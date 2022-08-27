@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es5",
+    "sourceMap": false,
+      "lib": [
+          "DOM","DOM.Iterable",
+          "ESNext"
+      ],
+      "allowJs": false,
+      "esModuleInterop": true,
+      "allowSyntheticDefaultImports": true,
+      "forceConsistentCasingInFileNames": true,
+      "moduleResolution": "Node",
+      "resolveJsonModule": true,
+      "isolatedModules": true,
+      "jsx": "react-jsx",
+  },
+    "files": ["src/**/*.tsx", "src/**/*.ts"],
+    "include": ["src"],
+
+    "exclude": [
+    "node_modules"
+  ]
+}
