@@ -6,7 +6,7 @@ export default defineConfig({
     type: 'none',
   },
   routes: routes,
-  mfsu: {},
   outputPath: './',
   fastRefresh: {},
+  mfsu: {},
 });
