@@ -1,0 +1,1 @@
+const appName = 'My App';

@@ -1,9 +1,5 @@
-import styles from './index.less';
+import Home from '@/components/Home';
 
-export default function IndexPage() {
-  return (
-    <div>
-      <h1 className={styles.title}>Page index</h1>
-    </div>
-  );
-}
+export default () => {
+  return <Home />;
+};
