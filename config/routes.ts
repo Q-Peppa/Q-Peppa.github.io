@@ -1,7 +1,7 @@
 const routes = [
   {
     path: '/',
-    component: '@/pages/index',
+    component: '@/pages/Home',
   },
 ];
 export default routes;
