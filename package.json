@@ -6,15 +6,6 @@
     "prettier": "prettier --write '**/*.{js,jsx,tsx,ts,less,md,json}'",
     "copy": "gulp copy"
   },
-
-  "lint-staged": {
-    "*.{js,jsx,less,md,json}": [
-      "prettier --write"
-    ],
-    "*.ts?(x)": [
-      "prettier --parser=typescript --write"
-    ]
-  },
   "dependencies": {
     "@ant-design/pro-layout": "^6.5.0",
     "@umijs/max": "^4.0.0",
@@ -22,6 +13,7 @@
     "antd": "^5.2.3",
     "cross-env": "^7.0.3",
     "gulp": "^4.0.2",
+    "gulp-edit": "^0.0.1",
     "react": "18.x",
     "react-dom": "18.x"
   },

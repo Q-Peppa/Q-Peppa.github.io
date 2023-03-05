@@ -13,6 +13,7 @@ const Home = () => {
       <Drawer open={open} onClose={toggle} title="Basic Drawer" width={'20%'}>
         <div>
           <p>好好看你的书！！！</p>
+          <span>尝试用gulp自动化开发， 如果你能看到这段话，说明你已经成功</span>
         </div>
       </Drawer>
     </div>
