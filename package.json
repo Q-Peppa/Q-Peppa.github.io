@@ -6,9 +6,7 @@
     "prettier": "prettier --write '**/*.{js,jsx,tsx,ts,less,md,json}'",
     "copy": "gulp copy"
   },
-  "gitHooks": {
-    "pre-commit": "lint-staged"
-  },
+
   "lint-staged": {
     "*.{js,jsx,less,md,json}": [
       "prettier --write"
