@@ -4,7 +4,8 @@ import path from 'path';
 export default defineConfig({
   antd: {},
   routes: routes,
+  outputPath: './docs',
   mfsu: {},
   fastRefresh: true,
-  publicPath: "/",
+  publicPath: '/',
 });

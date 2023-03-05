@@ -2,9 +2,8 @@
   "private": true,
   "scripts": {
     "start": "cross-env SOCKET_SERVER=http://localhost:8000/ max dev",
-    "build": "max build && gulp copy",
-    "prettier": "prettier --write '**/*.{js,jsx,tsx,ts,less,md,json}'",
-    "copy": "gulp copy"
+    "build": "max build",
+    "prettier": "prettier --write '**/*.{js,jsx,tsx,ts,less,md,json}'"
   },
   "dependencies": {
     "@ant-design/pro-layout": "^6.5.0",
