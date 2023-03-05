@@ -1,14 +1,10 @@
 import { defineConfig } from 'umi';
 import routes from './routes';
-
+import path from 'path';
 export default defineConfig({
-  nodeModulesTransform: {
-    type: 'none',
-  },
+  antd: {},
+  outputPath: path.resolve(__dirname, '../dist'),
   routes: routes,
-  outputPath: './',
-  fastRefresh: {},
-  devServer: {
-    port: 8000,
-  },
+  mfsu: {},
+  fastRefresh: true,
 });
