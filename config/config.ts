@@ -8,5 +8,7 @@ export default defineConfig({
   routes: routes,
   outputPath: './',
   fastRefresh: {},
-  mfsu: {},
+  devServer: {
+    port: 8000,
+  },
 });

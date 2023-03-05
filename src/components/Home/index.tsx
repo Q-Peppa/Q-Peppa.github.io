@@ -7,13 +7,13 @@ const Home = () => {
 
   return (
     <div>
-      <h1 className={styles.title}>此项目还在测试中</h1>
+      <h1 className={styles.title}>测试小网页</h1>
       <Button onClick={toggle} type="primary">
-        Button
+        click me
       </Button>
       <Drawer open={open} onClose={toggle} title="Basic Drawer" width={600}>
         <div>
-          <p>this is drawer</p>
+          <p>好好看你的书！！！</p>
         </div>
       </Drawer>
     </div>
