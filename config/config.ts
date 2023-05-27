@@ -1,5 +1,6 @@
-import { defineConfig } from 'umi';
+import { defineConfig } from '@umijs/max';
 import routes from './routes';
+
 export default defineConfig({
   antd: {},
   routes,
@@ -7,4 +8,5 @@ export default defineConfig({
   mfsu: {},
   fastRefresh: true,
   publicPath: '/',
+  model: {},
 });

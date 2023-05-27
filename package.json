@@ -1,12 +1,17 @@
 {
   "private": true,
   "scripts": {
-    "start": "cross-env SOCKET_SERVER=http://localhost:8000/ max dev",
+    "start": "max dev",
     "build": "max build",
-    "prettier": "prettier --write '**/*.{js,jsx,tsx,ts,less,md,json}'"
+    "prettier": "prettier --write '**/*.{js,jsx,tsx,ts,less,md,json}'",
+    "lint": "max lint"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,css,less}": [
+      "max lint"
+    ]
   },
   "dependencies": {
-    "@ant-design/pro-layout": "^6.5.0",
     "@umijs/max": "^4.0.0",
     "ahooks": "^3.7.2",
     "antd": "^5.2.3",
@@ -22,8 +27,10 @@
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
     "@umijs/test": "^3.5.35",
-    "lint-staged": "^10.0.7",
+    "eslint": "^8.41.0",
+    "lint-staged": "^13.2.2",
     "prettier": "^2.2.0",
+    "stylelint": "^15.6.2",
     "typescript": "^4.1.2",
     "yorkie": "^2.0.0"
   },
