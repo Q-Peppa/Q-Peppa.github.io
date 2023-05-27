@@ -18,3 +18,9 @@
 /src/.umi-production
 /src/.umi-test
 /.env.local
+
+
+# idea
+.idea
+.fleet
+.vscode
