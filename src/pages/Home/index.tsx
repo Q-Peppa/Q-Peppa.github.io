@@ -1,5 +1,12 @@
-import Home from '@/components/Home';
+import React from 'react';
+import { DatePicker } from 'antd';
 
-export default () => {
-  return <Home />;
+const Home: React.FC = () => {
+  return (
+    <React.Fragment>
+      <DatePicker />
+    </React.Fragment>
+  );
 };
+
+export default Home;
