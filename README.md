@@ -5,11 +5,11 @@
 Install dependencies,
 
 ```bash
-$ yarn
+$ cnpm
 ```
 
 Start the dev server,
 
 ```bash
-$ yarn start
+$ cnpm start
 ```
