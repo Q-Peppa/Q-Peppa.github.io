@@ -1,8 +1,5 @@
 # umi project
 
-## Getting Started
-
-Install dependencies,
 
 ```bash
 $ cnpm

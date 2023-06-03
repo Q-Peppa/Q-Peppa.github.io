@@ -1,22 +1,25 @@
 import React from 'react';
-import { DatePicker } from 'antd';
+import { Button, DatePicker, message } from 'antd';
 import { useModel } from '@umijs/max';
-
+let t = 0;
 const Home: React.FC = () => {
   const { user, setUser } = useModel('user');
+  const handleClick = () => {
+    console.log(t);
+    message.info(`hello, ${t}`);
+    setUser({
+      age: user.age + t,
+    });
+  };
   return (
     <React.Fragment>
-      <DatePicker />
-      <p>{user.age}</p>
-      <button
-        onClick={() => {
-          setUser({
-            age: user.age + Number((Math.random() * 10).toFixed(0)),
-          });
+      <DatePicker
+        onSelect={(e) => {
+          t = e.get('D');
         }}
-      >
-        add age
-      </button>
+      />
+      <p>{user.age}</p>
+      <Button onClick={handleClick}>add age</Button>
     </React.Fragment>
   );
 };

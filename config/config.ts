@@ -9,4 +9,5 @@ export default defineConfig({
   fastRefresh: true,
   publicPath: '/',
   model: {},
+  title: 'UmiJS Max',
 });
