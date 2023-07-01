@@ -2,7 +2,10 @@ import { defineConfig } from '@umijs/max';
 import routes from './routes';
 
 export default defineConfig({
-  antd: {},
+  antd: {
+    import: false,
+  },
+  layout: false,
   routes,
   outputPath: './docs',
   mfsu: {},
@@ -10,4 +13,5 @@ export default defineConfig({
   publicPath: '/',
   model: {},
   title: 'UmiJS Max',
+  valtio: {},
 });

@@ -5,15 +5,14 @@ import zhCN from 'antd/locale/zh_CN';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 
-export default () => {
+const Layout: React.FC<any> = () => {
   useEffect(() => {
     dayjs.locale('zh-cn');
   }, []);
   return (
-    <React.Fragment>
-      <ConfigProvider locale={zhCN}>
-        <Outlet />
-      </ConfigProvider>
-    </React.Fragment>
+    <ConfigProvider locale={ zhCN }>
+      <Outlet />
+    </ConfigProvider>
   );
 };
+export default Layout;

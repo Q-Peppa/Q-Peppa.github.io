@@ -1,25 +1,17 @@
 import React from 'react';
-import { Button, DatePicker, message } from 'antd';
-import { useModel } from '@umijs/max';
-let t = 0;
+import { useProxy } from 'valtio/utils';
+import HomeState from '@/pages/Home/state';
+import { Card, Typography } from 'antd';
 const Home: React.FC = () => {
-  const { user, setUser } = useModel('user');
-  const handleClick = () => {
-    console.log(t);
-    message.info(`hello, ${t}`);
-    setUser({
-      age: user.age + t,
-    });
-  };
+  const HomeConsumer = useProxy(HomeState);
+
   return (
     <React.Fragment>
-      <DatePicker
-        onSelect={(e) => {
-          t = e.get('D');
-        }}
-      />
-      <p>{user.age}</p>
-      <Button onClick={handleClick}>add age</Button>
+      <div>
+        <Card title={HomeConsumer.name}>
+          <Typography.Title>{HomeConsumer.age > 3}</Typography.Title>
+        </Card>
+      </div>
     </React.Fragment>
   );
 };
