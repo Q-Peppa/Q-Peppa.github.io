@@ -12,6 +12,6 @@ export default defineConfig({
   fastRefresh: true,
   publicPath: '/',
   model: {},
-  title: 'UmiJS Max',
+  title: 'leetcode 提示',
   valtio: {},
 });
