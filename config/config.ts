@@ -1,11 +1,17 @@
-import { defineConfig } from 'umi';
+import { defineConfig } from '@umijs/max';
 import routes from './routes';
-import path from 'path';
+
 export default defineConfig({
-  antd: {},
-  routes: routes,
+  antd: {
+    import: false,
+  },
+  layout: false,
+  routes,
   outputPath: './docs',
   mfsu: {},
   fastRefresh: true,
   publicPath: '/',
+  model: {},
+  title: 'UmiJS Max',
+  valtio: {},
 });
