@@ -1,12 +1,14 @@
 import React, { useEffect } from 'react';
 import { Button, Divider, message, Select, Typography } from 'antd';
 import Editor, { useMonaco } from '@monaco-editor/react';
-
+const languages = ['javascript', 'typescript', 'python', 'java', 'c++', 'c'];
 function App() {
   const monaco = useMonaco();
   const valRef = React.useRef<string>();
   const [theme, setTheme] = React.useState<string>('vs-dark');
   const [font, setFont] = React.useState<number>(26);
+  const [currentLanguage, setCurrentLanguage] =
+    React.useState<string>('javascript'); // 'javascript
   useEffect(() => {
     if (monaco) {
       console.log(`monaco`, monaco);
@@ -44,7 +46,8 @@ function App() {
       onChange={handleEditorChange}
       theme={theme}
       height="90vh"
-      defaultLanguage="javascript"
+      language={currentLanguage}
+      defaultValue={'// 请在此处输入代码 https://q-peppa.github.io/'}
     />
   );
   return (
@@ -66,9 +69,6 @@ function App() {
         {Main}
       </section>
       <aside>
-        <Button type={'primary'} onClick={showValue}>
-          复制代码
-        </Button>
         <p className={'my-2'}>选择主题 </p>
         <Select
           onSelect={handleSelectTheme}
@@ -92,6 +92,27 @@ function App() {
         <Button onClick={() => handleSelectFont(1)}> + </Button>
         <span>{font}</span>
         <Button onClick={() => handleSelectFont(-1)}> - </Button>
+        <p>选择你的语言</p>
+        <Select
+          value={currentLanguage}
+          onSelect={setCurrentLanguage}
+          style={{
+            minWidth: 200,
+          }}
+          options={languages.map((e) => ({
+            label: e,
+            value: e,
+          }))}
+        />
+        <Button
+          style={{
+            marginTop: 20,
+          }}
+          type={'primary'}
+          onClick={showValue}
+        >
+          写完了 , 复制代码到剪切板
+        </Button>
       </aside>
     </div>
   );
