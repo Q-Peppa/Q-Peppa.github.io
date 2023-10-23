@@ -12,6 +12,6 @@ export default defineConfig({
   fastRefresh: true,
   publicPath: '/',
   model: {},
-  title: 'leetcode 提示',
+  title: 'leetcode提示',
   valtio: {},
 });
