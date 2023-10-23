@@ -12,6 +12,7 @@
     ]
   },
   "dependencies": {
+    "@monaco-editor/react": "^4.6.0",
     "@umijs/max": "^4.0.0",
     "ahooks": "^3.7.2",
     "antd": "^5.2.3",

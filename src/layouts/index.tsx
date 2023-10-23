@@ -10,7 +10,7 @@ const Layout: React.FC<any> = () => {
     dayjs.locale('zh-cn');
   }, []);
   return (
-    <ConfigProvider locale={ zhCN }>
+    <ConfigProvider locale={zhCN}>
       <Outlet />
     </ConfigProvider>
   );

@@ -1,15 +1,11 @@
+import { appName } from '@/constant';
 import { proxy } from 'valtio';
-import { derive } from 'valtio/utils';
 
 const initialState = {
   age: 0,
-  name: 'max',
+  name: appName,
 };
 
 const HomeState = proxy(initialState);
-const someDeriveState = derive({
-  isPerson: (h) => h(HomeState).age > 3,
-});
-export default HomeState;
 
-export { someDeriveState };
+export default HomeState;
