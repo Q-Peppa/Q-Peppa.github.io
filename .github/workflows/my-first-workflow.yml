@@ -1,4 +1,12 @@
 # github 自动部署任务, 自动执行 npm install 和 npm build
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
 jobs:
   build:
     runs-on: ubuntu-latest
