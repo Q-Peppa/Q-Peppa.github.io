@@ -21,6 +21,6 @@
 
 
 # idea
-.idea
+.idea/**
 .fleet
 .vscode

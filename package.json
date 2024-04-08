@@ -1,40 +1,24 @@
 {
   "private": true,
   "scripts": {
-    "start": "max dev",
-    "build": "max build",
-    "prettier": "prettier --write '**/*.{js,jsx,tsx,ts,less,md,json}'",
-    "lint": "max lint"
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx,css,less}": [
-      "max lint"
-    ]
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
   },
   "dependencies": {
-    "@monaco-editor/react": "^4.6.0",
-    "@umijs/max": "^4.0.0",
-    "ahooks": "^3.7.2",
-    "antd": "^5.2.3",
-    "cross-env": "^7.0.3",
-    "dayjs": "^1.11.7",
-    "gulp": "^4.0.2",
-    "gulp-edit": "^0.0.1",
-    "react": "18.x",
-    "react-dom": "18.x",
-    "valtio": "^1.10.6"
+    "@emotion/react": "latest",
+    "@emotion/styled": "latest",
+    "@fontsource/roboto": "^5.0.12",
+    "@mui/icons-material": "^5.15.15",
+    "@mui/material": "latest",
+    "react": "latest",
+    "react-dom": "latest"
   },
   "devDependencies": {
-    "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0",
-    "@umijs/test": "^3.5.35",
-    "eslint": "^8.41.0",
-    "eslint-plugin-unused-imports": "^2.0.0",
-    "lint-staged": "^13.2.2",
-    "prettier": "^2.2.0",
-    "stylelint": "^15.6.2",
-    "typescript": "^4.1.2",
-    "yorkie": "^2.0.0"
-  },
-  "packageManager": "cnpm@9.1.0"
+    "@types/react": "^18.2.74",
+    "@types/react-dom": "^18.2.24",
+    "@vitejs/plugin-react": "latest",
+    "less": "^4.2.0",
+    "vite": "latest"
+  }
 }
