@@ -1,34 +1,38 @@
 import * as React from 'react';
-import { styled } from '@mui/material/styles';
-import Box from '@mui/material/Box';
-import Paper from '@mui/material/Paper';
-import Grid from '@mui/material/Unstable_Grid2';
+import FormatBoldIcon from '@mui/icons-material/FormatBold';
+import FormatItalicIcon from '@mui/icons-material/FormatItalic';
+import FormatUnderlinedIcon from '@mui/icons-material/FormatUnderlined';
+import FormatColorFillIcon from '@mui/icons-material/FormatColorFill';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
-const Item = styled(Paper)(({ theme }) => ({
-  backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
-  ...theme.typography.body2,
-  padding: theme.spacing(1),
-  textAlign: 'center',
-  color: theme.palette.text.secondary,
-}));
+export default function ToggleButtonsMultiple() {
+  const [formats, setFormats] = React.useState(() => ['bold', 'italic']);
 
-export default function BasicGrid() {
+  const handleFormat = (event, newFormats) => {
+    setFormats(newFormats);
+  };
+
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      <Grid container spacing={2}>
-        <Grid xs={8}>
-          <Item>xs=8</Item>
-        </Grid>
-        <Grid xs={4}>
-          <Item>xs=4</Item>
-        </Grid>
-        <Grid xs={4}>
-          <Item>xs=4</Item>
-        </Grid>
-        <Grid xs={8}>
-          <Item>xs=8</Item>
-        </Grid>
-      </Grid>
-    </Box>
+    <ToggleButtonGroup
+      value={ formats }
+      onChange={ handleFormat }
+      aria-label="text formatting"
+    >
+      <ToggleButton value="bold" aria-label="bold">
+        <FormatBoldIcon />
+      </ToggleButton>
+      <ToggleButton value="italic" aria-label="italic">
+        <FormatItalicIcon />
+      </ToggleButton>
+      <ToggleButton value="underlined" aria-label="underlined">
+        <FormatUnderlinedIcon />
+      </ToggleButton>
+      <ToggleButton value="color" aria-label="color" disabled>
+        <FormatColorFillIcon />
+        <ArrowDropDownIcon />
+      </ToggleButton>
+    </ToggleButtonGroup>
   );
 }
