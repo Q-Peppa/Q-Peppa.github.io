@@ -4,14 +4,11 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "eslint": "npx eslint ./src/pages/HomePage/index.tsx "
   },
   "dependencies": {
-    "@emotion/react": "latest",
-    "@emotion/styled": "latest",
-    "@fontsource/roboto": "^5.0.12",
-    "@mui/icons-material": "^5.15.15",
-    "@mui/material": "latest",
+
     "react": "latest",
     "react-dom": "latest"
   },
@@ -19,7 +16,8 @@
     "@types/react": "^18.2.74",
     "@types/react-dom": "^18.2.24",
     "@vitejs/plugin-react": "latest",
-    "less": "^4.2.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react": "^7.34.1",
     "vite": "latest"
   }
 }
