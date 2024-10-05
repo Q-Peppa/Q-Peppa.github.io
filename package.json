@@ -8,16 +8,10 @@
     "eslint": "npx eslint ./src/pages/HomePage/index.tsx "
   },
   "dependencies": {
-
-    "react": "latest",
-    "react-dom": "latest"
+    "svelte": "latest",
+    "@sveltejs/vite-plugin-svelte": "latest"
   },
   "devDependencies": {
-    "@types/react": "^18.2.74",
-    "@types/react-dom": "^18.2.24",
-    "@vitejs/plugin-react": "latest",
-    "eslint": "^8.57.0",
-    "eslint-plugin-react": "^7.34.1",
     "vite": "latest"
   }
 }

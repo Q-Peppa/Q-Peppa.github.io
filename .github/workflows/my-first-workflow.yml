@@ -1,4 +1,4 @@
-# github 自动部署任务, 自动执行 npm install 和 npm build
+# github 自动部署任务, 自动执行 npm install
 on:
   push:
     branches:
@@ -19,4 +19,3 @@ jobs:
       - name: npm install, build
         run: |
           npm install
-          npm run build
