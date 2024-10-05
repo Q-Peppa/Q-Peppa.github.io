@@ -8,8 +8,7 @@
     "eslint": "npx eslint ./src/pages/HomePage/index.tsx "
   },
   "dependencies": {
-    "svelte": "latest",
-    "@sveltejs/vite-plugin-svelte": "latest"
+    "alpinejs": "^3.14.1"
   },
   "devDependencies": {
     "vite": "latest"
