@@ -20,11 +20,11 @@ jobs:
         with:
           node-version: '22.5.1'
 # exec my profile
-      - run: |
-          echo ${{ matrix.node-version }}
       - name: clean cache
       - run: npm cache clean --force
+
       - name: install deps
       - run: npm install
+
       - name: build project
       - run: npm run build --if-present
