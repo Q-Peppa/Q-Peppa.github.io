@@ -5,12 +5,14 @@
     "dev": "vite",
     "build": "vite build",
     "serve": "vite preview",
-    "eslint": "npx eslint ./src/pages/HomePage/index.tsx "
+    "eslint": "npx eslint ./src/pages/HomePage/index.tsx ",
+    "prepare": "husky"
   },
   "dependencies": {
     "alpinejs": "^3.14.1"
   },
   "devDependencies": {
+    "husky": "^9.1.6",
     "vite": "latest"
   }
 }
