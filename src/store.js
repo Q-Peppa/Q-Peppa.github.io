@@ -1,4 +1,5 @@
 function initStore(){
+  const text = '千甲德也扛不住'
   Alpine.data('data', () => ({
     val:"",
     btnClass:"btn",
@@ -28,18 +29,22 @@ function initStore(){
         startFatigue:0,
         times:0,
         calcTotal(){
-          if (!this.start || !this.end) return "输入点东西看看吧~"
-          if (this.start > this.end) return  "输入的疲劳好像不对~"
+          const s = Number(this.start) || 0;
+          const e = Number(this.end) || 0;
+          if (e > 200 ) return text
+          if (!s || !e ) return "输入点东西看看吧~"
+          if (s > e ) return  "输入的疲劳好像不对~"
           let total = 0;
-          for (let i=this.start ; i<=this.end; i++) {
-          total+= Number(i)
-        }
+          for (let i=s  ; i<=e ; i++) {
+              total+= Number(i)
+          }
+          if (total > 10000)  return text
         return `总共的疲劳为：  <span style="color: red">${total}</span>`
       },
         calcTotal2(){
           const t = Number(this.times) || 0
           const f = Number(this.startFatigue) || 0
-          if ( t > 200) return  "正无穷"
+          if ( t > 200) return  text
           if (!f ) return "输入点东西看看吧~"
           let total = 0
           for (let i=0 ; i< t ; i++) {
