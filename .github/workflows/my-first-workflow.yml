@@ -21,10 +21,10 @@ jobs:
           node-version: '22.5.1'
 # exec my profile
       - name: clean cache
-      - run: npm cache clean --force
+        run: npm cache clean --force
 
       - name: install deps
-      - run: npm install
+        run: npm install
 
       - name: build project
-      - run: npm run build --if-present
+        run: npm run build --if-present
