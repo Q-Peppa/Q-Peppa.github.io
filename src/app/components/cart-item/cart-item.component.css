@@ -1,0 +1,4 @@
+.font-semibold {
+  --tw-font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-semibold);
+}

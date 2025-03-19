@@ -1,0 +1,46 @@
+<div
+  class="grid
+  overflow-x-hidden
+  justify-center
+  pt-14.25
+  [--gutter-width:2.5rem]
+  lg:grid-cols-[var(--gutter-width)_minmax(0,var(--breakpoint-2xl))_var(--gutter-width)]"
+>
+  <div
+    class="col-start-1
+    row-span-full
+    row-start-1
+    hidden border-x
+    border-x-(--pattern-fg)
+    bg-[image:repeating-linear-gradient(315deg,_var(--pattern-fg)_0,_var(--pattern-fg)_1px,_transparent_0,_transparent_50%)] bg-[size:10px_10px] bg-fixed [--pattern-fg:var(--color-black)]/5 lg:block dark:[--pattern-fg:var(--color-white)]/10"></div>
+
+  <div class="text-gray-950 dark:text-white h-full">
+    <div class="relative mx-auto mt-4 max-lg:max-w-2xl">
+      <div
+        class="relative before:absolute before:top-0 before:h-px before:w-[200vw] before:bg-gray-950/5 dark:before:bg-white/10 before:-left-[100vw] after:absolute after:bottom-0 after:h-px after:w-[200vw] after:bg-gray-950/5 dark:after:bg-white/10 after:-left-[100vw]">
+        <h1 class="mx-2 text-6xl tracking-tighter text-balance sm:text-7xl lg:text-8xl">Angular学习</h1>
+      </div>
+      <div
+        class="mt-10 relative before:absolute before:top-0 before:h-px before:w-[200vw] before:bg-gray-950/5 dark:before:bg-white/10 before:-left-[100vw] after:absolute after:bottom-0 after:h-px after:w-[200vw] after:bg-gray-950/5 dark:after:bg-white/10 after:-left-[100vw]">
+        <p class="mx-2 text-lg italic font-normal">所有代码基于Angular&#64;19, tailwindcss&#64;4, gemini&#64;2-Flash </p>
+      </div>
+      <div class="mt-10 relative"></div>
+      <section>
+        <app-cart-item
+          *ngFor="let article of articles; last as isLast"
+          [title]="article.title"
+          [content]="article.content"
+          [publishDate]="article.publishDate"
+          [tags]="article.tags"
+          [id]="article.id"
+          [isLast]="isLast"
+          class="cart-item-centered"
+
+        ></app-cart-item>
+      </section>
+    </div>
+  </div>
+  <!--  右侧的竖线 -->
+  <div
+    class="row-span-full row-start-1 hidden border-x border-x-(--pattern-fg) bg-[image:repeating-linear-gradient(315deg,_var(--pattern-fg)_0,_var(--pattern-fg)_1px,_transparent_0,_transparent_50%)] bg-[size:10px_10px] bg-fixed [--pattern-fg:var(--color-black)]/5 lg:col-start-3 lg:block dark:[--pattern-fg:var(--color-white)]/10"></div>
+</div>

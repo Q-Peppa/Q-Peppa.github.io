@@ -1,0 +1,12 @@
+.blog-list-container {
+  max-width: var(--container-width); /* 使用变量，限制容器宽度 */
+  margin: 0 auto; /* 左右居中 */
+  padding: var(--spacing-large);
+}
+
+.blog-list-title {
+  font-size: 2rem;
+  font-weight: var(--heading-font-weight);
+  color: var(--primary-color);
+  margin-bottom: var(--spacing-large);
+}

@@ -1,0 +1,7 @@
+.markdown-container {
+  max-width: 800px; /* 设置最大宽度 */
+  margin: 0 auto;   /* 左右自动边距，实现居中 */
+  padding: 20px;     /* 上下左右留白 */
+}
+
+

@@ -1,37 +1,27 @@
+/* To learn more about Typescript configuration file: https://www.typescriptlang.org/docs/handbook/tsconfig-json.html. */
+/* To learn more about Angular compiler options: https://angular.dev/reference/configs/angular-compiler-options. */
 {
+  "compileOnSave": false,
   "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "importHelpers": true,
-    "jsx": "react-jsx",
-    "esModuleInterop": true,
-    "sourceMap": true,
-    "baseUrl": "./",
+    "outDir": "./dist/out-tsc",
     "strict": true,
-    "paths": {
-      "@/*": ["src/*"],
-      "@@/*": ["src/.umi/*"]
-    },
-    "allowSyntheticDefaultImports": true
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "moduleResolution": "bundler",
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "ES2022"
   },
-  "include": [
-    "mock/**/*",
-    "src/**/*",
-    "config/**/*",
-    ".umirc.ts",
-    "typings.d.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "lib",
-    "es",
-    "dist",
-    "typings",
-    "**/__test__",
-    "test",
-    "docs",
-    "tests"
-  ]
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
+  }
 }
