@@ -4,7 +4,21 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1bbbf0e2-334b-4e49-a9a7-04ce20af669b" name="Changes" comment="test" />
+    <list default="true" id="1bbbf0e2-334b-4e49-a9a7-04ce20af669b" name="Changes" comment="test">
+      <change afterPath="$PROJECT_DIR$/_posts/2025-03-19-构建可重用的代码模块.markdown" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/_posts/2025-03-20-Angular 新控制流语法.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/_posts/2025-03-20-Angular 新控制流语法结合Async管道-优雅处理异步数据.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/_posts/2025-03-20-Angular-响应式表单-构建复杂的表单应用.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/_posts/2025-03-20-Angular-模板语法构建动态用户界面.markdown" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/_posts/2025-03-20-Angular中的依赖注入方式.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/_posts/2025-03-20-Angular中的父子组件之间如何通信.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/_posts/2025-03-20-Angular组件生命周期详解.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/_posts/2025-03-20-什么是 Dependency Injection.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_config.yml" beforeDir="false" afterPath="$PROJECT_DIR$/_config.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_includes/footer.html" beforeDir="false" afterPath="$PROJECT_DIR$/_includes/footer.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_posts/2025-03-20-welcome-to-jekyll.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/_posts/2025-03-20-革新你的数据状态管理.markdown" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -53,7 +67,7 @@
     "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "master",
     "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "D:/code/Q-Peppa.github.io",
+    "last_opened_file_path": "D:/code/Q-Peppa.github.io/_posts",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -69,6 +83,7 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\code\Q-Peppa.github.io\_posts" />
       <recent name="D:\code\Q-Peppa.github.io" />
       <recent name="D:\code\Q-Peppa.github.io\docs" />
       <recent name="D:\code\Q-Peppa.github.io\public" />
@@ -119,6 +134,7 @@
       <workItem from="1742322232348" duration="272000" />
       <workItem from="1742387696937" duration="8905000" />
       <workItem from="1742446593117" duration="3737000" />
+      <workItem from="1742481978750" duration="2395000" />
     </task>
     <task id="LOCAL-00001" summary="test">
       <option name="closed" value="true" />
