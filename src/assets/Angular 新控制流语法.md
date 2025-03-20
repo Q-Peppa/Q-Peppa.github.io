@@ -8,7 +8,7 @@ Angular 长期以来使用 structural directives (`*ngIf`, `*ngFor`, `ngSwitch`)
 
 **1. `*ngIf` (Conditional Rendering):**
 
-```html
+```angular17html
 <div *ngIf="condition">
   This content is displayed if the condition is true.
 </div>
@@ -16,7 +16,7 @@ Angular 长期以来使用 structural directives (`*ngIf`, `*ngFor`, `ngSwitch`)
 
 **2. `*ngFor` (Looping):**
 
-```html
+```angular17html
 <ul>
   <li *ngFor="let item of items; let i = index; let isEven = even">
     Item {{ i + 1 }}: {{ item }} (Even: {{ isEven }})
@@ -26,7 +26,7 @@ Angular 长期以来使用 structural directives (`*ngIf`, `*ngFor`, `ngSwitch`)
 
 **3. `ngSwitch` (Switch Statement):**
 
-```html
+```angular17html
 <div [ngSwitch]="value">
   <div *ngSwitchCase="'A'">Option A</div>
   <div *ngSwitchCase="'B'">Option B</div>
@@ -47,7 +47,7 @@ Angular v17 引入了新的 `@if`, `@for`, 和 `@switch` 控制流语法，旨�
 
 **1. `@if` (Conditional Rendering):**
 
-```html
+```angular17html
 @if (condition) {
   <div>
     This content is displayed if the condition is true.
@@ -61,7 +61,7 @@ Angular v17 引入了新的 `@if`, `@for`, 和 `@switch` 控制流语法，旨�
 
 **2. `@for` (Looping):**
 
-```html
+```angular17html
 <ul>
   @for (item of items; track item) {
     <li>
@@ -75,7 +75,7 @@ Angular v17 引入了新的 `@if`, `@for`, 和 `@switch` 控制流语法，旨�
 
 **3. `@switch` (Switch Statement):**
 
-```html
+```angular17html
 @switch (value) {
   @case ('A') {
     <div>Option A</div>
@@ -115,7 +115,7 @@ Angular v17 引入了新的 `@if`, `@for`, 和 `@switch` 控制流语法，旨�
 
 **旧语法：**
 
-```html
+```angular17html
 <ul>
   <li *ngFor="let item of items; trackBy: trackById">{{ item.name }}</li>
 </ul>
@@ -129,7 +129,7 @@ trackById(index: number, item: any): any {
 
 **新语法：**
 
-```html
+```angular17html
 <ul>
   @for (item of items; track item.id) {
     <li>{{ item.name }}</li>

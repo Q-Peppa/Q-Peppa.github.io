@@ -28,7 +28,7 @@ export class ArticleComponent {
 
 插值表达式是最简单的模板语法，用于将组件的属性值直接嵌入到  中。
 
-```html
+```angular17html
 <h1>{{ title }}</h1>
 <p>文章 ID: {{ id }}</p>
 <p>{{ content }}</p>
@@ -41,7 +41,7 @@ export class ArticleComponent {
 
 属性绑定用于将组件的属性值绑定到  元素的属性。 这比直接在字符串中使用插值更安全，尤其是在设置 src 或 href 等属性时，可以防止 XSS 攻击。
 
-```html
+```angular17html
 <!-- article.component. -->
 <a [href]="'articles/' + id">阅读更多</a>
 <img [src]="'assets/images/article-' + id + '.jpg'" [alt]="title">
@@ -49,7 +49,7 @@ export class ArticleComponent {
 
 ### 4. 事件绑定：()
 
-```html
+```angular17html
 <!-- article.component. -->
 <button (click)="shareArticle()">分享</button>
 ```
@@ -84,7 +84,7 @@ export class ArticleComponent {
 
 双向数据绑定允许你在组件属性和表单元素之间建立双向的数据流。 使用 `[(ngModel)]`指令实现。 需要 `FormsModule`。
 
-```html
+```angular17html
 <!-- article.component. -->
 <input type="text" [(ngModel)]="comment">
 <p>评论：{{ comment }}</p>
@@ -119,7 +119,7 @@ export class ArticleComponent {
 
 > *_ngIf_
 
-```html
+```angular17html
  <!-- article.component. -->
 <div *ngIf="tags.length > 0">
   <h3>标签：</h3>
@@ -131,7 +131,7 @@ export class ArticleComponent {
 
 > *_ngFor_
 
-```html
+```angular17html
 <!-- article.component. -->
 <ul>
   <li *ngFor="let tag of tags; let i = index; let isEven = even">
@@ -144,7 +144,7 @@ export class ArticleComponent {
 
 > *_ngSwitch_
 
-```html
+```
 <!-- article.component. -->
 <div [ngSwitch]="category">
   <div *ngSwitchCase="'angular'">Angular 文章</div>
@@ -162,18 +162,18 @@ export class ArticleComponent {
 
 
 - date 管道: 用于格式化日期
-```html
+```angular17html
 <!-- article.component. -->
 <p>发布日期: {{ publishDate | date:'yyyy-MM-dd HH:mm' }}</p>
 ```
 - uppercase 和 lowercase 管道: 用于转换字符串的大小写。
-```html
+```angular17html
 <!-- article.component. -->
 <h1>{{ title | uppercase }}</h1>
 <p>{{ content | lowercase }}</p>
 ```
 - slice 管道: 用于截取字符串或数组。
-```html
+```angular17html
 <!-- article.component. -->
 <p>{{ content | slice:0:100 }}...</p> <!-- 截取 content 的前 100 个字符 -->
 
@@ -181,7 +181,7 @@ export class ArticleComponent {
 
 ### 8. 模板引用变量 (#)
 模板引用变量允许你在模板中引用  元素或组件实例。
-```html
+```angular17html
 <!-- article.component. -->
 <input type="text" #commentInput>
 <button (click)="addComment(commentInput.value)">添加评论</button>

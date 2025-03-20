@@ -90,7 +90,7 @@ export class AppComponent implements OnInit {
 
 **2. 创建表单模板 (app.component.html)**
 
-```html
+```angular17html
 <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
   <div>
     <label for="username">Username:</label>
@@ -188,7 +188,7 @@ export class AppComponent implements OnInit {
 
 **3. 在模板中显示密码不匹配错误 (app.component.html)**
 
-```html
+```angular17html
 <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
   <div>
     <label for="username">Username:</label>
@@ -290,7 +290,7 @@ export class AppComponent implements OnInit {
 
 **2. 更新模板以显示 FormArray (app.component.html)**
 
-```html
+```angular17html
 <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
   <div>
     <label for="username">Username:</label>

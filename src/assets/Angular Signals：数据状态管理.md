@@ -63,7 +63,7 @@ export class CounterComponent {
 
 **2. 创建组件模板 (counter.component.html):**
 
-```html
+```angular17html
 <p>Count: {{ count() }}</p> <!-- 使用 count() 读取信号的值 -->
 <button (click)="increment()">Increment</button>
 <button (click)="decrement()">Decrement</button>
@@ -107,7 +107,7 @@ export class CounterComponent {
 
 **2. 更新组件模板 (counter.component.html):**
 
-```html
+```angular17html
 <p>Count: {{ count() }}</p>
 <p>Squared Count: {{ squaredCount() }}</p> <!-- 使用 squaredCount() 读取计算信号的值 -->
 <button (click)="increment()">Increment</button>

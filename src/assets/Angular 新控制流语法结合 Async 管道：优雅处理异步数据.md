@@ -23,7 +23,7 @@ export class AsyncExampleComponent {
 }
 ```
 
-```html
+```angular17html
 <p>Current time: {{ time$ | async | date:'mediumTime' }}</p>
 ```
 
@@ -53,7 +53,7 @@ export class AsyncIfComponent {
 
 **旧语法：**
 
-```html
+```angular17html
 <div *ngIf="isLoading$ | async; else loaded">
   Loading...
 </div>
@@ -66,7 +66,7 @@ export class AsyncIfComponent {
 
 **新语法：**
 
-```html
+```angular17html
 @if (isLoading$ | async) {
   <div>Loading...</div>
 } @else {
@@ -103,7 +103,7 @@ export class AsyncForComponent {
 
 **旧语法：**
 
-```html
+```angular17html
 <ul>
   <li *ngFor="let item of items$ | async">{{ item }}</li>
 </ul>
@@ -111,7 +111,7 @@ export class AsyncForComponent {
 
 **新语法：**
 
-```html
+```angular17html
 <ul>
   @for (item of items$ | async; track item) {
     <li>{{ item }}</li>
@@ -146,7 +146,7 @@ export class AsyncSwitchComponent {
 
 **旧语法：**
 
-```html
+```angular17html
 <div [ngSwitch]="status$ | async">
   <div *ngSwitchCase="'loading'">Loading...</div>
   <div *ngSwitchCase="'success'">Success!</div>
@@ -157,7 +157,7 @@ export class AsyncSwitchComponent {
 
 **新语法：**
 
-```html
+```angular17html
 @switch (status$ | async) {
   @case ('loading') {
     <div>Loading...</div>

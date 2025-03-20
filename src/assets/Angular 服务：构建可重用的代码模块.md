@@ -89,7 +89,7 @@ export class MyComponentComponent implements OnInit {
 
 **2. 在模板中使用数据 (my-component.component.html):**
 
-```html
+```angular17html
 <p>{{ message }}</p>
 ```
 
@@ -180,7 +180,7 @@ export class MyComponentComponent implements OnInit {
 
 **在模板中显示数据 (my-component.component.html):**
 
-```html
+```angular17html
 <ul>
   <li *ngFor="let todo of todos">{{ todo.title }}</li>
 </ul>
