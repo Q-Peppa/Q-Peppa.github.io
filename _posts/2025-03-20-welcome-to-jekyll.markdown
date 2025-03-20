@@ -1,10 +1,9 @@
 ---
-layout: post
-title:  "Welcome to Jekyll!"
+layout: markdown
+title:  Angular Signals：革新你的数据状态管理
 date:   2025-03-20 13:39:39 +0800
-categories: jekyll update
+categories: update
 ---
-## Angular Signals：革新你的数据状态管理
 
 Angular Signals 是一个 Angular 框架的内置功能，旨在提供一种细粒度、高性能且易于理解的方式来管理应用程序中的状态。 传统的变更检测机制可能导致不必要的组件重新渲染，而 Signals 允许 Angular 仅在必要时更新视图，从而显著提升性能。  本文将深入探讨 Angular Signals 的概念、优势、用法以及如何用它们来构建更高效的 Angular 应用。
 
