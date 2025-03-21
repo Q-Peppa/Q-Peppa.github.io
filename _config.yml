@@ -28,7 +28,7 @@ baseurl: "" # the subpath of your site, e.g. /blog
 url: "" # the base hostname & protocol for your site, e.g. http://example.com
 
 # Build settings
-theme: just-the-docs # for local development
+# theme: just-the-docs # for local development
 remote_theme: just-the-docs/just-the-docs # for GitHub deployment
 
 plugins:
