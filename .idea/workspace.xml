@@ -5,19 +5,31 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1bbbf0e2-334b-4e49-a9a7-04ce20af669b" name="Changes" comment="test">
-      <change afterPath="$PROJECT_DIR$/_posts/2025-03-19-构建可重用的代码模块.markdown" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/_posts/2025-03-20-Angular 新控制流语法.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/_posts/2025-03-20-Angular 新控制流语法结合Async管道-优雅处理异步数据.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/_posts/2025-03-20-Angular-响应式表单-构建复杂的表单应用.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/_posts/2025-03-20-Angular-模板语法构建动态用户界面.markdown" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/_posts/2025-03-20-Angular中的依赖注入方式.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/_posts/2025-03-20-Angular中的父子组件之间如何通信.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/_posts/2025-03-20-Angular组件生命周期详解.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/_posts/2025-03-20-什么是 Dependency Injection.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/_includes/components/footer.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/_includes/nav_footer_custom.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/_sass/color_schemes/blue.scss" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/angular/index.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Gemfile" beforeDir="false" afterPath="$PROJECT_DIR$/Gemfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Gemfile.lock" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/_config.yml" beforeDir="false" afterPath="$PROJECT_DIR$/_config.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_includes/footer.html" beforeDir="false" afterPath="$PROJECT_DIR$/_includes/footer.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_posts/2025-03-20-welcome-to-jekyll.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/_posts/2025-03-20-革新你的数据状态管理.markdown" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_includes/footer.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/_includes/header.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/_layouts/default.html" beforeDir="false" afterPath="$PROJECT_DIR$/_layouts/default.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_layouts/home.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/_layouts/markdown.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/_posts/2025-03-19-构建可重用的代码模块.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/angular/2025-03-19-构建可重用的代码模块.markdown" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_posts/2025-03-20-Angular 新控制流语法.md" beforeDir="false" afterPath="$PROJECT_DIR$/angular/2025-03-20-Angular 新控制流语法.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_posts/2025-03-20-Angular 新控制流语法结合Async管道-优雅处理异步数据.md" beforeDir="false" afterPath="$PROJECT_DIR$/angular/2025-03-20-Angular 新控制流语法结合Async管道-优雅处理异步数据.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_posts/2025-03-20-Angular-响应式表单-构建复杂的表单应用.md" beforeDir="false" afterPath="$PROJECT_DIR$/angular/2025-03-20-Angular-响应式表单-构建复杂的表单应用.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_posts/2025-03-20-Angular-模板语法构建动态用户界面.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/angular/2025-03-20-Angular-模板语法构建动态用户界面.markdown" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_posts/2025-03-20-Angular中的依赖注入方式.md" beforeDir="false" afterPath="$PROJECT_DIR$/angular/2025-03-20-Angular中的依赖注入方式.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_posts/2025-03-20-Angular中的父子组件之间如何通信.md" beforeDir="false" afterPath="$PROJECT_DIR$/angular/2025-03-20-Angular中的父子组件之间如何通信.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_posts/2025-03-20-Angular组件生命周期详解.md" beforeDir="false" afterPath="$PROJECT_DIR$/angular/2025-03-20-Angular组件生命周期详解.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_posts/2025-03-20-什么是 Dependency Injection.md" beforeDir="false" afterPath="$PROJECT_DIR$/angular/2025-03-20-什么是 Dependency Injection.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_posts/2025-03-20-革新你的数据状态管理.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/angular/2025-03-20-革新你的数据状态管理.markdown" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/css/syntax.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/index.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/index.markdown" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -28,6 +40,7 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="TypeScript File" />
+        <option value="SCSS File" />
       </list>
     </option>
   </component>
@@ -63,11 +76,14 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
+    "Shell Script.gem start.executor": "Run",
     "git-widget-placeholder": "master",
     "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "D:/code/Q-Peppa.github.io/_posts",
+    "last_opened_file_path": "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe",
+    "list.type.of.created.stylesheet": "SCSS",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -89,6 +105,7 @@
       <recent name="D:\code\Q-Peppa.github.io\public" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\code\Q-Peppa.github.io\_includes" />
       <recent name="D:\code\Q-Peppa.github.io\docs" />
       <recent name="D:\code\Q-Peppa.github.io\src\app\components" />
       <recent name="D:\code\Q-Peppa.github.io\src\app" />
@@ -96,21 +113,21 @@
     </key>
   </component>
   <component name="RunManager">
-    <configuration name="start" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
-      <package-json value="$PROJECT_DIR$/package.json" />
-      <command value="run" />
-      <scripts>
-        <script value="start" />
-      </scripts>
-      <node-interpreter value="project" />
+    <configuration name="gem start" type="ShConfigurationType">
+      <option name="SCRIPT_TEXT" value="jekyll serve" />
+      <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
+      <option name="SCRIPT_PATH" value="jekyll" />
+      <option name="SCRIPT_OPTIONS" value="serve" />
+      <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="true" />
+      <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="INDEPENDENT_INTERPRETER_PATH" value="true" />
+      <option name="INTERPRETER_PATH" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="EXECUTE_IN_TERMINAL" value="true" />
+      <option name="EXECUTE_SCRIPT_FILE" value="false" />
       <envs />
       <method v="2" />
     </configuration>
-    <recent_temporary>
-      <list>
-        <item itemvalue="npm.start" />
-      </list>
-    </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
@@ -134,7 +151,10 @@
       <workItem from="1742322232348" duration="272000" />
       <workItem from="1742387696937" duration="8905000" />
       <workItem from="1742446593117" duration="3737000" />
-      <workItem from="1742481978750" duration="2395000" />
+      <workItem from="1742481978750" duration="2558000" />
+      <workItem from="1742569628614" duration="87000" />
+      <workItem from="1742569730267" duration="17000" />
+      <workItem from="1742569752041" duration="6295000" />
     </task>
     <task id="LOCAL-00001" summary="test">
       <option name="closed" value="true" />

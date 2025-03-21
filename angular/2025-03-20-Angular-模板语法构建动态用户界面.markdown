@@ -1,7 +1,7 @@
 ---
-layout: markdown
+parent: Angular
 title:  Angular 模板语法：构建动态用户界面
-date:   2025-03-20 13:39:39 +0800
+last_modified_date:   2025-03-20 13:39:39 +0800
 categories: update
 ---
 
@@ -169,14 +169,13 @@ export class ArticleComponent {
 
 > date 管道: 用于格式化日期
 
-```angular181html
+```html
 <!-- article.component. -->
 <p>发布日期: {{ publishDate | date:'yyyy-MM-dd HH:mm' }}</p>
 ```
 > uppercase 和 lowercase 管道: 用于转换字符串的大小写。
 
 ```html
-<!-- article.component. -->
 <h1>{{ title | uppercase }}</h1>
 <p>{{ content | lowercase }}</p>
 ```
@@ -184,7 +183,7 @@ export class ArticleComponent {
 > slice 管道: 用于截取字符串或数组。
 
 
-```HTML
+```html
 <!-- article.component. -->
 <p>{{ content | slice:0:100 }}...</p> <!-- 截取 content 的前 100 个字符 -->
 

@@ -1,7 +1,7 @@
 ---
-layout: markdown
+parent: Angular
 title:  什么是 Dependency Injection?
-date:   2025-03-20 13:39:39 +0800
+last_modified_date:   2025-03-20 13:39:39 +0800
 categories: update
 ---
 {% raw %}

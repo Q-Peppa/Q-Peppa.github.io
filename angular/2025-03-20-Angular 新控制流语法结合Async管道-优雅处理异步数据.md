@@ -1,7 +1,7 @@
 ---
-layout: markdown
+parent: Angular
 title:  新控制流语法结合 Async 管道：优雅处理异步数据
-date:   2025-03-20 13:39:39 +0800
+last_modified_date:   2025-03-20 13:39:39 +0800
 categories: update
 ---
 

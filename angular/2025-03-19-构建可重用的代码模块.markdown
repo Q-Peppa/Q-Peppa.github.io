@@ -1,7 +1,7 @@
 ---
-layout: markdown
+parent: Angular
 title:  Angular 服务：构建可重用的代码模块
-date:   2025-03-19 13:39:39 +0800
+last_modified_date:   2025-03-19 13:39:39 +0800
 categories: update
 ---
 {% raw %}
