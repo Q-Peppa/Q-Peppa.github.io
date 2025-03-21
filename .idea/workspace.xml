@@ -5,31 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1bbbf0e2-334b-4e49-a9a7-04ce20af669b" name="Changes" comment="test">
-      <change afterPath="$PROJECT_DIR$/_includes/components/footer.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/_includes/nav_footer_custom.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/_sass/color_schemes/blue.scss" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/angular/index.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Gemfile" beforeDir="false" afterPath="$PROJECT_DIR$/Gemfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Gemfile.lock" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Gemfile.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Gemfile.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/_config.yml" beforeDir="false" afterPath="$PROJECT_DIR$/_config.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_includes/footer.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/_includes/header.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/_layouts/default.html" beforeDir="false" afterPath="$PROJECT_DIR$/_layouts/default.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_layouts/home.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/_layouts/markdown.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/_posts/2025-03-19-构建可重用的代码模块.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/angular/2025-03-19-构建可重用的代码模块.markdown" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_posts/2025-03-20-Angular 新控制流语法.md" beforeDir="false" afterPath="$PROJECT_DIR$/angular/2025-03-20-Angular 新控制流语法.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_posts/2025-03-20-Angular 新控制流语法结合Async管道-优雅处理异步数据.md" beforeDir="false" afterPath="$PROJECT_DIR$/angular/2025-03-20-Angular 新控制流语法结合Async管道-优雅处理异步数据.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_posts/2025-03-20-Angular-响应式表单-构建复杂的表单应用.md" beforeDir="false" afterPath="$PROJECT_DIR$/angular/2025-03-20-Angular-响应式表单-构建复杂的表单应用.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_posts/2025-03-20-Angular-模板语法构建动态用户界面.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/angular/2025-03-20-Angular-模板语法构建动态用户界面.markdown" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_posts/2025-03-20-Angular中的依赖注入方式.md" beforeDir="false" afterPath="$PROJECT_DIR$/angular/2025-03-20-Angular中的依赖注入方式.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_posts/2025-03-20-Angular中的父子组件之间如何通信.md" beforeDir="false" afterPath="$PROJECT_DIR$/angular/2025-03-20-Angular中的父子组件之间如何通信.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_posts/2025-03-20-Angular组件生命周期详解.md" beforeDir="false" afterPath="$PROJECT_DIR$/angular/2025-03-20-Angular组件生命周期详解.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_posts/2025-03-20-什么是 Dependency Injection.md" beforeDir="false" afterPath="$PROJECT_DIR$/angular/2025-03-20-什么是 Dependency Injection.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_posts/2025-03-20-革新你的数据状态管理.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/angular/2025-03-20-革新你的数据状态管理.markdown" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/css/syntax.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/index.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/index.markdown" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -79,6 +58,7 @@
     "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
+    "Shell Script.gem start --theme=just-the-docs.executor": "Run",
     "Shell Script.gem start.executor": "Run",
     "git-widget-placeholder": "master",
     "ignore.virus.scanning.warn.message": "true",
@@ -113,7 +93,7 @@
     </key>
   </component>
   <component name="RunManager">
-    <configuration name="gem start" type="ShConfigurationType">
+    <configuration name="gem start --theme=just-the-docs" type="ShConfigurationType">
       <option name="SCRIPT_TEXT" value="jekyll serve" />
       <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
       <option name="SCRIPT_PATH" value="jekyll" />
@@ -123,7 +103,7 @@
       <option name="INDEPENDENT_INTERPRETER_PATH" value="true" />
       <option name="INTERPRETER_PATH" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="EXECUTE_IN_TERMINAL" value="true" />
+      <option name="EXECUTE_IN_TERMINAL" value="false" />
       <option name="EXECUTE_SCRIPT_FILE" value="false" />
       <envs />
       <method v="2" />
