@@ -3,6 +3,7 @@ parent: Angular
 title:  Angular 什么是 OnPush 变更检测策略
 categories: Angular
 nav_order: 1
+render_with_liquid: false
 ---
 
 `OnPush` 是 Angular 中的一种变更检测策略（Change Detection Strategy），用于优化应用程序的性能。通过使用 `OnPush` 策略，Angular 可以减少不必要的变更检测，从而提高应用的响应速度和效率。以下是对 `OnPush` 的详细介绍、使用方法以及优化建议。
@@ -227,8 +228,7 @@ export class MyComponent {
 
 ### 子组件模板
 
-```html
-<!-- my-component.component.html -->
+```hbs
 <div>
   {{ item.name }} - {{ item.value }}
 </div>

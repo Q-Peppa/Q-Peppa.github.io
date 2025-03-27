@@ -54,7 +54,6 @@ back_to_top: true
 back_to_top_text: "Back to top"
 last_edit_timestamp: true # show or hide edit time - page must have `last_modified_date` defined in the frontmatter
 last_edit_time_format: "%b %e %Y at %I:%M %p" # uses ruby's time format: https://ruby-doc.org/stdlib-2.7.0/libdoc/time/rdoc/Time.html
-color_scheme: blue
 #kramdown:
 #  syntax_highlighter_opts
 ##    block:
@@ -71,6 +70,11 @@ sass:
   quiet_deps: true # https://github.com/just-the-docs/just-the-docs/issues/1541
   silence_deprecations: ['import'] # https://github.com/just-the-docs/just-the-docs/issues/1607
 
+aux_links_new_tab: true
+
 aux_links:
-  "github":
+  "github source code":
     - "//github.com/Q-Peppa/Q-Peppa.github.io"
+
+
+enable_color_scheme_toggle: true 
