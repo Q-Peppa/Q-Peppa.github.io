@@ -1,10 +1,6 @@
 ---
-parent: Angular
 title:  什么是 Dependency Injection?
-last_modified_date:   2025-03-20 13:39:39 +0800
-categories: update
 ---
-{% raw %}
 
 Dependency Injection (DI)，中文译为“依赖注入”，是一种软件设计模式，也是面向对象编程中的一种常用技术。它的核心思想是**将组件（或对象）的依赖关系从组件内部移除，转而通过外部“注入”的方式提供给组件。**
 
@@ -164,4 +160,3 @@ export class AppComponent implements OnInit {
 **总结：**
 
 Dependency Injection 是一种强大的设计模式，它可以提高代码的灵活性、可测试性和可重用性。 在 Angular 中，依赖注入是框架的核心特性之一，它简化了应用程序的开发和维护。 核心概念是：**不要让组件自己创建依赖，而是通过外部注入的方式提供依赖。**
-{% endraw %}

@@ -1,9 +1,5 @@
 ---
-parent: Angular
-title:  Angular 什么是 OnPush 变更检测策略
-categories: Angular
-nav_order: 1
-render_with_liquid: false
+title: Angular 什么是 OnPush 变更检测策略
 ---
 
 `OnPush` 是 Angular 中的一种变更检测策略（Change Detection Strategy），用于优化应用程序的性能。通过使用 `OnPush` 策略，Angular 可以减少不必要的变更检测，从而提高应用的响应速度和效率。以下是对 `OnPush` 的详细介绍、使用方法以及优化建议。
@@ -36,7 +32,7 @@ render_with_liquid: false
 首先，从 `@angular/core` 中导入 `ChangeDetectionStrategy`。
 
 ```typescript
-import { Component, ChangeDetectionStrategy, Input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, Input } from "@angular/core";
 ```
 
 ### 2. 设置组件的 `changeDetection` 属性
@@ -45,10 +41,10 @@ import { Component, ChangeDetectionStrategy, Input } from '@angular/core';
 
 ```typescript
 @Component({
-  selector: 'app-my-component',
-  templateUrl: './my-component.component.html',
-  styleUrls: ['./my-component.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  selector: "app-my-component",
+  templateUrl: "./my-component.component.html",
+  styleUrls: ["./my-component.component.css"],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyComponent {
   @Input() data: any;
@@ -68,14 +64,12 @@ export class MyComponent {
 #### 示例：使用不可变对象
 
 ```typescript
-import { Component, ChangeDetectionStrategy, Input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, Input } from "@angular/core";
 
 @Component({
-  selector: 'app-my-component',
-  template: `
-    <div>{{ item.name }} - {{ item.value }}</div>
-  `,
-  changeDetection: ChangeDetectionStrategy.OnPush
+  selector: "app-my-component",
+  template: ` <div>{{ item.name }} - {{ item.value }}</div> `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyComponent {
   @Input() item: { name: string; value: number };
@@ -88,10 +82,10 @@ export class MyComponent {
 
 ```typescript
 // 不推荐的做法 - 直接修改输入属性
-this.item.name = 'New Name'; // 这不会触发变更检测
+this.item.name = "New Name"; // 这不会触发变更检测
 
 // 推荐的做法 - 使用新对象
-this.item = { ...this.item, name: 'New Name' }; // 这会触发变更检测
+this.item = { ...this.item, name: "New Name" }; // 这会触发变更检测
 ```
 
 ### 4. 手动触发变更检测（可选）
@@ -99,14 +93,17 @@ this.item = { ...this.item, name: 'New Name' }; // 这会触发变更检测
 在某些情况下，你可能需要手动触发变更检测。可以通过注入 `ChangeDetectorRef` 并调用其方法来实现。
 
 ```typescript
-import { Component, ChangeDetectionStrategy, Input, ChangeDetectorRef } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  Input,
+  ChangeDetectorRef,
+} from "@angular/core";
 
 @Component({
-  selector: 'app-my-component',
-  template: `
-    <div>{{ item.name }} - {{ item.value }}</div>
-  `,
-  changeDetection: ChangeDetectionStrategy.OnPush
+  selector: "app-my-component",
+  template: ` <div>{{ item.name }} - {{ item.value }}</div> `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyComponent {
   @Input() item: { name: string; value: number };
@@ -115,7 +112,7 @@ export class MyComponent {
 
   updateItem() {
     // 更新数据
-    this.item = { ...this.item, name: 'New Name' };
+    this.item = { ...this.item, name: "New Name" };
     // 手动触发变更检测
     this.cdr.detectChanges();
   }
@@ -138,20 +135,24 @@ export class MyComponent {
 - **调试 `OnPush` 变更检测**：由于 `OnPush` 的变更检测范围有限，调试过程中可能会遇到一些问题。可以使用 `ngOnChanges` 钩子来调试输入属性的变化。
 
   ```typescript
-  import { Component, ChangeDetectionStrategy, Input, OnChanges, SimpleChanges } from '@angular/core';
+  import {
+    Component,
+    ChangeDetectionStrategy,
+    Input,
+    OnChanges,
+    SimpleChanges,
+  } from "@angular/core";
 
   @Component({
-    selector: 'app-my-component',
-    template: `
-      <div>{{ item.name }} - {{ item.value }}</div>
-    `,
-    changeDetection: ChangeDetectionStrategy.OnPush
+    selector: "app-my-component",
+    template: ` <div>{{ item.name }} - {{ item.value }}</div> `,
+    changeDetection: ChangeDetectionStrategy.OnPush,
   })
   export class MyComponent implements OnChanges {
     @Input() item: { name: string; value: number };
 
     ngOnChanges(changes: SimpleChanges) {
-      console.log('Changes', changes);
+      console.log("Changes", changes);
     }
   }
   ```
@@ -159,18 +160,22 @@ export class MyComponent {
 ## 使用 `OnPush` 的最佳实践
 
 1. **优先使用不可变对象**：
+
    - 使用不可变数据结构库如 Immutable.js，或使用 JavaScript 的 `Object.freeze`。
    - 避免直接修改输入属性，始终创建新对象来更新数据。
 
 2. **合理设置 `OnPush` 策略**：
+
    - 对于性能敏感的组件，使用 `OnPush`。
    - 对于频繁更新的小组件，保持默认的 `Default` 策略，以确保其响应性。
 
 3. **使用 `ngOnChanges` 钩子**：
+
    - 利用 `ngOnChanges` 钩子来调试和处理输入属性的变化。
    - 在 `ngOnChanges` 中可以执行一些必要的逻辑，如根据输入属性的变化更新本地状态。
 
 4. **避免依赖注入服务**：
+
    - 如果组件依赖注入的服务可能会频繁变化，使用 `OnPush` 可能导致变更检测失效。
    - 考虑使用 `async` 管道和 `Observables` 来处理异步数据。
 
@@ -185,39 +190,37 @@ export class MyComponent {
 
 ```typescript
 // app.component.ts
-import { Component } from '@angular/core';
+import { Component } from "@angular/core";
 
 @Component({
-  selector: 'app-root',
+  selector: "app-root",
   template: `
     <div>
       <h1>使用 OnPush 策略的示例</h1>
       <app-my-component [item]="item"></app-my-component>
       <button (click)="updateItem()">Update Item</button>
     </div>
-  `
+  `,
 })
 export class AppComponent {
-  item = { name: 'Initial Name', value: 100 };
+  item = { name: "Initial Name", value: 100 };
 
   updateItem() {
-    this.item = { ...this.item, name: 'Updated Name' };
+    this.item = { ...this.item, name: "Updated Name" };
   }
 }
 ```
 
 ### 子组件（使用 `OnPush`）
 
-```typescript
+```ts
 // my-component.component.ts
-import { Component, ChangeDetectionStrategy, Input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, Input } from "@angular/core";
 
 @Component({
-  selector: 'app-my-component',
-  template: `
-    <div>{{ item.name }} - {{ item.value }}</div>
-  `,
-  changeDetection: ChangeDetectionStrategy.OnPush
+  selector: "app-my-component",
+  template: ` <div>{{ item.name }} - {{ item.value }}</div> `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyComponent {
   @Input() item: { name: string; value: number };
@@ -228,9 +231,9 @@ export class MyComponent {
 
 ### 子组件模板
 
-```hbs
+```html
 <div>
-  {{ item.name }} - {{ item.value }}
+  {{item.name}} - {{item.value}}
 </div>
 ```
 

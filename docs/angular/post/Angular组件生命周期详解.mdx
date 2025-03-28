@@ -1,11 +1,11 @@
 ---
-parent: Angular
+
 title:  Angular 组件生命周期详解
-last_modified_date:   2025-03-20 13:39:39 +0800
-categories: update
 ---
 
-{% raw %}
+:::warning
+基于Angular@19 
+:::
 
 Angular 组件的生命周期是指组件从创建到销毁的整个过程。 在这个过程中，Angular 会调用一系列的钩子函数（Lifecycle Hooks），允许开发者在组件的不同阶段执行自定义的操作。 理解 Angular 组件的生命周期对于编写高效、可维护的 Angular 应用至关重要。
 
@@ -17,9 +17,10 @@ Angular 提供了以下生命周期钩子函数：
 
 *   **`ngOnInit`**: 在 Angular 初始化数据绑定 *之后*，初始化组件/指令。 只在指令/组件实例化后第一次调用。 用于执行组件的初始化逻辑。
 
+
 *   **`ngDoCheck`**: 检测 Angular 无法或不愿意自己检测的变化。 如果组件使用了 `OnPush` 变更检测策略，或者你需要更细粒度的变更检测，可以使用 `ngDoCheck`。
 
-*   **`ngAfterContentInit`**: 在 Angular 将内容投影进组件 *之后* 响应。 仅当 Angular 做了内容投影之后调用一次。
+*   **`ngAfterContentInit`**: 在 Angular 将内容投影进组件 *之后*  响应。 仅当 Angular 做了内容投影之后调用一次。
 
 *   **`ngAfterContentChecked`**: 在 Angular 检查完被投影到组件/指令中的内容 *之后* 响应。 在每次 Angular 做完内容投影的变更检测之后调用。
 
@@ -291,7 +292,7 @@ Angular 组件生命周期钩子函数的调用顺序如下：
 7.  `ngAfterViewChecked`
 8.  `ngOnDestroy`
 
-## Angular 组件生命周期钩子比较
+## 4. Angular 组件生命周期钩子比较
 
 以下表格比较了 Angular 组件的生命周期钩子，包括它们的触发时机、作用以及注意事项：
 
@@ -307,8 +308,6 @@ Angular 组件生命周期钩子函数的调用顺序如下：
 | **ngOnDestroy**     | 在 Angular 销毁组件之前被调用                 | 执行组件的清理逻辑。 这是取消订阅、释放资源等的最佳位置。                                                                                                                                                   | - 这是防止内存泄漏的关键。  - 在组件从 DOM 中移除之前执行。                                                                                                   |
 
 
-## 4. 总结
+## 5. 总结
 
 理解 Angular 组件的生命周期对于编写高质量的 Angular 应用至关重要。 通过合理地使用生命周期钩子函数，你可以控制组件的行为，管理组件的资源，并优化组件的性能。 记住在`ngOnDestroy` 取消订阅，这是防止 Angular 应用程序中出现内容泄漏的关键。
-
-{% endraw %}

@@ -1,11 +1,7 @@
 ---
-parent: Angular
 title:  Angular Signals：革新你的数据状态管理
-last_modified_date:   2025-03-20 13:39:39 +0800
-categories: update
 ---
 
-{% raw %}
 
 Angular Signals 是一个 Angular 框架的内置功能，旨在提供一种细粒度、高性能且易于理解的方式来管理应用程序中的状态。 传统的变更检测机制可能导致不必要的组件重新渲染，而 Signals 允许 Angular 仅在必要时更新视图，从而显著提升性能。  本文将深入探讨 Angular Signals 的概念、优势、用法以及如何用它们来构建更高效的 Angular 应用。
 
@@ -70,7 +66,7 @@ export class CounterComponent {
 
 **2. 创建组件模板 (counter.component.html):**
 
-```hbs
+```html
 <p>Count: {{ count() }}</p> <!-- 使用 count() 读取信号的值 -->
 <button (click)="increment()">Increment</button>
 <button (click)="decrement()">Decrement</button>
@@ -114,7 +110,7 @@ export class CounterComponent {
 
 **2. 更新组件模板 (counter.component.html):**
 
-```hbs
+```html
 <p>Count: {{ count() }}</p>
 <p>Squared Count: {{ squaredCount() }}</p> <!-- 使用 squaredCount() 读取计算信号的值 -->
 <button (click)="increment()">Increment</button>
@@ -181,4 +177,3 @@ export class CounterComponent {
 ### 总结
 
 Angular Signals 提供了一种令人兴奋的方式来管理 Angular 应用程序中的状态。  它们可以提高性能、简化状态管理并提供更细粒度的控制。  虽然 Signals 可能不适用于所有场景，但对于许多 Angular 开发人员来说，它们绝对是一个值得学习和使用的强大工具。  希望这篇文章能帮助你更好地理解 Angular Signals 并开始在你的项目中使用它们！ 实践是最好的老师，开始尝试并探索 Signals 的强大之处吧！
-{% endraw %}

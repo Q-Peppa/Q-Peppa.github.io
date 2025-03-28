@@ -1,11 +1,7 @@
 ---
-parent: Angular
 title:  Angular 模板语法：构建动态用户界面
-last_modified_date:   2025-03-20 13:39:39 +0800
-categories: update
 ---
 
-{% raw %}
 Angular 模板语法是构建动态 Angular 应用的基石。它允许你将组件中的数据高效且清晰地呈现到视图中。本文将探讨 Angular 模板语法的核心概念，并结合 `title: string`, `id: number`, `content: string`, `publishDate: Date`, `tags: string[]` 这些常见的数据结构，演示如何在模板中巧妙地运用它们。
 
 ### 1. 数据准备
@@ -34,7 +30,7 @@ export class ArticleComponent {
 
 插值表达式是最简单的模板语法，用于将组件的属性值直接嵌入到  中。
 
-```hbs
+```html
 <h1>{{ title }}</h1>
 <p>文章 ID: {{ id }}</p>
 <p>{{ content }}</p>
@@ -47,7 +43,7 @@ export class ArticleComponent {
 
 属性绑定用于将组件的属性值绑定到  元素的属性。 这比直接在字符串中使用插值更安全，尤其是在设置 src 或 href 等属性时，可以防止 XSS 攻击。
 
-```hbs
+```html
 <!-- article.component. -->
 <a [href]="'articles/' + id">阅读更多</a>
 <img [src]="'assets/images/article-' + id + '.jpg'" [alt]="title">
@@ -55,7 +51,7 @@ export class ArticleComponent {
 
 ### 4. 事件绑定：()
 
-```hbs
+```html
 <!-- article.component. -->
 <button (click)="shareArticle()">分享</button>
 ```
@@ -90,7 +86,7 @@ export class ArticleComponent {
 
 双向数据绑定允许你在组件属性和表单元素之间建立双向的数据流。 使用 `[(ngModel)]`指令实现。 需要 `FormsModule`。
 
-```hbs
+```html
 <!-- article.component. -->
 <input type="text" [(ngModel)]="comment">
 <p>评论：{{ comment }}</p>
@@ -125,7 +121,7 @@ export class ArticleComponent {
 
 > *_ngIf_
 
-```hbs
+```html
  <!-- article.component. -->
 <div *ngIf="tags.length > 0">
   <h3>标签：</h3>
@@ -137,7 +133,7 @@ export class ArticleComponent {
 
 > *_ngFor_
 
-```hbs
+```html
 <!-- article.component. -->
 <ul>
   <li *ngFor="let tag of tags; let i = index; let isEven = even">
@@ -169,13 +165,13 @@ export class ArticleComponent {
 
 > date 管道: 用于格式化日期
 
-```hbs
+```html
 <!-- article.component. -->
 <p>发布日期: {{ publishDate | date:'yyyy-MM-dd HH:mm' }}</p>
 ```
 > uppercase 和 lowercase 管道: 用于转换字符串的大小写。
 
-```hbs
+```html
 <h1>{{ title | uppercase }}</h1>
 <p>{{ content | lowercase }}</p>
 ```
@@ -183,7 +179,7 @@ export class ArticleComponent {
 > slice 管道: 用于截取字符串或数组。
 
 
-```hbs
+```html
 <!-- article.component. -->
 <p>{{ content | slice:0:100 }}...</p> <!-- 截取 content 的前 100 个字符 -->
 
@@ -191,7 +187,7 @@ export class ArticleComponent {
 
 ### 8. 模板引用变量 (#)
 模板引用变量允许你在模板中引用  元素或组件实例。
-```hbs
+```html
 <!-- article.component. -->
 <input type="text" #commentInput>
 <button (click)="addComment(commentInput.value)">添加评论</button>
@@ -215,7 +211,3 @@ export class ArticleComponent {
 
 ```
 `#commentInput` 创建了一个模板引用变量，指向该 `input` 元素。 在 `addComment()` 方法中，我们可以通过 `commentInput.value` 获取输入框的值。
-
-
-
-{% endraw %}
