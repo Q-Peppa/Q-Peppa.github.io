@@ -1,8 +1,8 @@
 [
-  {
-    "type": "dir",
-    "name": "post",
-    "label": "post",
-    "collapsible": true
-  }
+	{
+		"type": "dir",
+		"name": "post",
+		"label": "post",
+		"collapsible": true
+	}
 ]
