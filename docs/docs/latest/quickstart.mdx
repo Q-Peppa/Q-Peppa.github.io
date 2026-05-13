@@ -1,0 +1,110 @@
+import { PackageManagerTabs } from '@rspress/core/theme';
+
+# 快速开始
+
+> 本页面是 [Pi 官方文档](https://pi.dev/docs/latest/quickstart) 的中文翻译。仅供学习参考。
+
+## 安装
+
+<PackageManagerTabs command="install -g @earendil-works/pi-coding-agent" />
+
+也可以通过 curl 安装（Linux/macOS）：
+
+```bash
+curl -fsSL https://pi.dev/install.sh | sh
+```
+
+安装完成后，进入你的项目目录并运行 `pi` 启动。
+
+## 认证
+
+Pi 支持两种认证方式：订阅登录或 API Key。
+
+### 方式一：订阅登录
+
+启动 Pi 后执行 `/login`，然后选择一个 Provider。支持的订阅登录包括 **Claude Pro/Max**、**ChatGPT Plus/Pro (Codex)** 和 **GitHub Copilot**。
+
+### 方式二：API Key
+
+在启动前设置环境变量：
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+pi
+```
+
+或者运行 `/login` 选择一个 API Key Provider，Key 会被存储在 `~/.pi/agent/auth.json` 中。详细的 Provider 信息请参考 Providers 文档。
+
+## 第一个会话
+
+Pi 启动后，输入一个请求并按 Enter。例如：
+
+```
+总结一下这个仓库，告诉我如何运行它的检查。
+```
+
+默认情况下，Pi 为模型提供了四个工具：`read`、`write`、`edit`、`bash`。额外的只读工具（如 `grep`、`find`、`ls`）可通过工具选项获得。Pi 在你的当前工作目录中运行，可以修改文件，因此建议使用 git 或其他检查点工作流。
+
+## 给 Pi 项目指令
+
+Pi 在启动时加载上下文文件。添加 `AGENTS.md` 文件可以配置 Pi 在项目中的行为：
+
+```markdown
+# Project Instructions
+- Run `npm run check` after code changes.
+- Do not run production migrations locally.
+- Keep responses concise.
+```
+
+Pi 会加载 `~/.pi/agent/AGENTS.md`（全局指令）以及从父目录到当前目录的 `AGENTS.md` 或 `CLAUDE.md` 文件。更改上下文文件后，重启 Pi 或运行 `/reload`。
+
+## 常用操作
+
+### 引用文件
+
+在编辑器中输入 `@` 可以模糊搜索文件，或在命令行上传入文件：
+
+```bash
+pi @README.md "Summarize this"
+pi @src/app.ts @src/app.test.ts "Review these together"
+```
+
+在支持的终端中可以使用 Ctrl+V（Windows 为 Alt+V）粘贴图像，或拖入终端。
+
+### 运行 Shell 命令
+
+在交互模式下使用 `!npm run lint`——命令输出会发送给模型。使用 `!!command` 运行命令但不将输出添加到模型上下文。
+
+### 切换模型
+
+使用 `/model` 或 Ctrl+L 选择模型。Shift+Tab 循环切换思维级别（thinking level）。Ctrl+P / Shift+Ctrl+P 在限定模型之间循环。
+
+### 稍后继续
+
+会话自动保存。CLI 选项：
+
+```bash
+pi -c                  # 继续最近的会话
+pi -r                  # 浏览历史会话
+pi --session <path|id> # 打开特定会话
+```
+
+在 Pi 内部，使用 `/resume`、`/new`、`/tree`、`/fork`、`/clone` 管理会话。
+
+### 非交互模式
+
+```bash
+pi -p "Summarize this codebase"
+cat README.md | pi -p "Summarize this text"
+pi -p @screenshot.png "What's in this image?"
+```
+
+使用 `--mode json` 输出 JSON 事件，或 `--mode rpc` 进行进程集成。
+
+## 下一步
+
+深入了解：交互模式、斜杠命令、会话管理、上下文文件、CLI 参考、认证和模型设置、全局/项目配置、快捷键、Pi Packages。
+
+---
+
+> **法律声明**：本页面是 pi.dev 官方文档的中文翻译版本，仅供学习参考。本网站与 [pi.dev](https://pi.dev/) 及 Earendil Inc. 无任何法律关系。

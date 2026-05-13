@@ -1,29 +1,28 @@
-# Rspress website
+# Pi 中文文档
 
-## Setup
+[Pi Coding Agent](https://pi.dev/) 的非官方中文翻译文档。
 
-Install the dependencies:
+## 法律声明
 
-```bash
-npm install
-```
+- 本网站与 [pi.dev](https://pi.dev/) 及其所有者 **Earendil Inc.** 无任何法律关系。
+- 本网站仅为社区爱好者制作的翻译版本，仅供学习参考。
+- 原项目的所有权利归属于 Earendil Inc. 及原贡献者。
+- 如有疑问请参考 [官方文档](https://pi.dev/docs/latest)。
 
-## Get started
-
-Start the dev server:
-
-```bash
-npm run dev
-```
-
-Build the website for production:
+## 开发
 
 ```bash
-npm run build
+pnpm install
+pnpm run dev     # 启动开发服务器
+pnpm run build   # 构建
+pnpm run preview # 预览构建结果
 ```
 
-Preview the production build locally:
+## 技术栈
 
-```bash
-npm run preview
-```
+- [Rspress](https://rspress.dev/) v2
+- pnpm
+
+## License
+
+Pi 原始项目采用 MIT License。本翻译网站仅供学习使用。
