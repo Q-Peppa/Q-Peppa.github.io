@@ -1,13 +1,15 @@
 import * as path from 'node:path';
-import { defineConfig } from 'rspress/config';
+import { defineConfig } from '@rspress/core';
 import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
 
 export default defineConfig({
-  builderPlugins: [
-    pluginGoogleAnalytics({
-      id: 'G-7WCGTN4L3H',
-    }),
-  ],
+  builderConfig: {
+    plugins: [
+      pluginGoogleAnalytics({
+        id: 'G-7WCGTN4L3H',
+      }),
+    ],
+  },
   root: path.join(__dirname, 'docs'),
   title: 'Pi 中文文档',
   description: 'Pi Coding Agent 中文文档 - 终端 AI 编码助手',
