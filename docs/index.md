@@ -3,7 +3,7 @@ pageType: home
 
 hero:
   name: Pi 中文文档
-  text: 终端 AI 编码助手 — 让它成为你的
+  text: 代理工具有很多，但这是你的。
   tagline: Pi 是一个极简的终端编码助手。让 Pi 适应你的工作流，而不是反过来。
   actions:
     - theme: brand
