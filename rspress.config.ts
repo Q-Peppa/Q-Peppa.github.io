@@ -45,7 +45,8 @@ export default defineConfig({
         {
           text: 'Start here',
           items: [
-            { text: 'Overview', link: '/docs/latest/quickstart' },
+            { text: 'Overview', link: '/docs/latest/' },
+            { text: 'Quickstart', link: '/docs/latest/quickstart' },
             { text: 'Using Pi', link: '/docs/latest/usage' },
             { text: 'Providers', link: '/docs/latest/providers' },
             { text: 'Settings', link: '/docs/latest/settings' },

@@ -3,35 +3,48 @@ pageType: home
 
 hero:
   name: Pi 中文文档
-  text: Pi Coding Agent 非官方中文翻译
-  tagline: 一个极简的终端 AI 编码助手，通过 TypeScript 扩展、Skills、Prompt 模板和主题进行扩展
+  text: 终端 AI 编码助手 — 让它成为你的
+  tagline: Pi 是一个极简的终端编码助手。让 Pi 适应你的工作流，而不是反过来。
   actions:
     - theme: brand
-      text: 开始使用
+      text: 快速开始
       link: /docs/latest/quickstart
     - theme: alt
       text: 阅读文档
-      link: /docs/latest/quickstart
+      link: /docs/latest/
 features:
-  - title: 极简核心
-    details: Pi 保持核心小巧，通过扩展系统实现工作流定制，而非内置所有功能。
-    icon: 🎯
-  - title: TypeScript 扩展
-    details: 使用 TypeScript 编写扩展，可订阅事件、注册工具、添加命令和自定义 UI。
-    icon: 🔧
-  - title: 多 Provider 支持
-    details: 支持 Anthropic、OpenAI、Google Gemini、DeepSeek 等主流 LLM Provider。
+  - title: 改变工具，而不是改变工作流
+    details: Pi 不是封闭产品。需要命令、工具、Provider、工作流或 UI 调整？直接让 Pi 自己构建。它会即时定制自身，修改完成后 /reload 即可继续。
+    icon: 🔄
+  - title: 15+ Provider，数百种模型
+    details: Anthropic、OpenAI、Google、Azure、Bedrock、Mistral、Groq、Cerebras、xAI、Hugging Face、Kimi、MiniMax、OpenRouter、Ollama 等。通过 API Key 或 OAuth 认证，使用 /model 或 Ctrl+L 中途切换模型。
     icon: 🤖
-  - title: Skills 系统
-    details: 基于 Agent Skills 标准，按需加载的专用能力包。
-    icon: 📦
-  - title: 会话管理
-    details: 会话自动保存为 JSONL 格式，支持树状分支、继续、分叉和克隆。
-    icon: 📝
-  - title: 跨平台
-    details: 支持 Linux、macOS、Windows、Android（Termux）。
-    icon: 💻
+  - title: 四种运行模式
+    details: 交互模式：完整 TUI 体验。Print/JSON 模式：pi -p "query" 用于脚本。RPC 模式：通过 stdin/stdout 的 JSON 协议集成。SDK 模式：将 Pi 嵌入你的应用。
+    icon: 🖥️
+  - title: 树状结构，可分享的会话历史
+    details: 会话以树形结构存储。使用 /tree 导航到任意历史点继续对话。/share 上传到 GitHub Gist 获得可分享链接。
+    icon: 🌲
+  - title: 上下文工程
+    details: AGENTS.md 启动时加载项目指令。SYSTEM.md 按项目替换系统提示。Compaction 自动摘要早期消息。Skills 按需加载能力包。通过扩展实现 RAG、长期记忆等。
+    icon: 🧠
+  - title: 基元，而非功能
+    details: 子代理、计划模式、权限门禁、路径保护、SSH 执行、沙箱、MCP 集成——这些其他工具内置的功能，你都可以用扩展自己构建。不想自己写？让 Pi 帮你写，或者安装现成的包。
+    icon: 🧱
 ---
+
+## Pi 刻意没有内置什么
+
+Pi 是激进可扩展的，所以它不需要替你决定工作流。以下功能你可以用扩展、Skills 或第三方包来实现，这让核心保持极简，同时让你按照自己的方式塑造 Pi。
+
+| 我们没有内置 | 替代方案 |
+|---|---|
+| **No MCP** | 构建带 README 的 CLI 工具（见 Skills），或写一个扩展添加 MCP 支持。[为什么？](https://pi.dev/blog/pi) |
+| **No 子代理** | 通过 tmux 派生 Pi 实例，或用扩展构建自己的实现，或安装一个包。 |
+| **No 权限弹窗** | 在容器中运行，或用扩展构建符合你环境与安全需求的确认流程。 |
+| **No 计划模式** | 把计划写到文件里，或用扩展构建，或安装一个包。 |
+| **No 内置待办** | 使用 TODO.md 文件，或用扩展构建自己的。 |
+| **No 后台 Bash** | 使用 tmux。完全可观测，直接交互。 |
 
 ## 关于本网站
 

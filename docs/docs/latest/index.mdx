@@ -1,109 +1,73 @@
-import { PackageManagerTabs } from '@rspress/core/theme';
+# Pi 文档
 
-# 快速开始
+> 本页面是 [Pi 官方文档](https://pi.dev/docs/latest) 的中文翻译。仅供学习参考。
 
-> 本页面是 [Pi 官方文档](https://pi.dev/docs/latest/quickstart) 的中文翻译。仅供学习参考。
+Pi 是一个极简的终端编码助手。它的核心设计保持轻量，同时通过 TypeScript 扩展、技能（Skills）、提示模板（Prompt Templates）、主题和 Pi 软件包进行扩展。
 
-## 安装
+## 快速开始
 
-<PackageManagerTabs command="install -g @earendil-works/pi-coding-agent" />
-
-也可以通过 curl 安装（Linux/macOS）：
+在 Linux 或 macOS 上，可以通过 curl 安装 Pi：
 
 ```bash
 curl -fsSL https://pi.dev/install.sh | sh
 ```
 
-安装完成后，进入你的项目目录并运行 `pi` 启动。
-
-## 认证
-
-Pi 支持两种认证方式：订阅登录或 API Key。
-
-### 方式一：订阅登录
-
-启动 Pi 后执行 `/login`，然后选择一个 Provider。支持的订阅登录包括 **Claude Pro/Max**、**ChatGPT Plus/Pro (Codex)** 和 **GitHub Copilot**。
-
-### 方式二：API Key
-
-在启动前设置环境变量：
+或者通过 npm：
 
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-...
+npm install -g @earendil-works/pi-coding-agent
+```
+
+然后在项目目录中运行：
+
+```bash
 pi
 ```
 
-或者运行 `/login` 选择一个 API Key Provider，Key 会被存储在 `~/.pi/agent/auth.json` 中。详细的 Provider 信息请参考 Providers 文档。
+使用 `/login` 进行订阅提供商认证，或者设置 API Key（如 `ANTHROPIC_API_KEY`）后再启动 Pi。完整的新手流程请参阅 [Quickstart](/docs/latest/quickstart)。
 
-## 第一个会话
+## 从这里开始
 
-Pi 启动后，输入一个请求并按 Enter。例如：
+- **[Quickstart](/docs/latest/quickstart)** — 安装、认证并运行第一个会话。
+- **[Using Pi](/docs/latest/usage)** — 交互模式、斜杠命令、上下文文件和 CLI 参考。
+- **[Providers](/docs/latest/providers)** — 内置提供商的订阅和 API Key 设置。
+- **[Settings](/docs/latest/settings)** — 全局和项目级配置。
+- **[Keybindings](/docs/latest/keybindings)** — 默认快捷键和自定义按键绑定。
+- **[Sessions](/docs/latest/sessions)** — 会话管理、分支和树形导航。
+- **[Compaction](/docs/latest/compaction)** — 上下文压缩和分支摘要。
 
-```
-总结一下这个仓库，告诉我如何运行它的检查。
-```
+## 自定义
 
-默认情况下，Pi 为模型提供了四个工具：`read`、`write`、`edit`、`bash`。额外的只读工具（如 `grep`、`find`、`ls`）可通过工具选项获得。Pi 在你的当前工作目录中运行，可以修改文件，因此建议使用 git 或其他检查点工作流。
+- **[Extensions](/docs/latest/extensions)** — TypeScript 模块：工具、命令、事件和自定义 UI。
+- **[Skills](/docs/latest/skills)** — 可复用的按需能力（Agent Skills）。
+- **[Prompt Templates](/docs/latest/prompt-templates)** — 可通过斜杠命令展开的可复用提示。
+- **[Themes](/docs/latest/themes)** — 内置和自定义终端主题。
+- **[Pi Packages](/docs/latest/packages)** — 打包和分享扩展、技能、提示和主题。
+- **[Custom Models](/docs/latest/models)** — 为支持的提供商 API 添加模型条目。
+- **[Custom Providers](/docs/latest/custom-provider)** — 实现自定义 API 和 OAuth 流程。
 
-## 给 Pi 项目指令
+## 编程式使用
 
-Pi 在启动时加载上下文文件。添加 `AGENTS.md` 文件可以配置 Pi 在项目中的行为：
+- **[SDK](/docs/latest/sdk)** — 在 Node.js 应用中嵌入 Pi。
+- **[RPC Mode](/docs/latest/rpc)** — 通过 stdin/stdout JSONL 进行进程集成。
+- **[JSON Event Stream Mode](/docs/latest/json)** — 带结构化事件的输出模式。
+- **[TUI Components](/docs/latest/tui)** — 为扩展构建自定义终端 UI。
 
-```markdown
-# Project Instructions
-- Run `npm run check` after code changes.
-- Do not run production migrations locally.
-- Keep responses concise.
-```
+## 参考
 
-Pi 会加载 `~/.pi/agent/AGENTS.md`（全局指令）以及从父目录到当前目录的 `AGENTS.md` 或 `CLAUDE.md` 文件。更改上下文文件后，重启 Pi 或运行 `/reload`。
+- **[Session Format](/docs/latest/session-format)** — JSONL 会话文件格式、条目类型和 SessionManager API。
 
-## 常用操作
+## 平台设置
 
-### 引用文件
+- **[Windows](/docs/latest/windows)**
+- **[Termux on Android](/docs/latest/termux)**
+- **[tmux](/docs/latest/tmux)**
+- **[Terminal Setup](/docs/latest/terminal-setup)**
+- **[Shell Aliases](/docs/latest/shell-aliases)**
 
-在编辑器中输入 `@` 可以模糊搜索文件，或在命令行上传入文件：
+## 开发
 
-```bash
-pi @README.md "Summarize this"
-pi @src/app.ts @src/app.test.ts "Review these together"
-```
-
-在支持的终端中可以使用 Ctrl+V（Windows 为 Alt+V）粘贴图像，或拖入终端。
-
-### 运行 Shell 命令
-
-在交互模式下使用 `!npm run lint`——命令输出会发送给模型。使用 `!!command` 运行命令但不将输出添加到模型上下文。
-
-### 切换模型
-
-使用 `/model` 或 Ctrl+L 选择模型。Shift+Tab 循环切换思维级别（thinking level）。Ctrl+P / Shift+Ctrl+P 在限定模型之间循环。
-
-### 稍后继续
-
-会话自动保存。CLI 选项：
-
-```bash
-pi -c                  # 继续最近的会话
-pi -r                  # 浏览历史会话
-pi --session <path|id> # 打开特定会话
-```
-
-在 Pi 内部，使用 `/resume`、`/new`、`/tree`、`/fork`、`/clone` 管理会话。
-
-### 非交互模式
-
-```bash
-pi -p "Summarize this codebase"
-cat README.md | pi -p "Summarize this text"
-pi -p @screenshot.png "What's in this image?"
-```
-
-使用 `--mode json` 输出 JSON 事件，或 `--mode rpc` 进行进程集成。
-
-## 下一步
-
-深入了解：交互模式、斜杠命令、会话管理、上下文文件、CLI 参考、认证和模型设置、全局/项目配置、快捷键、Pi Packages。
+- **[Development](/docs/latest/development)** — 本地设置、项目结构和调试。
 
 ---
 
