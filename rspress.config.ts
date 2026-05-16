@@ -9,6 +9,25 @@ export default defineConfig({
         id: 'G-7WCGTN4L3H',
       }),
     ],
+    performance: {
+      // 移除生产环境的 console 日志，减小 JS 体积
+      removeConsole: true,
+      // 开启构建缓存，加速重复构建
+      buildCache: true,
+      // 预加载当前页面的异步 chunk，加快首屏可交互时间
+      preload: true,
+      // 预取其他页面的 chunk，加快站内导航速度
+      prefetch: true,
+    },
+    output: {
+      // 对 JS 产物使用内容哈希，最大化浏览器缓存命中率
+      filenameHash: true,
+    },
+  },
+  // 搜索优化：不索引代码块内容，减小搜索索引体积
+  search: {
+    mode: 'local',
+    codeBlocks: false,
   },
   root: path.join(__dirname, 'docs'),
   title: 'Pi 中文文档',
