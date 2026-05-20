@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "rspress build",
+    "build": "rspress build && node scripts/generate-sitemap.mjs",
     "dev": "rspress dev",
     "preview": "rspress preview"
   },

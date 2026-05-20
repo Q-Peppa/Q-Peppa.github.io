@@ -2,6 +2,8 @@ import * as path from 'node:path';
 import { defineConfig } from '@rspress/core';
 import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
 
+const SITE_URL = 'https://pi-doc.com';
+
 export default defineConfig({
   builderConfig: {
     plugins: [
@@ -30,8 +32,9 @@ export default defineConfig({
     codeBlocks: false,
   },
   root: path.join(__dirname, 'docs'),
+  lang: 'zh-CN',
   title: 'Pi 中文文档',
-  description: 'Pi Coding Agent 中文文档 - 终端 AI 编码助手',
+  description: 'Pi Coding Agent 中文文档 - 终端 AI 编码助手。提供扩展、Skills、Provider 和 Pi 包的中文参考，帮助开发者快速上手终端编码助手。',
   icon: '/rspress-icon.png',
   logo: {
     light: '/rspress-light-logo.png',
@@ -39,6 +42,17 @@ export default defineConfig({
   },
   logoText: 'Pi 中文文档',
   globalStyles: path.join(__dirname, 'styles/global.css'),
+  head: [
+    // Canonical URL — 每页自动生成，防止 GitHub Pages 默认域名造成重复内容
+    (route) => ['link', { rel: 'canonical', href: `${SITE_URL}${route.routePath === '/' ? '/index' : route.routePath}.html` }],
+    // Open Graph image for social sharing
+    ['meta', { property: 'og:image', content: `${SITE_URL}/rspress-icon.png` }],
+    ['meta', { property: 'og:image:width', content: '512' }],
+    ['meta', { property: 'og:image:height', content: '512' }],
+    ['meta', { name: 'twitter:card', content: 'summary' }],
+    ['meta', { name: 'twitter:title', content: 'Pi 中文文档' }],
+    ['meta', { name: 'twitter:description', content: 'Pi Coding Agent 中文文档 - 终端 AI 编码助手' }],
+  ],
   themeConfig: {
     nav: [
       { text: 'HOME', link: '/', activeMatch: '^/(index\\.html)?$' },
