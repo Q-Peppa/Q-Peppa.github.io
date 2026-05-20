@@ -8,22 +8,21 @@ Prompt 模板是**可以展开为完整 Prompt 的 Markdown 片段**。输入 `/
 
 ## 位置
 
+Pi 从以下位置加载 Prompt 模板：
+
 - **全局**：`~/.pi/agent/prompts/*.md`
 - **项目**：`.pi/prompts/*.md`
 - **包**：`prompts/` 目录或 `package.json` 中的 `pi.prompts` 条目
-- **设置**：`prompts` 数组
+- **设置**：`prompts` 数组，包含文件或目录
 - **CLI**：`--prompt-template <path>`（可重复）
 
 使用 `--no-prompt-templates` 禁用发现。
 
 ## 格式
 
-模板使用 YAML frontmatter 和 Markdown 正文：
-
-```yaml
+```markdown
 ---
 description: Review staged git changes
-argument-hint: "<PR-URL>"
 ---
 Review the staged changes (`git diff --cached`). Focus on:
 - Bugs and logic errors
@@ -31,9 +30,29 @@ Review the staged changes (`git diff --cached`). Focus on:
 - Error handling gaps
 ```
 
-- 文件名即命令名。`review.md` 变为 `/review`
-- `description` 可选，缺少时使用第一行非空内容
-- `argument-hint` 可选，用于在自动补全中显示参数提示
+- 文件名即命令名。`review.md` 变为 `/review`。
+- `description` 可选。缺少时使用第一行非空内容。
+- `argument-hint` 可选。设置后，在自动补全下拉框中，提示信息会显示在描述之前。
+
+### 参数提示
+
+使用 frontmatter 中的 `argument-hint` 在自动补全中显示期望的参数。使用 `<angle brackets>` 表示必需参数，使用 `[square brackets]` 表示可选参数：
+
+```markdown
+---
+description: Review PRs from URLs with structured issue and code analysis
+argument-hint: "<PR-URL>"
+---
+```
+
+在自动补全下拉框中渲染为：
+
+```
+→ pr   <PR-URL>       — Review PRs from URLs with structured issue and code analysis
+  is   <issue>        — Analyze GitHub issues (bugs or feature requests)
+  wr   [instructions] — Finish the current task end-to-end
+  cl   — Audit changelog entries before release
+```
 
 ## 使用
 
@@ -47,17 +66,28 @@ Review the staged changes (`git diff --cached`). Focus on:
 
 ## 参数
 
-模板支持位置参数和切片：
+模板支持位置参数和简单切片：
 
 - `$1`、`$2` 等 —— 位置参数
 - `$@` 或 `$ARGUMENTS` —— 所有参数连接
 - `${@:N}` —— 从第 N 个位置开始的参数（1-indexed）
 - `${@:N:L}` —— 从 N 开始取 L 个参数
 
+示例：
+
+```markdown
+---
+description: Create a component
+---
+Create a React component named $1 with features: $@
+```
+
+用法：`/component Button "onClick handler" "disabled support"`
+
 ## 加载规则
 
-- `prompts/` 中的模板发现是非递归的
-- 子目录模板必须通过 `prompts` 设置或包清单显式添加
+- `prompts/` 中的模板发现是**非递归的**。
+- 子目录中的模板必须通过 `prompts` 设置或包清单显式添加。
 
 ---
 

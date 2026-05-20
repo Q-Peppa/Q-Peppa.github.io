@@ -12,11 +12,13 @@ Pi 将会话保存为会话文件，**使你可以继续工作、从之前的回
 pi -c                  # 继续最近的会话
 pi -r                  # 浏览并选择历史会话
 pi --no-session        # 临时模式，不保存
-pi --session <path|id> # 使用特定会话
-pi --fork <path|id>    # 分叉会话
+pi --session <path|id> # 使用特定会话文件或部分会话 ID
+pi --fork <path|id>    # 将会话文件或部分会话 ID 分叉为新会话
 ```
 
 `/session` 命令显示当前会话文件、会话 ID、消息数、Token 和费用。
+
+关于 JSONL 文件格式和 SessionManager API，请参阅 [Session Format](session-format.md)。
 
 ## 会话命令
 
@@ -24,14 +26,14 @@ pi --fork <path|id>    # 分叉会话
 |---|---|
 | `/resume` | 浏览并选择历史会话 |
 | `/new` | 开始新会话 |
-| `/name <name>` | 设置会话显示名称 |
+| `/name <name>` | 设置当前会话显示名称 |
 | `/session` | 显示会话信息 |
 | `/tree` | 导航当前会话树 |
 | `/fork` | 从之前的用户消息创建新会话 |
 | `/clone` | 复制当前活跃分支到新会话 |
-| `/compact [prompt]` | 总结较早的上下文 |
+| `/compact [prompt]` | 总结较早的上下文；参阅 [Compaction](compaction.md) |
 | `/export [file]` | 导出会话为 HTML |
-| `/share` | 上传为私有 GitHub Gist |
+| `/share` | 上传为私有 GitHub Gist 并生成可分享的 HTML 链接 |
 
 ## 恢复和删除会话
 
@@ -44,9 +46,13 @@ pi --fork <path|id>    # 分叉会话
 - Ctrl+R：重命名
 - Ctrl+D：删除并确认
 
+Pi 在可用时会使用 `trash` CLI 进行删除，而非永久移除文件。
+
 ## 命名会话
 
-```bash
+使用 `/name <name>` 设置可读的会话名称：
+
+```text
 /name Refactor auth module
 ```
 
@@ -54,9 +60,13 @@ pi --fork <path|id>    # 分叉会话
 
 ## 使用 `/tree` 分支
 
-会话以树状结构存储。每个条目有 `id` 和 `parentId`，当前位置是活跃的叶节点。`/tree` 让你跳转到任意之前的节点并从那里继续。
+会话以树状结构存储。每个条目有 `id` 和 `parentId`，当前位置是活跃的叶节点。`/tree` 让你跳转到任意之前的节点并从那里继续，而无需创建新文件。
 
-```
+<p align="center"><img src="/images/tree-view.png" alt="树形视图" width="600"></p>
+
+示例结构：
+
+```text
 ├─ user: "Hello, can you help..."
 │  └─ assistant: "Of course! I can..."
 │     ├─ user: "Let's try approach A..."
@@ -72,17 +82,30 @@ pi --fork <path|id>    # 分叉会话
 |---|---|
 | ↑/↓ | 导航可见条目 |
 | ←/→ | 翻页 |
-| Ctrl+←/Ctrl+→ | 折叠/展开或跳转分支段 |
-| Shift+L | 设置或清除标签 |
+| Ctrl+←/Ctrl+→ 或 Alt+←/Alt+→ | 折叠/展开或跳转分支段 |
+| Shift+L | 设置或清除选中条目上的标签 |
+| Shift+T | 切换标签时间戳显示 |
 | Enter | 选择条目 |
 | Escape/Ctrl+C | 取消 |
 | Ctrl+O | 循环过滤模式 |
 
+过滤模式包括：default、no-tools、user-only、labeled-only 和 all。可通过 [Settings](settings.md) 中的 `treeFilterMode` 配置默认值。
+
 ### 选择行为
 
-- **选择用户消息**：将叶节点移到消息父节点，消息文本放入编辑器，可编辑后重新提交（创建新分支）
-- **选择非用户条目**：将叶节点移到该条目，编辑器清空，从该点继续
-- **选择根用户消息**：重置为空对话，原始 Prompt 放入编辑器
+选择用户消息或自定义消息：
+
+1. 将叶节点移到所选消息的父节点。
+2. 将所选消息文本放入编辑器。
+3. 允许编辑并重新提交，创建新分支。
+
+选择助手、工具、压缩或其他非用户条目：
+
+1. 将叶节点移到该条目。
+2. 编辑器保持清空。
+3. 从该点继续。
+
+选择根用户消息会将叶节点重置为空对话，并将原始 Prompt 放入编辑器。
 
 ## `/tree`、`/fork` 和 `/clone` 对比
 
@@ -91,14 +114,27 @@ pi --fork <path|id>    # 分叉会话
 | 输出 | 同一会话文件 | 新会话文件 | 新会话文件 |
 | 视图 | 完整树 | 用户消息选择器 | 当前活跃分支 |
 | 典型用途 | 原地探索替代方案 | 从之前的 Prompt 开始新会话 | 在继续前复制当前工作 |
+| 摘要 | 可选分支摘要 | 无 | 无 |
+
+当你希望将替代方案保存在一起时使用 `/tree`；当你希望创建单独的会话文件时使用 `/fork` 或 `/clone`。
 
 ## 分支摘要
 
-当 `/tree` 从一个分支切换到另一个分支时，Pi 可以总结被放弃的分支，并在新位置附加该摘要。
+当 `/tree` 从一个分支切换到另一个分支时，Pi 可以总结被放弃的分支，并在新位置附加该摘要。这保留了离开路径时的重要上下文，而无需重放整个分支。
+
+提示时会让你选择：
+
+1. 不总结
+2. 使用默认提示总结
+3. 使用自定义焦点指令总结
+
+分支总结的内部机制和扩展钩子请参阅 [Compaction](compaction.md)。
 
 ## 会话格式
 
 会话文件是 JSONL 格式，包含消息条目、模型更改、thinking level 更改、标签、压缩记录、分支摘要和扩展条目。
+
+关于解析器、扩展、SDK 用法和完整的 SessionManager API，请参阅 [Session Format](session-format.md)。
 
 ---
 

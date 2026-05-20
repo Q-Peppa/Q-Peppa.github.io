@@ -2,9 +2,20 @@
 
 > 本页面是 [Pi 官方文档](https://pi.dev/docs/latest/themes) 的中文翻译。仅供学习参考。
 
-Pi 可以帮你创建主题。告诉它你想要什么风格即可。
+> Pi 可以帮你创建主题。告诉它你想要什么风格即可。
 
 Themes 是定义 TUI 颜色的 JSON 文件。
+
+## 目录
+
+- [位置](#位置)
+- [选择主题](#选择主题)
+- [创建自定义主题](#创建自定义主题)
+- [主题格式](#主题格式)
+- [颜色 Token](#颜色-token)
+- [颜色值](#颜色值)
+- [提示](#提示)
+- [示例](#示例)
 
 ## 位置
 
@@ -40,9 +51,7 @@ mkdir -p ~/.pi/agent/themes
 vim ~/.pi/agent/themes/my-theme.json
 ```
 
-2. 使用所有必需颜色定义主题（见颜色 Token）。支持**热重载**：编辑当前活跃的自定义主题文件时，Pi 自动重新加载，可即时预览效果。
-
-### 主题文件示例
+2. 使用所有必需颜色定义主题（见[颜色 Token](#颜色-token)）：
 
 ```json
 {
@@ -108,6 +117,10 @@ vim ~/.pi/agent/themes/my-theme.json
 }
 ```
 
+3. 通过 `/settings` 选择主题。
+
+**热重载：** 编辑当前活跃的自定义主题文件时，Pi 自动重新加载，可即时预览效果。
+
 ## 主题格式
 
 ```json
@@ -132,24 +145,7 @@ vim ~/.pi/agent/themes/my-theme.json
 - `colors`：必须定义全部 51 个 token。
 - `$schema` 字段启用编辑器自动补全和验证。
 
-## 颜色值格式
-
-支持四种格式：
-
-| 格式 | 示例 | 说明 |
-|---|---|---|
-| Hex | `"#ff0000"` | 6 位十六进制 RGB |
-| 256 色 | `39` | xterm 256 色调色板索引（0-255） |
-| 变量 | `"primary"` | 引用 `vars` 条目 |
-| 默认 | `""` | 终端默认颜色 |
-
-### 256 色调色板
-
-- `0-15`：基本 ANSI 颜色（因终端而异）
-- `16-231`：6×6×6 RGB 色块（`16 + 36×R + 6×G + B`，其中 R、G、B 为 0-5）
-- `232-255`：灰度渐变
-
-## 颜色 Token（共 51 个，全部必填）
+## 颜色 Token
 
 每个主题必须定义全部 51 个颜色 token，没有可选颜色。
 
@@ -241,7 +237,7 @@ vim ~/.pi/agent/themes/my-theme.json
 |---|---|
 | `bashMode` | Bash 模式编辑器边框（`!` 前缀时） |
 
-## HTML Export（可选）
+### HTML Export（可选）
 
 `export` 部分控制 `/export` HTML 输出的颜色。如果省略，颜色从 `userMessageBg` 派生。
 
@@ -255,7 +251,24 @@ vim ~/.pi/agent/themes/my-theme.json
 }
 ```
 
-## 终端兼容性
+## 颜色值
+
+支持四种格式：
+
+| 格式 | 示例 | 说明 |
+|---|---|---|
+| Hex | `"#ff0000"` | 6 位十六进制 RGB |
+| 256 色 | `39` | xterm 256 色调色板索引（0-255） |
+| 变量 | `"primary"` | 引用 `vars` 条目 |
+| 默认 | `""` | 终端默认颜色 |
+
+### 256 色调色板
+
+- `0-15`：基本 ANSI 颜色（因终端而异）
+- `16-231`：6×6×6 RGB 色块（`16 + 36×R + 6×G + B`，其中 R、G、B 为 0-5）
+- `232-255`：灰度渐变
+
+### 终端兼容性
 
 Pi 使用 24 位 RGB 颜色（True Color）。大多数现代终端支持（iTerm2、Kitty、WezTerm、Windows Terminal、VS Code）。对于仅支持 256 色的旧终端，Pi 回退到最接近的近似值。
 
@@ -265,15 +278,19 @@ Pi 使用 24 位 RGB 颜色（True Color）。大多数现代终端支持（iTer
 echo $COLORTERM   # 应输出 "truecolor" 或 "24bit"
 ```
 
-**VS Code 用户**：设置 `terminal.integrated.minimumContrastRatio` 为 `1` 以获得准确颜色。
-
 ## 提示
 
 - **暗色终端**：使用明亮、饱和度高的颜色，提高对比度。
 - **亮色终端**：使用较暗、柔和的颜色，降低对比度。
 - **色彩和谐**：从基础调色板（Nord、Gruvbox、Tokyo Night 等）开始，定义在 `vars` 中，统一引用。
 - **测试**：用不同的消息类型、工具状态、Markdown 内容和长折行文本检查主题效果。
-- **内置主题参考**：查看内置的 [dark.json](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/modes/interactive/theme/themes/dark.json) 和 [light.json](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/modes/interactive/theme/themes/light.json)。
+- **VS Code**：设置 `terminal.integrated.minimumContrastRatio` 为 `1` 以获得准确颜色。
+
+## 示例
+
+查看内置主题：
+- [dark.json](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/modes/interactive/theme/dark.json)
+- [light.json](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/modes/interactive/theme/light.json)
 
 ---
 

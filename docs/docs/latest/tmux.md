@@ -2,11 +2,13 @@
 
 > 本页面是 [Pi 官方文档](https://pi.dev/docs/latest/tmux) 的中文翻译。仅供学习参考。
 
+Pi 可在 tmux 内工作，但 tmux 默认会剥离某些按键的修饰键信息。未配置时，`Shift+Enter` 和 `Ctrl+Enter` 通常与普通 `Enter` 无法区分。
+
 ## 推荐配置
 
 添加到 `~/.tmux.conf`：
 
-```
+```text
 set -g extended-keys on
 set -g extended-keys-format csi-u
 ```
@@ -18,9 +20,27 @@ tmux kill-server
 tmux
 ```
 
+当 Kitty 键盘协议不可用时，Pi 会自动请求扩展按键报告。使用 `extended-keys-format csi-u` 时，tmux 以 CSI-u 格式转发修饰键，这是最可靠的配置。
+
 ## 为什么推荐 `csi-u`
 
-仅使用 `set -g extended-keys on` 时，tmux 默认使用 `extended-keys-format xterm`。当应用请求扩展按键报告时，修饰键以 xterm 的 `modifyOtherKeys` 格式转发。使用 `extended-keys-format csi-u` 时，相同的按键以 CSI-u 格式转发，更可靠。
+仅使用：
+
+```text
+set -g extended-keys on
+```
+
+时，tmux 默认使用 `extended-keys-format xterm`。当应用请求扩展按键报告时，修饰键以 xterm 的 `modifyOtherKeys` 格式转发，例如：
+
+- `Ctrl+C` → `\x1b[27;5;99~`
+- `Ctrl+D` → `\x1b[27;5;100~`
+- `Ctrl+Enter` → `\x1b[27;5;13~`
+
+使用 `extended-keys-format csi-u` 时，相同的按键以 CSI-u 格式转发：
+
+- `Ctrl+C` → `\x1b[99;5u`
+- `Ctrl+D` → `\x1b[100;5u`
+- `Ctrl+Enter` → `\x1b[13;5u`
 
 Pi 支持两种格式，但对于 tmux 推荐使用 `csi-u`。
 

@@ -2,6 +2,8 @@
 
 > 本页面是 [Pi 官方文档](https://pi.dev/docs/latest/development) 的中文翻译。仅供学习参考。
 
+请参阅 [AGENTS.md](https://github.com/earendil-works/pi/blob/main/AGENTS.md) 获取更多指南。
+
 ## 设置
 
 ```bash
@@ -11,7 +13,13 @@ npm install
 npm run build
 ```
 
-从源码运行使用 `/path/to/pi-mono/pi-test.sh`。该脚本可从任何目录运行，Pi 保留调用者的当前工作目录。
+从源码运行：
+
+```bash
+/path/to/pi-mono/pi-test.sh
+```
+
+该脚本可从任何目录运行，Pi 保留调用者的当前工作目录。
 
 ## Forking / Rebranding
 
@@ -26,15 +34,19 @@ npm run build
 }
 ```
 
-更改 `name`、`configDir` 和 `bin` 字段会影响 CLI 横幅、配置路径和环境变量名。
+更改 `name`、`configDir` 和 `bin` 字段会影响你的分支版本。影响 CLI 横幅、配置路径和环境变量名。
 
 ## 路径解析
 
-有三种执行模式：npm install、独立二进制和 tsx（从源码）。开发者应始终使用 `src/config.ts` 访问包资源：
+三种执行模式：npm install、独立二进制和 tsx（从源码）。
+
+**始终使用 `src/config.ts`** 访问包资源：
 
 ```typescript
 import { getPackageDir, getThemeDir } from "./config.js";
 ```
+
+切勿直接使用 `__dirname` 访问包资源。
 
 ## Debug 命令
 
