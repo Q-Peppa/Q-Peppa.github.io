@@ -81,9 +81,9 @@ export default defineConfig({
           text: 'Start here',
           items: [
             { text: 'Overview', link: '/docs/latest/' },
-            { text: 'Quickstart', link: '/docs/latest/quickstart' },
+            { text: 'Quickstart', link: '/docs/latest/quickstart', tag: 'updated' },
             { text: 'Using Pi', link: '/docs/latest/usage' },
-            { text: 'Providers', link: '/docs/latest/providers' },
+            { text: 'Providers', link: '/docs/latest/providers', tag: '推荐' },
             { text: 'Settings', link: '/docs/latest/settings' },
             { text: 'Keybindings', link: '/docs/latest/keybindings' },
             { text: 'Sessions', link: '/docs/latest/sessions' },
@@ -93,7 +93,7 @@ export default defineConfig({
         {
           text: 'Customization',
           items: [
-            { text: 'Extensions', link: '/docs/latest/extensions' },
+            { text: 'Extensions', link: '/docs/latest/extensions', tag: 'updated' },
             { text: 'Skills', link: '/docs/latest/skills' },
             { text: 'Prompt Templates', link: '/docs/latest/prompt-templates' },
             { text: 'Themes', link: '/docs/latest/themes' },
@@ -111,10 +111,10 @@ export default defineConfig({
         {
           text: 'Programmatic Usage',
           items: [
-            { text: 'SDK', link: '/docs/latest/sdk' },
+            { text: 'SDK', link: '/docs/latest/sdk', tag: 'updated' },
             { text: 'RPC Mode', link: '/docs/latest/rpc' },
             { text: 'JSON Event Stream Mode', link: '/docs/latest/json' },
-            { text: 'TUI Components', link: '/docs/latest/tui' },
+            { text: 'TUI Components', link: '/docs/latest/tui', tag: 'updated' },
           ],
         },
         {
