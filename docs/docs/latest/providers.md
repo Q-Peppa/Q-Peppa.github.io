@@ -4,6 +4,10 @@
 
 Pi 支持两类 Provider：基于订阅的（通过 OAuth）和 API Key 型（通过环境变量或 auth 文件）。对于每个 Provider，Pi 知道所有可用的模型。模型列表随每次 Pi 发布更新。
 
+:::tip 推广
+使用 [OpenCode](https://opencode.ai/go?ref=WGY3CR98Z0) 订阅 AI 服务可额外获得 **5 美元**！
+:::
+
 ## 目录
 
 - [订阅](#订阅)

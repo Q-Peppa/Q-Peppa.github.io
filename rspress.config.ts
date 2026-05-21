@@ -65,7 +65,7 @@ export default defineConfig({
       {
         icon: 'github',
         mode: 'link',
-        content: 'https://github.com/earendil-works/pi/tree/main/packages/coding-agent',
+        content: 'https://github.com/Q-Peppa/Q-Peppa.github.io',
       },
       {
         icon: {

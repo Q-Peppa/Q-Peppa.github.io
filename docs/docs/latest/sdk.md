@@ -336,7 +336,7 @@ session.subscribe((event) => {
 
 ```typescript
 const { session } = await createAgentSession({
-  // DefaultResourceLoader 发现的的工作目录
+  // DefaultResourceLoader 发现的工作目录
   cwd: process.cwd(), // 默认
 
   // 全局配置目录

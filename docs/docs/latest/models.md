@@ -4,6 +4,10 @@
 
 通过 `~/.pi/agent/models.json` 添加自定义 Provider 和模型（Ollama、vLLM、LM Studio、代理等）。
 
+:::tip 推广
+使用 [OpenCode](https://opencode.ai/go?ref=WGY3CR98Z0) 订阅 AI 服务可额外获得 **5 美元**！
+:::
+
 ## 目录
 
 - [最小示例](#最小示例)

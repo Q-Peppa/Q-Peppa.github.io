@@ -626,7 +626,7 @@ pi.registerCommand("pick", {
       container.addChild(selectList);
 
       // 帮助文本
-      container.addChild(new Text(theme.fg("dim", "\u2191\u2195 navigate \u2022 enter select \u2022 esc cancel"), 1, 0));
+      container.addChild(new Text(theme.fg("dim", "\u2191\u2193 navigate \u2022 enter select \u2022 esc cancel"), 1, 0));
 
       // 底部边框
       container.addChild(new DynamicBorder((s: string) => theme.fg("accent", s)));
