@@ -87,9 +87,9 @@ ssh://git@github.com/user/repo@v1
 - 支持 HTTPS 和 SSH URL。
 - SSH URL 自动使用你配置的 SSH 密钥（遵循 `~/.ssh/config`）。
 - 对于非交互式运行（如 CI），可设置 `GIT_TERMINAL_PROMPT=0` 禁用凭据提示，并设置 `GIT_SSH_COMMAND`（例如 `ssh -o BatchMode=yes -o ConnectTimeout=5`）以快速失败。
-- Ref 会固定包，跳过包更新（`pi update`、`pi update --extensions`）。
+- Ref 会被固定为 tag 或 commit，跳过包更新（`pi update`、`pi update --extensions`）。使用 `pi install git:host/user/repo@new-ref` 将已有包移动到新的固定 ref。
 - 克隆到 `~/.pi/agent/git/<host>/<path>`（全局）或 `.pi/git/<host>/<path>`（项目）。
-- 克隆或拉取后若存在 `package.json` 则运行 `npm install`。
+- 克隆、拉取或固定 ref 变更后若存在 `package.json` 则运行 `npm install`。
 
 **SSH 示例：**
 ```bash

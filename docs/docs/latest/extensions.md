@@ -1158,7 +1158,7 @@ pi.registerCommand("handoff", {
 
 ```typescript
 pi.registerCommand("reload-runtime", {
-  description: "重载扩展、skill、prompt 和主题",
+  description: "重载扩展、Skill、Prompt 和主题",
   handler: async (_args, ctx) => {
     await ctx.reload();
     return;
@@ -1186,7 +1186,7 @@ import { Type } from "typebox";
 
 export default function (pi: ExtensionAPI) {
   pi.registerCommand("reload-runtime", {
-    description: "重载扩展、skill、prompt 和主题",
+    description: "重载扩展、Skill、Prompt 和主题",
     handler: async (_args, ctx) => {
       await ctx.reload();
       return;
@@ -1196,7 +1196,7 @@ export default function (pi: ExtensionAPI) {
   pi.registerTool({
     name: "reload_runtime",
     label: "重载运行时",
-    description: "重载扩展、skill、prompt 和主题",
+    description: "重载扩展、Skill、Prompt 和主题",
     parameters: Type.Object({}),
     async execute() {
       pi.sendUserMessage("/reload-runtime", { deliverAs: "followUp" });

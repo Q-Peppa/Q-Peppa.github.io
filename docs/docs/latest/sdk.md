@@ -475,6 +475,8 @@ const { session } = await createAgentSession({ resourceLoader: loader });
 - `noTools: "all"` 禁用所有工具
 - `noTools: "builtin"` 禁用默认内置工具，同时保持扩展和自定义工具启用
 
+`edit` 工具返回 `details.diff` 供 Pi 的 TUI 展示，以及 `details.patch` 作为标准统一补丁（unified patch）供 SDK 消费者使用。
+
 ```typescript
 import { createAgentSession } from "@earendil-works/pi-coding-agent";
 
