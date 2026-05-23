@@ -126,8 +126,8 @@ pi [options] [@files...] [messages...]
 pi install <source> [-l]     # 安装包，-l 为项目本地安装
 pi remove <source> [-l]      # 移除包
 pi uninstall <source> [-l]   # remove 的别名
-pi update [source|self|pi]   # 更新 Pi 和包；跳过固定的包
-pi update --extensions       # 仅更新包
+pi update [source|self|pi]   # 更新 Pi 和包；协调固定的 git ref
+pi update --extensions       # 仅更新包；协调固定的 git ref
 pi update --self             # 仅更新 Pi
 pi update --extension <src>  # 更新单个包
 pi list                      # 列出已安装的包

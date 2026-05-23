@@ -2,6 +2,59 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.75.5（即将发布）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新增
+
+- 为自定义 Anthropic 兼容模型配置文档和验证添加了 `compat.forceAdaptiveThinking` 支持（[#4797](https://github.com/earendil-works/pi-mono/pull/4797)，感谢 [@mbazso](https://github.com/mbazso)）。
+- 为 SDK 消费者添加了编辑工具结果详情的标准统一补丁（[#4821](https://github.com/earendil-works/pi/issues/4821)）。
+
+变更
+
+- 修改了根开发安装文档，使用 `npm install --ignore-scripts`（[#4868](https://github.com/earendil-works/pi/issues/4868)）。
+
+修复
+
+- 修复了 `pi update` 将 git-pinned 包协调到其配置的 ref（[#4869](https://github.com/earendil-works/pi/issues/4869)）。
+- 修复了 OpenCode Zen/Go 请求发送每个会话的 OpenCode 路由头（[#4847](https://github.com/earendil-works/pi/issues/4847)）。
+- 修复了 Amazon Bedrock Provider 在严格包管理器下的加载，继承了 `@earendil-works/pi-ai` 中声明的 `@smithy/node-http-handler` 依赖（[#4842](https://github.com/earendil-works/pi/issues/4842)）。
+- 修复了导出的会话 HTML，对属性值中的引号字符进行转义（[#4832](https://github.com/earendil-works/pi/issues/4832)）。
+- 修复了 GitHub Copilot 设备码登录，在浏览器可用环境中持续打开验证 URL，同时忽略无头使用的浏览器启动失败。
+- 修复了 git 包安装，将现有检出与请求的 ref 对齐，并在不丢失过滤器的情况下更新包设置（[#4870](https://github.com/earendil-works/pi/issues/4870)）。
+- 发布了 0.74.2 救援版本，告知 Node 20 用户在更新到更新版 Pi 之前先升级 Node（[#4876](https://github.com/earendil-works/pi/issues/4876)）。
+- 修复了最终 bash 工具卡片，避免渲染重复的完整输出截断路径（[#4819](https://github.com/earendil-works/pi/issues/4819)）。
+- 修复了 bash 工具截断行数统计，忽略尾随换行符作为额外输出行（[#4818](https://github.com/earendil-works/pi/issues/4818)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+不兼容变更
+
+- 修改了 `OAuthLoginCallbacks`，要求提供 `onDeviceCode` 和 `onSelect`，以便 OAuth Provider 可以依赖 Pi 提供设备码和选择界面回调。
+
+修复
+
+- 修复了自定义 Anthropic 兼容模型别名，通过添加 `compat.forceAdaptiveThinking` 模型元数据并将内置 adaptive-thinking 选择移出 Provider ID 子字符串检查（[#4797](https://github.com/earendil-works/pi-mono/pull/4797)，感谢 [@mbazso](https://github.com/mbazso)）。
+- 修复了 GitHub Copilot OAuth 登录，依赖必需的设备码回调，无需运行时回调可用性保护。
+- 修复了 Amazon Bedrock Provider 在严格包管理器下的加载，声明其直接的 `@smithy/node-http-handler` 依赖（[#4842](https://github.com/earendil-works/pi/issues/4842)）。
+- 修复了 Amazon Bedrock Claude 请求默认发送模型输出 Token 上限，匹配 Anthropic 请求并避免 Bedrock 的 4096 Token 默认截断（[#4848](https://github.com/earendil-works/pi/issues/4848)）。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+变更
+
+- 将 Windows VT 输入的可选 `koffi` 依赖替换为小型内嵌原生辅助，减少安装体积的同时保留 Shift+Tab 处理（[#4480](https://github.com/earendil-works/pi/issues/4480)）。
+
+</details>
+
 ## v0.75.4（2026-05-20）
 
 <details>

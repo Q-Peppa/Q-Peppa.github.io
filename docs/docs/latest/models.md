@@ -322,9 +322,11 @@
 
 ## Anthropic Messages 兼容性
 
-对于使用 `api: "anthropic-messages"` 的 Provider 或代理，使用 `compat.supportsEagerToolInputStreaming` 控制 Anthropic 细粒度工具流兼容性。
+对于使用 `api: "anthropic-messages"` 的 Provider 或代理，使用 `compat` 控制 Anthropic 特定请求兼容性。
 
 默认情况下，Pi 发送每个工具的 `eager_input_streaming: true`。如果代理或 Anthropic 兼容的后端拒绝此字段，将 `supportsEagerToolInputStreaming` 设为 `false`。Pi 会省略 `tools[].eager_input_streaming`，并在启用工具的请求中发送旧的 `fine-grained-tool-streaming-2025-05-14` beta 头。
+
+某些 Anthropic 模型需要 adaptive thinking（`thinking.type: "adaptive"` 加 `output_config.effort`），而非旧的基于 token 预算的 thinking 负载。内置模型会自动设置此项。对于路由到这些模型的自定义 Provider 或别名，将 `forceAdaptiveThinking` 设为 `true`。
 
 ```json
 {
@@ -335,7 +337,8 @@
       "apiKey": "ANTHROPIC_PROXY_KEY",
       "compat": {
         "supportsEagerToolInputStreaming": false,
-        "supportsLongCacheRetention": true
+        "supportsLongCacheRetention": true,
+        "forceAdaptiveThinking": true
       },
       "models": [
         {
@@ -353,6 +356,9 @@
 |------|------|
 | `supportsEagerToolInputStreaming` | Provider 是否接受每个工具的 `eager_input_streaming`。默认：`true`。设为 `false` 可省略该字段，并在启用工具的请求中使用旧的细粒度工具流 beta 头 |
 | `supportsLongCacheRetention` | Provider 是否在缓存保留为 `long` 时接受 Anthropic 长缓存保留（`cache_control.ttl: "1h"`）。默认：`true` |
+| `sendSessionAffinityHeaders` | 启用缓存后是否从会话 ID 发送 `x-session-affinity`。默认：对已知 Provider 自动检测 |
+| `supportsCacheControlOnTools` | Provider 是否接受工具定义上的 Anthropic 风格 `cache_control` 标记。默认：`true` |
+| `forceAdaptiveThinking` | 是否为此模型发送 adaptive thinking（`thinking.type: "adaptive"` 加 `output_config.effort`）。内置 adaptive 模型会自动设置。默认：`false` |
 
 ## OpenAI 兼容性
 

@@ -232,6 +232,8 @@ models: [{
 使用 `openrouter` 实现 OpenRouter 风格的 `reasoning: { effort }` 控制。使用 `together` 实现 Together 风格的 `reasoning: { enabled }` 控制；配合 `supportsReasoningEffort` 时还会发送 `reasoning_effort`。使用 `qwen-chat-template` 用于读取 `chat_template_kwargs.enable_thinking` 的本地 Qwen 兼容服务器。
 使用 `cacheControlFormat: "anthropic"` 为兼容 OpenAI 的 Provider 启用 Anthropic 风格提示缓存，通过 `cache_control` 标记应用于系统提示、最后一个工具定义和最后一个用户/助手文本内容。
 
+对于使用 `api: "anthropic-messages"` 的 Anthropic 兼容 Provider，对上游模型需要 adaptive thinking（`thinking.type: "adaptive"` 加 `output_config.effort`）的模型或 Provider 设置 `compat.forceAdaptiveThinking: true`。内置的 adaptive Claude 模型会自动设置此项。
+
 > 迁移说明：Mistral 已从 `openai-completions` 迁移到 `mistral-conversations`。
 > 原生 Mistral 模型请使用 `mistral-conversations`。
 > 如果你有意将 Mistral 兼容/自定义端点通过 `openai-completions` 路由，请根据需要显式设置 `compat` 标志。
@@ -265,17 +267,28 @@ pi.registerProvider("corporate-ai", {
     name: "Corporate AI (SSO)",
 
     async login(callbacks: OAuthLoginCallbacks): Promise<OAuthCredentials> {
-      // 选项 1：基于浏览器的 OAuth
-      callbacks.onAuth({ url: "https://sso.corp.com/authorize?..." });
-
-      // 选项 2：设备码流程
-      callbacks.onDeviceCode({
-        userCode: "ABCD-1234",
-        verificationUri: "https://sso.corp.com/device"
+      const method = await callbacks.onSelect({
+        message: "选择登录方式：",
+        options: [
+          { id: "browser", label: "浏览器 OAuth" },
+          { id: "device", label: "设备码" }
+        ]
       });
+      if (!method) throw new Error("登录已取消");
 
-      // 选项 3：提示输入令牌/码
-      const code = await callbacks.onPrompt({ message: "Enter SSO code:" });
+      let code: string;
+      if (method === "device") {
+        callbacks.onDeviceCode({
+          userCode: "ABCD-1234",
+          verificationUri: "https://sso.corp.com/device",
+          intervalSeconds: 5,
+          expiresInSeconds: 900
+        });
+        code = await pollDeviceCodeUntilComplete();
+      } else {
+        callbacks.onAuth({ url: "https://sso.corp.com/authorize?..." });
+        code = await callbacks.onPrompt({ message: "输入 SSO 码：" });
+      }
 
       // 兑换令牌（你的实现）
       const tokens = await exchangeCodeForTokens(code);
@@ -324,10 +337,21 @@ interface OAuthLoginCallbacks {
   onAuth(params: { url: string }): void;
 
   // 显示设备码（用于设备授权流程）
-  onDeviceCode(params: { userCode: string; verificationUri: string }): void;
+  onDeviceCode(params: {
+    userCode: string;
+    verificationUri: string;
+    intervalSeconds?: number;
+    expiresInSeconds?: number;
+  }): void;
 
   // 提示用户输入（用于手动输入令牌）
   onPrompt(params: { message: string }): Promise<string>;
+
+  // 显示交互式选择器，例如选择浏览器 OAuth 还是设备码
+  onSelect(params: {
+    message: string;
+    options: { id: string; label: string }[];
+  }): Promise<string | undefined>;
 }
 ```
 
@@ -682,8 +706,9 @@ interface ProviderModelConfig {
   /** 该特定模型的自定义请求头。 */
   headers?: Record<string, string>;
 
-  /** openai-completions API 的 OpenAI 兼容性设置。 */
+  /** 所选 API 的兼容性设置。 */
   compat?: {
+    // openai-completions
     supportsStore?: boolean;
     supportsDeveloperRole?: boolean;
     supportsReasoningEffort?: boolean;
@@ -695,6 +720,13 @@ interface ProviderModelConfig {
     requiresReasoningContentOnAssistantMessages?: boolean;
     thinkingFormat?: "openai" | "openrouter" | "deepseek" | "together" | "zai" | "qwen" | "qwen-chat-template";
     cacheControlFormat?: "anthropic";
+
+    // anthropic-messages
+    supportsEagerToolInputStreaming?: boolean;
+    supportsLongCacheRetention?: boolean;
+    sendSessionAffinityHeaders?: boolean;
+    supportsCacheControlOnTools?: boolean;
+    forceAdaptiveThinking?: boolean;
   };
 }
 ```

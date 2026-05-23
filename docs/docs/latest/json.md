@@ -12,7 +12,7 @@ pi --mode json "Your prompt"
 
 ## 事件类型
 
-事件定义在 `AgentSessionEvent` 中：
+事件定义在 [`AgentSessionEvent`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/agent-session.ts#L102) 中：
 
 ```typescript
 type AgentSessionEvent =
@@ -53,7 +53,7 @@ type AgentSessionEvent =
 - `compaction_start` / `compaction_end` —— 覆盖手动和自动压缩，包含原因、结果、是否中止、是否重试等信息。
 - `auto_retry_start` / `auto_retry_end` —— 自动重试事件，含尝试次数、最大次数、延迟和错误信息。
 
-基础事件来自 `AgentEvent`：
+基础事件来自 [`AgentEvent`](https://github.com/earendil-works/pi-mono/blob/main/packages/agent/src/types.ts#L179)：
 
 ```typescript
 type AgentEvent =
@@ -115,13 +115,13 @@ type AgentEvent =
 
 ## 消息类型
 
-基础消息定义在 `packages/ai/src/types.ts`：
+基础消息定义在 [`packages/ai/src/types.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/ai/src/types.ts#L134)：
 
 - `UserMessage`（第 134 行）—— 用户消息
 - `AssistantMessage`（第 140 行）—— 助手消息，包含 `content` 数组、`usage`、`stopReason` 等
 - `ToolResultMessage`（第 152 行）—— 工具结果消息
 
-扩展消息定义在 `packages/coding-agent/src/core/messages.ts`：
+扩展消息定义在 [`packages/coding-agent/src/core/messages.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/messages.ts#L29)：
 
 - `BashExecutionMessage`（第 29 行）—— Bash 命令执行消息
 - `CustomMessage`（第 46 行）—— 自定义消息
