@@ -2,10 +2,17 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
-## v0.75.5（即将发布）
+## v0.75.5（2026-05-23）
 
 <details>
 <summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **更清晰的 read 工具输出** — 折叠的 `read` 工具卡片现在默认只显示读取的行，按 `Ctrl+O` 仍可展开查看完整文件内容。
+- **Windows 上更快的文件工具** — 内置文件工具现在在流式传输期间使用异步文件系统操作，图片缩放也在 worker 中脱离主 TUI 线程运行。
+- **更可靠的包更新** — `pi update` 和 git 包安装现在会协调固定的 git ref 并保持包设置完整。参见 [Packages](/docs/latest/packages)。
+- **自定义 Anthropic 兼容模型的自适应思考** — 自定义 Provider 模型配置可通过 `compat.forceAdaptiveThinking` 启用自适应思考 Claude 行为。参见 [自定义 Provider](/docs/latest/custom-provider) 和 [模型](/docs/latest/models)。
 
 新增
 
@@ -14,19 +21,27 @@
 
 变更
 
+- 折叠的 read 工具卡片现在默认仅显示读取的行，展开后才显示完整内容（[#4916](https://github.com/earendil-works/pi/issues/4916)）。
 - 修改了根开发安装文档，使用 `npm install --ignore-scripts`（[#4868](https://github.com/earendil-works/pi/issues/4868)）。
 
 修复
 
 - 修复了 `pi update` 将 git-pinned 包协调到其配置的 ref（[#4869](https://github.com/earendil-works/pi/issues/4869)）。
+- 修复了 Windows 上的包/资源路径处理和 glob/模式解析（[#4873](https://github.com/earendil-works/pi-mono/pull/4873)，感谢 [@mitsuhiko](https://github.com/mitsuhiko)）。
+- 修复了配置模式匹配，从正确的基础目录解析模式（[#4898](https://github.com/earendil-works/pi-mono/pull/4898)，感谢 [@haoqixu](https://github.com/haoqixu)）。
+- 修复了主题选择器，按其内容名称而非文件名列出主题（[#4830](https://github.com/earendil-works/pi-mono/pull/4830)，感谢 [@Perlence](https://github.com/Perlence)）。
 - 修复了 OpenCode Zen/Go 请求发送每个会话的 OpenCode 路由头（[#4847](https://github.com/earendil-works/pi/issues/4847)）。
 - 修复了 Amazon Bedrock Provider 在严格包管理器下的加载，继承了 `@earendil-works/pi-ai` 中声明的 `@smithy/node-http-handler` 依赖（[#4842](https://github.com/earendil-works/pi/issues/4842)）。
+- 修复了 Amazon Bedrock Claude 请求默认发送模型输出 Token 上限，避免 Bedrock 的 4096 Token 默认截断（[#4848](https://github.com/earendil-works/pi/issues/4848)）。
 - 修复了导出的会话 HTML，对属性值中的引号字符进行转义（[#4832](https://github.com/earendil-works/pi/issues/4832)）。
-- 修复了 GitHub Copilot 设备码登录，在浏览器可用环境中持续打开验证 URL，同时忽略无头使用的浏览器启动失败。
+- 修复了 GitHub Copilot 设备码登录，在浏览器可用环境中持续打开验证 URL，同时忽略无头使用的浏览器启动失败（[#4788](https://github.com/earendil-works/pi-mono/pull/4788)，感谢 [@vegarsti](https://github.com/vegarsti)）。
 - 修复了 git 包安装，将现有检出与请求的 ref 对齐，并在不丢失过滤器的情况下更新包设置（[#4870](https://github.com/earendil-works/pi/issues/4870)）。
 - 发布了 0.74.2 救援版本，告知 Node 20 用户在更新到更新版 Pi 之前先升级 Node（[#4876](https://github.com/earendil-works/pi/issues/4876)）。
 - 修复了最终 bash 工具卡片，避免渲染重复的完整输出截断路径（[#4819](https://github.com/earendil-works/pi/issues/4819)）。
 - 修复了 bash 工具截断行数统计，忽略尾随换行符作为额外输出行（[#4818](https://github.com/earendil-works/pi/issues/4818)）。
+- 修复了底栏主目录缩写，避免缩短仅共享同一前缀的兄弟路径（[#4878](https://github.com/earendil-works/pi/issues/4878)）。
+- 修复了 macOS Bun 发布二进制文件，解析原生剪贴板 sidecar，使 Ctrl+V 图片粘贴可以加载 `@mariozechner/clipboard`（[#4307](https://github.com/earendil-works/pi/issues/4307)）。
+- 修复了 coding-agent 工具，避免在流式传输期间使用同步文件系统操作，并将图片缩放移出主 TUI 线程（[#4756](https://github.com/earendil-works/pi-mono/pull/4756)，感谢 [@mitsuhiko](https://github.com/mitsuhiko)）。
 
 </details>
 
