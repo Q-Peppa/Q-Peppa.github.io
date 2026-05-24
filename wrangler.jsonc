@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "pi-docs",
+  "name": "pi",
   "compatibility_date": "2026-05-24",
   "assets": {
     "directory": "doc_build"
