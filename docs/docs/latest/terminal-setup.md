@@ -8,6 +8,12 @@ Pi 使用 **Kitty keyboard protocol** 进行可靠的修饰键检测。大多数
 
 **开箱即用。**
 
+## Apple Terminal
+
+Pi 在可用时启用增强按键报告。如果 Terminal.app 仍然为 `Shift+Enter` 发送普通 Return，Pi 会使用本地 macOS 修饰键回退机制，将该 Return 视为 `Shift+Enter`。
+
+此回退仅在 Pi 与 Terminal.app 运行在同一台 Mac 上时有效。它无法通过远程 SSH 检测本地键盘。
+
 ## Ghostty
 
 在 Ghostty 配置中添加（macOS：`~/Library/Application Support/com.mitchellh.ghostty/config`，Linux：`~/.config/ghostty/config`）：
