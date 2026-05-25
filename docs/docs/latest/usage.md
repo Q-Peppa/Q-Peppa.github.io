@@ -134,7 +134,7 @@ pi list                      # 列出已安装的包
 pi config                    # 启用/禁用包资源
 ```
 
-这些命令管理 Pi 包，而非 Pi CLI 安装本身。要卸载 Pi 本身，请参阅 [Quickstart](quickstart.md#uninstall)。
+这些命令管理 Pi 包，而非 Pi CLI 安装本身。要卸载 Pi 本身，请参阅 [Quickstart](quickstart.mdx#卸载)。
 
 包来源和安全说明请参阅 [Pi Packages](packages.md)。
 
