@@ -151,6 +151,10 @@
 - 修改源码语法，避免需要 JavaScript 产出的 TypeScript 构造，保持包与 Node.js strip-only 类型检查兼容。
 - 移除了包级开发 watch 脚本。
 
+新增
+
+- 新增了一流的 OAuth 设备码回调元数据、共享轮询支持和 GitHub Copilot OAuth 集成。
+
 修复
 
 - 修复了 OpenAI 兼容的 `streamSimple()` 请求，停止发送模型派生的默认输出 token 上限，避免在 vLLM 等服务器上发生上下文窗口预留失败，同时保留显式的 `maxTokens` 和必需的 Anthropic `max_tokens` 处理（[#4675](https://github.com/earendil-works/pi/issues/4675)）。
