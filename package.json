@@ -6,7 +6,9 @@
   "scripts": {
     "build": "rspress build && node scripts/generate-sitemap.mjs",
     "dev": "rspress dev",
-    "preview": "rspress preview"
+    "preview": "rspress preview",
+    "deploy": "wrangler deploy",
+    "dev:worker": "wrangler dev"
   },
   "dependencies": {
     "@rspress/core": "^2.0.12"
@@ -14,7 +16,8 @@
   "devDependencies": {
     "@biomejs/biome": "2.4.15",
     "@types/node": "^25.9.1",
-    "rsbuild-plugin-google-analytics": "^1.0.5"
+    "rsbuild-plugin-google-analytics": "^1.0.5",
+    "wrangler": "^4.94.0"
   },
   "packageManager": "pnpm@11.1.1+sha512.d1fdf5f73c617b64fa1a56a81c3c8dfe0e966e33a6010aa256b517ae77be21d93e05affc0de1a83b0e4f29d569f68b446ae8f068cd7247c0bb3df0fb4d7bdf9a"
 }
