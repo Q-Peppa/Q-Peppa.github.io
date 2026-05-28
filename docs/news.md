@@ -2,6 +2,82 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.76.0（2026-05-27）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **自动化场景的显式会话 ID** — `--session-id <id>` 允许脚本创建或恢复一个精确的项目本地会话。参见 [Sessions](/docs/latest/usage#sessions)。
+- **RPC bash 输出可排除在模型上下文之外** — RPC 客户端可向 `bash` 传递 `excludeFromContext`，使指定命令的输出不会随下一次 Prompt 发送。参见 [RPC 模式](/docs/latest/rpc#bash)。
+- **更可预测的 Provider 重试与超时** — Codex WebSocket/SSE 等待已设上限，`retry.provider.maxRetries` 控制 Provider 重试，取代原先隐藏的 SDK 默认值。参见 [重试设置](/docs/latest/settings#retry)。
+- **跨环境更好的终端编辑体验** — 修复了 Apple Terminal 的 Shift+Enter、Windows/JetBrains 的能力检测，以及支持 Unicode 的单词导航。参见 [终端配置](/docs/latest/terminal-setup) 和 [快捷键](/docs/latest/keybindings)。
+
+新增
+
+- 新增 `--session-id` 参数，允许 CLI 调用者使用精确的项目本地会话 ID，不存在时自动创建（[#4874](https://github.com/earendil-works/pi/issues/4874)）。
+- 为 `bash` RPC 命令新增 `excludeFromContext` 标志，与内部 `executeBash` API 对齐（[#5039](https://github.com/earendil-works/pi/issues/5039)）。
+
+修复
+
+- 修复了用户消息转录渲染，保留用户编写的有序列表标记（[#5013](https://github.com/earendil-works/pi/issues/5013)）。
+- 修复了自更新命令，显式运行 `pi update` 时绕过 npm、pnpm 和 Bun 的最低发布年龄门槛（[#4929](https://github.com/earendil-works/pi/issues/4929)）。
+- 修复了上下文 Token 估算，用户图片附件现在与工具结果图片一致计数（[#4983](https://github.com/earendil-works/pi/issues/4983)）。
+- 修复了 `httpIdleTimeoutMs` 应用于 OpenAI Codex Responses WebSocket 空闲等待，新增 `websocketConnectTimeoutMs` 限制 WebSocket 连接等待时间，并为 Codex SSE 添加了 10 秒响应头超时（[#4945](https://github.com/earendil-works/pi/issues/4945)）。
+- 修复了 `RpcClient`，当子进程意外退出时拒绝待处理请求并消费 stdin 管道错误（[#4764](https://github.com/earendil-works/pi/issues/4764)）。
+- 修复了托管 npm 扩展更新，避免包管理器将 pi 宿主包作为 peer 依赖安装或解析（[#4907](https://github.com/earendil-works/pi/issues/4907)）。
+- 修复了 RPC 模式原始 stdout 写入，重试瞬时背压错误并在关闭期间刷新排队的协议输出（[#4897](https://github.com/earendil-works/pi/issues/4897)）。
+- 修复了 OpenAI Codex Responses 缓存亲和性头，发送 `session-id` 而非与代理不兼容的 `session_id`（[#4967](https://github.com/earendil-works/pi/issues/4967)）。
+- 修复了 `openai-codex/gpt-5.3-codex-spark` 模型元数据，使用其 128k 上下文窗口（[#4969](https://github.com/earendil-works/pi/issues/4969)）。
+- 修复了 OpenRouter/Poolside 上下文溢出检测，处理 `maximum allowed input length` 错误（[#4943](https://github.com/earendil-works/pi/issues/4943)）。
+- 修复了 Provider 重试控制，`retry.provider.maxRetries` 现在被正确执行，SDK 重试默认为 `0`，配额/计费 429 错误不再被 Pi 的重试机制重试（[#4991](https://github.com/earendil-works/pi-mono/pull/4991)，感谢 [@mitsuhiko](https://github.com/mitsuhiko)）。
+- 修复了 Apple Terminal 的 Shift+Enter，当 Terminal.app 发送普通回车时检测本地 macOS 修饰键状态。
+- 修复了 Windows Terminal 能力检测，启用 OSC 8 超链接，使可点击的长 URL 在换行时保持有效（[#4923](https://github.com/earendil-works/pi/issues/4923)）。
+- 修复了 JetBrains 终端能力检测，启用真彩色同时禁用不支持的 OSC 8 超链接（[#5037](https://github.com/earendil-works/pi-mono/pull/5037)，感谢 [@Perlence](https://github.com/Perlence)）。
+- 修复了编辑器和输入的单词导航/删除，使用 Unicode 词边界同时保留 ASCII 标点符号边界（[#5022](https://github.com/earendil-works/pi-mono/pull/5022)，感谢 [@haoqixu](https://github.com/haoqixu)；[#5067](https://github.com/earendil-works/pi-mono/pull/5067)，感谢 [@haoqixu](https://github.com/haoqixu)；[#5068](https://github.com/earendil-works/pi-mono/pull/5068)，感谢 [@haoqixu](https://github.com/haoqixu)）。
+- 修复了开发文档中 `AGENTS.md` 链接，指向 pi-mono 指南（[#5041](https://github.com/earendil-works/pi/issues/5041)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+修复
+
+- 修复了 OpenAI Codex Responses 缓存亲和性头，发送 `session-id` 而非与代理不兼容的 `session_id`（[#4967](https://github.com/earendil-works/pi/issues/4967)）。
+- 修复了 `openai-codex/gpt-5.3-codex-spark` 生成的元数据，使用其 128k 上下文窗口（[#4969](https://github.com/earendil-works/pi/issues/4969)）。
+- 修复了 OpenRouter/Poolside 上下文溢出检测，处理 `maximum allowed input length` 错误（[#4943](https://github.com/earendil-works/pi/issues/4943)）。
+- 修复了 OpenAI Codex Responses WebSocket 流和 SSE 响应头等待，应用有界超时而非无限等待（[#4945](https://github.com/earendil-works/pi/issues/4945)）。
+- 修复了 Provider 重试控制，OpenAI Codex Responses 现在正确执行 `maxRetries`，SDK 重试默认为 `0`，配额/计费 429 错误不再被重试（[#4991](https://github.com/earendil-works/pi-mono/pull/4991)，感谢 [@mitsuhiko](https://github.com/mitsuhiko)）。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+修复
+
+- 修复了上下文 Token 估算，用户图片附件现在与工具结果图片一致计数（[#4983](https://github.com/earendil-works/pi/issues/4983)）。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+新增
+
+- 新增可选的 Markdown 渲染器选项，保留源文件中的有序列表标记用于转录渲染（[#5013](https://github.com/earendil-works/pi/issues/5013)）。
+
+修复
+
+- 修复了 Apple Terminal 的 Shift+Enter，当 Terminal.app 发送普通回车时检测本地 macOS 修饰键状态。
+- 修复了 Windows Terminal 能力检测，启用 OSC 8 超链接，使可点击的长 URL 在换行时保持有效（[#4923](https://github.com/earendil-works/pi/issues/4923)）。
+- 修复了 JetBrains 终端能力检测，启用真彩色同时禁用不支持的 OSC 8 超链接（[#5037](https://github.com/earendil-works/pi-mono/pull/5037)，感谢 [@Perlence](https://github.com/Perlence)）。
+- 修复了编辑器和输入的单词导航/删除，使用 Unicode 词边界同时保留 ASCII 标点符号边界（[#5022](https://github.com/earendil-works/pi-mono/pull/5022)，感谢 [@haoqixu](https://github.com/haoqixu)；[#5067](https://github.com/earendil-works/pi-mono/pull/5067)，感谢 [@haoqixu](https://github.com/haoqixu)；[#5068](https://github.com/earendil-works/pi-mono/pull/5068)，感谢 [@haoqixu](https://github.com/haoqixu)）。
+
+</details>
+
 ## v0.75.5（2026-05-23）
 
 <details>

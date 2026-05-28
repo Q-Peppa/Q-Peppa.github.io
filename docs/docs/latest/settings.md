@@ -103,10 +103,12 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 | `retry.maxRetries` | number | `3` | 最大 Agent 级别重试次数 |
 | `retry.baseDelayMs` | number | `2000` | Agent 级别指数退避的基础延迟（2s、4s、8s） |
 | `retry.provider.timeoutMs` | number | SDK 默认 | Provider/SDK 请求超时（毫秒） |
-| `retry.provider.maxRetries` | number | SDK 默认 | Provider/SDK 重试次数 |
+| `retry.provider.maxRetries` | number | `0` | Provider/SDK 重试次数 |
 | `retry.provider.maxRetryDelayMs` | number | `60000` | 最大服务器请求延迟，超时则直接失败（60s） |
 
 当 Provider 请求的重试延迟超过 `retry.provider.maxRetryDelayMs` 时（例如 Google 的"配额将在 5 小时后重置"），请求会立即失败并显示信息性错误，而不是静默等待。设为 `0` 可禁用此上限。
+
+除非明确需要 Provider 级别重试，否则请保持 `retry.provider.maxRetries` 为 `0`。将其设为大于 `0` 可能导致 SDK/Provider 重试在 Pi 处理之前就处理了用量超限错误，在某些情况下可能会阻塞 Agent 直到 Provider 配额重置。
 
 ```json
 {
