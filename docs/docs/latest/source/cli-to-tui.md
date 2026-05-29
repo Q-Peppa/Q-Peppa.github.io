@@ -1,5 +1,3 @@
-import { Callout } from '@rspress/core/theme';
-
 # 从终端到 TUI：输入 `pi` 后发生了什么
 
 这是理解 Pi 运作机制的**第一道门**。当你在终端输入 `pi` 并按下 Enter 时，一段精密的链条开始运转。
@@ -34,9 +32,7 @@ pi hello world
 
 ### 阶段 1：CLI 入口（`cli.ts`）
 
-<Callout type="info">
 **文件**：`packages/coding-agent/src/cli.ts`（全文件 18 行）
-</Callout>
 
 ```typescript
 #!/usr/bin/env node
@@ -56,10 +52,8 @@ main(process.argv.slice(2));              // 第 17 行：传入去掉 node/cli 
 
 ### 阶段 2：`main()` 参数解析与服务组装
 
-<Callout type="info">
 **文件**：`packages/coding-agent/src/main.ts`
 **关键行数**：`main()` 函数从第 280 行开始
-</Callout>
 
 #### 2a. 参数解析
 
@@ -94,9 +88,7 @@ interface Args {
 let appMode = resolveAppMode(parsed, process.stdin.isTTY);
 ```
 
-<Callout type="info">
 `resolveAppMode()` 的逻辑（`main.ts:85-95`）：
-</Callout>
 
 ```typescript
 function resolveAppMode(parsed: Args, stdinIsTTY: boolean): AppMode {
@@ -170,9 +162,7 @@ const runtime = await createAgentSessionRuntime(createRuntime, {
 
 ### 阶段 3：InteractiveMode 启动 TUI
 
-<Callout type="info">
 **文件**：`packages/coding-agent/src/modes/interactive/interactive-mode.ts`
-</Callout>
 
 #### 3a. 构造函数（约第 370 行）
 
@@ -192,9 +182,7 @@ ProcessTerminal 初始化
   → write("\x1b[?2004h")              // 启用 bracketed paste
 ```
 
-<Callout type="warning">
 **raw mode 是终端编程的核心概念**。正常模式下，终端按行缓冲（你按 Enter 才发送数据）。raw mode 下，**每个按键立即发送**。这是 TUI 能实时响应的基础。
-</Callout>
 
 #### 3b. `init()` 构建 UI 布局（约第 988 行）
 
@@ -231,10 +219,8 @@ async init(): Promise<void> {
 
 #### 3c. `ui.start()` 启动渲染循环
 
-<Callout type="info">
 **文件**：`packages/tui/src/tui.ts`
 **关键方法**：`start()`（约第 320 行附近）
-</Callout>
 
 ```typescript
 // tui.ts: start() 方法的核心逻辑
@@ -292,10 +278,8 @@ Pi 可以解释自身功能并查阅文档。询问如何使用或扩展 Pi。
 
 ### 阶段 4：主循环等待输入
 
-<Callout type="info">
 **文件**：`packages/coding-agent/src/modes/interactive/interactive-mode.ts`
 **关键方法**：`run()`（约第 1000 行）
-</Callout>
 
 ```typescript
 // interactive-mode.ts:1000

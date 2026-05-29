@@ -1,5 +1,3 @@
-import { Callout, Steps } from '@rspress/core/theme';
-
 # 环境搭建与调试
 
 本文档带你从零开始搭建 Pi 的本地开发环境，并学会使用断点调试追踪代码执行。
@@ -18,9 +16,7 @@ npm install --ignore-scripts
 npm run check
 ```
 
-<Callout type="info">
 `npm run check` 执行完整的质量检查（TypeScript 类型检查 + Biome lint），**不会运行测试**。这是每次修改代码后的标准验证命令。
-</Callout>
 
 ## 第二步：理解目录结构
 
@@ -89,9 +85,7 @@ npx tsx packages/coding-agent/src/cli.ts --help
 tsx packages/coding-agent/src/cli.ts -p "Say hello"
 ```
 
-<Callout type="warning">
 不要运行 `npm run build`。Pi 的设计是开发时直接运行 `.ts` 源码，发布时通过打包脚本处理。
-</Callout>
 
 ## 第四步：VS Code 断点调试
 
@@ -190,9 +184,7 @@ class MyComponent {
 node ../../node_modules/vitest/dist/cli.js --run test/specific.test.ts
 ```
 
-<Callout type="warning">
 不要直接运行 `npm test`。完整套件包含 E2E 测试，需要 API key 且会消耗 token。
-</Callout>
 
 ## 下一步
 

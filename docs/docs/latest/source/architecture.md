@@ -1,14 +1,10 @@
-import { Callout } from '@rspress/core/theme';
-
 # 核心架构与设计哲学
 
 本文档深入分析 Pi 的架构设计模式，理解这些模式不仅能读懂 Pi 的代码，还能举一反三到其他 LLM Agent 项目。
 
 ## 一、Provider 抽象层：用一套接口统一 30+ LLM 提供商
 
-<Callout type="info">
 **文件**：`packages/ai/src/api-registry.ts`、`packages/ai/src/types.ts`、`packages/ai/src/providers/`
-</Callout>
 
 ### 设计问题
 
@@ -133,9 +129,7 @@ interface OpenAICompletionsCompat {
 
 ## 二、事件驱动架构
 
-<Callout type="info">
 **文件**：`packages/ai/src/utils/event-stream.ts`、`packages/agent/src/types.ts`
-</Callout>
 
 Pi 的整个架构是**事件驱动**的。从 LLM 流式响应到 TUI 更新，从工具执行到扩展触发，全部通过事件传递。
 
@@ -213,10 +207,8 @@ type ExtensionEvent =
 
 ## 三、TUI 差分渲染
 
-<Callout type="info">
 **文件**：`packages/tui/src/tui.ts`
 **核心类**：`TUI extends Container`
-</Callout>
 
 ### 为什么需要差分渲染
 
@@ -306,10 +298,8 @@ Overlay 渲染流程：
 
 ## 四、扩展系统
 
-<Callout type="info">
 **文件**：`packages/coding-agent/src/core/extensions/runner.ts`
 **核心类**：`ExtensionRunner`
-</Callout>
 
 ### 扩展是什么
 
@@ -383,9 +373,7 @@ export default function extension(cwd: string) {
 
 ## 五、工具系统
 
-<Callout type="info">
 **文件**：`packages/coding-agent/src/core/tools/`
-</Callout>
 
 ### 工具架构
 
@@ -441,9 +429,7 @@ function truncateOutput(output: string, maxTokens: number): {
 
 ## 六、会话格式（JSONL）
 
-<Callout type="info">
 **文件**：`packages/coding-agent/src/core/session-manager.ts`
-</Callout>
 
 Pi 的会话是**每行一条 JSON** 的格式（JSONL）：
 

@@ -1,5 +1,3 @@
-import { Callout } from '@rspress/core/theme';
-
 # 从输入到 LLM 循环：智能体的心脏
 
 本文档带你追踪用户输入文本后的**完整数据流**，从 TUI 编辑器到 LLM 调用，再到工具执行的循环。
@@ -67,10 +65,8 @@ import { Callout } from '@rspress/core/theme';
 
 ## 阶段 A：TUI 传递输入
 
-<Callout type="info">
 **文件**：`packages/coding-agent/src/modes/interactive/interactive-mode.ts`
 **关键方法**：`run()`（约第 1000 行）、`getUserInput()`（第 3233 行）
-</Callout>
 
 ```typescript
 // interactive-mode.ts:1025-1035
@@ -109,10 +105,8 @@ async getUserInput(): Promise<string> {
 
 ## 阶段 B：消息预处理
 
-<Callout type="info">
 **文件**：`packages/coding-agent/src/core/agent-session.ts`
 **关键方法**：`prompt()`（第 983 行）
-</Callout>
 
 这是**输入到 LLM 之间最重要的关卡**。`prompt()` 方法对用户的输入做了多层处理：
 
@@ -254,11 +248,9 @@ await this._runAgentPrompt(messages);
 
 ## 阶段 C：Agent 启动
 
-<Callout type="info">
 **文件**：`packages/coding-agent/src/core/agent-session.ts`（`_runAgentPrompt`，约 933 行）
 → `packages/agent/src/agent.ts`（`prompt()`，第 327 行）
 → `packages/agent/src/agent-loop.ts`（`runAgentLoop()`，第 95 行）
-</Callout>
 
 ```typescript
 // agent-session.ts:933-941
@@ -308,10 +300,8 @@ private async runPromptMessages(
 
 ## 阶段 D：★ Agent Loop 核心循环
 
-<Callout type="info">
 **文件**：`packages/agent/src/agent-loop.ts`
 **关键函数**：`runLoop()`（第 155 行起）
-</Callout>
 
 这是整个智能体的**心脏**。理解了它，你就理解了所有编码智能体的运作原理。
 
@@ -464,10 +454,8 @@ async function runLoop(
 
 ### streamAssistantResponse 详解
 
-<Callout type="info">
 **文件**：`packages/agent/src/agent-loop.ts`
 **关键函数**：`streamAssistantResponse()`（约第 260 行）
-</Callout>
 
 ```typescript
 // agent-loop.ts: 核心逻辑
@@ -539,10 +527,8 @@ async function streamAssistantResponse(
 
 ### executeToolCalls 详解
 
-<Callout type="info">
 **文件**：`packages/agent/src/agent-loop.ts`
 **关键函数**：`executeToolCalls()`（约第 350 行）
-</Callout>
 
 工具执行的流程：
 

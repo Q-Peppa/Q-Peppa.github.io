@@ -1,5 +1,3 @@
-import { Callout } from '@rspress/core/theme';
-
 # 前置知识与学习路径
 
 本系列文档面向**有一定编程基础但对 LLM Agent 或终端 UI 不熟悉的开发者**。我们先明确你需要什么，再给出高效的学习路径。
@@ -27,9 +25,7 @@ import { Callout } from '@rspress/core/theme';
 | 包数量 | 4 个主包 |
 | 测试文件 | 数百个 |
 
-<Callout type="info">
 **好消息**：你不需要读完所有代码。核心逻辑集中在约 5,000 行中。其余是边缘处理、测试、和独立模块。
-</Callout>
 
 ## 阅读顺序（推荐）
 
@@ -100,9 +96,7 @@ Pi 的代码风格是**显式类型、无 `any`、纯 async/await**，对 Python
 | **Node.js 18+** | 运行环境 | `nvm install 20` |
 | **npm** | 包管理 | 随 Node.js 安装 |
 
-<Callout type="warning">
 **不要在浏览器中读代码**。这个项目需要本地调试才能理解数据流。GitHub 的代码浏览无法追踪运行时行为。
-</Callout>
 
 ## 预期学习时间
 
