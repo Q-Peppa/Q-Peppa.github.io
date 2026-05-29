@@ -181,6 +181,7 @@ cat README.md | pi -p "Summarize this text"
 | 选项 | 说明 |
 |------|------|
 | `--tools <list>`、`-t <list>` | 白名单指定内置、扩展和自定义工具 |
+| `--exclude-tools <list>`、`-xt <list>` | 禁用指定的内置、扩展和自定义工具，其余工具保持可用 |
 | `--no-builtin-tools`、`-nbt` | 禁用内置工具但保留扩展/自定义工具 |
 | `--no-tools`、`-nt` | 禁用所有工具 |
 

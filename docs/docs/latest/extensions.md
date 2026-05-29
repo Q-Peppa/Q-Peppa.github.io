@@ -819,6 +819,9 @@ pi.on("input", async (event, ctx) => {
   // event.text - 原始输入（在 skill/模板扩展之前）
   // event.images - 附带的图片（如果有）
   // event.source - "interactive"（键入）、"rpc"（API）或 "extension"（通过 sendUserMessage）
+  // event.streamingBehavior - "steer" | "followUp" | undefined
+  //   空闲时为 undefined，"steer" 表示流中中断，
+  //   "followUp" 表示 agent 完成前排队的消息
 
   // 转换：在扩展前重写输入
   if (event.text.startsWith("?quick "))
@@ -2540,6 +2543,7 @@ const highlighted = highlightCode(code, lang, theme);
 | `confirm-destructive.ts` | 确认会话更改 | `on("session_before_switch")`、`on("session_before_fork")` |
 | `dirty-repo-guard.ts` | 在 Git 仓库脏时警告 | `on("session_before_*")`、`exec` |
 | `input-transform.ts` | 转换用户输入 | `on("input")` |
+| `input-transform-streaming.ts` | 感知流式行为的输入转换 | `on("input")`、`streamingBehavior` |
 | `model-status.ts` | 响应模型更改 | `on("model_select")`、`setStatus` |
 | `provider-payload.ts` | 检查负载和 Provider 响应标头 | `on("before_provider_request")`、`on("after_provider_response")` |
 | `system-prompt-header.ts` | 显示系统提示信息 | `on("agent_start")`、`getSystemPrompt` |

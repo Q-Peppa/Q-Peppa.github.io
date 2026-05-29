@@ -462,7 +462,7 @@ Vercel AI Gateway 示例：
   "providers": {
     "vercel-ai-gateway": {
       "baseUrl": "https://ai-gateway.vercel.sh/v1",
-      "apiKey": "AI_GATEWAY_API_KEY",
+      "apiKey": "$AI_GATEWAY_API_KEY",
       "api": "openai-completions",
       "models": [
         {

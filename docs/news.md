@@ -2,6 +2,89 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.77.0（2026-05-28）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **Claude Opus 4.8 支持** — 新增 Anthropic Claude Opus 4.8 元数据，并更新 Opus adaptive-thinking 覆盖范围。
+- **选择性工具禁用** — `--exclude-tools` / `-xt` 可禁用指定的内置、扩展或自定义工具，其余工具保持可用。参见 [工具选项](/docs/latest/usage#tool-options)。
+- **无头 Codex 订阅登录** — `/login` 可使用设备码认证登录 ChatGPT Plus/Pro Codex 订阅。参见 [订阅](/docs/latest/providers#subscriptions) 和 [OpenAI Codex](/docs/latest/providers#openai-codex)。
+- **感知流式行为的扩展输入** — 扩展可通过 `InputEvent.streamingBehavior` 区分空闲 Prompt、流中转向和排队的后续操作。参见 [输入事件](/docs/latest/extensions#input-events)。
+
+新增
+
+- 新增 `--exclude-tools` / `-xt` 参数，可禁用指定的内置、扩展或自定义工具，其余工具保持可用（[#5109](https://github.com/earendil-works/pi/issues/5109)）。
+- 新增 OpenAI Codex 订阅设备码登录作为可选的无头替代方案，同时保留浏览器登录为默认方式（[#4911](https://github.com/earendil-works/pi/pull/4911)，感谢 [@vegarsti](https://github.com/vegarsti)）。
+- 为扩展输入事件新增 `streamingBehavior`，使扩展能够区分空闲 Prompt、流中转向和排队的后续操作（[#5107](https://github.com/earendil-works/pi/pull/5107)，感谢 [@DanielThomas](https://github.com/DanielThomas)）。
+- 新增 Claude Opus 4.8 模型元数据（Anthropic），并更新 Opus adaptive-thinking 覆盖范围以使用它。
+
+修复
+
+- 修复了启动时间输出，`readPipedStdin` 不再包含 `createAgentSessionRuntime` 的工作（[#4829](https://github.com/earendil-works/pi/issues/4829)）。
+- 修复了 OpenRouter DeepSeek V4 `xhigh` reasoning 元数据，保留 OpenRouter 原生的 effort 而非发送 DeepSeek 的 `max` effort（[#4801](https://github.com/earendil-works/pi/issues/4801)）。
+- 修复了自定义会话目录，使当前文件夹的 resume/continue 查找限定于当前 cwd，而 all-session 列表覆盖自定义目录。
+- 修复了 SIGTERM/SIGHUP 退出流程，运行扩展 `session_shutdown` 清理并恢复终端：信号触发的关闭现在在终端写入之前发出 `session_shutdown`，SIGHUP 不再硬退出，因此即使终端已消失，扩展资源（如 socket）也会被释放（[#5080](https://github.com/earendil-works/pi/issues/5080)）。
+- 修复了键盘协议协商，忽略不匹配或延迟的终端响应，避免误检测 Kitty 键盘协议（[#5091](https://github.com/earendil-works/pi/pull/5091)，感谢 [@mitsuhiko](https://github.com/mitsuhiko)）。
+- 修复了 MSYS2 ucrt64 Node.js 下 Windows 启动崩溃，通过更新原生剪贴板插件至 napi-rs 3.x（[#5028](https://github.com/earendil-works/pi/issues/5028)）。
+- 修复了 API Key 和 Header 配置解析：将普通字符串视为字面量，支持 `$ENV_VAR` / `${ENV_VAR}` 插值和 `$!` 转义，配置文件要求显式 env 语法，避免 Windows 大小写不敏感的 env 匹配破坏字面量 Key（[#5095](https://github.com/earendil-works/pi/issues/5095)）。
+- 修复了会话销毁流程，中止进行中的 agent、compaction、branch summary、retry 和 bash 工作（[#5029](https://github.com/earendil-works/pi/pull/5029)，感谢 [@TerminallyChilI](https://github.com/TerminallyChilI)）。
+- 修复了 `pi.getAllTools()`，暴露每个工具的 `promptGuidelines`，供需要按工具归因 guideline 的扩展使用（[#4879](https://github.com/earendil-works/pi/issues/4879)）。
+- 修复了从 Anthropic extended-thinking 会话切换到 OpenAI Codex Responses 后的回放问题，为转换的 thinking/text 块生成唯一的 fallback 消息项 ID（[#5148](https://github.com/earendil-works/pi/issues/5148)）。
+- 修复了返回空 thinking signature 的 Provider 的 Anthropic 兼容回放，新增可选的 `allowEmptySignature` 兼容性标志（[#4464](https://github.com/earendil-works/pi/issues/4464)）。
+- 修复了 OpenAI 和 OpenRouter GPT-5.5 Pro thinking level 元数据，仅暴露支持的 medium、high 和 xhigh efforts。
+- 修复了 OpenCode Go Kimi K2.6 thinking-off 请求，发送 `thinking: "none"`（[#5078](https://github.com/earendil-works/pi/issues/5078)）。
+- 修复了 Xiaomi Token Plan 模型元数据，省略不支持的 `mimo-v2-flash` 变体（[#5075](https://github.com/earendil-works/pi/issues/5075)）。
+- 修复了由 `agent_end` 扩展处理器排队的后续消息，确保在 agent 变为空闲之前排出（[#5115](https://github.com/earendil-works/pi/pull/5115)，感谢 [@DanielThomas](https://github.com/DanielThomas)）。
+- 修复了扩展输入事件，仅在流式处理期间实际排队的 Prompt 上报告 `streamingBehavior`（[#5107](https://github.com/earendil-works/pi/pull/5107)，感谢 [@DanielThomas](https://github.com/DanielThomas)）。
+- 修复了系统 Prompt 的工具选择指引，避免偏好不可用的文件探索工具（[#5132](https://github.com/earendil-works/pi/issues/5132)）。
+- 修复了 fenced `diff` 代码块及其他 highlight.js 作用域，在 `cli-highlight` 替换后保持感知主题的语法高亮颜色（[#5092](https://github.com/earendil-works/pi/issues/5092)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 新增 OpenAI Codex 订阅设备码登录作为可选的无头替代方案，同时保留浏览器登录为默认方式（[#4911](https://github.com/earendil-works/pi/pull/4911)，感谢 [@vegarsti](https://github.com/vegarsti)）。
+- 新增 Claude Opus 4.8 模型元数据（Anthropic），并更新 Opus adaptive-thinking 覆盖范围以使用它。
+
+修复
+
+- 修复了 OpenRouter DeepSeek V4 `xhigh` reasoning 元数据，保留 OpenRouter 原生的 effort 而非发送 DeepSeek 的 `max` effort（[#4801](https://github.com/earendil-works/pi/issues/4801)）。
+- 修复了从 Anthropic extended-thinking 会话切换到 OpenAI Codex Responses 后的回放问题，为转换的 thinking/text 块生成唯一的 fallback 消息项 ID（[#5148](https://github.com/earendil-works/pi/issues/5148)）。
+- 修复了返回空 thinking signature 的 Provider 的 Anthropic 兼容回放，新增可选的 `allowEmptySignature` 兼容性标志（[#4464](https://github.com/earendil-works/pi/issues/4464)）。
+- 修复了 OpenAI 和 OpenRouter GPT-5.5 Pro thinking level 元数据，仅暴露支持的 medium、high 和 xhigh efforts。
+- 修复了 OpenCode Go Kimi K2.6 thinking-off 请求，发送 `thinking: "none"`（[#5078](https://github.com/earendil-works/pi/issues/5078)）。
+- 修复了 Xiaomi Token Plan 模型元数据，省略不支持的 `mimo-v2-flash` 变体（[#5075](https://github.com/earendil-works/pi/issues/5075)）。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+不兼容变更
+
+- 将 agent harness 的 `model_select` 和 `thinking_level_select` 事件重命名为 `model_update` 和 `thinking_level_update`。
+
+新增
+
+- 新增 agent harness 工具注册表 API、`tools_update` 事件、分支级活跃工具持久化和重复工具验证。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+修复
+
+- 修复了键盘协议协商，忽略不匹配或延迟的终端响应，避免误检测 Kitty 键盘协议（[#5091](https://github.com/earendil-works/pi/pull/5091)，感谢 [@mitsuhiko](https://github.com/mitsuhiko)）。
+
+</details>
+
 ## v0.76.0（2026-05-27）
 
 <details>

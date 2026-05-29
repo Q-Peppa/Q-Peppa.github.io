@@ -107,8 +107,8 @@ export default defineConfig({
           text: 'Start here',
           items: [
             { text: 'Overview', link: '/docs/latest/' },
-            { text: 'Quickstart', link: '/docs/latest/quickstart', tag: 'updated' },
-            { text: 'Using Pi', link: '/docs/latest/usage' },
+            { text: 'Quickstart', link: '/docs/latest/quickstart' },
+            { text: 'Using Pi', link: '/docs/latest/usage', tag: 'updated' },
             { text: 'Providers', link: '/docs/latest/providers', tag: '推荐' },
             { text: 'Settings', link: '/docs/latest/settings' },
             { text: 'Keybindings', link: '/docs/latest/keybindings' },
@@ -137,10 +137,10 @@ export default defineConfig({
         {
           text: 'Programmatic Usage',
           items: [
-            { text: 'SDK', link: '/docs/latest/sdk', tag: 'updated' },
+            { text: 'SDK', link: '/docs/latest/sdk' },
             { text: 'RPC Mode', link: '/docs/latest/rpc' },
             { text: 'JSON Event Stream Mode', link: '/docs/latest/json' },
-            { text: 'TUI Components', link: '/docs/latest/tui', tag: 'updated' },
+            { text: 'TUI Components', link: '/docs/latest/tui' },
           ],
         },
         {
