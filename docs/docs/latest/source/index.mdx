@@ -1,0 +1,90 @@
+import { Steps, Callout } from '@rspress/core/theme';
+
+# 深入理解 Pi 源码
+
+> 本系列文档从架构设计、数据流、设计模式三个维度，带你深入理解 Pi Coding Agent 的运作机制。读完本系列后，你将掌握一个**生产级终端编码智能体**的完整实现。
+
+## 系列导航
+
+| 文档 | 内容 | 难度 |
+|------|------|------|
+| [前置知识与学习路径](prerequisites.md) | 需要掌握的技能栈、建议的阅读顺序、预期学习时间 | 入门 |
+| [环境搭建与调试](setup-and-debug.md) | 克隆源码、本地调试、断点调试、日志追踪 | 入门 |
+| [从终端到 TUI](cli-to-tui.md) | 输入 `pi` 后发生了什么：CLI 解析、服务组装、TUI 启动 | 进阶 |
+| [从输入到 LLM 循环](input-to-llm.md) | 用户输入文本 → 消息预处理 → Agent Loop → LLM 调用 → 工具执行 | 进阶 |
+| [核心架构与设计哲学](architecture.md) | Provider 抽象层、事件驱动架构、TUI 差异渲染、扩展系统 | 深入 |
+
+## 速览：Pi 是什么？
+
+Pi 是一个**终端 AI 编码智能体**（Terminal AI Coding Agent）。它的核心理念：
+
+```
+┌─────────────────────────────────────────────────┐
+│                  终端（Terminal）                  │
+│                                                   │
+│   ┌─────────┐    ┌──────────────┐    ┌─────────┐ │
+│   │  用户    │◄──►│   TUI 界面   │◄──►│  Agent  │ │
+│   │  输入    │    │  (编辑器/渲染) │    │  循环   │ │
+│   └─────────┘    └──────────────┘    └────┬────┘ │
+│                                           │      │
+│                                    ┌──────▼──────┐│
+│                                    │  LLM 提供商  ││
+│                                    │ (OpenAI 等)  ││
+│                                    └──────┬──────┘│
+│                                           │      │
+│                                    ┌──────▼──────┐│
+│                                    │  工具执行    ││
+│                                    │ read/write/  ││
+│                                    │ bash/edit    ││
+│                                    └─────────────┘│
+└─────────────────────────────────────────────────┘
+```
+
+### 四个核心包
+
+| 包名 | 职责 | 代码量 | 类比 |
+|------|------|--------|------|
+| **`pi-ai`** | 统一 LLM API，支持 30+ 提供商 | ~13K 行 | "数据库驱动层" |
+| **`pi-agent-core`** | 智能体运行时：工具调用、状态管理 | ~7K 行 | "ORM / 事务层" |
+| **`pi-coding-agent`** | CLI 入口 + 扩展 + 会话管理 | ~8K 行 | "应用层" |
+| **`pi-tui`** | 独立可复用的终端 UI 库 | ~23K 行 | "UI 框架" |
+
+### 核心数据流
+
+```
+用户输入
+  → AgentSession.prompt(text)         // 消息预处理
+  → Agent.prompt(messages)            // 启动 prompt
+  → runAgentLoop(messages, context)   // ★ 核心循环
+      → streamAssistantResponse()     // 调用 LLM，stream 回复
+      → executeToolCalls()            // 执行工具调用
+      → 将工具结果写入 context
+      → 循环直到 LLM 不再调用工具
+```
+
+## 为什么读这份文档？
+
+读完本系列，你将：
+
+1. **理解一个生产级编码智能体如何工作** — 不只是 demo，而是处理了边缘情况、错误恢复、性能优化的真实产品
+2. **掌握 LLM Agent 的核心模式** — Provider 抽象、事件驱动、流式处理、工具调用循环
+3. **学会终端 UI 的构建方法** — 差分渲染、ANSI 转义、Kitty 协议、IME 支持
+4. **能够独立扩展 Pi** — 写 Extension、Skill、Tool、Theme
+5. **获得调试大型 TypeScript 项目的实战经验**
+
+## 快速开始
+
+```bash
+# 1. 克隆源码
+git clone https://github.com/earendil-works/pi-mono.git
+cd pi-mono
+
+# 2. 安装依赖（不执行生命周期脚本）
+npm install --ignore-scripts
+
+# 3. 检查代码质量
+npm run check
+
+# 4. 直接运行源码（无需构建）
+node packages/coding-agent/src/cli.ts
+```

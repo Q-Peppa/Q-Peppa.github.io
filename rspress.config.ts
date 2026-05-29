@@ -159,6 +159,17 @@ export default defineConfig({
             { text: 'Development', link: '/docs/latest/development' },
           ],
         },
+        {
+          text: '源码深入',
+          items: [
+            { text: '概述', link: '/docs/latest/source/' },
+            { text: '前置知识与学习路径', link: '/docs/latest/source/prerequisites' },
+            { text: '环境搭建与调试', link: '/docs/latest/source/setup-and-debug' },
+            { text: '从终端到 TUI', link: '/docs/latest/source/cli-to-tui', tag: '核心' },
+            { text: '从输入到 LLM 循环', link: '/docs/latest/source/input-to-llm', tag: '核心' },
+            { text: '核心架构与设计哲学', link: '/docs/latest/source/architecture', tag: '深入' },
+          ],
+        },
       ],
     },
   },
