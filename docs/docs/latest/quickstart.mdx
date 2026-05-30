@@ -10,33 +10,7 @@ import { PackageManagerTabs } from '@rspress/core/theme';
 
 <PackageManagerTabs command="install -g @earendil-works/pi-coding-agent" />
 
-也可以通过 curl 安装（Linux/macOS）：
-
-```bash
-curl -fsSL https://pi.dev/install.sh | sh
-```
-
 `--ignore-scripts` 在安装期间禁用依赖生命周期脚本。Pi 的正常 npm 安装不需要安装脚本。
-
-### 卸载
-
-使用安装 Pi 的包管理器。curl 安装器使用全局 npm，因此 curl 和 npm 安装都可通过 npm 移除：
-
-```bash
-# curl 安装器 或 npm install -g
-npm uninstall -g @earendil-works/pi-coding-agent
-
-# pnpm
-pnpm remove -g @earendil-works/pi-coding-agent
-
-# Yarn
-yarn global remove @earendil-works/pi-coding-agent
-
-# Bun
-bun uninstall -g @earendil-works/pi-coding-agent
-```
-
-卸载 Pi 会保留 `~/.pi/agent/` 中的设置、凭据、会话和已安装的 Pi 包。
 
 然后在你希望运行的项目目录中启动 Pi：
 
@@ -70,7 +44,7 @@ pi
 
 或者运行 `/login` 选择一个 API Key Provider，Key 会被存储在 `~/.pi/agent/auth.json` 中。
 
-详细的 Provider 信息请参考 [Providers](providers.md)。
+所有支持的 Provider、环境变量和云 Provider 设置请参考 [Providers](providers.md)。
 
 ## 第一个会话
 
@@ -142,6 +116,7 @@ pi @src/app.ts @src/app.test.ts "Review these together"
 ```bash
 pi -c                  # 继续最近的会话
 pi -r                  # 浏览历史会话
+pi --name "my task"    # 启动时设置会话显示名称
 pi --session <path|id> # 打开特定会话
 ```
 

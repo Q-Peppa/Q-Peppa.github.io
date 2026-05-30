@@ -52,9 +52,9 @@ class MyInput implements Component, Focusable {
 1. 在组件上设置 `focused = true`
 2. 在渲染输出中扫描 `CURSOR_MARKER`（零宽度 APC 转义序列）
 3. 将硬件终端光标定位到该位置
-4. 显示硬件光标
+4. 仅在 `showHardwareCursor` 启用时显示硬件光标
 
-这使得 IME 候选窗口能够出现在正确位置，适用于中日韩输入法。内置的 `Editor` 和 `Input` 组件已实现此接口。
+光标默认隐藏。这保留了假光标渲染，同时仍然为通过隐藏光标追踪 IME 候选窗口的终端定位硬件光标。某些终端需要可见的硬件光标来进行 IME 定位；可以通过 `showHardwareCursor`、`setShowHardwareCursor(true)` 或 `PI_HARDWARE_CURSOR=1` 启用。
 
 ### 包含嵌入式输入的容器组件
 

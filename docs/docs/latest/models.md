@@ -108,7 +108,7 @@
     "my-google": {
       "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
       "api": "google-generative-ai",
-      "apiKey": "GEMINI_API_KEY",
+      "apiKey": "$GEMINI_API_KEY",
       "models": [
         {
           "id": "gemma-4-31b-it",
@@ -157,13 +157,22 @@
   "apiKey": "!security find-generic-password -ws 'anthropic'"
   "apiKey": "!op read 'op://vault/item/credential'"
   ```
-- **环境变量：** 使用命名变量的值
+- **环境变量插值：** `"$ENV_VAR"` 或 `"${ENV_VAR}"` 使用命名环境变量的值。插值可以在更大的字面值内工作。
   ```json
-  "apiKey": "MY_API_KEY"
+  { "type": "api_key", "key": "$MY_ANTHROPIC_KEY" }
+  { "type": "api_key", "key": "${KEY_PREFIX}_${KEY_SUFFIX}" }
   ```
+  `$FOO_BAR` 是变量 `FOO_BAR`；当 `BAR` 是字面文本时使用 `${FOO}_BAR`。缺少的环境变量会使值变为未解析状态。
 - **字面值：** 直接使用
   ```json
   "apiKey": "sk-..."
+  { "type": "api_key", "key": "public" }
+  ```
+- **转义：** `"$$"` 产生字面值 `"$"`；`"$!"` 产生字面值 `"!"` 而不触发命令执行。
+
+  ```json
+  { "type": "api_key", "key": "$$literal-dollar-prefix" }
+  { "type": "api_key", "key": "$!literal-bang-prefix" }
   ```
 
 对于 `models.json`，Shell 命令在请求时解析。Pi 有意不对任意命令应用内置 TTL、过期复用或恢复逻辑。不同的命令需要不同的缓存和失败策略，Pi 无法推断出正确策略。
@@ -172,6 +181,8 @@
 
 `/model` 可用性检查使用已配置的认证信息，不会执行 Shell 命令。
 
+旧版大写环境变量格式的值（如 `MY_API_KEY`）会在启动时自动迁移为 `$MY_API_KEY`。
+
 ### 自定义请求头
 
 ```json
@@ -179,10 +190,10 @@
   "providers": {
     "custom-proxy": {
       "baseUrl": "https://proxy.example.com/v1",
-      "apiKey": "MY_API_KEY",
+      "apiKey": "$MY_API_KEY",
       "api": "anthropic-messages",
       "headers": {
-        "x-portkey-api-key": "PORTKEY_API_KEY",
+        "x-portkey-api-key": "$PORTKEY_API_KEY",
         "x-secret": "!op read 'op://vault/item/secret'"
       },
       "models": [...]
@@ -275,7 +286,7 @@
   "providers": {
     "anthropic": {
       "baseUrl": "https://my-proxy.example.com/v1",
-      "apiKey": "ANTHROPIC_API_KEY",
+      "apiKey": "$ANTHROPIC_API_KEY",
       "api": "anthropic-messages",
       "models": [...]
     }
@@ -334,11 +345,12 @@
     "anthropic-proxy": {
       "baseUrl": "https://proxy.example.com",
       "api": "anthropic-messages",
-      "apiKey": "ANTHROPIC_PROXY_KEY",
+      "apiKey": "$ANTHROPIC_PROXY_KEY",
       "compat": {
         "supportsEagerToolInputStreaming": false,
         "supportsLongCacheRetention": true,
-        "forceAdaptiveThinking": true
+        "forceAdaptiveThinking": true,
+        "allowEmptySignature": true
       },
       "models": [
         {
@@ -359,6 +371,7 @@
 | `sendSessionAffinityHeaders` | 启用缓存后是否从会话 ID 发送 `x-session-affinity`。默认：对已知 Provider 自动检测 |
 | `supportsCacheControlOnTools` | Provider 是否接受工具定义上的 Anthropic 风格 `cache_control` 标记。默认：`true` |
 | `forceAdaptiveThinking` | 是否为此模型发送 adaptive thinking（`thinking.type: "adaptive"` 加 `output_config.effort`）。内置 adaptive 模型会自动设置。默认：`false` |
+| `allowEmptySignature` | 某些 Anthropic 兼容 Provider 会发出签名为空的 thinking 块，并在重放时仍然期望它们。仅在这些 Provider 上将 `allowEmptySignature` 设为 `true`；真正的 Anthropic 会拒绝空的 thinking 签名。默认：`false` |
 
 ## OpenAI 兼容性
 
@@ -412,7 +425,7 @@
   "providers": {
     "openrouter": {
       "baseUrl": "https://openrouter.ai/api/v1",
-      "apiKey": "OPENROUTER_API_KEY",
+      "apiKey": "$OPENROUTER_API_KEY",
       "api": "openai-completions",
       "models": [
         {

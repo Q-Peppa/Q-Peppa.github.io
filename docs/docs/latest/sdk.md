@@ -474,6 +474,7 @@ const { session } = await createAgentSession({ resourceLoader: loader });
 - 默认内置工具：`read`、`bash`、`edit`、`write`
 - `noTools: "all"` 禁用所有工具
 - `noTools: "builtin"` 禁用默认内置工具，同时保持扩展和自定义工具启用
+- `excludeTools` 在 `tools` 白名单应用后，禁用特定的内置、扩展或自定义工具名称
 
 `edit` 工具返回 `details.diff` 供 Pi 的 TUI 展示，以及 `details.patch` 作为标准统一补丁（unified patch）供 SDK 消费者使用。
 
@@ -488,6 +489,11 @@ const { session } = await createAgentSession({
 // 选择特定工具
 const { session } = await createAgentSession({
   tools: ["read", "bash", "grep"],
+});
+
+// 禁用某个工具，同时保留其他工具可用
+const { session } = await createAgentSession({
+  excludeTools: ["ask_question"],
 });
 ```
 

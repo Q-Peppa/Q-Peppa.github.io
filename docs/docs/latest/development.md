@@ -2,7 +2,7 @@
 
 > 本页面是 [Pi 官方文档](https://pi.dev/docs/latest/development) 的中文翻译。仅供学习参考。
 
-请参阅 [AGENTS.md](https://github.com/earendil-works/pi/blob/main/AGENTS.md) 获取更多指南。
+请参阅 [AGENTS.md](https://github.com/earendil-works/pi-mono/blob/main/AGENTS.md) 获取更多指南。
 
 ## 设置
 

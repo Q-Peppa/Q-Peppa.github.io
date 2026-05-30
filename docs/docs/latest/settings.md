@@ -42,13 +42,13 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 |--------|------|--------|------|
 | `theme` | string | `"dark"` | 主题名称（`"dark"`、`"light"` 或自定义） |
 | `quietStartup` | boolean | `false` | 隐藏启动头部 |
-| `collapseChangelog` | boolean | `false` | 更新后显示折叠的 changelog |
-| `enableInstallTelemetry` | boolean | `true` | 首次安装或检测到更新时发送匿名安装/更新版本 ping。这不控制更新检查 |
+| `collapseChangelog` | boolean | `false` | 更新后显示精简的 changelog |
+| `enableInstallTelemetry` | boolean | `true` | 首次安装或 changelog 检测到更新时发送匿名安装/更新版本 ping。这不控制更新检查 |
 | `doubleEscapeAction` | string | `"tree"` | 双击 Esc 的行为：`"tree"`、`"fork"` 或 `"none"` |
 | `treeFilterMode` | string | `"default"` | `/tree` 的默认过滤器：`"default"`、`"no-tools"`、`"user-only"`、`"labeled-only"`、`"all"` |
 | `editorPaddingX` | number | `0` | 编辑器水平内边距（0-3） |
 | `autocompleteMaxVisible` | number | `5` | 自动补全下拉框最大可见项（3-20） |
-| `showHardwareCursor` | boolean | `false` | 显示终端硬件光标 |
+| `showHardwareCursor` | boolean | `false` | TUI 为 IME 输入法定位时显示终端硬件光标 |
 
 ### 遥测和更新检查
 
@@ -131,7 +131,9 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 |--------|------|--------|------|
 | `steeringMode` | string | `"one-at-a-time"` | Steering 消息投递方式：`"all"` 或 `"one-at-a-time"` |
 | `followUpMode` | string | `"one-at-a-time"` | Follow-up 消息投递方式：`"all"` 或 `"one-at-a-time"` |
-| `transport` | string | `"sse"` | 支持多种传输的 Provider 的首选传输方式：`"sse"`、`"websocket"` 或 `"auto"` |
+| `transport` | string | `"auto"` | 支持多种传输的 Provider 的首选传输方式：`"sse"`、`"websocket"`、`"websocket-cached"` 或 `"auto"` |
+| `httpIdleTimeoutMs` | number | `300000` | HTTP 头部/正文空闲超时（毫秒），也用于具有显式流空闲超时的 Provider。设为 0 禁用 |
+| `websocketConnectTimeoutMs` | number | `15000` | WebSocket 连接/握手超时（毫秒），用于支持 WebSocket 传输的 Provider。设为 0 禁用 |
 
 ### 终端和图像
 
@@ -262,18 +264,18 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 项目设置（`.pi/settings.json`）覆盖全局设置。嵌套对象会合并：
 
 ```json
-// ~/.pi/agent/settings.json（全局）
+// ~/.pi/agent/settings.json (global)
 {
   "theme": "dark",
   "compaction": { "enabled": true, "reserveTokens": 16384 }
 }
 
-// .pi/settings.json（项目）
+// .pi/settings.json (project)
 {
   "compaction": { "reserveTokens": 8192 }
 }
 
-// 结果
+// Result
 {
   "theme": "dark",
   "compaction": { "enabled": true, "reserveTokens": 8192 }

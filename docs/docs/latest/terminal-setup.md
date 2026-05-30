@@ -2,7 +2,7 @@
 
 > 本页面是 [Pi 官方文档](https://pi.dev/docs/latest/terminal-setup) 的中文翻译。仅供学习参考。
 
-Pi 使用 **Kitty keyboard protocol** 进行可靠的修饰键检测。大多数现代终端支持此协议，但某些需要配置更改。
+Pi 使用 [Kitty 键盘协议](https://sw.kovidgoyal.net/kitty/keyboard-protocol/) 进行可靠的修饰键检测。大多数现代终端支持此协议，但某些需要配置更改。
 
 ## Kitty、iTerm2
 
@@ -30,7 +30,7 @@ keybind = shift+enter=text:\n
 
 该映射发送原始的换行符字节。在 Pi 内部，这与 `Ctrl+J` 无法区分，因此 tmux 和 Pi 不再看到真正的 `shift+enter` 按键事件。
 
-如果仅为 Claude Code 2.x+ 添加的该映射，可以删除。如果你希望在 tmux 中通过此重映射让 `Shift+Enter` 继续工作，请在 `~/.pi/agent/keybindings.json` 中将 `ctrl+j` 添加到 pi 的 `newLine` 快捷键中：
+如果仅为 Claude Code 2.x+ 添加的该映射，可以删除，除非你想在 tmux 中使用 Claude Code，它仍然需要该 Ghostty 映射。如果你希望在 tmux 中通过此重映射让 `Shift+Enter` 继续工作，请在 `~/.pi/agent/keybindings.json` 中将 `ctrl+j` 添加到 pi 的 `newLine` 快捷键中：
 
 ```json
 {
@@ -48,6 +48,8 @@ local config = wezterm.config_builder()
 config.enable_kitty_keyboard = true
 return config
 ```
+
+在 WSL 上，WezTerm 可能需要可见的硬件光标来定位 IME 候选窗口。如果中日韩 IME 候选不跟随文本光标，请在运行 Pi 前设置 `PI_HARDWARE_CURSOR=1` 或在设置中将 `showHardwareCursor` 设为 `true`。
 
 ## VS Code（集成终端）
 

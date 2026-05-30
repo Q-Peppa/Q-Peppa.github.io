@@ -45,7 +45,7 @@ export default function (pi: ExtensionAPI) {
   pi.registerProvider("my-provider", {
     name: "My Provider",
     baseUrl: "https://api.example.com",
-    apiKey: "MY_API_KEY",
+    apiKey: "$MY_API_KEY",
     api: "openai-completions",
     models: [
       {
@@ -85,7 +85,7 @@ pi.registerProvider("openai", {
 pi.registerProvider("google", {
   baseUrl: "https://ai-gateway.corp.com/google",
   headers: {
-    "X-Corp-Auth": "CORP_AUTH_TOKEN"  // 环境变量名或字面值
+    "X-Corp-Auth": "$CORP_AUTH_TOKEN"  // 环境变量引用或字面值
   }
 });
 ```
@@ -114,7 +114,7 @@ export default async function (pi: ExtensionAPI) {
 
   pi.registerProvider("local-openai", {
     baseUrl: "http://localhost:1234/v1",
-    apiKey: "LOCAL_OPENAI_API_KEY",
+    apiKey: "$LOCAL_OPENAI_API_KEY",
     api: "openai-completions",
     models: payload.data.map((model) => ({
       id: model.id,
@@ -134,7 +134,7 @@ export default async function (pi: ExtensionAPI) {
 ```typescript
 pi.registerProvider("my-llm", {
   baseUrl: "https://api.my-llm.com/v1",
-  apiKey: "MY_LLM_API_KEY",  // 环境变量名或字面值
+  apiKey: "$MY_LLM_API_KEY",  // 环境变量引用
   api: "openai-completions",  // 使用的流式 API
   models: [
     {
@@ -157,6 +157,8 @@ pi.registerProvider("my-llm", {
 
 当提供 `models` 时，它会**替换**该 Provider 的所有现有模型。
 
+`apiKey` 和自定义请求头值使用与 `models.json` 相同的配置值语法：开头的 `!command` 将整个值作为命令执行，`$ENV_VAR` 和 `${ENV_VAR}` 插值环境变量，`$$` 产生字面值 `$`，`$!` 产生字面值 `!`。
+
 ## 卸载 Provider
 
 使用 `pi.unregisterProvider(name)` 移除之前通过 `pi.registerProvider(name, ...)` 注册的 Provider：
@@ -165,7 +167,7 @@ pi.registerProvider("my-llm", {
 // 注册
 pi.registerProvider("my-llm", {
   baseUrl: "https://api.my-llm.com/v1",
-  apiKey: "MY_LLM_API_KEY",
+  apiKey: "$MY_LLM_API_KEY",
   api: "openai-completions",
   models: [
     {
@@ -229,10 +231,10 @@ models: [{
 }]
 ```
 
-使用 `openrouter` 实现 OpenRouter 风格的 `reasoning: { effort }` 控制。使用 `together` 实现 Together 风格的 `reasoning: { enabled }` 控制；配合 `supportsReasoningEffort` 时还会发送 `reasoning_effort`。使用 `qwen-chat-template` 用于读取 `chat_template_kwargs.enable_thinking` 的本地 Qwen 兼容服务器。
+使用 `openrouter` 实现 OpenRouter 风格的 `reasoning: { effort }` 控制。使用 `deepseek` 实现 DeepSeek 风格的 `thinking: { type: "enabled" | "disabled" }` 控制，启用时还会发送 `reasoning_effort`。使用 `together` 实现 Together 风格的 `reasoning: { enabled }` 控制；配合 `supportsReasoningEffort` 时还会发送 `reasoning_effort`。使用 `qwen-chat-template` 用于读取 `chat_template_kwargs.enable_thinking` 的本地 Qwen 兼容服务器。
 使用 `cacheControlFormat: "anthropic"` 为兼容 OpenAI 的 Provider 启用 Anthropic 风格提示缓存，通过 `cache_control` 标记应用于系统提示、最后一个工具定义和最后一个用户/助手文本内容。
 
-对于使用 `api: "anthropic-messages"` 的 Anthropic 兼容 Provider，对上游模型需要 adaptive thinking（`thinking.type: "adaptive"` 加 `output_config.effort`）的模型或 Provider 设置 `compat.forceAdaptiveThinking: true`。内置的 adaptive Claude 模型会自动设置此项。
+对于使用 `api: "anthropic-messages"` 的 Anthropic 兼容 Provider，对上游模型需要 adaptive thinking（`thinking.type: "adaptive"` 加 `output_config.effort`）的模型或 Provider 设置 `compat.forceAdaptiveThinking: true`。内置的 adaptive Claude 模型会自动设置此项。仅对产生空思考签名并在重放时期望 `signature: ""` 的 Provider 设置 `compat.allowEmptySignature: true`。
 
 > 迁移说明：Mistral 已从 `openai-completions` 迁移到 `mistral-conversations`。
 > 原生 Mistral 模型请使用 `mistral-conversations`。
@@ -245,7 +247,7 @@ models: [{
 ```typescript
 pi.registerProvider("custom-api", {
   baseUrl: "https://api.example.com",
-  apiKey: "MY_API_KEY",
+  apiKey: "$MY_API_KEY",
   authHeader: true,  // 添加 Authorization: Bearer 请求头
   api: "openai-completions",
   models: [...]
@@ -594,7 +596,7 @@ export default function (pi: ExtensionAPI) {
 ```typescript
 pi.registerProvider("my-provider", {
   baseUrl: "https://api.example.com",
-  apiKey: "MY_API_KEY",
+  apiKey: "$MY_API_KEY",
   api: "my-custom-api",
   models: [...],
   streamSimple: streamMyProvider
@@ -631,7 +633,7 @@ interface ProviderConfig {
   /** API 端点 URL。定义模型时需要。 */
   baseUrl?: string;
 
-  /** API 密钥或环境变量名称。定义模型时需要（除非使用 oauth）。 */
+  /** API 密钥、环境变量插值（$ENV_VAR 或 ${ENV_VAR}）或 !command。定义模型时需要（除非使用 oauth）。 */
   apiKey?: string;
 
   /** 流式传输的 API 类型。定义模型时需要在 Provider 或模型级别指定。 */
@@ -727,6 +729,7 @@ interface ProviderModelConfig {
     sendSessionAffinityHeaders?: boolean;
     supportsCacheControlOnTools?: boolean;
     forceAdaptiveThinking?: boolean;
+    allowEmptySignature?: boolean;
   };
 }
 ```

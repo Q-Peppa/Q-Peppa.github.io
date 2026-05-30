@@ -15,6 +15,7 @@ pi --mode rpc [options]
 常用选项：
 - `--provider <name>`: 设置 LLM Provider（anthropic、openai、google 等）
 - `--model <pattern>`: 模型模式或 ID（支持 `provider/id` 和可选的 `:<thinking>`）
+- `--name <name>` / `-n <name>`: 启动时设置会话显示名称
 - `--no-session`: 禁用会话持久化
 - `--session-dir <path>`: 自定义会话存储目录
 
@@ -696,7 +697,7 @@ drwxr-xr-x ...
 }
 ```
 
-当前会话名称可通过 `get_state` 的 `sessionName` 字段获取。
+当前会话名称可通过 `get_state` 的 `sessionName` 字段获取。要在启动 RPC 模式时设置初始名称，请向 `pi --mode rpc` 进程传递 `--name <name>` 或 `-n <name>`。
 
 ### 命令
 

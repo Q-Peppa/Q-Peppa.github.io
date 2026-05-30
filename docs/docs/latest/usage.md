@@ -10,8 +10,8 @@
 
 交互界面分为四个主要区域：
 
-- **启动头部（Startup header）** —— 显示快捷键、已加载的上下文文件、Prompt 模板、Skills 和扩展
-- **消息区域（Messages）** —— 用户消息、助手回复、工具调用、工具结果、通知、错误和扩展 UI
+- **启动栏（Startup header）** —— 显示快捷键、已加载的上下文文件、Prompt 模板、Skills 和扩展
+- **消息区域（Messages）** —— 用户消息、助手回复、tool call、工具结果、通知、错误和扩展 UI
 - **编辑器（Editor）** —— 输入区域，边框颜色反映当前 thinking level
 - **底部栏（Footer）** —— 显示工作目录、会话名称、Token/缓存使用、成本、上下文使用量和当前模型
 
@@ -61,14 +61,14 @@
 
 在 Agent 仍在工作时可以提交消息：
 
-- **Enter** 将 steering 消息加入队列，在当前助手回合完成工具调用后投递。
-- **Alt+Enter** 将 follow-up 消息加入队列，在 Agent 完成所有工作后投递。
+- **Enter** 将 steering 消息加入队列，在当前助手回合完成 tool call 后送达。
+- **Alt+Enter** 将 follow-up 消息加入队列，在 Agent 完成所有工作后送达。
 - **Escape** 中断并将队列消息恢复到编辑器。
 - **Alt+Up** 将队列消息取回编辑器。
 
 在 Windows Terminal 上，Alt+Enter 默认为全屏。如要使 Pi 接收到该快捷键，请按照 [Terminal 设置](terminal-setup.md) 中的描述重新映射。
 
-投递行为可通过 [Settings](settings.md) 中的 `steeringMode` 和 `followUpMode` 配置。
+送达行为可通过 [Settings](settings.md) 中的 `steeringMode` 和 `followUpMode` 配置。
 
 ## 会话（Sessions）
 
@@ -135,7 +135,7 @@ pi list                      # 列出已安装的包
 pi config                    # 启用/禁用包资源
 ```
 
-这些命令管理 Pi 包，而非 Pi CLI 安装本身。要卸载 Pi 本身，请参阅 [Quickstart](quickstart.mdx#卸载)。
+这些命令管理 Pi 包，而非 Pi CLI 安装本身。要卸载 Pi 本身，请参阅 [Quickstart](quickstart)。
 
 包来源和安全说明请参阅 [Pi Packages](packages.md)。
 
@@ -278,7 +278,7 @@ pi --exclude-tools ask_question
 
 ## 设计原则
 
-Pi 将核心保持小巧，将工作流特定的行为推到扩展、Skills、Prompt 模板和包中。
+Pi 将核心保持小巧，将工作流特定的行为下放到扩展、Skills、Prompt 模板和包中。
 
 它有意不包含内置的 MCP、子 Agent、权限弹窗、Plan 模式、待办事项或后台 Bash。你可以将工作流作为扩展或包来构建或安装，或使用外部工具如容器和 tmux。
 

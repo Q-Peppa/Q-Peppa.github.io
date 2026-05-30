@@ -47,41 +47,41 @@ pi
 - **Prefix**: `/data/data/com.termux/files/usr`
 - **Shared storage**: `/storage/emulated/0`（Downloads、Documents 等）
 
-## 打开 URL
+## Opening URLs
 ```bash
 termux-open-url "https://example.com"
 ```
 
-## 打开文件
+## Opening Files
 ```bash
 termux-open file.pdf              # 使用默认应用打开
 termux-open --chooser image.jpg   # 选择应用
 ```
 
-## 剪贴板
+## Clipboard
 ```bash
 termux-clipboard-set "text"   # 复制
 termux-clipboard-get          # 粘贴
 ```
 
-## 通知
+## Notifications
 ```bash
 termux-notification -t "Title" -c "Content"
 ```
 
-## 设备信息
+## Device Info
 ```bash
 termux-battery-status         # 电池信息
 termux-wifi-connectioninfo    # WiFi 信息
 termux-telephony-deviceinfo   # 设备信息
 ```
 
-## 分享
+## Sharing
 ```bash
 termux-share -a send file.txt # 分享文件
 ```
 
-## 其他有用命令
+## Other Useful Commands
 ```bash
 termux-toast "message"        # 快速 Toast 弹窗
 termux-vibrate                # 震动设备
@@ -89,7 +89,7 @@ termux-tts-speak "hello"      # 文字转语音
 termux-camera-photo out.jpg   # 拍照
 ```
 
-## 注意
+## Notes
 - 需要安装 Termux:API 应用才能使用 `termux-*` 命令
 - 使用 `pkg install termux-api` 安装命令行工具
 - 访问 `/storage/emulated/0` 需要存储权限

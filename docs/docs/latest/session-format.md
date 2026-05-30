@@ -1,4 +1,4 @@
-# Session Format（会话格式）
+# Session File Format（会话文件格式）
 
 > 本页面是 [Pi 官方文档](https://pi.dev/docs/latest/session-format) 的中文翻译。仅供学习参考。
 

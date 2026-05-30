@@ -105,21 +105,27 @@ pi
 
 ### Key 解析
 
-`key` 字段支持三种格式：
+`key` 字段支持命令执行、环境变量插值和字面值：
 
-- **Shell 命令：** `"!command"` 执行命令并使用 stdout（进程生命周期内缓存）
+- **Shell 命令：** `"!command"` 在开头时将**整个值**作为命令执行，并使用其 stdout 作为值。命令在进程生命周期内只运行一次（非每次请求），结果会被缓存。
   ```json
   { "type": "api_key", "key": "!security find-generic-password -ws 'anthropic'" }
   { "type": "api_key", "key": "!op read 'op://vault/item/credential'" }
   ```
-- **环境变量：** 使用命名变量的值
+- **环境变量插值：** `"$ENV_VAR"` 或 `"${ENV_VAR}"` 使用命名环境变量的值。插值可以在更大的字面值内工作。
   ```json
-  { "type": "api_key", "key": "MY_ANTHROPIC_KEY" }
+  { "type": "api_key", "key": "$MY_ANTHROPIC_KEY" }
+  { "type": "api_key", "key": "${KEY_PREFIX}_${KEY_SUFFIX}" }
   ```
-- **字面值：** 直接使用
+  `$FOO_BAR` 是变量 `FOO_BAR`；当 `BAR` 是字面文本时使用 `${FOO}_BAR`。缺少的环境变量会使值变为未解析状态。
+- **转义：** `"$$"` 产生字面值 `"$"`；`"$!"` 产生字面值 `"!"` 而不触发命令执行。
   ```json
-  { "type": "api_key", "key": "sk-ant-..." }
+  { "type": "api_key", "key": "$$literal-dollar-prefix" }
+  { "type": "api_key", "key": "$!literal-bang-prefix" }
   ```
+- **字面值：** 其他任何值都是普通字符串。`"public"` 是用于不需要认证的 Provider 的有效字面值 API Key。
+
+旧版大写环境变量格式的值（如 `MY_API_KEY`）会在启动时自动迁移为 `$MY_API_KEY`。
 
 OAuth 凭证在使用 `/login` 后也会存储在这里，并自动管理。
 
