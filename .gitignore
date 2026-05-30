@@ -13,3 +13,6 @@ doc_build/
 !.vscode/extensions.json
 .idea
 docs/docs/latest/cdn-setup.md
+
+# Wrangler cache
+.wrangler

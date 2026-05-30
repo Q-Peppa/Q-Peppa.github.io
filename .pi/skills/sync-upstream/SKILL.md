@@ -8,7 +8,10 @@ description: >-
 
 # 同步源站（Sync Upstream）
 
-对 `/home/demo/projects/Q-Peppa.github.io`（中文翻译站）与 `/home/demo/pi-repo`（源站英文文档）进行双向同步，涵盖**新闻页面更新**和**翻译文档同步与审核**。
+对翻译站（当前项目）与 `../pi-repo`（源站英文文档）进行双向同步，涵盖**新闻页面更新**和**翻译文档同步与审核**。
+
+> **目录约定**：本 Skill 假设 `pi-repo` 与翻译站是同级目录。
+> 如果你的布局不同，请调整 `../pi-repo` 为实际相对路径。
 
 ---
 
@@ -16,65 +19,50 @@ description: >-
 
 | 项目 | 路径 |
 |------|------|
-| 翻译站根目录 | `/home/demo/projects/Q-Peppa.github.io` |
-| 翻译站文档 | `/home/demo/projects/Q-Peppa.github.io/docs/docs/latest/` |
-| 翻译站新闻页 | `/home/demo/projects/Q-Peppa.github.io/docs/news.md` |
-| 翻译站配置 | `/home/demo/projects/Q-Peppa.github.io/rspress.config.ts` |
-| 翻译站图片 | `/home/demo/projects/Q-Peppa.github.io/docs/public/images/` |
-| 源站根目录 | `/home/demo/pi-repo` |
-| 源站文档 | `/home/demo/pi-repo/packages/coding-agent/docs/` |
-| 源站图片 | `/home/demo/pi-repo/packages/coding-agent/docs/images/` |
+| 翻译站根目录 | `.`（当前项目根目录） |
+| 翻译站文档 | `./docs/docs/latest/` |
+| 翻译站新闻页 | `./docs/news.md` |
+| 翻译站配置 | `./rspress.config.ts` |
+| 翻译站图片 | `./docs/public/images/` |
+| 源站根目录 | `../pi-repo` |
+| 源站文档 | `../pi-repo/packages/coding-agent/docs/` |
+| 源站图片 | `../pi-repo/packages/coding-agent/docs/images/` |
 | 源站 git remote | `https://github.com/earendil-works/pi.git`（`origin/main`） |
-| 源站克隆方式 | 浅克隆（`--depth 1`），需先 `git pull` 再对比 |
 
 源站各包 CHANGELOG：
 
 | 包 | 路径 |
 |----|------|
-| coding-agent | `/home/demo/pi-repo/packages/coding-agent/CHANGELOG.md` |
-| ai | `/home/demo/pi-repo/packages/ai/CHANGELOG.md` |
-| agent | `/home/demo/pi-repo/packages/agent/CHANGELOG.md` |
-| tui | `/home/demo/pi-repo/packages/tui/CHANGELOG.md` |
+| coding-agent | `../pi-repo/packages/coding-agent/CHANGELOG.md` |
+| ai | `../pi-repo/packages/ai/CHANGELOG.md` |
+| agent | `../pi-repo/packages/agent/CHANGELOG.md` |
+| tui | `../pi-repo/packages/tui/CHANGELOG.md` |
 
 ---
 
 ## 前置：拉取源站最新代码
 
-> 源站是浅克隆（`--depth 1`），每次操作前先拉取最新内容。
-
-### 普通更新（保持浅克隆）
+> 源站是完全克隆（非浅克隆），每次操作前先 `git pull` 拉取最新内容。
 
 ```bash
-cd /home/demo/pi-repo
-git pull --rebase --depth 1
+cd ../pi-repo
+git pull --rebase
 ```
-
-### 如果首次深度拉取或遇到冲突
-
-转为完整克隆（只做一次）：
-
-```bash
-cd /home/demo/pi-repo
-git fetch --unshallow
-git pull
-```
-
-之后每次只需 `git pull` 即可。
 
 ### 如果 `git pull` 报错
 
 可能是本地做了修改导致冲突，先重置再拉：
 
 ```bash
-cd /home/demo/pi-repo
+cd ../pi-repo
 git stash
-git pull --rebase --depth 1
+git pull --rebase
 ```
 
 ### 检查是否有更新
 
 ```bash
-cd /home/demo/pi-repo
+cd ../pi-repo
 git log --oneline HEAD..origin/main 2>/dev/null | head -5
 ```
 
@@ -94,12 +82,12 @@ git log --oneline HEAD..origin/main 2>/dev/null | head -5
 
 ```bash
 # 查看最新版本
-head -30 /home/demo/pi-repo/packages/coding-agent/CHANGELOG.md
+head -30 ../pi-repo/packages/coding-agent/CHANGELOG.md
 
 # 对比其他子包
-head -15 /home/demo/pi-repo/packages/ai/CHANGELOG.md
-head -15 /home/demo/pi-repo/packages/agent/CHANGELOG.md
-head -15 /home/demo/pi-repo/packages/tui/CHANGELOG.md
+head -15 ../pi-repo/packages/ai/CHANGELOG.md
+head -15 ../pi-repo/packages/agent/CHANGELOG.md
+head -15 ../pi-repo/packages/tui/CHANGELOG.md
 ```
 
 ### 第 2 步：提取新增版本的变更内容
@@ -107,7 +95,7 @@ head -15 /home/demo/pi-repo/packages/tui/CHANGELOG.md
 ```bash
 # 一次性提取指定版本的变更（示例：0.75.5）
 for pkg in coding-agent ai agent tui; do
-  file="/home/demo/pi-repo/packages/$pkg/CHANGELOG.md"
+  file="../pi-repo/packages/$pkg/CHANGELOG.md"
   echo "=== $pkg ==="
   awk -v ver="0.75.5" '
     $0 ~ "^## \\[" ver "\\]" { found=1; next }
@@ -199,11 +187,11 @@ done
 
 ```bash
 # 源站文档列表
-ls -1 /home/demo/pi-repo/packages/coding-agent/docs/*.md | xargs -I{} basename {} | sort
+ls -1 ../pi-repo/packages/coding-agent/docs/*.md | xargs -I{} basename {} | sort
 
 # 翻译站文档列表
-ls -1 /home/demo/projects/Q-Peppa.github.io/docs/docs/latest/*.md \
-  /home/demo/projects/Q-Peppa.github.io/docs/docs/latest/*.mdx 2>/dev/null \
+ls -1 ./docs/docs/latest/*.md \
+  ./docs/docs/latest/*.mdx 2>/dev/null \
   | xargs -I{} basename {} | sort
 ```
 
@@ -218,12 +206,12 @@ ls -1 /home/demo/projects/Q-Peppa.github.io/docs/docs/latest/*.md \
 ```bash
 # 源站行数
 echo "=== 源站 ==="
-wc -l /home/demo/pi-repo/packages/coding-agent/docs/*.md | sort -n
+wc -l ../pi-repo/packages/coding-agent/docs/*.md | sort -n
 
 echo ""
 echo "=== 翻译站 ==="
-wc -l /home/demo/projects/Q-Peppa.github.io/docs/docs/latest/*.md \
-  /home/demo/projects/Q-Peppa.github.io/docs/docs/latest/*.mdx 2>/dev/null | sort -n
+wc -l ./docs/docs/latest/*.md \
+  ./docs/docs/latest/*.mdx 2>/dev/null | sort -n
 ```
 
 **检查要点：**
@@ -309,7 +297,7 @@ wc -l /home/demo/projects/Q-Peppa.github.io/docs/docs/latest/*.md \
 1. 用 `edit` 工具更新翻译站文件
 2. 如果是新增文件，用 `write` 工具创建
 3. 如需新增或修改图片：
-   - 从 `/home/demo/pi-repo/packages/coding-agent/docs/images/` 复制到 `/home/demo/projects/Q-Peppa.github.io/docs/public/images/`
+   - 从 `../pi-repo/packages/coding-agent/docs/images/` 复制到 `./docs/public/images/`
 
 ---
 
@@ -318,7 +306,7 @@ wc -l /home/demo/projects/Q-Peppa.github.io/docs/docs/latest/*.md \
 修改完成后，务必构建验证：
 
 ```bash
-cd /home/demo/projects/Q-Peppa.github.io
+cd .
 pnpm run build
 ```
 
@@ -326,10 +314,31 @@ pnpm run build
 
 ---
 
+## 最后：提交并推送
+
+构建验证通过后，将变更提交并推送到远程仓库：
+
+```bash
+git add -A
+git commit -m "sync: 同步源站文档更新"
+git push
+```
+
+如有更具体的变更内容，建议编写更有意义的 commit message：
+
+```bash
+git add -A
+git commit
+# 在编辑器中编写详细的 commit message
+git push
+```
+
+---
+
 ## 工作流快捷键
 
 | 只看这个 | 运行以下 |
 |----------|---------|
-| 只更新新闻 | 执行前置拉取 → 执行 A 部分 |
-| 只审核翻译 | 执行前置拉取 → 执行 B 部分 |
-| 全部同步 | 执行前置拉取 → A → B → 构建 |
+| 只更新新闻 | 执行前置拉取 → 执行 A 部分 → 构建验证 → 提交推送 |
+| 只审核翻译 | 执行前置拉取 → 执行 B 部分 → 构建验证 → 提交推送 |
+| 全部同步 | 执行前置拉取 → A → B → 构建验证 → 提交推送 |
