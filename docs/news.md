@@ -2,6 +2,71 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.78.0（2026-05-29）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **命名启动会话** — `--name` / `-n` 可在交互、打印、JSON 和 RPC 模式下于启动前设置会话显示名称。参见 [命名会话](/docs/latest/sessions#naming-sessions) 和 [会话选项](/docs/latest/usage#session-options)。
+- **可点击的文件工具路径** — 内置文件工具的标题在终端支持时会渲染 OSC 8 `file://` 超链接，包括支持的 tmux 客户端。
+
+新增
+
+- 为扩展作者导出了 `convertToPng`（[\#5167](https://github.com/earendil-works/pi-mono/pull/5167)，感谢 [@xl0](https://github.com/xl0)）。
+- 为扩展作者导出了 `parseArgs` 和类型 `Args`（[\#5202](https://github.com/earendil-works/pi-mono/pull/5202)，感谢 [@xl0](https://github.com/xl0)）。
+- 添加了 `--name` / `-n` 以在启动时设置会话显示名称（[\#5153](https://github.com/earendil-works/pi-mono/issues/5153)）。
+- 退出交互会话时添加了 resume 命令提示（[\#5176](https://github.com/earendil-works/pi-mono/pull/5176)，感谢 [@yzhg1983](https://github.com/yzhg1983)）。
+- 内置文件工具标题中的文件路径添加了 OSC 8 `file://` 超链接（[\#5189](https://github.com/earendil-works/pi-mono/pull/5189)，感谢 [@mpazik](https://github.com/mpazik)）。
+- 添加了自定义 Amazon Bedrock 请求头支持，继承自 `@earendil-works/pi-ai`（[\#5178](https://github.com/earendil-works/pi-mono/pull/5178)，感谢 [@stephanmck](https://github.com/stephanmck)）。
+
+修复
+
+- 澄清了 WezTerm/WSL IME 硬件光标文档，说明光标可见性仍是可选的（[\#5200](https://github.com/earendil-works/pi-mono/issues/5200)）。
+- 修复了 GitLab Duo 自定义 Provider 示例，使其对 Claude 模型使用 adaptive thinking、暴露 xhigh thinking 并包含更新的已验证模型 ID（[\#5201](https://github.com/earendil-works/pi-mono/issues/5201)）。
+- 修复了 Bun 发布归档的创建流程，确保安装并复制匹配的 `@mariozechner/clipboard` 基础包和原生 sidecar（[\#5184](https://github.com/earendil-works/pi-mono/issues/5184)）。
+- 修复了提示循环启动前输入的早期交互输入被丢弃的问题，现改为缓冲处理（[\#5195](https://github.com/earendil-works/pi-mono/pull/5195)，感谢 [@yzhg1983](https://github.com/yzhg1983)）。
+- 修复了 OpenRouter Moonshot Kimi K2.6 请求使用 `system` 而非不支持的 `developer` 消息（[\#5159](https://github.com/earendil-works/pi-mono/issues/5159)）。
+- 修复了 OpenCode Go Kimi K2.6 thinking 请求发送 `thinking` 对象而非无效字符串值，并修复了 OpenCode Zen Grok Build thinking 请求省略不支持的 `reasoning_effort`（[\#5169](https://github.com/earendil-works/pi-mono/issues/5169)）。
+- 修复了 OpenAI Codex Responses SSE 流，在终端事件后中止响应体读取。
+- 修复了 OpenCode Kimi K2.6 生成的元数据，使用 Anthropic 风格的 thinking 元数据而非无效的 reasoning-effort 参数。
+- 修复了 OSC 8 超链接在客户端支持时通过 tmux 传递（[\#5189](https://github.com/earendil-works/pi-mono/pull/5189)，感谢 [@mpazik](https://github.com/mpazik)）。
+- 修复了 ANSI 文本换行，避免超长换行时发生栈溢出（[\#5185](https://github.com/earendil-works/pi-mono/issues/5185)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+不兼容变更
+
+- 更改了直接 Provider 流函数，要求显式传入 `options.apiKey`；顶层 `stream*`/`complete*` 辅助函数仍保留内置环境认证。
+
+新增
+
+- 通过 `StreamOptions.headers` 添加了自定义 Amazon Bedrock 请求头支持，排除了保留的 AWS 签名头（[\#5178](https://github.com/earendil-works/pi-mono/pull/5178)，感谢 [@stephanmck](https://github.com/stephanmck)）。
+
+修复
+
+- 修复了 OpenRouter Moonshot Kimi K2.6 请求使用 `system` 而非不支持的 `developer` 消息（[\#5159](https://github.com/earendil-works/pi-mono/issues/5159)）。
+- 修复了 OpenCode Go Kimi K2.6 thinking 请求发送 `thinking` 对象而非无效字符串值，并修复了 OpenCode Zen Grok Build thinking 请求省略不支持的 `reasoning_effort`（[\#5169](https://github.com/earendil-works/pi-mono/issues/5169)）。
+- 修复了 OpenAI Codex Responses SSE 流，在终端事件后中止响应体读取。
+- 修复了 OpenCode Kimi K2.6 生成的元数据，使用 Anthropic 风格的 thinking 元数据而非无效的 reasoning-effort 参数。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+修复
+
+- 修复了 ANSI 文本换行，避免超长换行时发生栈溢出（[\#5185](https://github.com/earendil-works/pi-mono/issues/5185)）。
+- 澄清了 IME 硬件光标文档，说明光标可见性仍是可选的（[\#5200](https://github.com/earendil-works/pi-mono/issues/5200)）。
+- 修复了 OSC 8 超链接在客户端支持时通过 tmux 传递（[\#5189](https://github.com/earendil-works/pi-mono/pull/5189)，感谢 [@mpazik](https://github.com/mpazik)）。
+
+</details>
+
 ## v0.77.0（2026-05-28）
 
 <details>

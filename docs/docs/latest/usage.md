@@ -78,6 +78,7 @@
 pi -c                  # 继续最近的会话
 pi -r                  # 浏览并选择会话
 pi --no-session        # 临时模式，不保存
+pi --name "my task"    # 启动时设置会话显示名称
 pi --session <path|id> # 使用特定会话文件或会话 ID
 pi --fork <path|id>    # 从会话分叉到新会话文件
 ```
@@ -175,6 +176,7 @@ cat README.md | pi -p "Summarize this text"
 | `--fork <path\|id>` | 从会话文件或部分 UUID 分叉到新会话 |
 | `--session-dir <dir>` | 自定义会话存储目录 |
 | `--no-session` | 临时模式，不保存 |
+| `--name <name>`、`-n <name>` | 启动时设置会话显示名称 |
 
 ### 工具选项
 
@@ -239,6 +241,9 @@ pi -p "Summarize this codebase"
 # 非交互式带管道传入
 cat README.md | pi -p "Summarize this text"
 
+# 命名的一次性会话
+pi --name "release audit" -p "Audit this repository"
+
 # 不同模型
 pi --provider openai --model gpt-4o "Help me refactor"
 
@@ -253,6 +258,9 @@ pi --models "claude-*,gpt-4o"
 
 # 只读模式
 pi --tools read,grep,find,ls -p "Review the code"
+
+# 禁用一个扩展或内置工具，同时保持其余工具可用
+pi --exclude-tools ask_question
 ```
 
 ### 环境变量

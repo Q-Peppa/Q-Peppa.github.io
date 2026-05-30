@@ -12,13 +12,14 @@ Pi 将会话保存为会话文件，**使你可以继续工作、从之前的回
 pi -c                  # 继续最近的会话
 pi -r                  # 浏览并选择历史会话
 pi --no-session        # 临时模式，不保存
+pi --name "my task"    # 启动时设置会话显示名称
 pi --session <path|id> # 使用特定会话文件或部分会话 ID
 pi --fork <path|id>    # 将会话文件或部分会话 ID 分叉为新会话
 ```
 
-`/session` 命令显示当前会话文件、会话 ID、消息数、Token 和费用。
+交互模式下使用 `/session` 可查看当前会话文件、会话 ID、消息数、Token 和费用。
 
-关于 JSONL 文件格式和 SessionManager API，请参阅 [Session Format](session-format.md)。
+JSONL 文件格式和 SessionManager API 详见 [Session Format](session-format.md)。
 
 ## 会话命令
 
@@ -54,6 +55,13 @@ Pi 在可用时会使用 `trash` CLI 进行删除，而非永久移除文件。
 
 ```text
 /name Refactor auth module
+```
+
+启动时使用 `--name` 或 `-n` 设置名称：
+
+```bash
+pi --name "Refactor auth module"
+pi --name "CI audit" -p "Review this build failure"
 ```
 
 命名后的会话在 `/resume` 和 `pi -r` 中更容易找到。
