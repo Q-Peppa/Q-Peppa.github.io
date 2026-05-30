@@ -9,6 +9,7 @@
 ### 设计问题
 
 LLM 提供商各有不同的 API：
+
 - OpenAI 有 Chat Completions API 和 Responses API
 - Anthropic 用 Messages API，消息格式完全不同
 - Google 用 Generative AI API，结构又不一样
@@ -180,6 +181,7 @@ AgentEvent (agent-core 层的事件)
 ```
 
 TUI 监听这些事件并实时更新界面：
+
 - `message_update` → 更新流式文本显示
 - `tool_call` → 显示工具调用状态
 - `tool_result` → 显示工具输出
@@ -192,15 +194,15 @@ TUI 监听这些事件并实时更新界面：
 ```typescript
 // 扩展可以监听的事件
 type ExtensionEvent =
-  | "input"                // 用户输入
-  | "before_agent_start"   // Agent 调用前
-  | "message_end"          // 消息结束
-  | "tool_call"            // 工具调用
-  | "tool_result"          // 工具结果
-  | "before_provider_request"  // LLM 请求前
-  | "after_provider_response"  // LLM 响应后
-  | "agent_end"            // Agent 结束
-  | "session_shutdown";    // 会话关闭
+  | 'input' // 用户输入
+  | 'before_agent_start' // Agent 调用前
+  | 'message_end' // 消息结束
+  | 'tool_call' // 工具调用
+  | 'tool_result' // 工具结果
+  | 'before_provider_request' // LLM 请求前
+  | 'after_provider_response' // LLM 响应后
+  | 'agent_end' // Agent 结束
+  | 'session_shutdown'; // 会话关闭
 ```
 
 扩展可以在这些事件的任何一环**拦截、修改、或增强**行为。
@@ -213,10 +215,12 @@ type ExtensionEvent =
 ### 为什么需要差分渲染
 
 传统终端 UI 每帧清除整个屏幕并重新渲染。这在终端环境中有两个问题：
+
 1. **闪烁**：清屏 → 重绘，肉眼可见
 2. **性能**：每次输出几百行 ANSI 转义码，终端处理慢
 
 Pi 的解决方案是**差分渲染**：
+
 1. 保存上一帧的输出（`previousLines: string[]`）
 2. 渲染当前帧
 3. 逐行对比，**只输出变化的行**
@@ -226,13 +230,13 @@ Pi 的解决方案是**差分渲染**：
 ```typescript
 // tui.ts 核心字段
 class TUI extends Container {
-  private previousLines: string[] = [];  // 上一帧输出
+  private previousLines: string[] = []; // 上一帧输出
   private renderTimer: NodeJS.Timeout | undefined;
   private static readonly MIN_RENDER_INTERVAL_MS = 16; // ~60fps
 
   start(): void {
     const loop = () => {
-      this._render();                          // 渲染
+      this._render(); // 渲染
       this.renderTimer = setTimeout(loop, TUI.MIN_RENDER_INTERVAL_MS);
     };
     loop();
@@ -263,13 +267,14 @@ class TUI extends Container {
 ```typescript
 // tui.ts: Component 接口
 interface Component {
-  render(width: number): string[];    // 渲染为行数组
-  handleInput?(data: string): void;    // 处理按键
-  invalidate(): void;                  // 清除缓存，强制重绘
+  render(width: number): string[]; // 渲染为行数组
+  handleInput?(data: string): void; // 处理按键
+  invalidate(): void; // 清除缓存，强制重绘
 }
 ```
 
 **所有 UI 元素都是 Component**：
+
 - `Text` — 纯文本行
 - `Container` — 子组件容器（递归渲染）
 - `Editor` — 编辑器（含光标、选区）
@@ -284,13 +289,14 @@ Pi TUI 支持**模态覆盖层**：
 ```typescript
 // 在现有内容上弹出选择器
 ui.showOverlay(new ModelSelectorComponent(), {
-  anchor: "center",
+  anchor: 'center',
   width: 60,
   height: 20,
 });
 ```
 
 Overlay 渲染流程：
+
 1. 渲染基础内容（header + chat + editor + footer）
 2. 在基础内容上叠加 overlay
 3. 差分对比时包含 overlay 区域
@@ -339,34 +345,34 @@ Pi 的扩展是一个 TypeScript 模块，通过 `ExtensionFactory` 函数创建
 // 一个简单的扩展
 export default function extension(cwd: string) {
   return {
-    name: "my-extension",
+    name: 'my-extension',
     setup(pi: ExtensionAPI) {
       // 注册工具
       pi.registerTool({
-        name: "deploy",
-        description: "Deploy the current project",
+        name: 'deploy',
+        description: 'Deploy the current project',
         parameters: Type.Object({
-          environment: Type.Enum({ staging: "staging", production: "production" })
+          environment: Type.Enum({ staging: 'staging', production: 'production' }),
         }),
         execute: async (args) => {
           const result = await exec(`deploy --env ${args.environment}`);
-          return { content: [{ type: "text", text: result.stdout }] };
-        }
+          return { content: [{ type: 'text', text: result.stdout }] };
+        },
       });
 
       // 监听工具调用
-      pi.on("tool_call", (event) => {
+      pi.on('tool_call', (event) => {
         console.log(`Tool called: ${event.toolName}`);
       });
 
       // 拦截用户输入
-      pi.on("input", (event) => {
-        if (event.text.startsWith("# ")) {
+      pi.on('input', (event) => {
+        if (event.text.startsWith('# ')) {
           // 将注释标记为特殊消息
-          return { action: "transform", text: `[COMMENT] ${event.text}` };
+          return { action: 'transform', text: `[COMMENT] ${event.text}` };
         }
       });
-    }
+    },
   };
 }
 ```
@@ -397,16 +403,16 @@ ToolDefinitionWrapper.execute(args, context)
 
 ### 内置工具
 
-| 工具 | 实现 | 关键特性 |
-|------|------|---------|
-| **read** | `read.ts` | 支持行范围、自动截断、token 计数 |
-| **write** | `write.ts` | 创建/覆盖、目录自动创建 |
-| **edit** | `edit.ts` | 精确文本替换、支持多次编辑 |
-| **edit-diff** | `edit-diff.ts` | 统一 diff 格式补丁应用 |
-| **bash** | `bash.ts` | 超时控制、输出截断、pty 支持 |
-| **grep** | `grep.ts` | rg 封装、支持正则、行号输出 |
-| **find** | `find.ts` | fd 封装、支持 glob |
-| **ls** | `ls.ts` | 目录列表、隐藏文件、排序 |
+| 工具          | 实现           | 关键特性                         |
+| ------------- | -------------- | -------------------------------- |
+| **read**      | `read.ts`      | 支持行范围、自动截断、token 计数 |
+| **write**     | `write.ts`     | 创建/覆盖、目录自动创建          |
+| **edit**      | `edit.ts`      | 精确文本替换、支持多次编辑       |
+| **edit-diff** | `edit-diff.ts` | 统一 diff 格式补丁应用           |
+| **bash**      | `bash.ts`      | 超时控制、输出截断、pty 支持     |
+| **grep**      | `grep.ts`      | rg 封装、支持正则、行号输出      |
+| **find**      | `find.ts`      | fd 封装、支持 glob               |
+| **ls**        | `ls.ts`        | 目录列表、隐藏文件、排序         |
 
 ### 工具输出的截断与累积
 
@@ -416,7 +422,10 @@ LLM 的上下文窗口有限，工具输出需要智能截断：
 // truncate.ts
 const MAX_OUTPUT_TOKENS = 12000;
 
-function truncateOutput(output: string, maxTokens: number): {
+function truncateOutput(
+  output: string,
+  maxTokens: number,
+): {
   text: string;
   wasTruncated: boolean;
   tokensUsed: number;
@@ -497,6 +506,7 @@ stream(model, context, {
 ### 4. 扩展优于修改
 
 不鼓励修改核心代码。通过扩展系统：
+
 - 添加自定义工具
 - 注册斜杠命令
 - 监听/修改事件
@@ -513,6 +523,7 @@ stream(model, context, {
 ## 下一步
 
 回顾：
+
 - [前置知识与学习路径](prerequisites.md)
 - [环境搭建与调试](setup-and-debug.md)
 - [从终端到 TUI](cli-to-tui.md)

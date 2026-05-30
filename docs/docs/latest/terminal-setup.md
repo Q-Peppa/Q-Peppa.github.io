@@ -54,6 +54,7 @@ return config
 ## VS Code（集成终端）
 
 `keybindings.json` 位置：
+
 - **macOS**：`~/Library/Application Support/Code/User/keybindings.json`
 - **Linux**：`~/.config/Code/User/keybindings.json`
 - **Windows**：`%APPDATA%\Code\User\keybindings.json`
@@ -99,6 +100,7 @@ return config
 这些终端对转义序列支持有限。带修饰的 Enter 键（Ctrl+Enter、Shift+Enter）无法与普通 Enter 区分，导致 `submit: ["ctrl+enter"]` 等自定义快捷键无法工作。
 
 为获得最佳体验，请使用支持 Kitty 键盘协议的终端：
+
 - [Kitty](https://sw.kovidgoyal.net/kitty/)
 - [Ghostty](https://ghostty.org/)
 - [WezTerm](https://wezfurlong.org/wezterm/)

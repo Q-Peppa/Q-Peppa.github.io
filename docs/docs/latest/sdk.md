@@ -7,6 +7,7 @@
 SDK 提供对 pi Agent 能力的编程式访问。用于嵌入其他应用、构建自定义界面或集成自动化工作流。
 
 **示例用例：**
+
 - 构建自定义 UI（Web、桌面、移动端）
 - 将 Agent 能力集成到现有应用
 - 创建带有 Agent 推理的自动化流水线
@@ -18,7 +19,7 @@ SDK 提供对 pi Agent 能力的编程式访问。用于嵌入其他应用、构
 ## 快速开始
 
 ```typescript
-import { AuthStorage, createAgentSession, ModelRegistry, SessionManager } from "@earendil-works/pi-coding-agent";
+import { AuthStorage, createAgentSession, ModelRegistry, SessionManager } from '@earendil-works/pi-coding-agent';
 
 // 设置凭证存储和模型注册表
 const authStorage = AuthStorage.create();
@@ -31,12 +32,12 @@ const { session } = await createAgentSession({
 });
 
 session.subscribe((event) => {
-  if (event.type === "message_update" && event.assistantMessageEvent.type === "text_delta") {
+  if (event.type === 'message_update' && event.assistantMessageEvent.type === 'text_delta') {
     process.stdout.write(event.assistantMessageEvent.delta);
   }
 });
 
-await session.prompt("What files are in the current directory?");
+await session.prompt('What files are in the current directory?');
 ```
 
 ## 安装
@@ -56,7 +57,7 @@ SDK 已包含在主包中，无需单独安装。
 `createAgentSession()` 使用 `ResourceLoader` 提供扩展、Skills、Prompt 模板、主题和上下文文件。如果不提供，它将使用 `DefaultResourceLoader` 进行标准发现。
 
 ```typescript
-import { createAgentSession, SessionManager } from "@earendil-works/pi-coding-agent";
+import { createAgentSession, SessionManager } from '@earendil-works/pi-coding-agent';
 
 // 最小用法：默认使用 DefaultResourceLoader
 const { session } = await createAgentSession();
@@ -64,7 +65,7 @@ const { session } = await createAgentSession();
 // 自定义：覆盖特定选项
 const { session } = await createAgentSession({
   model: myModel,
-  tools: ["read", "bash"],
+  tools: ['read', 'bash'],
   sessionManager: SessionManager.inMemory(),
 });
 ```
@@ -103,7 +104,10 @@ interface AgentSession {
   isStreaming: boolean;
 
   // 在会话文件内进行原地树导航
-  navigateTree(targetId: string, options?: { summarize?: boolean; customInstructions?: string; replaceInstructions?: boolean; label?: string }): Promise<{ editorText?: string; cancelled: boolean }>;
+  navigateTree(
+    targetId: string,
+    options?: { summarize?: boolean; customInstructions?: string; replaceInstructions?: boolean; label?: string },
+  ): Promise<{ editorText?: string; cancelled: boolean }>;
 
   // 压缩
   compact(customInstructions?: string): Promise<CompactionResult>;
@@ -134,7 +138,7 @@ import {
   createAgentSessionServices,
   getAgentDir,
   SessionManager,
-} from "@earendil-works/pi-coding-agent";
+} from '@earendil-works/pi-coding-agent';
 
 const createRuntime: CreateAgentSessionRuntimeFactory = async ({ cwd, sessionManager, sessionStartEvent }) => {
   const services = await createAgentSessionServices({ cwd });
@@ -191,7 +195,7 @@ unsubscribe = session.subscribe(() => {});
 interface PromptOptions {
   expandPromptTemplates?: boolean;
   images?: ImageContent[];
-  streamingBehavior?: "steer" | "followUp";
+  streamingBehavior?: 'steer' | 'followUp';
   source?: InputSource;
   preflightResult?: (success: boolean) => void;
 }
@@ -208,19 +212,20 @@ interface PromptOptions {
 
 ```typescript
 // 基本 prompt（非流式传输时）
-await session.prompt("What files are here?");
+await session.prompt('What files are here?');
 
 // 带图像
 await session.prompt("What's in this image?", {
-  images: [{ type: "image", source: { type: "base64", mediaType: "image/png", data: "..." } }]
+  images: [{ type: 'image', source: { type: 'base64', mediaType: 'image/png', data: '...' } }],
 });
 
 // 流式传输期间：必须指定如何队列消息
-await session.prompt("Stop and do this instead", { streamingBehavior: "steer" });
-await session.prompt("After you're done, also check X", { streamingBehavior: "followUp" });
+await session.prompt('Stop and do this instead', { streamingBehavior: 'steer' });
+await session.prompt("After you're done, also check X", { streamingBehavior: 'followUp' });
 ```
 
 **行为：**
+
 - **扩展命令**（例如 `/mycommand`）：立即执行，即使在流式传输期间。它们通过 `pi.sendMessage()` 管理自己的 LLM 交互。
 - **基于文件的 prompt 模板**（来自 `.md` 文件）：在发送或队列前扩展为内容。
 - **流式传输期间未指定 `streamingBehavior`**：抛出错误。直接使用 `steer()` 或 `followUp()`，或指定选项。
@@ -231,7 +236,7 @@ await session.prompt("After you're done, also check X", { streamingBehavior: "fo
 
 ```typescript
 // 队列一条 steering 消息，在当前助手回合完成工具调用后发送
-await session.steer("New instruction");
+await session.steer('New instruction');
 
 // 等待 Agent 完成（仅在 Agent 停止时发送）
 await session.followUp("After you're done, also do this");
@@ -273,58 +278,58 @@ await session.agent.waitForIdle();
 session.subscribe((event) => {
   switch (event.type) {
     // 来自助手的流式文本
-    case "message_update":
-      if (event.assistantMessageEvent.type === "text_delta") {
+    case 'message_update':
+      if (event.assistantMessageEvent.type === 'text_delta') {
         process.stdout.write(event.assistantMessageEvent.delta);
       }
-      if (event.assistantMessageEvent.type === "thinking_delta") {
+      if (event.assistantMessageEvent.type === 'thinking_delta') {
         // 思考输出（如果启用思考）
       }
       break;
 
     // 工具执行
-    case "tool_execution_start":
+    case 'tool_execution_start':
       console.log(`Tool: ${event.toolName}`);
       break;
-    case "tool_execution_update":
+    case 'tool_execution_update':
       // 流式工具输出
       break;
-    case "tool_execution_end":
-      console.log(`Result: ${event.isError ? "error" : "success"}`);
+    case 'tool_execution_end':
+      console.log(`Result: ${event.isError ? 'error' : 'success'}`);
       break;
 
     // 消息生命周期
-    case "message_start":
+    case 'message_start':
       // 新消息开始
       break;
-    case "message_end":
+    case 'message_end':
       // 消息完成
       break;
 
     // Agent 生命周期
-    case "agent_start":
+    case 'agent_start':
       // Agent 开始处理 prompt
       break;
-    case "agent_end":
+    case 'agent_end':
       // Agent 完成（event.messages 包含新消息）
       break;
 
     // 回合生命周期（一次 LLM 响应 + 工具调用）
-    case "turn_start":
+    case 'turn_start':
       break;
-    case "turn_end":
+    case 'turn_end':
       // event.message: 助手响应
       // event.toolResults: 此回合的工具结果
       break;
 
     // 会话事件（队列、压缩、重试）
-    case "queue_update":
+    case 'queue_update':
       console.log(event.steering, event.followUp);
       break;
-    case "compaction_start":
-    case "compaction_end":
-    case "auto_retry_start":
-    case "auto_retry_end":
+    case 'compaction_start':
+    case 'compaction_end':
+    case 'auto_retry_start':
+    case 'auto_retry_end':
       break;
   }
 });
@@ -340,11 +345,12 @@ const { session } = await createAgentSession({
   cwd: process.cwd(), // 默认
 
   // 全局配置目录
-  agentDir: "~/.pi/agent", // 默认（展开 ~）
+  agentDir: '~/.pi/agent', // 默认（展开 ~）
 });
 ```
 
 `cwd` 被 `DefaultResourceLoader` 用于：
+
 - 项目扩展（`.pi/extensions/`）
 - 项目 Skills：
   - `.pi/skills/`
@@ -354,6 +360,7 @@ const { session } = await createAgentSession({
 - 会话目录命名
 
 `agentDir` 被 `DefaultResourceLoader` 用于：
+
 - 全局扩展（`extensions/`）
 - 全局 Skills：
   - `agentDir` 下的 `skills/`（例如 `~/.pi/agent/skills/`）
@@ -370,31 +377,31 @@ const { session } = await createAgentSession({
 ### 模型
 
 ```typescript
-import { getModel } from "@earendil-works/pi-ai";
-import { AuthStorage, ModelRegistry } from "@earendil-works/pi-coding-agent";
+import { getModel } from '@earendil-works/pi-ai';
+import { AuthStorage, ModelRegistry } from '@earendil-works/pi-coding-agent';
 
 const authStorage = AuthStorage.create();
 const modelRegistry = ModelRegistry.create(authStorage);
 
 // 查找特定的内置模型（不检查 API Key 是否存在）
-const opus = getModel("anthropic", "claude-opus-4-5");
-if (!opus) throw new Error("Model not found");
+const opus = getModel('anthropic', 'claude-opus-4-5');
+if (!opus) throw new Error('Model not found');
 
 // 按 provider/id 查找任何模型，包括来自 models.json 的自定义模型
 // （不检查 API Key 是否存在）
-const customModel = modelRegistry.find("my-provider", "my-model");
+const customModel = modelRegistry.find('my-provider', 'my-model');
 
 // 仅获取配置了有效 API Key 的模型
 const available = await modelRegistry.getAvailable();
 
 const { session } = await createAgentSession({
   model: opus,
-  thinkingLevel: "medium", // off, minimal, low, medium, high, xhigh
+  thinkingLevel: 'medium', // off, minimal, low, medium, high, xhigh
 
   // 用于循环的模型（交互模式中的 Ctrl+P）
   scopedModels: [
-    { model: opus, thinkingLevel: "high" },
-    { model: haiku, thinkingLevel: "off" },
+    { model: opus, thinkingLevel: 'high' },
+    { model: haiku, thinkingLevel: 'off' },
   ],
 
   authStorage,
@@ -403,6 +410,7 @@ const { session } = await createAgentSession({
 ```
 
 如果未提供模型：
+
 1. 尝试从会话恢复（如果正在继续）
 2. 使用设置中的默认值
 3. 回退到第一个可用模型
@@ -412,13 +420,14 @@ const { session } = await createAgentSession({
 ### API Key 和 OAuth
 
 API Key 解析优先级（由 AuthStorage 处理）：
+
 1. 运行时覆盖（通过 `setRuntimeApiKey`，不持久化）
 2. `auth.json` 中存储的凭证（API Key 或 OAuth 令牌）
 3. 环境变量（`ANTHROPIC_API_KEY`、`OPENAI_API_KEY` 等）
 4. 回退解析器（用于来自 `models.json` 的自定义 Provider Key）
 
 ```typescript
-import { AuthStorage, ModelRegistry } from "@earendil-works/pi-coding-agent";
+import { AuthStorage, ModelRegistry } from '@earendil-works/pi-coding-agent';
 
 // 默认：使用 ~/.pi/agent/auth.json 和 ~/.pi/agent/models.json
 const authStorage = AuthStorage.create();
@@ -431,11 +440,11 @@ const { session } = await createAgentSession({
 });
 
 // 运行时 API Key 覆盖（不持久化到磁盘）
-authStorage.setRuntimeApiKey("anthropic", "sk-my-temp-key");
+authStorage.setRuntimeApiKey('anthropic', 'sk-my-temp-key');
 
 // 自定义凭证存储位置
-const customAuth = AuthStorage.create("/my/app/auth.json");
-const customRegistry = ModelRegistry.create(customAuth, "/my/app/models.json");
+const customAuth = AuthStorage.create('/my/app/auth.json');
+const customRegistry = ModelRegistry.create(customAuth, '/my/app/models.json');
 
 const { session } = await createAgentSession({
   sessionManager: SessionManager.inMemory(),
@@ -454,10 +463,10 @@ const simpleRegistry = ModelRegistry.inMemory(authStorage);
 使用 `ResourceLoader` 覆盖系统提示：
 
 ```typescript
-import { createAgentSession, DefaultResourceLoader } from "@earendil-works/pi-coding-agent";
+import { createAgentSession, DefaultResourceLoader } from '@earendil-works/pi-coding-agent';
 
 const loader = new DefaultResourceLoader({
-  systemPromptOverride: () => "You are a helpful assistant.",
+  systemPromptOverride: () => 'You are a helpful assistant.',
 });
 await loader.reload();
 
@@ -479,21 +488,21 @@ const { session } = await createAgentSession({ resourceLoader: loader });
 `edit` 工具返回 `details.diff` 供 Pi 的 TUI 展示，以及 `details.patch` 作为标准统一补丁（unified patch）供 SDK 消费者使用。
 
 ```typescript
-import { createAgentSession } from "@earendil-works/pi-coding-agent";
+import { createAgentSession } from '@earendil-works/pi-coding-agent';
 
 // 只读模式
 const { session } = await createAgentSession({
-  tools: ["read", "grep", "find", "ls"],
+  tools: ['read', 'grep', 'find', 'ls'],
 });
 
 // 选择特定工具
 const { session } = await createAgentSession({
-  tools: ["read", "bash", "grep"],
+  tools: ['read', 'bash', 'grep'],
 });
 
 // 禁用某个工具，同时保留其他工具可用
 const { session } = await createAgentSession({
-  excludeTools: ["ask_question"],
+  excludeTools: ['ask_question'],
 });
 ```
 
@@ -502,9 +511,9 @@ const { session } = await createAgentSession({
 当传入自定义 `cwd` 时，`createAgentSession()` 为该 cwd 构建选定的内置工具。
 
 ```typescript
-import { createAgentSession, SessionManager } from "@earendil-works/pi-coding-agent";
+import { createAgentSession, SessionManager } from '@earendil-works/pi-coding-agent';
 
-const cwd = "/path/to/project";
+const cwd = '/path/to/project';
 
 // 为自定义 cwd 使用默认工具
 const { session } = await createAgentSession({
@@ -515,7 +524,7 @@ const { session } = await createAgentSession({
 // 或为自定义 cwd 选择特定工具
 const { session } = await createAgentSession({
   cwd,
-  tools: ["read", "bash", "grep"],
+  tools: ['read', 'bash', 'grep'],
   sessionManager: SessionManager.inMemory(cwd),
 });
 ```
@@ -525,19 +534,19 @@ const { session } = await createAgentSession({
 ### 自定义工具
 
 ```typescript
-import { Type } from "typebox";
-import { createAgentSession, defineTool } from "@earendil-works/pi-coding-agent";
+import { Type } from 'typebox';
+import { createAgentSession, defineTool } from '@earendil-works/pi-coding-agent';
 
 // 内联自定义工具
 const myTool = defineTool({
-  name: "my_tool",
-  label: "My Tool",
-  description: "Does something useful",
+  name: 'my_tool',
+  label: 'My Tool',
+  description: 'Does something useful',
   parameters: Type.Object({
-    input: Type.String({ description: "Input value" }),
+    input: Type.String({ description: 'Input value' }),
   }),
   execute: async (_toolCallId, params) => ({
-    content: [{ type: "text", text: `Result: ${params.input}` }],
+    content: [{ type: 'text', text: `Result: ${params.input}` }],
     details: {},
   }),
 });
@@ -561,14 +570,14 @@ const { session } = await createAgentSession({
 扩展由 `ResourceLoader` 加载。`DefaultResourceLoader` 从 `~/.pi/agent/extensions/`、`.pi/extensions/` 和 settings.json 扩展源中发现扩展。
 
 ```typescript
-import { createAgentSession, DefaultResourceLoader } from "@earendil-works/pi-coding-agent";
+import { createAgentSession, DefaultResourceLoader } from '@earendil-works/pi-coding-agent';
 
 const loader = new DefaultResourceLoader({
-  additionalExtensionPaths: ["/path/to/my-extension.ts"],
+  additionalExtensionPaths: ['/path/to/my-extension.ts'],
   extensionFactories: [
     (pi) => {
-      pi.on("agent_start", () => {
-        console.log("[Inline Extension] Agent starting");
+      pi.on('agent_start', () => {
+        console.log('[Inline Extension] Agent starting');
       });
     },
   ],
@@ -583,7 +592,7 @@ const { session } = await createAgentSession({ resourceLoader: loader });
 **事件总线：** 扩展可以通过 `pi.events` 通信。如果需要从外部发出或监听事件，请将共享的 `eventBus` 传递给 `DefaultResourceLoader`：
 
 ```typescript
-import { createEventBus, DefaultResourceLoader } from "@earendil-works/pi-coding-agent";
+import { createEventBus, DefaultResourceLoader } from '@earendil-works/pi-coding-agent';
 
 const eventBus = createEventBus();
 const loader = new DefaultResourceLoader({
@@ -591,7 +600,7 @@ const loader = new DefaultResourceLoader({
 });
 await loader.reload();
 
-eventBus.on("my-extension:status", (data) => console.log(data));
+eventBus.on('my-extension:status', (data) => console.log(data));
 ```
 
 > 参见 [examples/sdk/06-extensions.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/sdk/06-extensions.ts) 和 [docs/extensions.md](extensions.md)
@@ -599,18 +608,14 @@ eventBus.on("my-extension:status", (data) => console.log(data));
 ### Skills
 
 ```typescript
-import {
-  createAgentSession,
-  DefaultResourceLoader,
-  type Skill,
-} from "@earendil-works/pi-coding-agent";
+import { createAgentSession, DefaultResourceLoader, type Skill } from '@earendil-works/pi-coding-agent';
 
 const customSkill: Skill = {
-  name: "my-skill",
-  description: "Custom instructions",
-  filePath: "/path/to/SKILL.md",
-  baseDir: "/path/to",
-  source: "custom",
+  name: 'my-skill',
+  description: 'Custom instructions',
+  filePath: '/path/to/SKILL.md',
+  baseDir: '/path/to',
+  source: 'custom',
 };
 
 const loader = new DefaultResourceLoader({
@@ -629,14 +634,11 @@ const { session } = await createAgentSession({ resourceLoader: loader });
 ### 上下文文件
 
 ```typescript
-import { createAgentSession, DefaultResourceLoader } from "@earendil-works/pi-coding-agent";
+import { createAgentSession, DefaultResourceLoader } from '@earendil-works/pi-coding-agent';
 
 const loader = new DefaultResourceLoader({
   agentsFilesOverride: (current) => ({
-    agentsFiles: [
-      ...current.agentsFiles,
-      { path: "/virtual/AGENTS.md", content: "# Guidelines\n\n- Be concise" },
-    ],
+    agentsFiles: [...current.agentsFiles, { path: '/virtual/AGENTS.md', content: '# Guidelines\n\n- Be concise' }],
   }),
 });
 await loader.reload();
@@ -649,17 +651,13 @@ const { session } = await createAgentSession({ resourceLoader: loader });
 ### 斜杠命令
 
 ```typescript
-import {
-  createAgentSession,
-  DefaultResourceLoader,
-  type PromptTemplate,
-} from "@earendil-works/pi-coding-agent";
+import { createAgentSession, DefaultResourceLoader, type PromptTemplate } from '@earendil-works/pi-coding-agent';
 
 const customCommand: PromptTemplate = {
-  name: "deploy",
-  description: "Deploy the application",
-  source: "(custom)",
-  content: "# Deploy\n\n1. Build\n2. Test\n3. Deploy",
+  name: 'deploy',
+  description: 'Deploy the application',
+  source: '(custom)',
+  content: '# Deploy\n\n1. Build\n2. Test\n3. Deploy',
 };
 
 const loader = new DefaultResourceLoader({
@@ -688,7 +686,7 @@ import {
   createAgentSessionServices,
   getAgentDir,
   SessionManager,
-} from "@earendil-works/pi-coding-agent";
+} from '@earendil-works/pi-coding-agent';
 
 // 内存模式（无持久化）
 const { session } = await createAgentSession({
@@ -705,12 +703,12 @@ const { session: continued, modelFallbackMessage } = await createAgentSession({
   sessionManager: SessionManager.continueRecent(process.cwd()),
 });
 if (modelFallbackMessage) {
-  console.log("Note:", modelFallbackMessage);
+  console.log('Note:', modelFallbackMessage);
 }
 
 // 打开特定文件
 const { session: opened } = await createAgentSession({
-  sessionManager: SessionManager.open("/path/to/session.jsonl"),
+  sessionManager: SessionManager.open('/path/to/session.jsonl'),
 });
 
 // 列出会话
@@ -741,40 +739,40 @@ const runtime = await createAgentSessionRuntime(createRuntime, {
 await runtime.newSession();
 
 // 用另一个已保存的会话替换当前会话
-await runtime.switchSession("/path/to/session.jsonl");
+await runtime.switchSession('/path/to/session.jsonl');
 
 // 从特定用户条目创建分支替换当前会话
-await runtime.fork("entry-id");
+await runtime.fork('entry-id');
 
 // 通过特定条目克隆当前路径
-await runtime.fork("entry-id", { position: "at" });
+await runtime.fork('entry-id', { position: 'at' });
 ```
 
 **SessionManager 树 API：**
 
 ```typescript
-const sm = SessionManager.open("/path/to/session.jsonl");
+const sm = SessionManager.open('/path/to/session.jsonl');
 
 // 会话列表
 const currentProjectSessions = await SessionManager.list(process.cwd());
 const allSessions = await SessionManager.listAll(process.cwd());
 
 // 树遍历
-const entries = sm.getEntries();        // 所有条目（不含头部）
-const tree = sm.getTree();              // 完整树结构
-const path = sm.getPath();              // 从根到当前叶子的路径
-const leaf = sm.getLeafEntry();         // 当前叶子条目
-const entry = sm.getEntry(id);          // 按 ID 获取条目
-const children = sm.getChildren(id);    // 条目的直接子节点
+const entries = sm.getEntries(); // 所有条目（不含头部）
+const tree = sm.getTree(); // 完整树结构
+const path = sm.getPath(); // 从根到当前叶子的路径
+const leaf = sm.getLeafEntry(); // 当前叶子条目
+const entry = sm.getEntry(id); // 按 ID 获取条目
+const children = sm.getChildren(id); // 条目的直接子节点
 
 // 标签
-const label = sm.getLabel(id);          // 获取条目标签
-sm.appendLabelChange(id, "checkpoint"); // 设置标签
+const label = sm.getLabel(id); // 获取条目标签
+sm.appendLabelChange(id, 'checkpoint'); // 设置标签
 
 // 分支
-sm.branch(entryId);                     // 将叶子移动到早期条目
-sm.branchWithSummary(id, "Summary...");  // 带上下文摘要的分支
-sm.createBranchedSession(leafId);       // 提取路径到新文件
+sm.branch(entryId); // 将叶子移动到早期条目
+sm.branchWithSummary(id, 'Summary...'); // 带上下文摘要的分支
+sm.createBranchedSession(leafId); // 提取路径到新文件
 ```
 
 > 参见 [examples/sdk/11-sessions.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/sdk/11-sessions.ts) 和 [Session Format](session-format.md)
@@ -782,7 +780,7 @@ sm.createBranchedSession(leafId);       // 提取路径到新文件
 ### 设置管理
 
 ```typescript
-import { createAgentSession, SettingsManager, SessionManager } from "@earendil-works/pi-coding-agent";
+import { createAgentSession, SettingsManager, SessionManager } from '@earendil-works/pi-coding-agent';
 
 // 默认：从文件加载（全局 + 项目合并）
 const { session } = await createAgentSession({
@@ -805,17 +803,19 @@ const { session } = await createAgentSession({
 
 // 自定义目录
 const { session } = await createAgentSession({
-  settingsManager: SettingsManager.create("/custom/cwd", "/custom/agent"),
+  settingsManager: SettingsManager.create('/custom/cwd', '/custom/agent'),
 });
 ```
 
 **静态工厂：**
+
 - `SettingsManager.create(cwd?, agentDir?)` - 从文件加载
 - `SettingsManager.inMemory(settings?)` - 无文件 I/O
 
 **项目特定设置：**
 
 设置从两个位置加载并合并：
+
 1. 全局：`~/.pi/agent/settings.json`
 2. 项目：`<cwd>/.pi/settings.json`
 
@@ -835,10 +835,7 @@ const { session } = await createAgentSession({
 使用 `DefaultResourceLoader` 发现扩展、Skills、Prompt、主题和上下文文件。
 
 ```typescript
-import {
-  DefaultResourceLoader,
-  getAgentDir,
-} from "@earendil-works/pi-coding-agent";
+import { DefaultResourceLoader, getAgentDir } from '@earendil-works/pi-coding-agent';
 
 const loader = new DefaultResourceLoader({
   cwd,
@@ -879,8 +876,8 @@ interface LoadExtensionsResult {
 ## 完整示例
 
 ```typescript
-import { getModel } from "@earendil-works/pi-ai";
-import { Type } from "typebox";
+import { getModel } from '@earendil-works/pi-ai';
+import { Type } from 'typebox';
 import {
   AuthStorage,
   createAgentSession,
@@ -889,14 +886,14 @@ import {
   ModelRegistry,
   SessionManager,
   SettingsManager,
-} from "@earendil-works/pi-coding-agent";
+} from '@earendil-works/pi-coding-agent';
 
 // 设置凭证存储（自定义位置）
-const authStorage = AuthStorage.create("/custom/agent/auth.json");
+const authStorage = AuthStorage.create('/custom/agent/auth.json');
 
 // 运行时 API Key 覆盖（不持久化）
 if (process.env.MY_KEY) {
-  authStorage.setRuntimeApiKey("anthropic", process.env.MY_KEY);
+  authStorage.setRuntimeApiKey('anthropic', process.env.MY_KEY);
 }
 
 // 模型注册表（无自定义 models.json）
@@ -904,18 +901,18 @@ const modelRegistry = ModelRegistry.create(authStorage);
 
 // 内联工具
 const statusTool = defineTool({
-  name: "status",
-  label: "Status",
-  description: "Get system status",
+  name: 'status',
+  label: 'Status',
+  description: 'Get system status',
   parameters: Type.Object({}),
   execute: async () => ({
-    content: [{ type: "text", text: `Uptime: ${process.uptime()}s` }],
+    content: [{ type: 'text', text: `Uptime: ${process.uptime()}s` }],
     details: {},
   }),
 });
 
-const model = getModel("anthropic", "claude-opus-4-5");
-if (!model) throw new Error("Model not found");
+const model = getModel('anthropic', 'claude-opus-4-5');
+if (!model) throw new Error('Model not found');
 
 // 带覆盖的内存设置
 const settingsManager = SettingsManager.inMemory({
@@ -925,22 +922,22 @@ const settingsManager = SettingsManager.inMemory({
 
 const loader = new DefaultResourceLoader({
   cwd: process.cwd(),
-  agentDir: "/custom/agent",
+  agentDir: '/custom/agent',
   settingsManager,
-  systemPromptOverride: () => "You are a minimal assistant. Be concise.",
+  systemPromptOverride: () => 'You are a minimal assistant. Be concise.',
 });
 await loader.reload();
 
 const { session } = await createAgentSession({
   cwd: process.cwd(),
-  agentDir: "/custom/agent",
+  agentDir: '/custom/agent',
 
   model,
-  thinkingLevel: "off",
+  thinkingLevel: 'off',
   authStorage,
   modelRegistry,
 
-  tools: ["read", "bash", "status"],
+  tools: ['read', 'bash', 'status'],
   customTools: [statusTool],
   resourceLoader: loader,
 
@@ -949,12 +946,12 @@ const { session } = await createAgentSession({
 });
 
 session.subscribe((event) => {
-  if (event.type === "message_update" && event.assistantMessageEvent.type === "text_delta") {
+  if (event.type === 'message_update' && event.assistantMessageEvent.type === 'text_delta') {
     process.stdout.write(event.assistantMessageEvent.delta);
   }
 });
 
-await session.prompt("Get status and list files.");
+await session.prompt('Get status and list files.');
 ```
 
 ## 运行模式
@@ -974,7 +971,7 @@ import {
   getAgentDir,
   InteractiveMode,
   SessionManager,
-} from "@earendil-works/pi-coding-agent";
+} from '@earendil-works/pi-coding-agent';
 
 const createRuntime: CreateAgentSessionRuntimeFactory = async ({ cwd, sessionManager, sessionStartEvent }) => {
   const services = await createAgentSessionServices({ cwd });
@@ -993,7 +990,7 @@ const runtime = await createAgentSessionRuntime(createRuntime, {
 const mode = new InteractiveMode(runtime, {
   migratedProviders: [],
   modelFallbackMessage: undefined,
-  initialMessage: "Hello",
+  initialMessage: 'Hello',
   initialImages: [],
   initialMessages: [],
 });
@@ -1014,7 +1011,7 @@ import {
   getAgentDir,
   runPrintMode,
   SessionManager,
-} from "@earendil-works/pi-coding-agent";
+} from '@earendil-works/pi-coding-agent';
 
 const createRuntime: CreateAgentSessionRuntimeFactory = async ({ cwd, sessionManager, sessionStartEvent }) => {
   const services = await createAgentSessionServices({ cwd });
@@ -1031,10 +1028,10 @@ const runtime = await createAgentSessionRuntime(createRuntime, {
 });
 
 await runPrintMode(runtime, {
-  mode: "text",
-  initialMessage: "Hello",
+  mode: 'text',
+  initialMessage: 'Hello',
   initialImages: [],
-  messages: ["Follow up"],
+  messages: ['Follow up'],
 });
 ```
 
@@ -1051,7 +1048,7 @@ import {
   getAgentDir,
   runRpcMode,
   SessionManager,
-} from "@earendil-works/pi-coding-agent";
+} from '@earendil-works/pi-coding-agent';
 
 const createRuntime: CreateAgentSessionRuntimeFactory = async ({ cwd, sessionManager, sessionStartEvent }) => {
   const services = await createAgentSessionServices({ cwd });
@@ -1083,12 +1080,14 @@ pi --mode rpc --no-session
 参见 [RPC 文档](rpc.md) 了解 JSON 协议。
 
 SDK 更适合以下场景：
+
 - 需要类型安全
 - 在同一个 Node.js 进程中
 - 需要直接访问 Agent 状态
 - 希望以编程方式自定义工具/扩展
 
 RPC 模式更适合以下场景：
+
 - 从其他语言集成
 - 需要进程隔离
 - 构建语言无关的客户端

@@ -5,6 +5,7 @@
 LLM 的上下文窗口有限。当对话过长时，Pi 使用压缩（compaction）来总结较旧的内容，同时保留近期工作。本页面涵盖自动压缩和分支摘要。
 
 **源文件**（[pi-mono](https://github.com/earendil-works/pi-mono)）:
+
 - [`packages/coding-agent/src/core/compaction/compaction.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/compaction/compaction.ts) - 自动压缩逻辑
 - [`packages/coding-agent/src/core/compaction/branch-summarization.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/compaction/branch-summarization.ts) - 分支摘要
 - [`packages/coding-agent/src/core/compaction/utils.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/compaction/utils.ts) - 共享工具（文件追踪、序列化）
@@ -17,10 +18,10 @@ LLM 的上下文窗口有限。当对话过长时，Pi 使用压缩（compaction
 
 Pi 有两种摘要机制：
 
-| 机制 | 触发 | 目的 |
-|------|------|------|
-| Compaction（压缩） | 上下文超过阈值，或 `/compact` | 总结旧消息以释放上下文空间 |
-| Branch Summarization（分支摘要） | `/tree` 导航 | 在切换分支时保留上下文 |
+| 机制                             | 触发                          | 目的                       |
+| -------------------------------- | ----------------------------- | -------------------------- |
+| Compaction（压缩）               | 上下文超过阈值，或 `/compact` | 总结旧消息以释放上下文空间 |
+| Branch Summarization（分支摘要） | `/tree` 导航                  | 在切换分支时保留上下文     |
 
 两种机制使用相同的结构化摘要格式，并累积跟踪文件操作。
 
@@ -105,12 +106,14 @@ LLM 看到的内容：
 ```
 
 对于拆分轮次，Pi 会生成两个摘要并合并：
+
 1. **历史摘要**：之前的上下文（如果有）
 2. **轮次前缀摘要**：拆分轮次的前半部分
 
 ### 切割点规则
 
 有效的切割点包括：
+
 - 用户消息
 - 助手消息
 - BashExecution 消息
@@ -124,15 +127,15 @@ LLM 看到的内容：
 
 ```typescript
 interface CompactionEntry<T = unknown> {
-  type: "compaction";
+  type: 'compaction';
   id: string;
   parentId: string;
   timestamp: number;
   summary: string;
   firstKeptEntryId: string;
   tokensBefore: number;
-  fromHook?: boolean;  // 如果由扩展提供则为 true（旧字段名）
-  details?: T;         // 实现特定的数据
+  fromHook?: boolean; // 如果由扩展提供则为 true（旧字段名）
+  details?: T; // 实现特定的数据
 }
 
 // 默认压缩使用此 details（来自 compaction.ts）：
@@ -180,6 +183,7 @@ interface CompactionDetails {
 ### 累积文件追踪
 
 压缩和分支摘要都会累积追踪文件。在生成摘要时，Pi 会从以下来源提取文件操作：
+
 - 被摘要消息中的工具调用
 - 之前的压缩或分支摘要 `details`（如果有）
 
@@ -191,14 +195,14 @@ interface CompactionDetails {
 
 ```typescript
 interface BranchSummaryEntry<T = unknown> {
-  type: "branch_summary";
+  type: 'branch_summary';
   id: string;
   parentId: string;
   timestamp: number;
   summary: string;
-  fromId: string;        // 我们从此条目导航而来
-  fromHook?: boolean;    // 如果由扩展提供则为 true（旧字段名）
-  details?: T;           // 实现特定的数据
+  fromId: string; // 我们从此条目导航而来
+  fromHook?: boolean; // 如果由扩展提供则为 true（旧字段名）
+  details?: T; // 实现特定的数据
 }
 
 // 默认分支摘要使用此 details（来自 branch-summarization.ts）：
@@ -218,28 +222,37 @@ interface BranchSummaryDetails {
 
 ```markdown
 ## Goal
+
 [用户试图完成的目标]
 
 ## Constraints & Preferences
+
 - [用户提到的要求]
 
 ## Progress
+
 ### Done
+
 - [x] [已完成任务]
 
 ### In Progress
+
 - [ ] [当前工作]
 
 ### Blocked
+
 - [问题，如果有]
 
 ## Key Decisions
+
 - **[决策]**：[理由]
 
 ## Next Steps
+
 1. [接下来应该做的事情]
 
 ## Critical Context
+
 - [继续工作所需的数据]
 
 <read-files>
@@ -277,7 +290,7 @@ path/to/changed.ts
 在自动压缩或 `/compact` 之前触发。可以取消或提供自定义摘要。关于 `SessionBeforeCompactEvent` 和 `CompactionPreparation`，请参阅类型文件。
 
 ```typescript
-pi.on("session_before_compact", async (event, ctx) => {
+pi.on('session_before_compact', async (event, ctx) => {
   const { preparation, branchEntries, customInstructions, signal } = event;
 
   // preparation.messagesToSummarize - 要总结的消息
@@ -297,11 +310,13 @@ pi.on("session_before_compact", async (event, ctx) => {
   // 自定义摘要：
   return {
     compaction: {
-      summary: "你的摘要...",
+      summary: '你的摘要...',
       firstKeptEntryId: preparation.firstKeptEntryId,
       tokensBefore: preparation.tokensBefore,
-      details: { /* 自定义数据 */ },
-    }
+      details: {
+        /* 自定义数据 */
+      },
+    },
   };
 });
 ```
@@ -311,15 +326,13 @@ pi.on("session_before_compact", async (event, ctx) => {
 要使用自己的模型生成摘要，使用 `serializeConversation` 将消息转换为文本：
 
 ```typescript
-import { convertToLlm, serializeConversation } from "@earendil-works/pi-coding-agent";
+import { convertToLlm, serializeConversation } from '@earendil-works/pi-coding-agent';
 
-pi.on("session_before_compact", async (event, ctx) => {
+pi.on('session_before_compact', async (event, ctx) => {
   const { preparation } = event;
 
   // 将 AgentMessage[] 转换为 Message[]，然后序列化为文本
-  const conversationText = serializeConversation(
-    convertToLlm(preparation.messagesToSummarize)
-  );
+  const conversationText = serializeConversation(convertToLlm(preparation.messagesToSummarize));
   // 返回：
   // [User]: 消息文本
   // [Assistant thinking]: thinking 内容
@@ -335,7 +348,7 @@ pi.on("session_before_compact", async (event, ctx) => {
       summary,
       firstKeptEntryId: preparation.firstKeptEntryId,
       tokensBefore: preparation.tokensBefore,
-    }
+    },
   };
 });
 ```
@@ -347,7 +360,7 @@ pi.on("session_before_compact", async (event, ctx) => {
 在 `/tree` 导航之前触发。无论用户是否选择摘要，都会触发。可以取消导航或提供自定义摘要。
 
 ```typescript
-pi.on("session_before_tree", async (event, ctx) => {
+pi.on('session_before_tree', async (event, ctx) => {
   const { preparation, signal } = event;
 
   // preparation.targetId - 导航目标
@@ -363,9 +376,11 @@ pi.on("session_before_tree", async (event, ctx) => {
   if (preparation.userWantsSummary) {
     return {
       summary: {
-        summary: "你的摘要...",
-        details: { /* 自定义数据 */ },
-      }
+        summary: '你的摘要...',
+        details: {
+          /* 自定义数据 */
+        },
+      },
     };
   }
 });
@@ -387,10 +402,10 @@ pi.on("session_before_tree", async (event, ctx) => {
 }
 ```
 
-| 设置项 | 默认值 | 说明 |
-|---------|--------|------|
-| `enabled` | `true` | 启用自动压缩 |
-| `reserveTokens` | `16384` | 为 LLM 响应预留的 Token |
+| 设置项             | 默认值  | 说明                       |
+| ------------------ | ------- | -------------------------- |
+| `enabled`          | `true`  | 启用自动压缩               |
+| `reserveTokens`    | `16384` | 为 LLM 响应预留的 Token    |
 | `keepRecentTokens` | `20000` | 保留的最近 Token（不总结） |
 
 使用 `"enabled": false` 禁用自动压缩。你仍可以使用 `/compact` 手动压缩。

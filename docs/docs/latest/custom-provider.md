@@ -33,31 +33,31 @@
 ## 快速参考
 
 ```typescript
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 
 export default function (pi: ExtensionAPI) {
   // 覆盖现有 Provider 的 baseUrl
-  pi.registerProvider("anthropic", {
-    baseUrl: "https://proxy.example.com"
+  pi.registerProvider('anthropic', {
+    baseUrl: 'https://proxy.example.com',
   });
 
   // 注册新 Provider 并指定模型
-  pi.registerProvider("my-provider", {
-    name: "My Provider",
-    baseUrl: "https://api.example.com",
-    apiKey: "$MY_API_KEY",
-    api: "openai-completions",
+  pi.registerProvider('my-provider', {
+    name: 'My Provider',
+    baseUrl: 'https://api.example.com',
+    apiKey: '$MY_API_KEY',
+    api: 'openai-completions',
     models: [
       {
-        id: "my-model",
-        name: "My Model",
+        id: 'my-model',
+        name: 'My Model',
         reasoning: false,
-        input: ["text", "image"],
+        input: ['text', 'image'],
         cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
         contextWindow: 128000,
-        maxTokens: 4096
-      }
-    ]
+        maxTokens: 4096,
+      },
+    ],
   });
 }
 ```
@@ -70,23 +70,23 @@ export default function (pi: ExtensionAPI) {
 
 ```typescript
 // 所有 Anthropic 请求现在通过你的代理
-pi.registerProvider("anthropic", {
-  baseUrl: "https://proxy.example.com"
+pi.registerProvider('anthropic', {
+  baseUrl: 'https://proxy.example.com',
 });
 
 // 为 OpenAI 请求添加自定义请求头
-pi.registerProvider("openai", {
+pi.registerProvider('openai', {
   headers: {
-    "X-Custom-Header": "value"
-  }
+    'X-Custom-Header': 'value',
+  },
 });
 
 // 同时指定 baseUrl 和 headers
-pi.registerProvider("google", {
-  baseUrl: "https://ai-gateway.corp.com/google",
+pi.registerProvider('google', {
+  baseUrl: 'https://ai-gateway.corp.com/google',
   headers: {
-    "X-Corp-Auth": "$CORP_AUTH_TOKEN"  // 环境变量引用或字面值
-  }
+    'X-Corp-Auth': '$CORP_AUTH_TOKEN', // 环境变量引用或字面值
+  },
 });
 ```
 
@@ -99,10 +99,10 @@ pi.registerProvider("google", {
 如果模型列表来自远程端点，使用异步扩展工厂：
 
 ```typescript
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 
 export default async function (pi: ExtensionAPI) {
-  const response = await fetch("http://localhost:1234/v1/models");
+  const response = await fetch('http://localhost:1234/v1/models');
   const payload = (await response.json()) as {
     data: Array<{
       id: string;
@@ -112,15 +112,15 @@ export default async function (pi: ExtensionAPI) {
     }>;
   };
 
-  pi.registerProvider("local-openai", {
-    baseUrl: "http://localhost:1234/v1",
-    apiKey: "$LOCAL_OPENAI_API_KEY",
-    api: "openai-completions",
+  pi.registerProvider('local-openai', {
+    baseUrl: 'http://localhost:1234/v1',
+    apiKey: '$LOCAL_OPENAI_API_KEY',
+    api: 'openai-completions',
     models: payload.data.map((model) => ({
       id: model.id,
       name: model.name ?? model.id,
       reasoning: false,
-      input: ["text"],
+      input: ['text'],
       cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
       contextWindow: model.context_window ?? 128000,
       maxTokens: model.max_tokens ?? 4096,
@@ -132,26 +132,26 @@ export default async function (pi: ExtensionAPI) {
 这会在启动完成前注册获取到的模型。
 
 ```typescript
-pi.registerProvider("my-llm", {
-  baseUrl: "https://api.my-llm.com/v1",
-  apiKey: "$MY_LLM_API_KEY",  // 环境变量引用
-  api: "openai-completions",  // 使用的流式 API
+pi.registerProvider('my-llm', {
+  baseUrl: 'https://api.my-llm.com/v1',
+  apiKey: '$MY_LLM_API_KEY', // 环境变量引用
+  api: 'openai-completions', // 使用的流式 API
   models: [
     {
-      id: "my-llm-large",
-      name: "My LLM Large",
-      reasoning: true,        // 支持扩展思考
-      input: ["text", "image"],
+      id: 'my-llm-large',
+      name: 'My LLM Large',
+      reasoning: true, // 支持扩展思考
+      input: ['text', 'image'],
       cost: {
-        input: 3.0,           // $/百万 token
+        input: 3.0, // $/百万 token
         output: 15.0,
         cacheRead: 0.3,
-        cacheWrite: 3.75
+        cacheWrite: 3.75,
       },
       contextWindow: 200000,
-      maxTokens: 16384
-    }
-  ]
+      maxTokens: 16384,
+    },
+  ],
 });
 ```
 
@@ -165,25 +165,25 @@ pi.registerProvider("my-llm", {
 
 ```typescript
 // 注册
-pi.registerProvider("my-llm", {
-  baseUrl: "https://api.my-llm.com/v1",
-  apiKey: "$MY_LLM_API_KEY",
-  api: "openai-completions",
+pi.registerProvider('my-llm', {
+  baseUrl: 'https://api.my-llm.com/v1',
+  apiKey: '$MY_LLM_API_KEY',
+  api: 'openai-completions',
   models: [
     {
-      id: "my-llm-large",
-      name: "My LLM Large",
+      id: 'my-llm-large',
+      name: 'My LLM Large',
       reasoning: true,
-      input: ["text", "image"],
+      input: ['text', 'image'],
       cost: { input: 3.0, output: 15.0, cacheRead: 0.3, cacheWrite: 3.75 },
       contextWindow: 200000,
-      maxTokens: 16384
-    }
-  ]
+      maxTokens: 16384,
+    },
+  ],
 });
 
 // 随后移除
-pi.unregisterProvider("my-llm");
+pi.unregisterProvider('my-llm');
 ```
 
 卸载会移除该 Provider 的动态模型、API Key 回退、OAuth Provider 注册和自定义流处理器注册。被覆盖的任何内置模型或 Provider 行为将被恢复。
@@ -194,41 +194,44 @@ pi.unregisterProvider("my-llm");
 
 `api` 字段决定使用哪个流式实现：
 
-| API | 用途 |
-|-----|---------|
-| `anthropic-messages` | Anthropic Claude API 及兼容 |
-| `openai-completions` | OpenAI Chat Completions API 及兼容 |
-| `openai-responses` | OpenAI Responses API |
-| `azure-openai-responses` | Azure OpenAI Responses API |
-| `openai-codex-responses` | OpenAI Codex Responses API |
-| `mistral-conversations` | Mistral SDK Conversations/Chat 流式 |
-| `google-generative-ai` | Google Generative AI API |
-| `google-vertex` | Google Vertex AI API |
-| `bedrock-converse-stream` | Amazon Bedrock Converse API |
+| API                       | 用途                                |
+| ------------------------- | ----------------------------------- |
+| `anthropic-messages`      | Anthropic Claude API 及兼容         |
+| `openai-completions`      | OpenAI Chat Completions API 及兼容  |
+| `openai-responses`        | OpenAI Responses API                |
+| `azure-openai-responses`  | Azure OpenAI Responses API          |
+| `openai-codex-responses`  | OpenAI Codex Responses API          |
+| `mistral-conversations`   | Mistral SDK Conversations/Chat 流式 |
+| `google-generative-ai`    | Google Generative AI API            |
+| `google-vertex`           | Google Vertex AI API                |
+| `bedrock-converse-stream` | Amazon Bedrock Converse API         |
 
 大多数兼容 OpenAI 的 Provider 使用 `openai-completions`。使用模型级别的 `thinkingLevelMap` 指定模型特定的思考级别，使用 `compat` 处理 Provider 的特殊行为：
 
 ```typescript
-models: [{
-  id: "custom-model",
-  // ...
-  reasoning: true,
-  thinkingLevelMap: {              // 将 pi 级别映射到 Provider 值；null 隐藏不支持的级别
-    minimal: null,
-    low: null,
-    medium: null,
-    high: "default",
-    xhigh: "max"
+models: [
+  {
+    id: 'custom-model',
+    // ...
+    reasoning: true,
+    thinkingLevelMap: {
+      // 将 pi 级别映射到 Provider 值；null 隐藏不支持的级别
+      minimal: null,
+      low: null,
+      medium: null,
+      high: 'default',
+      xhigh: 'max',
+    },
+    compat: {
+      supportsDeveloperRole: false, // 使用 "system" 而非 "developer"
+      supportsReasoningEffort: true,
+      maxTokensField: 'max_tokens', // 而非 "max_completion_tokens"
+      requiresToolResultName: true, // tool result 需要 name 字段
+      thinkingFormat: 'qwen', // 顶层 enable_thinking: true
+      cacheControlFormat: 'anthropic', // Anthropic 风格的 cache_control 标记
+    },
   },
-  compat: {
-    supportsDeveloperRole: false,   // 使用 "system" 而非 "developer"
-    supportsReasoningEffort: true,
-    maxTokensField: "max_tokens",   // 而非 "max_completion_tokens"
-    requiresToolResultName: true,   // tool result 需要 name 字段
-    thinkingFormat: "qwen",        // 顶层 enable_thinking: true
-    cacheControlFormat: "anthropic" // Anthropic 风格的 cache_control 标记
-  }
-}]
+];
 ```
 
 使用 `openrouter` 实现 OpenRouter 风格的 `reasoning: { effort }` 控制。使用 `deepseek` 实现 DeepSeek 风格的 `thinking: { type: "enabled" | "disabled" }` 控制，启用时还会发送 `reasoning_effort`。使用 `together` 实现 Together 风格的 `reasoning: { enabled }` 控制；配合 `supportsReasoningEffort` 时还会发送 `reasoning_effort`。使用 `qwen-chat-template` 用于读取 `chat_template_kwargs.enable_thinking` 的本地 Qwen 兼容服务器。
@@ -350,10 +353,7 @@ interface OAuthLoginCallbacks {
   onPrompt(params: { message: string }): Promise<string>;
 
   // 显示交互式选择器，例如选择浏览器 OAuth 还是设备码
-  onSelect(params: {
-    message: string;
-    options: { id: string; label: string }[];
-  }): Promise<string | undefined>;
+  onSelect(params: { message: string; options: { id: string; label: string }[] }): Promise<string | undefined>;
 }
 ```
 
@@ -363,9 +363,9 @@ interface OAuthLoginCallbacks {
 
 ```typescript
 interface OAuthCredentials {
-  refresh: string;   // 刷新令牌（用于 refreshToken()）
-  access: string;    // 访问令牌（由 getApiKey() 返回）
-  expires: number;   // 过期时间戳（毫秒）
+  refresh: string; // 刷新令牌（用于 refreshToken()）
+  access: string; // 访问令牌（由 getApiKey() 返回）
+  expires: number; // 过期时间戳（毫秒）
 }
 ```
 
@@ -374,6 +374,7 @@ interface OAuthCredentials {
 对于非标准 API 的 Provider，实现 `streamSimple`。在编写自己的实现之前，请先研究现有的 Provider 实现：
 
 **参考实现：**
+
 - [anthropic.ts](https://github.com/earendil-works/pi-mono/blob/main/packages/ai/src/providers/anthropic.ts) - Anthropic Messages API
 - [mistral.ts](https://github.com/earendil-works/pi-mono/blob/main/packages/ai/src/providers/mistral.ts) - Mistral Conversations API
 - [openai-completions.ts](https://github.com/earendil-works/pi-mono/blob/main/packages/ai/src/providers/openai-completions.ts) - OpenAI Chat Completions
@@ -394,19 +395,19 @@ import {
   type SimpleStreamOptions,
   calculateCost,
   createAssistantMessageEventStream,
-} from "@earendil-works/pi-ai";
+} from '@earendil-works/pi-ai';
 
 function streamMyProvider(
   model: Model<any>,
   context: Context,
-  options?: SimpleStreamOptions
+  options?: SimpleStreamOptions,
 ): AssistantMessageEventStream {
   const stream = createAssistantMessageEventStream();
 
   (async () => {
     // 初始化输出消息
     const output: AssistantMessage = {
-      role: "assistant",
+      role: 'assistant',
       content: [],
       api: model.api,
       provider: model.provider,
@@ -419,28 +420,28 @@ function streamMyProvider(
         totalTokens: 0,
         cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
       },
-      stopReason: "stop",
+      stopReason: 'stop',
       timestamp: Date.now(),
     };
 
     try {
       // 推送 start 事件
-      stream.push({ type: "start", partial: output });
+      stream.push({ type: 'start', partial: output });
 
       // 发起 API 请求并处理响应...
       // 随着数据到达推送内容事件...
 
       // 推送 done 事件
       stream.push({
-        type: "done",
-        reason: output.stopReason as "stop" | "length" | "toolUse",
-        message: output
+        type: 'done',
+        reason: output.stopReason as 'stop' | 'length' | 'toolUse',
+        message: output,
       });
       stream.end();
     } catch (error) {
-      output.stopReason = options?.signal?.aborted ? "aborted" : "error";
+      output.stopReason = options?.signal?.aborted ? 'aborted' : 'error';
       output.errorMessage = error instanceof Error ? error.message : String(error);
-      stream.push({ type: "error", reason: output.stopReason, error: output });
+      stream.push({ type: 'error', reason: output.stopReason, error: output });
       stream.end();
     }
   })();
@@ -476,18 +477,18 @@ function streamMyProvider(
 
 ```typescript
 // 文本块
-output.content.push({ type: "text", text: "" });
-stream.push({ type: "text_start", contentIndex: output.content.length - 1, partial: output });
+output.content.push({ type: 'text', text: '' });
+stream.push({ type: 'text_start', contentIndex: output.content.length - 1, partial: output });
 
 // 文本到达时
 const block = output.content[contentIndex];
-if (block.type === "text") {
+if (block.type === 'text') {
   block.text += delta;
-  stream.push({ type: "text_delta", contentIndex, delta, partial: output });
+  stream.push({ type: 'text_delta', contentIndex, delta, partial: output });
 }
 
 // 块完成时
-stream.push({ type: "text_end", contentIndex, content: block.text, partial: output });
+stream.push({ type: 'text_end', contentIndex, content: block.text, partial: output });
 ```
 
 ### 工具调用
@@ -497,27 +498,27 @@ stream.push({ type: "text_end", contentIndex, content: block.text, partial: outp
 ```typescript
 // 开始工具调用
 output.content.push({
-  type: "toolCall",
+  type: 'toolCall',
   id: toolCallId,
   name: toolName,
-  arguments: {}
+  arguments: {},
 });
-stream.push({ type: "toolcall_start", contentIndex: output.content.length - 1, partial: output });
+stream.push({ type: 'toolcall_start', contentIndex: output.content.length - 1, partial: output });
 
 // 累积 JSON
-let partialJson = "";
+let partialJson = '';
 partialJson += jsonDelta;
 try {
   block.arguments = JSON.parse(partialJson);
 } catch {}
-stream.push({ type: "toolcall_delta", contentIndex, delta: jsonDelta, partial: output });
+stream.push({ type: 'toolcall_delta', contentIndex, delta: jsonDelta, partial: output });
 
 // 完成
 stream.push({
-  type: "toolcall_end",
+  type: 'toolcall_end',
   contentIndex,
-  toolCall: { type: "toolCall", id, name, arguments: block.arguments },
-  partial: output
+  toolCall: { type: 'toolCall', id, name, arguments: block.arguments },
+  partial: output,
 });
 ```
 
@@ -530,8 +531,7 @@ output.usage.input = response.usage.input_tokens;
 output.usage.output = response.usage.output_tokens;
 output.usage.cacheRead = response.usage.cache_read_tokens ?? 0;
 output.usage.cacheWrite = response.usage.cache_write_tokens ?? 0;
-output.usage.totalTokens = output.usage.input + output.usage.output +
-                           output.usage.cacheRead + output.usage.cacheWrite;
+output.usage.totalTokens = output.usage.input + output.usage.output + output.usage.cacheRead + output.usage.cacheWrite;
 calculateCost(model, output.usage);
 ```
 
@@ -550,20 +550,18 @@ calculateCost(model, output.usage);
 const MY_PROVIDER_OVERFLOW_PATTERN = /your provider's overflow phrase/i;
 
 export default function (pi: ExtensionAPI) {
-  pi.registerProvider("my-provider", { /* ... */ });
+  pi.registerProvider('my-provider', {
+    /* ... */
+  });
 
-  pi.on("message_end", (event, ctx) => {
+  pi.on('message_end', (event, ctx) => {
     const message = event.message;
-    if (message.role !== "assistant") return;
-    if (message.stopReason !== "error") return;
-    if (
-      message.provider !== "my-provider" &&
-      ctx.model?.provider !== "my-provider"
-    )
-      return;
+    if (message.role !== 'assistant') return;
+    if (message.stopReason !== 'error') return;
+    if (message.provider !== 'my-provider' && ctx.model?.provider !== 'my-provider') return;
 
-    const errorMessage = message.errorMessage ?? "";
-    if (errorMessage.includes("context_length_exceeded")) return;
+    const errorMessage = message.errorMessage ?? '';
+    if (errorMessage.includes('context_length_exceeded')) return;
     if (!MY_PROVIDER_OVERFLOW_PATTERN.test(errorMessage)) return;
 
     return {
@@ -607,19 +605,19 @@ pi.registerProvider("my-provider", {
 
 使用与内置 Provider 相同的测试套件测试你的 Provider。从 [packages/ai/test/](https://github.com/earendil-works/pi-mono/tree/main/packages/ai/test) 复制并适配以下测试文件：
 
-| 测试 | 目的 |
-|------|---------|
-| `stream.test.ts` | 基本流式传输、文本输出 |
-| `tokens.test.ts` | Token 计数和使用量 |
-| `abort.test.ts` | AbortSignal 处理 |
-| `empty.test.ts` | 空/最小响应 |
-| `context-overflow.test.ts` | 上下文窗口限制 |
-| `image-limits.test.ts` | 图像输入处理 |
-| `unicode-surrogate.test.ts` | Unicode 边界情况 |
-| `tool-call-without-result.test.ts` | 工具调用边界情况 |
-| `image-tool-result.test.ts` | 工具结果中的图像 |
-| `total-tokens.test.ts` | 总 Token 计算 |
-| `cross-provider-handoff.test.ts` | Provider 间上下文交接 |
+| 测试                               | 目的                   |
+| ---------------------------------- | ---------------------- |
+| `stream.test.ts`                   | 基本流式传输、文本输出 |
+| `tokens.test.ts`                   | Token 计数和使用量     |
+| `abort.test.ts`                    | AbortSignal 处理       |
+| `empty.test.ts`                    | 空/最小响应            |
+| `context-overflow.test.ts`         | 上下文窗口限制         |
+| `image-limits.test.ts`             | 图像输入处理           |
+| `unicode-surrogate.test.ts`        | Unicode 边界情况       |
+| `tool-call-without-result.test.ts` | 工具调用边界情况       |
+| `image-tool-result.test.ts`        | 工具结果中的图像       |
+| `total-tokens.test.ts`             | 总 Token 计算          |
+| `cross-provider-handoff.test.ts`   | Provider 间上下文交接  |
 
 使用你的 Provider/模型对运行测试以验证兼容性。
 
@@ -640,11 +638,7 @@ interface ProviderConfig {
   api?: Api;
 
   /** 非标准 API 的自定义流式实现。 */
-  streamSimple?: (
-    model: Model<Api>,
-    context: Context,
-    options?: SimpleStreamOptions
-  ) => AssistantMessageEventStream;
+  streamSimple?: (model: Model<Api>, context: Context, options?: SimpleStreamOptions) => AssistantMessageEventStream;
 
   /** 包含在请求中的自定义请求头。值可以是环境变量名。 */
   headers?: Record<string, string>;
@@ -686,10 +680,10 @@ interface ProviderModelConfig {
   reasoning: boolean;
 
   /** 将 pi 思考级别映射到 Provider/模型特定值；null 标记不支持的级别。 */
-  thinkingLevelMap?: Partial<Record<"off" | "minimal" | "low" | "medium" | "high" | "xhigh", string | null>>;
+  thinkingLevelMap?: Partial<Record<'off' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh', string | null>>;
 
   /** 支持的输入类型。 */
-  input: ("text" | "image")[];
+  input: ('text' | 'image')[];
 
   /** 每百万 Token 的成本（用于使用量跟踪）。 */
   cost: {
@@ -715,13 +709,13 @@ interface ProviderModelConfig {
     supportsDeveloperRole?: boolean;
     supportsReasoningEffort?: boolean;
     supportsUsageInStreaming?: boolean;
-    maxTokensField?: "max_completion_tokens" | "max_tokens";
+    maxTokensField?: 'max_completion_tokens' | 'max_tokens';
     requiresToolResultName?: boolean;
     requiresAssistantAfterToolResult?: boolean;
     requiresThinkingAsText?: boolean;
     requiresReasoningContentOnAssistantMessages?: boolean;
-    thinkingFormat?: "openai" | "openrouter" | "deepseek" | "together" | "zai" | "qwen" | "qwen-chat-template";
-    cacheControlFormat?: "anthropic";
+    thinkingFormat?: 'openai' | 'openrouter' | 'deepseek' | 'together' | 'zai' | 'qwen' | 'qwen-chat-template';
+    cacheControlFormat?: 'anthropic';
 
     // anthropic-messages
     supportsEagerToolInputStreaming?: boolean;

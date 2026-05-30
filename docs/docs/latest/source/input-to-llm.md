@@ -114,7 +114,7 @@ async getUserInput(): Promise<string> {
 
 ```typescript
 // agent-session.ts:989
-if (expandPromptTemplates && text.startsWith("/")) {
+if (expandPromptTemplates && text.startsWith('/')) {
   const handled = await this._tryExecuteExtensionCommand(text);
   if (handled) {
     return; // 扩展命令已处理，不再发送 LLM
@@ -129,15 +129,16 @@ if (expandPromptTemplates && text.startsWith("/")) {
 
 ```typescript
 // agent-session.ts:998
-if (this._extensionRunner.hasHandlers("input")) {
+if (this._extensionRunner.hasHandlers('input')) {
   const inputResult = await this._extensionRunner.emitInput(
     currentText,
     currentImages,
-    options?.source ?? "interactive",
+    options?.source ?? 'interactive',
     this.isStreaming ? options?.streamingBehavior : undefined,
   );
-  if (inputResult.action === "handled") return;     // 扩展处理了
-  if (inputResult.action === "transform") {          // 扩展修改了输入
+  if (inputResult.action === 'handled') return; // 扩展处理了
+  if (inputResult.action === 'transform') {
+    // 扩展修改了输入
     currentText = inputResult.text;
     currentImages = inputResult.images ?? currentImages;
   }
@@ -157,6 +158,7 @@ if (expandPromptTemplates) {
 ```
 
 **Skill 展开**示例：
+
 ```
 用户输入：/skill:react-best-practices 如何优化这个组件？
 
@@ -172,6 +174,7 @@ References are relative to /path/to.
 ```
 
 **Prompt Template 展开**示例：
+
 ```
 用户输入：/review @src/index.ts
 
@@ -186,7 +189,7 @@ You are a code reviewer. Review the following code:
 // agent-session.ts:1019
 if (this.isStreaming) {
   // Agent 正在工作中，输入作为 steer 或 follow-up 排队
-  if (options.streamingBehavior === "followUp") {
+  if (options.streamingBehavior === 'followUp') {
     await this._queueFollowUp(expandedText, currentImages);
   } else {
     await this._queueSteer(expandedText, currentImages);
@@ -197,10 +200,10 @@ if (this.isStreaming) {
 
 **关键概念：steer vs follow-up**
 
-| 行为 | 触发条件 | 效果 |
-|------|---------|------|
-| **Steer** | Agent 正在工作中输入 | 在**当前工具执行完成后、下一次 LLM 调用前**注入消息 |
-| **Follow-up** | Agent 正在工作中输入 | 在 Agent 完全完成后作为**新问题**排队 |
+| 行为          | 触发条件             | 效果                                                |
+| ------------- | -------------------- | --------------------------------------------------- |
+| **Steer**     | Agent 正在工作中输入 | 在**当前工具执行完成后、下一次 LLM 调用前**注入消息 |
+| **Follow-up** | Agent 正在工作中输入 | 在 Agent 完全完成后作为**新问题**排队               |
 
 这允许用户在 LLM 工作时输入新消息（"引导"或"追问"）。
 
@@ -219,6 +222,7 @@ if (lastAssistant && (await this._checkCompaction(lastAssistant, false))) {
 ```
 
 **Compaction**（上下文压缩）是长会话的关键机制。当上下文接近 LLM 的 token 限制时：
+
 1. 将历史消息发送给一个快模型进行摘要
 2. 用摘要替换详细消息
 3. 释放 token 空间
@@ -230,12 +234,12 @@ if (lastAssistant && (await this._checkCompaction(lastAssistant, false))) {
 messages = [];
 
 // 添加用户消息
-const userContent: (TextContent | ImageContent)[] = [{ type: "text", text: expandedText }];
+const userContent: (TextContent | ImageContent)[] = [{ type: 'text', text: expandedText }];
 if (currentImages) {
   userContent.push(...currentImages);
 }
 messages.push({
-  role: "user",
+  role: 'user',
   content: userContent,
   timestamp: Date.now(),
 });
@@ -331,7 +335,7 @@ async function runLoop(
     // ★ 内层循环：处理工具调用
     while (hasMoreToolCalls || pendingMessages.length > 0) {
       if (!firstTurn) {
-        await emit({ type: "turn_start" });
+        await emit({ type: 'turn_start' });
       } else {
         firstTurn = false;
       }
@@ -350,12 +354,12 @@ async function runLoop(
       newMessages.push(message);
 
       // ③ 检查是否出错
-      if (message.stopReason === "error" || message.stopReason === "aborted") {
+      if (message.stopReason === 'error' || message.stopReason === 'aborted') {
         return;
       }
 
       // ④ 提取 tool calls
-      const toolCalls = message.content.filter((c) => c.type === "toolCall");
+      const toolCalls = message.content.filter((c) => c.type === 'toolCall');
       hasMoreToolCalls = false;
 
       if (toolCalls.length > 0) {
@@ -370,7 +374,7 @@ async function runLoop(
         }
       }
 
-      await emit({ type: "turn_end", message, toolResults: executedToolBatch.messages });
+      await emit({ type: 'turn_end', message, toolResults: executedToolBatch.messages });
     }
 
     // ⑥ 检查 follow-up 消息
@@ -383,7 +387,7 @@ async function runLoop(
     break; // 所有完成，退出
   }
 
-  await emit({ type: "agent_end", messages: newMessages });
+  await emit({ type: 'agent_end', messages: newMessages });
 }
 ```
 
@@ -466,7 +470,6 @@ async function streamAssistantResponse(
   emit: AgentEventSink,
   streamFn?: StreamFn,
 ): Promise<AssistantMessage> {
-
   // ① AgentMessage → LLM Message（格式转换）
   const llmMessages = await config.convertToLlm(messages);
 
@@ -491,24 +494,24 @@ async function streamAssistantResponse(
   // ⑤ 处理流式事件
   for await (const event of response) {
     switch (event.type) {
-      case "start":
+      case 'start':
         partialMessage = event.partial;
         context.messages.push(partialMessage);
         break;
 
-      case "text_delta":
-      case "thinking_delta":
-      case "toolcall_delta":
+      case 'text_delta':
+      case 'thinking_delta':
+      case 'toolcall_delta':
         partialMessage = event.partial;
         context.messages[context.messages.length - 1] = partialMessage;
-        await emit({ type: "message_update", assistantMessageEvent: event, message: { ...partialMessage } });
+        await emit({ type: 'message_update', assistantMessageEvent: event, message: { ...partialMessage } });
         break;
 
-      case "done":
+      case 'done':
         // 流结束
         break;
 
-      case "error":
+      case 'error':
         // 错误处理
         break;
     }
@@ -519,6 +522,7 @@ async function streamAssistantResponse(
 ```
 
 **关键设计**：LLM 的回复是**流式的**（SSE，Server-Sent Events）。每个 delta 事件都会：
+
 1. 更新 `partialMessage`（累积的助手消息）
 2. 更新 `context.messages` 中的最后一条消息
 3. 发出 `message_update` 事件 → TUI 收到后实时更新显示
@@ -563,44 +567,44 @@ executeToolCalls()
 
 **内置工具列表**（`packages/coding-agent/src/core/tools/`）：
 
-| 工具 | 文件 | 功能 |
-|------|------|------|
-| `read` | `read.ts` | 读取文件内容 |
-| `write` | `write.ts` | 创建或覆盖文件 |
-| `edit` | `edit.ts` | 精确文本替换 |
+| 工具        | 文件           | 功能                 |
+| ----------- | -------------- | -------------------- |
+| `read`      | `read.ts`      | 读取文件内容         |
+| `write`     | `write.ts`     | 创建或覆盖文件       |
+| `edit`      | `edit.ts`      | 精确文本替换         |
 | `edit-diff` | `edit-diff.ts` | 基于 diff 的补丁应用 |
-| `bash` | `bash.ts` | 执行 Shell 命令 |
-| `grep` | `grep.ts` | 文件内容搜索 |
-| `find` | `find.ts` | 文件名搜索 |
-| `ls` | `ls.ts` | 列出目录 |
+| `bash`      | `bash.ts`      | 执行 Shell 命令      |
+| `grep`      | `grep.ts`      | 文件内容搜索         |
+| `find`      | `find.ts`      | 文件名搜索           |
+| `ls`        | `ls.ts`        | 列出目录             |
 
 ## 循环终止条件
 
 Agent Loop 在以下情况下退出：
 
-| 条件 | stopReason | 退出层级 |
-|------|-----------|---------|
-| LLM 正常回复完成 | `"stop"` | 内层循环退出 |
-| LLM 调用工具 | `"toolUse"` | 继续内层循环 |
-| 输出超过最大 token | `"length"` | 内层循环退出 |
-| 发生错误 | `"error"` | 直接 return |
-| 用户中断（Ctrl+C） | `"aborted"` | 直接 return |
-| 用户输入 steer | — | steer 注入后继续 |
-| 用户输入 follow-up | — | 外层循环继续 |
+| 条件               | stopReason  | 退出层级         |
+| ------------------ | ----------- | ---------------- |
+| LLM 正常回复完成   | `"stop"`    | 内层循环退出     |
+| LLM 调用工具       | `"toolUse"` | 继续内层循环     |
+| 输出超过最大 token | `"length"`  | 内层循环退出     |
+| 发生错误           | `"error"`   | 直接 return      |
+| 用户中断（Ctrl+C） | `"aborted"` | 直接 return      |
+| 用户输入 steer     | —           | steer 注入后继续 |
+| 用户输入 follow-up | —           | 外层循环继续     |
 
 ## 关键概念总结
 
-| 概念 | 解释 | 代码位置 |
-|------|------|---------|
-| **AgentSession** | 业务逻辑中枢，处理消息预处理 | `agent-session.ts` |
-| **Agent** | 智能体运行时，管理状态和生命周期 | `agent.ts` |
-| **runAgentLoop** | ★ 核心循环，LLM → 工具 → 循环 | `agent-loop.ts:155` |
-| **streamAssistantResponse** | LLM 调用入口，处理流式事件 | `agent-loop.ts:260` |
-| **executeToolCalls** | 工具执行，验证 → 执行 → 返回结果 | `agent-loop.ts:350` |
-| **Steer** | Agent 工作中注入消息，当前工具完成后生效 | `agent-session.ts:steer()` |
-| **Follow-up** | Agent 完成后排队的新消息 | `agent-session.ts:followUp()` |
-| **Compaction** | 上下文压缩，释放 token 空间 | `agent-session.ts:_checkCompaction()` |
-| **事件驱动** | 所有状态变化通过事件通知 TUI | `emit()` 调用 |
+| 概念                        | 解释                                     | 代码位置                              |
+| --------------------------- | ---------------------------------------- | ------------------------------------- |
+| **AgentSession**            | 业务逻辑中枢，处理消息预处理             | `agent-session.ts`                    |
+| **Agent**                   | 智能体运行时，管理状态和生命周期         | `agent.ts`                            |
+| **runAgentLoop**            | ★ 核心循环，LLM → 工具 → 循环            | `agent-loop.ts:155`                   |
+| **streamAssistantResponse** | LLM 调用入口，处理流式事件               | `agent-loop.ts:260`                   |
+| **executeToolCalls**        | 工具执行，验证 → 执行 → 返回结果         | `agent-loop.ts:350`                   |
+| **Steer**                   | Agent 工作中注入消息，当前工具完成后生效 | `agent-session.ts:steer()`            |
+| **Follow-up**               | Agent 完成后排队的新消息                 | `agent-session.ts:followUp()`         |
+| **Compaction**              | 上下文压缩，释放 token 空间              | `agent-session.ts:_checkCompaction()` |
+| **事件驱动**                | 所有状态变化通过事件通知 TUI             | `emit()` 调用                         |
 
 ## 下一步
 

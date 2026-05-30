@@ -29,6 +29,7 @@ Pi 也支持从 `/resume` 交互式删除会话（选择一个会话后按 `Ctrl
 ## 源文件
 
 GitHub 上的源代码（[pi-mono](https://github.com/earendil-works/pi-mono)）：
+
 - [`packages/coding-agent/src/core/session-manager.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/session-manager.ts) - 会话条目类型和 SessionManager
 - [`packages/coding-agent/src/core/messages.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/messages.ts) - 扩展消息类型（BashExecutionMessage、CustomMessage 等）
 - [`packages/ai/src/types.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/ai/src/types.ts) - 基础消息类型（UserMessage、AssistantMessage、ToolResultMessage）
@@ -46,23 +47,23 @@ GitHub 上的源代码（[pi-mono](https://github.com/earendil-works/pi-mono)）
 
 ```typescript
 interface TextContent {
-  type: "text";
+  type: 'text';
   text: string;
 }
 
 interface ImageContent {
-  type: "image";
-  data: string;      // base64 编码
-  mimeType: string;  // 例如 "image/jpeg"、"image/png"
+  type: 'image';
+  data: string; // base64 编码
+  mimeType: string; // 例如 "image/jpeg"、"image/png"
 }
 
 interface ThinkingContent {
-  type: "thinking";
+  type: 'thinking';
   thinking: string;
 }
 
 interface ToolCall {
-  type: "toolCall";
+  type: 'toolCall';
   id: string;
   name: string;
   arguments: Record<string, any>;
@@ -73,29 +74,29 @@ interface ToolCall {
 
 ```typescript
 interface UserMessage {
-  role: "user";
+  role: 'user';
   content: string | (TextContent | ImageContent)[];
-  timestamp: number;  // Unix 毫秒
+  timestamp: number; // Unix 毫秒
 }
 
 interface AssistantMessage {
-  role: "assistant";
+  role: 'assistant';
   content: (TextContent | ThinkingContent | ToolCall)[];
   api: string;
   provider: string;
   model: string;
   usage: Usage;
-  stopReason: "stop" | "length" | "toolUse" | "error" | "aborted";
+  stopReason: 'stop' | 'length' | 'toolUse' | 'error' | 'aborted';
   errorMessage?: string;
   timestamp: number;
 }
 
 interface ToolResultMessage {
-  role: "toolResult";
+  role: 'toolResult';
   toolCallId: string;
   toolName: string;
   content: (TextContent | ImageContent)[];
-  details?: any;        // 工具特定的元数据
+  details?: any; // 工具特定的元数据
   isError: boolean;
   timestamp: number;
 }
@@ -120,35 +121,35 @@ interface Usage {
 
 ```typescript
 interface BashExecutionMessage {
-  role: "bashExecution";
+  role: 'bashExecution';
   command: string;
   output: string;
   exitCode: number | undefined;
   cancelled: boolean;
   truncated: boolean;
   fullOutputPath?: string;
-  excludeFromContext?: boolean;  // 对于使用 !! 前缀的命令为 true
+  excludeFromContext?: boolean; // 对于使用 !! 前缀的命令为 true
   timestamp: number;
 }
 
 interface CustomMessage {
-  role: "custom";
-  customType: string;             // 扩展标识符
+  role: 'custom';
+  customType: string; // 扩展标识符
   content: string | (TextContent | ImageContent)[];
-  display: boolean;               // 在 TUI 中显示
-  details?: any;                  // 扩展特定的元数据
+  display: boolean; // 在 TUI 中显示
+  details?: any; // 扩展特定的元数据
   timestamp: number;
 }
 
 interface BranchSummaryMessage {
-  role: "branchSummary";
+  role: 'branchSummary';
   summary: string;
-  fromId: string;                 // 分支来源条目
+  fromId: string; // 分支来源条目
   timestamp: number;
 }
 
 interface CompactionSummaryMessage {
-  role: "compactionSummary";
+  role: 'compactionSummary';
   summary: string;
   tokensBefore: number;
   timestamp: number;
@@ -175,9 +176,9 @@ type AgentMessage =
 ```typescript
 interface SessionEntryBase {
   type: string;
-  id: string;                // 8 字符十六进制 ID
-  parentId: string | null;   // 父条目 ID（第一条目为 null）
-  timestamp: string;         // ISO 时间戳
+  id: string; // 8 字符十六进制 ID
+  parentId: string | null; // 父条目 ID（第一条目为 null）
+  timestamp: string; // ISO 时间戳
 }
 ```
 
@@ -188,13 +189,20 @@ interface SessionEntryBase {
 文件的第一行。仅元数据，不属于树结构（没有 `id`/`parentId`）。
 
 ```json
-{"type":"session","version":3,"id":"uuid","timestamp":"2024-12-03T14:00:00.000Z","cwd":"/path/to/project"}
+{ "type": "session", "version": 3, "id": "uuid", "timestamp": "2024-12-03T14:00:00.000Z", "cwd": "/path/to/project" }
 ```
 
 对于有父会话的会话（通过 `/fork`、`/clone` 或 `newSession({ parentSession })` 创建）：
 
 ```json
-{"type":"session","version":3,"id":"uuid","timestamp":"2024-12-03T14:00:00.000Z","cwd":"/path/to/project","parentSession":"/path/to/original/session.jsonl"}
+{
+  "type": "session",
+  "version": 3,
+  "id": "uuid",
+  "timestamp": "2024-12-03T14:00:00.000Z",
+  "cwd": "/path/to/project",
+  "parentSession": "/path/to/original/session.jsonl"
+}
 ```
 
 ### SessionMessageEntry
@@ -212,7 +220,14 @@ interface SessionEntryBase {
 当用户在会话中切换模型时触发。
 
 ```json
-{"type":"model_change","id":"d4e5f6g7","parentId":"c3d4e5f6","timestamp":"2024-12-03T14:05:00.000Z","provider":"openai","modelId":"gpt-4o"}
+{
+  "type": "model_change",
+  "id": "d4e5f6g7",
+  "parentId": "c3d4e5f6",
+  "timestamp": "2024-12-03T14:05:00.000Z",
+  "provider": "openai",
+  "modelId": "gpt-4o"
+}
 ```
 
 ### ThinkingLevelChangeEntry
@@ -220,7 +235,13 @@ interface SessionEntryBase {
 当用户更改 thinking/reasoning level 时触发。
 
 ```json
-{"type":"thinking_level_change","id":"e5f6g7h8","parentId":"d4e5f6g7","timestamp":"2024-12-03T14:06:00.000Z","thinkingLevel":"high"}
+{
+  "type": "thinking_level_change",
+  "id": "e5f6g7h8",
+  "parentId": "d4e5f6g7",
+  "timestamp": "2024-12-03T14:06:00.000Z",
+  "thinkingLevel": "high"
+}
 ```
 
 ### CompactionEntry
@@ -228,10 +249,19 @@ interface SessionEntryBase {
 当上下文被压缩时创建。存储之前消息的摘要。
 
 ```json
-{"type":"compaction","id":"f6g7h8i9","parentId":"e5f6g7h8","timestamp":"2024-12-03T14:10:00.000Z","summary":"User discussed X, Y, Z...","firstKeptEntryId":"c3d4e5f6","tokensBefore":50000}
+{
+  "type": "compaction",
+  "id": "f6g7h8i9",
+  "parentId": "e5f6g7h8",
+  "timestamp": "2024-12-03T14:10:00.000Z",
+  "summary": "User discussed X, Y, Z...",
+  "firstKeptEntryId": "c3d4e5f6",
+  "tokensBefore": 50000
+}
 ```
 
 可选字段：
+
 - `details`：实现特定的数据（例如默认的 `{ readFiles: string[], modifiedFiles: string[] }`，或扩展的自定义数据）
 - `fromHook`：如果由扩展生成则为 `true`，如果由 Pi 生成则为 `false`/`undefined`（旧字段名）
 
@@ -240,10 +270,18 @@ interface SessionEntryBase {
 当通过 `/tree` 切换分支时创建，包含 LLM 生成的从左分支到公共祖先的摘要。捕获被放弃路径的上下文。
 
 ```json
-{"type":"branch_summary","id":"g7h8i9j0","parentId":"a1b2c3d4","timestamp":"2024-12-03T14:15:00.000Z","fromId":"f6g7h8i9","summary":"Branch explored approach A..."}
+{
+  "type": "branch_summary",
+  "id": "g7h8i9j0",
+  "parentId": "a1b2c3d4",
+  "timestamp": "2024-12-03T14:15:00.000Z",
+  "fromId": "f6g7h8i9",
+  "summary": "Branch explored approach A..."
+}
 ```
 
 可选字段：
+
 - `details`：文件追踪数据（默认的 `{ readFiles: string[], modifiedFiles: string[] }`，或扩展的自定义数据）
 - `fromHook`：如果由扩展生成则为 `true`，如果由 Pi 生成则为 `false`/`undefined`（旧字段名）
 
@@ -252,7 +290,14 @@ interface SessionEntryBase {
 扩展状态持久化。**不参与** LLM 上下文。
 
 ```json
-{"type":"custom","id":"h8i9j0k1","parentId":"g7h8i9j0","timestamp":"2024-12-03T14:20:00.000Z","customType":"my-extension","data":{"count":42}}
+{
+  "type": "custom",
+  "id": "h8i9j0k1",
+  "parentId": "g7h8i9j0",
+  "timestamp": "2024-12-03T14:20:00.000Z",
+  "customType": "my-extension",
+  "data": { "count": 42 }
+}
 ```
 
 使用 `customType` 在重新加载时识别你的扩展条目。
@@ -262,10 +307,19 @@ interface SessionEntryBase {
 扩展注入的消息，**参与** LLM 上下文。
 
 ```json
-{"type":"custom_message","id":"i9j0k1l2","parentId":"h8i9j0k1","timestamp":"2024-12-03T14:25:00.000Z","customType":"my-extension","content":"Injected context...","display":true}
+{
+  "type": "custom_message",
+  "id": "i9j0k1l2",
+  "parentId": "h8i9j0k1",
+  "timestamp": "2024-12-03T14:25:00.000Z",
+  "customType": "my-extension",
+  "content": "Injected context...",
+  "display": true
+}
 ```
 
 字段：
+
 - `content`：字符串或 `(TextContent | ImageContent)[]`（与 UserMessage 相同）
 - `display`：`true` = 在 TUI 中以不同样式显示，`false` = 隐藏
 - `details`：可选的扩展特定元数据（不发送给 LLM）
@@ -275,7 +329,14 @@ interface SessionEntryBase {
 用户定义的书签/标记。
 
 ```json
-{"type":"label","id":"j0k1l2m3","parentId":"i9j0k1l2","timestamp":"2024-12-03T14:30:00.000Z","targetId":"a1b2c3d4","label":"checkpoint-1"}
+{
+  "type": "label",
+  "id": "j0k1l2m3",
+  "parentId": "i9j0k1l2",
+  "timestamp": "2024-12-03T14:30:00.000Z",
+  "targetId": "a1b2c3d4",
+  "label": "checkpoint-1"
+}
 ```
 
 将 `label` 设为 `undefined` 以清除标记。
@@ -285,7 +346,13 @@ interface SessionEntryBase {
 会话元数据（例如用户定义的显示名称）。通过 `/name` 命令或扩展中的 `pi.setSessionName()` 设置。
 
 ```json
-{"type":"session_info","id":"k1l2m3n4","parentId":"j0k1l2m3","timestamp":"2024-12-03T14:35:00.000Z","name":"Refactor auth module"}
+{
+  "type": "session_info",
+  "id": "k1l2m3n4",
+  "parentId": "j0k1l2m3",
+  "timestamp": "2024-12-03T14:35:00.000Z",
+  "name": "Refactor auth module"
+}
 ```
 
 设置后，会话名称会在会话选择器（`/resume`）中显示，而不是第一条消息。
@@ -293,6 +360,7 @@ interface SessionEntryBase {
 ## 树状结构
 
 条目形成树：
+
 - 第一个条目的 `parentId: null`
 - 每个后续条目通过 `parentId` 指向其父条目
 - 分叉从较早的条目创建新的子条目
@@ -319,39 +387,39 @@ interface SessionEntryBase {
 ## 解析示例
 
 ```typescript
-import { readFileSync } from "fs";
+import { readFileSync } from 'fs';
 
-const lines = readFileSync("session.jsonl", "utf8").trim().split("\n");
+const lines = readFileSync('session.jsonl', 'utf8').trim().split('\n');
 
 for (const line of lines) {
   const entry = JSON.parse(line);
 
   switch (entry.type) {
-    case "session":
+    case 'session':
       console.log(`Session v${entry.version ?? 1}: ${entry.id}`);
       break;
-    case "message":
+    case 'message':
       console.log(`[${entry.id}] ${entry.message.role}: ${JSON.stringify(entry.message.content)}`);
       break;
-    case "compaction":
+    case 'compaction':
       console.log(`[${entry.id}] Compaction: ${entry.tokensBefore} tokens summarized`);
       break;
-    case "branch_summary":
+    case 'branch_summary':
       console.log(`[${entry.id}] Branch from ${entry.fromId}`);
       break;
-    case "custom":
+    case 'custom':
       console.log(`[${entry.id}] Custom (${entry.customType}): ${JSON.stringify(entry.data)}`);
       break;
-    case "custom_message":
+    case 'custom_message':
       console.log(`[${entry.id}] Extension message (${entry.customType}): ${entry.content}`);
       break;
-    case "label":
+    case 'label':
       console.log(`[${entry.id}] Label "${entry.label}" on ${entry.targetId}`);
       break;
-    case "model_change":
+    case 'model_change':
       console.log(`[${entry.id}] Model: ${entry.provider}/${entry.modelId}`);
       break;
-    case "thinking_level_change":
+    case 'thinking_level_change':
       console.log(`[${entry.id}] Thinking: ${entry.thinkingLevel}`);
       break;
   }
@@ -363,6 +431,7 @@ for (const line of lines) {
 以编程方式操作会话的关键方法。
 
 ### 静态创建方法
+
 - `SessionManager.create(cwd, sessionDir?)` - 新会话
 - `SessionManager.open(path, sessionDir?)` - 打开现有会话文件
 - `SessionManager.continueRecent(cwd, sessionDir?)` - 继续最近会话或创建新会话
@@ -370,15 +439,18 @@ for (const line of lines) {
 - `SessionManager.forkFrom(sourcePath, targetCwd, sessionDir?)` - 从其他项目分叉会话
 
 ### 静态列表方法
+
 - `SessionManager.list(cwd, sessionDir?, onProgress?)` - 列出目录的会话
 - `SessionManager.listAll(onProgress?)` - 列出所有项目的所有会话
 
 ### 实例方法 - 会话管理
+
 - `newSession(options?)` - 开始新会话（options：`{ parentSession?: string }`）
 - `setSessionFile(path)` - 切换到不同的会话文件
 - `createBranchedSession(leafId)` - 将分支提取到新会话文件
 
 ### 实例方法 - 追加（全部返回条目 ID）
+
 - `appendMessage(message)` - 追加消息
 - `appendThinkingLevelChange(level)` - 记录 thinking 变更
 - `appendModelChange(provider, modelId)` - 记录模型变更
@@ -389,6 +461,7 @@ for (const line of lines) {
 - `appendLabelChange(targetId, label)` - 设置/清除标记
 
 ### 实例方法 - 树导航
+
 - `getLeafId()` - 当前位置
 - `getLeafEntry()` - 获取当前叶条目
 - `getEntry(id)` - 按 ID 获取条目
@@ -401,6 +474,7 @@ for (const line of lines) {
 - `branchWithSummary(entryId, summary, details?, fromHook?)` - 带上下文摘要的分支
 
 ### 实例方法 - 上下文和信息
+
 - `buildSessionContext()` - 获取 LLM 所需的消息、thinkingLevel 和模型
 - `getEntries()` - 所有条目（不包括头部）
 - `getHeader()` - 会话头部元数据

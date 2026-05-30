@@ -4,10 +4,10 @@
 
 Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 
-| 位置 | 作用域 |
-|------|--------|
+| 位置                        | 作用域           |
+| --------------------------- | ---------------- |
 | `~/.pi/agent/settings.json` | 全局（所有项目） |
-| `.pi/settings.json` | 项目（当前目录） |
+| `.pi/settings.json`         | 项目（当前目录） |
 
 可以直接编辑文件，或使用 `/settings` 进行常用选项配置。
 
@@ -15,13 +15,13 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 
 ### 模型和思维（Model & Thinking）
 
-| 设置项 | 类型 | 默认值 | 说明 |
-|--------|------|--------|------|
-| `defaultProvider` | string | - | 默认 Provider，如 `"anthropic"`、`"openai"` |
-| `defaultModel` | string | - | 默认模型 ID |
-| `defaultThinkingLevel` | string | - | `"off"`、`"minimal"`、`"low"`、`"medium"`、`"high"`、`"xhigh"` |
-| `hideThinkingBlock` | boolean | `false` | 是否隐藏 thinking block |
-| `thinkingBudgets` | object | - | 每个 thinking level 的自定义 Token 预算 |
+| 设置项                 | 类型    | 默认值  | 说明                                                           |
+| ---------------------- | ------- | ------- | -------------------------------------------------------------- |
+| `defaultProvider`      | string  | -       | 默认 Provider，如 `"anthropic"`、`"openai"`                    |
+| `defaultModel`         | string  | -       | 默认模型 ID                                                    |
+| `defaultThinkingLevel` | string  | -       | `"off"`、`"minimal"`、`"low"`、`"medium"`、`"high"`、`"xhigh"` |
+| `hideThinkingBlock`    | boolean | `false` | 是否隐藏 thinking block                                        |
+| `thinkingBudgets`      | object  | -       | 每个 thinking level 的自定义 Token 预算                        |
 
 #### thinkingBudgets
 
@@ -38,17 +38,17 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 
 ### UI 和显示
 
-| 设置项 | 类型 | 默认值 | 说明 |
-|--------|------|--------|------|
-| `theme` | string | `"dark"` | 主题名称（`"dark"`、`"light"` 或自定义） |
-| `quietStartup` | boolean | `false` | 隐藏启动头部 |
-| `collapseChangelog` | boolean | `false` | 更新后显示精简的 changelog |
-| `enableInstallTelemetry` | boolean | `true` | 首次安装或 changelog 检测到更新时发送匿名安装/更新版本 ping。这不控制更新检查 |
-| `doubleEscapeAction` | string | `"tree"` | 双击 Esc 的行为：`"tree"`、`"fork"` 或 `"none"` |
-| `treeFilterMode` | string | `"default"` | `/tree` 的默认过滤器：`"default"`、`"no-tools"`、`"user-only"`、`"labeled-only"`、`"all"` |
-| `editorPaddingX` | number | `0` | 编辑器水平内边距（0-3） |
-| `autocompleteMaxVisible` | number | `5` | 自动补全下拉框最大可见项（3-20） |
-| `showHardwareCursor` | boolean | `false` | TUI 为 IME 输入法定位时显示终端硬件光标 |
+| 设置项                   | 类型    | 默认值      | 说明                                                                                      |
+| ------------------------ | ------- | ----------- | ----------------------------------------------------------------------------------------- |
+| `theme`                  | string  | `"dark"`    | 主题名称（`"dark"`、`"light"` 或自定义）                                                  |
+| `quietStartup`           | boolean | `false`     | 隐藏启动头部                                                                              |
+| `collapseChangelog`      | boolean | `false`     | 更新后显示精简的 changelog                                                                |
+| `enableInstallTelemetry` | boolean | `true`      | 首次安装或 changelog 检测到更新时发送匿名安装/更新版本 ping。这不控制更新检查             |
+| `doubleEscapeAction`     | string  | `"tree"`    | 双击 Esc 的行为：`"tree"`、`"fork"` 或 `"none"`                                           |
+| `treeFilterMode`         | string  | `"default"` | `/tree` 的默认过滤器：`"default"`、`"no-tools"`、`"user-only"`、`"labeled-only"`、`"all"` |
+| `editorPaddingX`         | number  | `0`         | 编辑器水平内边距（0-3）                                                                   |
+| `autocompleteMaxVisible` | number  | `5`         | 自动补全下拉框最大可见项（3-20）                                                          |
+| `showHardwareCursor`     | boolean | `false`     | TUI 为 IME 输入法定位时显示终端硬件光标                                                   |
 
 ### 遥测和更新检查
 
@@ -58,8 +58,8 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 
 ### Warnings（警告）
 
-| 设置项 | 类型 | 默认值 | 说明 |
-|--------|------|--------|------|
+| 设置项                         | 类型    | 默认值 | 说明                                                |
+| ------------------------------ | ------- | ------ | --------------------------------------------------- |
 | `warnings.anthropicExtraUsage` | boolean | `true` | 当 Anthropic 订阅认证可能使用付费额外使用时显示警告 |
 
 ```json
@@ -72,11 +72,11 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 
 ### Compaction（压缩）
 
-| 设置项 | 类型 | 默认值 | 说明 |
-|--------|------|--------|------|
-| `compaction.enabled` | boolean | `true` | 启用自动压缩 |
-| `compaction.reserveTokens` | number | `16384` | 为 LLM 响应预留的 Token |
-| `compaction.keepRecentTokens` | number | `20000` | 保留的最近 Token（不总结） |
+| 设置项                        | 类型    | 默认值  | 说明                       |
+| ----------------------------- | ------- | ------- | -------------------------- |
+| `compaction.enabled`          | boolean | `true`  | 启用自动压缩               |
+| `compaction.reserveTokens`    | number  | `16384` | 为 LLM 响应预留的 Token    |
+| `compaction.keepRecentTokens` | number  | `20000` | 保留的最近 Token（不总结） |
 
 ```json
 {
@@ -90,21 +90,21 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 
 ### Branch Summary（分支摘要）
 
-| 设置项 | 类型 | 默认值 | 说明 |
-|--------|------|--------|------|
-| `branchSummary.reserveTokens` | number | `16384` | 分支摘要预留的 Token |
-| `branchSummary.skipPrompt` | boolean | `false` | 跳过 `/tree` 导航时的"摘要分支？"提示（默认不生成摘要） |
+| 设置项                        | 类型    | 默认值  | 说明                                                    |
+| ----------------------------- | ------- | ------- | ------------------------------------------------------- |
+| `branchSummary.reserveTokens` | number  | `16384` | 分支摘要预留的 Token                                    |
+| `branchSummary.skipPrompt`    | boolean | `false` | 跳过 `/tree` 导航时的"摘要分支？"提示（默认不生成摘要） |
 
 ### Retry（重试）
 
-| 设置项 | 类型 | 默认值 | 说明 |
-|--------|------|--------|------|
-| `retry.enabled` | boolean | `true` | 启用自动 Agent 级别重试（针对瞬态错误） |
-| `retry.maxRetries` | number | `3` | 最大 Agent 级别重试次数 |
-| `retry.baseDelayMs` | number | `2000` | Agent 级别指数退避的基础延迟（2s、4s、8s） |
-| `retry.provider.timeoutMs` | number | SDK 默认 | Provider/SDK 请求超时（毫秒） |
-| `retry.provider.maxRetries` | number | `0` | Provider/SDK 重试次数 |
-| `retry.provider.maxRetryDelayMs` | number | `60000` | 最大服务器请求延迟，超时则直接失败（60s） |
+| 设置项                           | 类型    | 默认值   | 说明                                       |
+| -------------------------------- | ------- | -------- | ------------------------------------------ |
+| `retry.enabled`                  | boolean | `true`   | 启用自动 Agent 级别重试（针对瞬态错误）    |
+| `retry.maxRetries`               | number  | `3`      | 最大 Agent 级别重试次数                    |
+| `retry.baseDelayMs`              | number  | `2000`   | Agent 级别指数退避的基础延迟（2s、4s、8s） |
+| `retry.provider.timeoutMs`       | number  | SDK 默认 | Provider/SDK 请求超时（毫秒）              |
+| `retry.provider.maxRetries`      | number  | `0`      | Provider/SDK 重试次数                      |
+| `retry.provider.maxRetryDelayMs` | number  | `60000`  | 最大服务器请求延迟，超时则直接失败（60s）  |
 
 当 Provider 请求的重试延迟超过 `retry.provider.maxRetryDelayMs` 时（例如 Google 的"配额将在 5 小时后重置"），请求会立即失败并显示信息性错误，而不是静默等待。设为 `0` 可禁用此上限。
 
@@ -127,31 +127,31 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 
 ### 消息传递
 
-| 设置项 | 类型 | 默认值 | 说明 |
-|--------|------|--------|------|
-| `steeringMode` | string | `"one-at-a-time"` | Steering 消息投递方式：`"all"` 或 `"one-at-a-time"` |
-| `followUpMode` | string | `"one-at-a-time"` | Follow-up 消息投递方式：`"all"` 或 `"one-at-a-time"` |
-| `transport` | string | `"auto"` | 支持多种传输的 Provider 的首选传输方式：`"sse"`、`"websocket"`、`"websocket-cached"` 或 `"auto"` |
-| `httpIdleTimeoutMs` | number | `300000` | HTTP 头部/正文空闲超时（毫秒），也用于具有显式流空闲超时的 Provider。设为 0 禁用 |
-| `websocketConnectTimeoutMs` | number | `15000` | WebSocket 连接/握手超时（毫秒），用于支持 WebSocket 传输的 Provider。设为 0 禁用 |
+| 设置项                      | 类型   | 默认值            | 说明                                                                                             |
+| --------------------------- | ------ | ----------------- | ------------------------------------------------------------------------------------------------ |
+| `steeringMode`              | string | `"one-at-a-time"` | Steering 消息投递方式：`"all"` 或 `"one-at-a-time"`                                              |
+| `followUpMode`              | string | `"one-at-a-time"` | Follow-up 消息投递方式：`"all"` 或 `"one-at-a-time"`                                             |
+| `transport`                 | string | `"auto"`          | 支持多种传输的 Provider 的首选传输方式：`"sse"`、`"websocket"`、`"websocket-cached"` 或 `"auto"` |
+| `httpIdleTimeoutMs`         | number | `300000`          | HTTP 头部/正文空闲超时（毫秒），也用于具有显式流空闲超时的 Provider。设为 0 禁用                 |
+| `websocketConnectTimeoutMs` | number | `15000`           | WebSocket 连接/握手超时（毫秒），用于支持 WebSocket 传输的 Provider。设为 0 禁用                 |
 
 ### 终端和图像
 
-| 设置项 | 类型 | 默认值 | 说明 |
-|--------|------|--------|------|
-| `terminal.showImages` | boolean | `true` | 在终端显示图像（如支持） |
-| `terminal.imageWidthCells` | number | `60` | 图像宽度（终端单元格） |
-| `terminal.clearOnShrink` | boolean | `false` | 内容缩小时清除空行（可能导致闪烁） |
-| `images.autoResize` | boolean | `true` | 自动调整图像大小至最大 2000x2000 |
-| `images.blockImages` | boolean | `false` | 阻止所有图像发送给 LLM |
+| 设置项                     | 类型    | 默认值  | 说明                               |
+| -------------------------- | ------- | ------- | ---------------------------------- |
+| `terminal.showImages`      | boolean | `true`  | 在终端显示图像（如支持）           |
+| `terminal.imageWidthCells` | number  | `60`    | 图像宽度（终端单元格）             |
+| `terminal.clearOnShrink`   | boolean | `false` | 内容缩小时清除空行（可能导致闪烁） |
+| `images.autoResize`        | boolean | `true`  | 自动调整图像大小至最大 2000x2000   |
+| `images.blockImages`       | boolean | `false` | 阻止所有图像发送给 LLM             |
 
 ### Shell
 
-| 设置项 | 类型 | 默认值 | 说明 |
-|--------|------|--------|------|
-| `shellPath` | string | - | 自定义 shell 路径（例如 Windows 上的 Cygwin） |
-| `shellCommandPrefix` | string | - | 每个 bash 命令前添加的前缀（例如 `"shopt -s expand_aliases"`） |
-| `npmCommand` | string[] | - | npm 包查找/安装操作的命令 argv（例如 `["mise", "exec", "node@20", "--", "npm"]`） |
+| 设置项               | 类型     | 默认值 | 说明                                                                              |
+| -------------------- | -------- | ------ | --------------------------------------------------------------------------------- |
+| `shellPath`          | string   | -      | 自定义 shell 路径（例如 Windows 上的 Cygwin）                                     |
+| `shellCommandPrefix` | string   | -      | 每个 bash 命令前添加的前缀（例如 `"shopt -s expand_aliases"`）                    |
+| `npmCommand`         | string[] | -      | npm 包查找/安装操作的命令 argv（例如 `["mise", "exec", "node@20", "--", "npm"]`） |
 
 ```json
 {
@@ -163,9 +163,9 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 
 ### 会话
 
-| 设置项 | 类型 | 默认值 | 说明 |
-|--------|------|--------|------|
-| `sessionDir` | string | - | 会话文件存储目录。接受绝对或相对路径，以及 `~` |
+| 设置项       | 类型   | 默认值 | 说明                                           |
+| ------------ | ------ | ------ | ---------------------------------------------- |
+| `sessionDir` | string | -      | 会话文件存储目录。接受绝对或相对路径，以及 `~` |
 
 ```json
 { "sessionDir": ".pi/sessions" }
@@ -175,9 +175,9 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 
 ### 模型循环
 
-| 设置项 | 类型 | 默认值 | 说明 |
-|--------|------|--------|------|
-| `enabledModels` | string[] | - | Ctrl+P 循环的模型模式（与 `--models` CLI 标志格式相同） |
+| 设置项          | 类型     | 默认值 | 说明                                                    |
+| --------------- | -------- | ------ | ------------------------------------------------------- |
+| `enabledModels` | string[] | -      | Ctrl+P 循环的模型模式（与 `--models` CLI 标志格式相同） |
 
 ```json
 {
@@ -187,8 +187,8 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 
 ### Markdown
 
-| 设置项 | 类型 | 默认值 | 说明 |
-|--------|------|--------|------|
+| 设置项                     | 类型   | 默认值 | 说明       |
+| -------------------------- | ------ | ------ | ---------- |
 | `markdown.codeBlockIndent` | string | `"  "` | 代码块缩进 |
 
 ### 资源
@@ -197,14 +197,14 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 
 `~/.pi/agent/settings.json` 中的路径相对于 `~/.pi/agent` 解析。`.pi/settings.json` 中的路径相对于 `.pi` 解析。支持绝对路径和 `~`。
 
-| 设置项 | 类型 | 默认值 | 说明 |
-|--------|------|--------|------|
-| `packages` | array | `[]` | 要加载资源的 npm/git 包 |
-| `extensions` | string[] | `[]` | 本地扩展文件路径或目录 |
-| `skills` | string[] | `[]` | 本地 Skill 文件路径或目录 |
-| `prompts` | string[] | `[]` | 本地 Prompt 模板路径或目录 |
-| `themes` | string[] | `[]` | 本地主题文件路径或目录 |
-| `enableSkillCommands` | boolean | `true` | 将 Skills 注册为 `/skill:name` 命令 |
+| 设置项                | 类型     | 默认值 | 说明                                |
+| --------------------- | -------- | ------ | ----------------------------------- |
+| `packages`            | array    | `[]`   | 要加载资源的 npm/git 包             |
+| `extensions`          | string[] | `[]`   | 本地扩展文件路径或目录              |
+| `skills`              | string[] | `[]`   | 本地 Skill 文件路径或目录           |
+| `prompts`             | string[] | `[]`   | 本地 Prompt 模板路径或目录          |
+| `themes`              | string[] | `[]`   | 本地主题文件路径或目录              |
+| `enableSkillCommands` | boolean  | `true` | 将 Skills 注册为 `/skill:name` 命令 |
 
 数组支持 glob 模式和排除。使用 `!pattern` 排除。使用 `+path` 强制包含精确路径，使用 `-path` 强制排除精确路径。
 

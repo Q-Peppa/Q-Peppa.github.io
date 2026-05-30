@@ -48,12 +48,12 @@ Pi 支持两种格式，但对于 tmux 推荐使用 `csi-u`。
 
 没有 tmux 扩展按键时，带修饰的 Enter 键会退化为旧版序列：
 
-| 按键 | 无扩展按键 | 有 `csi-u` |
-|---|---|---|
-| Enter | `\r` | `\r` |
-| Shift+Enter | `\r` | `\x1b[13;2u` |
-| Ctrl+Enter | `\r` | `\x1b[13;5u` |
-| Alt/Option+Enter | `\x1b\r` | `\x1b[13;3u` |
+| 按键             | 无扩展按键 | 有 `csi-u`   |
+| ---------------- | ---------- | ------------ |
+| Enter            | `\r`       | `\r`         |
+| Shift+Enter      | `\r`       | `\x1b[13;2u` |
+| Ctrl+Enter       | `\r`       | `\x1b[13;5u` |
+| Alt/Option+Enter | `\x1b\r`   | `\x1b[13;3u` |
 
 这影响默认快捷键（`Enter` 提交，`Shift+Enter` 换行）和任何使用修饰 Enter 的自定义快捷键。
 

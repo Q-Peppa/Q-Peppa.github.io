@@ -32,10 +32,7 @@
       "baseUrl": "http://localhost:11434/v1",
       "api": "openai-completions",
       "apiKey": "ollama",
-      "models": [
-        { "id": "llama3.1:8b" },
-        { "id": "qwen2.5-coder:7b" }
-      ]
+      "models": [{ "id": "llama3.1:8b" }, { "id": "qwen2.5-coder:7b" }]
     }
   }
 }
@@ -127,26 +124,26 @@
 
 ## 支持的 API 类型
 
-| API | 说明 |
-|-----|------|
-| `openai-completions` | OpenAI Chat Completions（最兼容） |
-| `openai-responses` | OpenAI Responses API |
-| `anthropic-messages` | Anthropic Messages API |
-| `google-generative-ai` | Google Generative AI |
+| API                    | 说明                              |
+| ---------------------- | --------------------------------- |
+| `openai-completions`   | OpenAI Chat Completions（最兼容） |
+| `openai-responses`     | OpenAI Responses API              |
+| `anthropic-messages`   | Anthropic Messages API            |
+| `google-generative-ai` | Google Generative AI              |
 
 在 Provider 级别（所有模型的默认值）或模型级别（逐个覆盖）设置 `api`。
 
 ## Provider 配置
 
-| 字段 | 说明 |
-|------|------|
-| `baseUrl` | API 端点 URL |
-| `api` | API 类型（见上表） |
-| `apiKey` | API Key（见下面的值解析） |
-| `headers` | 自定义请求头（见下面的值解析） |
-| `authHeader` | 设为 `true` 自动添加 `Authorization: Bearer <apiKey>` |
-| `models` | 模型配置数组 |
-| `modelOverrides` | 此 Provider 上内置模型的逐模型覆盖 |
+| 字段             | 说明                                                  |
+| ---------------- | ----------------------------------------------------- |
+| `baseUrl`        | API 端点 URL                                          |
+| `api`            | API 类型（见上表）                                    |
+| `apiKey`         | API Key（见下面的值解析）                             |
+| `headers`        | 自定义请求头（见下面的值解析）                        |
+| `authHeader`     | 设为 `true` 自动添加 `Authorization: Bearer <apiKey>` |
+| `models`         | 模型配置数组                                          |
+| `modelOverrides` | 此 Provider 上内置模型的逐模型覆盖                    |
 
 ### 值解析
 
@@ -204,20 +201,21 @@
 
 ## 模型配置
 
-| 字段 | 必需 | 默认值 | 说明 |
-|------|------|--------|------|
-| `id` | 是 | — | 模型标识符（传递给 API） |
-| `name` | 否 | `id` | 人类可读的模型标签。用于匹配（`--model` 模式）并显示在模型详情/状态文本中 |
-| `api` | 否 | Provider 的 `api` | 为此模型覆盖 Provider 的 API |
-| `reasoning` | 否 | `false` | 是否支持 extended thinking |
-| `thinkingLevelMap` | 否 | 省略 | 将 Pi 的 thinking level 映射到 Provider 值，并标记不支持的 level（见下文） |
-| `input` | 否 | `["text"]` | 输入类型：`["text"]` 或 `["text", "image"]` |
-| `contextWindow` | 否 | `128000` | 上下文窗口大小（Token） |
-| `maxTokens` | 否 | `16384` | 最大输出 Token |
-| `cost` | 否 | 全零 | `{"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0}`（每百万 Token） |
-| `compat` | 否 | Provider 的 `compat` | Provider 兼容性覆盖。当两者都设置时，与 Provider 级别的 `compat` 合并 |
+| 字段               | 必需 | 默认值               | 说明                                                                         |
+| ------------------ | ---- | -------------------- | ---------------------------------------------------------------------------- |
+| `id`               | 是   | —                    | 模型标识符（传递给 API）                                                     |
+| `name`             | 否   | `id`                 | 人类可读的模型标签。用于匹配（`--model` 模式）并显示在模型详情/状态文本中    |
+| `api`              | 否   | Provider 的 `api`    | 为此模型覆盖 Provider 的 API                                                 |
+| `reasoning`        | 否   | `false`              | 是否支持 extended thinking                                                   |
+| `thinkingLevelMap` | 否   | 省略                 | 将 Pi 的 thinking level 映射到 Provider 值，并标记不支持的 level（见下文）   |
+| `input`            | 否   | `["text"]`           | 输入类型：`["text"]` 或 `["text", "image"]`                                  |
+| `contextWindow`    | 否   | `128000`             | 上下文窗口大小（Token）                                                      |
+| `maxTokens`        | 否   | `16384`              | 最大输出 Token                                                               |
+| `cost`             | 否   | 全零                 | `{"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0}`（每百万 Token） |
+| `compat`           | 否   | Provider 的 `compat` | Provider 兼容性覆盖。当两者都设置时，与 Provider 级别的 `compat` 合并        |
 
 当前行为：
+
 - `/model` 和 `--list-models` 按模型 `id` 列出条目。
 - 配置的 `name` 用于模型匹配和详情/状态文本。
 
@@ -227,10 +225,10 @@
 
 值为三态：
 
-| 值 | 含义 |
-|----|------|
-| 省略 | 该 level 受支持，使用 Provider 的默认映射 |
-| 字符串 | 该 level 受支持，此值被发送给 Provider |
+| 值     | 含义                                        |
+| ------ | ------------------------------------------- |
+| 省略   | 该 level 受支持，使用 Provider 的默认映射   |
+| 字符串 | 该 level 受支持，此值被发送给 Provider      |
 | `null` | 该 level 不受支持，被隐藏/跳过/固定到最近值 |
 
 仅支持 off、high 和 max 推理的模型示例：
@@ -295,6 +293,7 @@
 ```
 
 合并语义：
+
 - 内置模型被保留。
 - 自定义模型按 Provider 内的 `id` 进行更新（upsert）。
 - 如果自定义模型 `id` 与内置模型 `id` 匹配，则替换该内置模型。
@@ -326,6 +325,7 @@
 `modelOverrides` 支持每个模型的以下字段：`name`、`reasoning`、`input`、`cost`（部分）、`contextWindow`、`maxTokens`、`headers`、`compat`。
 
 行为说明：
+
 - `modelOverrides` 应用于内置 Provider 的模型。
 - 未知模型 ID 被忽略。
 - 你可以将 Provider 级别的 `baseUrl`/`headers` 与 `modelOverrides` 结合使用。
@@ -364,14 +364,14 @@
 }
 ```
 
-| 字段 | 说明 |
-|------|------|
-| `supportsEagerToolInputStreaming` | Provider 是否接受每个工具的 `eager_input_streaming`。默认：`true`。设为 `false` 可省略该字段，并在启用工具的请求中使用旧的细粒度工具流 beta 头 |
-| `supportsLongCacheRetention` | Provider 是否在缓存保留为 `long` 时接受 Anthropic 长缓存保留（`cache_control.ttl: "1h"`）。默认：`true` |
-| `sendSessionAffinityHeaders` | 启用缓存后是否从会话 ID 发送 `x-session-affinity`。默认：对已知 Provider 自动检测 |
-| `supportsCacheControlOnTools` | Provider 是否接受工具定义上的 Anthropic 风格 `cache_control` 标记。默认：`true` |
-| `forceAdaptiveThinking` | 是否为此模型发送 adaptive thinking（`thinking.type: "adaptive"` 加 `output_config.effort`）。内置 adaptive 模型会自动设置。默认：`false` |
-| `allowEmptySignature` | 某些 Anthropic 兼容 Provider 会发出签名为空的 thinking 块，并在重放时仍然期望它们。仅在这些 Provider 上将 `allowEmptySignature` 设为 `true`；真正的 Anthropic 会拒绝空的 thinking 签名。默认：`false` |
+| 字段                              | 说明                                                                                                                                                                                                  |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supportsEagerToolInputStreaming` | Provider 是否接受每个工具的 `eager_input_streaming`。默认：`true`。设为 `false` 可省略该字段，并在启用工具的请求中使用旧的细粒度工具流 beta 头                                                        |
+| `supportsLongCacheRetention`      | Provider 是否在缓存保留为 `long` 时接受 Anthropic 长缓存保留（`cache_control.ttl: "1h"`）。默认：`true`                                                                                               |
+| `sendSessionAffinityHeaders`      | 启用缓存后是否从会话 ID 发送 `x-session-affinity`。默认：对已知 Provider 自动检测                                                                                                                     |
+| `supportsCacheControlOnTools`     | Provider 是否接受工具定义上的 Anthropic 风格 `cache_control` 标记。默认：`true`                                                                                                                       |
+| `forceAdaptiveThinking`           | 是否为此模型发送 adaptive thinking（`thinking.type: "adaptive"` 加 `output_config.effort`）。内置 adaptive 模型会自动设置。默认：`false`                                                              |
+| `allowEmptySignature`             | 某些 Anthropic 兼容 Provider 会发出签名为空的 thinking 块，并在重放时仍然期望它们。仅在这些 Provider 上将 `allowEmptySignature` 设为 `true`；真正的 Anthropic 会拒绝空的 thinking 签名。默认：`false` |
 
 ## OpenAI 兼容性
 
@@ -396,23 +396,23 @@
 }
 ```
 
-| 字段 | 说明 |
-|------|------|
-| `supportsStore` | Provider 支持 `store` 字段 |
-| `supportsDeveloperRole` | 使用 `developer` 角色而非 `system` |
-| `supportsReasoningEffort` | 支持 `reasoning_effort` 参数 |
-| `supportsUsageInStreaming` | 支持 `stream_options: { include_usage: true }`（默认：`true`） |
-| `maxTokensField` | 使用 `max_completion_tokens` 或 `max_tokens` |
-| `requiresToolResultName` | 在工具结果消息中包含 `name` |
-| `requiresAssistantAfterToolResult` | 在工具结果后、用户消息前插入一条助手消息 |
-| `requiresThinkingAsText` | 将 thinking 块转换为纯文本 |
-| `requiresReasoningContentOnAssistantMessages` | 在启用推理时，在所有重放的助手消息上包含空的 `reasoning_content` |
-| `thinkingFormat` | 使用 `reasoning_effort`、`openrouter`、`deepseek`、`together`、`zai`、`qwen` 或 `qwen-chat-template` thinking 参数 |
-| `cacheControlFormat` | 在系统提示、最后一个工具定义和最后一个用户/助手文本内容上使用 Anthropic 风格的 `cache_control` 标记。目前仅支持 `anthropic` |
-| `supportsStrictMode` | 在工具定义中包含 `strict` 字段 |
-| `supportsLongCacheRetention` | Provider 是否在缓存保留为 `long` 时接受长缓存保留：OpenAI 提示缓存的 `prompt_cache_retention: "24h"`，或当 `cacheControlFormat` 为 `anthropic` 时的 `cache_control.ttl: "1h"`。默认：`true` |
-| `openRouterRouting` | OpenRouter Provider 路由偏好。此对象按原样作为 [OpenRouter API 请求](https://openrouter.ai/docs/guides/routing/provider-selection) 的 `provider` 字段发送 |
-| `vercelGatewayRouting` | Vercel AI Gateway 路由配置，用于 Provider 选择（`only`、`order`） |
+| 字段                                          | 说明                                                                                                                                                                                        |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supportsStore`                               | Provider 支持 `store` 字段                                                                                                                                                                  |
+| `supportsDeveloperRole`                       | 使用 `developer` 角色而非 `system`                                                                                                                                                          |
+| `supportsReasoningEffort`                     | 支持 `reasoning_effort` 参数                                                                                                                                                                |
+| `supportsUsageInStreaming`                    | 支持 `stream_options: { include_usage: true }`（默认：`true`）                                                                                                                              |
+| `maxTokensField`                              | 使用 `max_completion_tokens` 或 `max_tokens`                                                                                                                                                |
+| `requiresToolResultName`                      | 在工具结果消息中包含 `name`                                                                                                                                                                 |
+| `requiresAssistantAfterToolResult`            | 在工具结果后、用户消息前插入一条助手消息                                                                                                                                                    |
+| `requiresThinkingAsText`                      | 将 thinking 块转换为纯文本                                                                                                                                                                  |
+| `requiresReasoningContentOnAssistantMessages` | 在启用推理时，在所有重放的助手消息上包含空的 `reasoning_content`                                                                                                                            |
+| `thinkingFormat`                              | 使用 `reasoning_effort`、`openrouter`、`deepseek`、`together`、`zai`、`qwen` 或 `qwen-chat-template` thinking 参数                                                                          |
+| `cacheControlFormat`                          | 在系统提示、最后一个工具定义和最后一个用户/助手文本内容上使用 Anthropic 风格的 `cache_control` 标记。目前仅支持 `anthropic`                                                                 |
+| `supportsStrictMode`                          | 在工具定义中包含 `strict` 字段                                                                                                                                                              |
+| `supportsLongCacheRetention`                  | Provider 是否在缓存保留为 `long` 时接受长缓存保留：OpenAI 提示缓存的 `prompt_cache_retention: "24h"`，或当 `cacheControlFormat` 为 `anthropic` 时的 `cache_control.ttl: "1h"`。默认：`true` |
+| `openRouterRouting`                           | OpenRouter Provider 路由偏好。此对象按原样作为 [OpenRouter API 请求](https://openrouter.ai/docs/guides/routing/provider-selection) 的 `provider` 字段发送                                   |
+| `vercelGatewayRouting`                        | Vercel AI Gateway 路由配置，用于 Provider 选择（`only`、`order`）                                                                                                                           |
 
 `openrouter` 使用 `reasoning: { effort }`。`together` 使用 `reasoning: { enabled }`，并在 `supportsReasoningEffort` 启用时也使用 `reasoning_effort`。`qwen` 使用顶级 `enable_thinking`。对需要 `chat_template_kwargs.enable_thinking` 的本地 Qwen 兼容服务器，使用 `qwen-chat-template`。
 

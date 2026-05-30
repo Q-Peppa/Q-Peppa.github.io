@@ -17,26 +17,26 @@ description: >-
 
 ## 全局目录约定
 
-| 项目 | 路径 |
-|------|------|
-| 翻译站根目录 | `.`（当前项目根目录） |
-| 翻译站文档 | `./docs/docs/latest/` |
-| 翻译站新闻页 | `./docs/news.md` |
-| 翻译站配置 | `./rspress.config.ts` |
-| 翻译站图片 | `./docs/public/images/` |
-| 源站根目录 | `../pi-repo` |
-| 源站文档 | `../pi-repo/packages/coding-agent/docs/` |
-| 源站图片 | `../pi-repo/packages/coding-agent/docs/images/` |
+| 项目            | 路径                                                        |
+| --------------- | ----------------------------------------------------------- |
+| 翻译站根目录    | `.`（当前项目根目录）                                       |
+| 翻译站文档      | `./docs/docs/latest/`                                       |
+| 翻译站新闻页    | `./docs/news.md`                                            |
+| 翻译站配置      | `./rspress.config.ts`                                       |
+| 翻译站图片      | `./docs/public/images/`                                     |
+| 源站根目录      | `../pi-repo`                                                |
+| 源站文档        | `../pi-repo/packages/coding-agent/docs/`                    |
+| 源站图片        | `../pi-repo/packages/coding-agent/docs/images/`             |
 | 源站 git remote | `https://github.com/earendil-works/pi.git`（`origin/main`） |
 
 源站各包 CHANGELOG：
 
-| 包 | 路径 |
-|----|------|
+| 包           | 路径                                            |
+| ------------ | ----------------------------------------------- |
 | coding-agent | `../pi-repo/packages/coding-agent/CHANGELOG.md` |
-| ai | `../pi-repo/packages/ai/CHANGELOG.md` |
-| agent | `../pi-repo/packages/agent/CHANGELOG.md` |
-| tui | `../pi-repo/packages/tui/CHANGELOG.md` |
+| ai           | `../pi-repo/packages/ai/CHANGELOG.md`           |
+| agent        | `../pi-repo/packages/agent/CHANGELOG.md`        |
+| tui          | `../pi-repo/packages/tui/CHANGELOG.md`          |
 
 ---
 
@@ -160,16 +160,16 @@ done
 
 **翻译对照表：**
 
-| 英文 | 中文 |
-|------|------|
-| New Features | 新功能 |
-| Added | 新增 |
-| Changed | 变更 |
-| Fixed | 修复 |
-| Removed | 移除 |
+| 英文             | 中文       |
+| ---------------- | ---------- |
+| New Features     | 新功能     |
+| Added            | 新增       |
+| Changed          | 变更       |
+| Fixed            | 修复       |
+| Removed          | 移除       |
 | Breaking Changes | 不兼容变更 |
-| Deprecated | 弃用 |
-| Security | 安全 |
+| Deprecated       | 弃用       |
+| Security         | 安全       |
 
 **链接处理规则：**
 
@@ -196,6 +196,7 @@ ls -1 ./docs/docs/latest/*.md \
 ```
 
 **检查要点：**
+
 - 源站有的文件，翻译站是否有对应的翻译
 - 翻译站是否有额外文件（如 `cdn-setup.md`）
 - 文件名差异（`.md` vs `.mdx`）
@@ -215,6 +216,7 @@ wc -l ./docs/docs/latest/*.md \
 ```
 
 **检查要点：**
+
 - 行数相差很大的文件（>20 行差异），标记为需要深入对比
 - 翻译站明显行数更多的——可能是增加了增强内容（表格、说明）
 - 翻译站明显行数更少的——可能是内容缺失或翻译省略
@@ -233,6 +235,7 @@ wc -l ./docs/docs/latest/*.md \
 - `sdk.md` —— SDK
 
 **比对方法：**
+
 1. 用 `read` 工具同时读取源站和翻译站的对应文件
 2. 逐段对比：
    - 标题层级是否对应
@@ -246,26 +249,27 @@ wc -l ./docs/docs/latest/*.md \
 
 #### 4.1 术语一致性
 
-| 英文 | 期望的中文 |
-|------|-----------|
-| extension | 扩展 |
-| skill | Skill（保持英文，首字母大写）或 技能 |
-| provider | Provider（保持英文） |
-| prompt | Prompt（保持英文） |
-| thinking | thinking（保持英文小写） |
-| token | Token（首字母大写） |
-| steering | steering（保持英文小写） |
-| follow-up | follow-up（保持英文） |
-| compaction | 压缩 |
-| session | 会话 |
-| keybinding | 快捷键 |
-| theme | 主题 |
-| tool call | tool call（保持英文）或 工具调用 |
-| command | 命令 |
+| 英文       | 期望的中文                           |
+| ---------- | ------------------------------------ |
+| extension  | 扩展                                 |
+| skill      | Skill（保持英文，首字母大写）或 技能 |
+| provider   | Provider（保持英文）                 |
+| prompt     | Prompt（保持英文）                   |
+| thinking   | thinking（保持英文小写）             |
+| token      | Token（首字母大写）                  |
+| steering   | steering（保持英文小写）             |
+| follow-up  | follow-up（保持英文）                |
+| compaction | 压缩                                 |
+| session    | 会话                                 |
+| keybinding | 快捷键                               |
+| theme      | 主题                                 |
+| tool call  | tool call（保持英文）或 工具调用     |
+| command    | 命令                                 |
 
 #### 4.2 机器翻译痕迹
 
 检查以下常见问题：
+
 - 「的、地、得」使用不当
 - 长定语不切分（如「通过……的……」结构套叠）
 - 被动语态直译（应转为主动语态）
@@ -276,6 +280,7 @@ wc -l ./docs/docs/latest/*.md \
 #### 4.3 代码/示例保护
 
 确认以下内容未被翻译：
+
 - 代码块内的所有文本
 - 命令行示例（`bash` 代码块）
 - 文件路径
@@ -287,6 +292,7 @@ wc -l ./docs/docs/latest/*.md \
 #### 4.4 链接和引用
 
 检查：
+
 - 站内链接格式是否正确（翻译站可能使用 `/docs/latest/xxx` 而非 `xxx.md`）
 - 外部链接是否仍指向正确的 GitHub 地址
 - 图片路径是否有效
@@ -294,6 +300,7 @@ wc -l ./docs/docs/latest/*.md \
 ### 第 5 步：同步修改
 
 对于确认需要同步的内容：
+
 1. 用 `edit` 工具更新翻译站文件
 2. 如果是新增文件，用 `write` 工具创建
 3. 如需新增或修改图片：
@@ -337,8 +344,8 @@ git push
 
 ## 工作流快捷键
 
-| 只看这个 | 运行以下 |
-|----------|---------|
+| 只看这个   | 运行以下                                         |
+| ---------- | ------------------------------------------------ |
 | 只更新新闻 | 执行前置拉取 → 执行 A 部分 → 构建验证 → 提交推送 |
 | 只审核翻译 | 执行前置拉取 → 执行 B 部分 → 构建验证 → 提交推送 |
-| 全部同步 | 执行前置拉取 → A → B → 构建验证 → 提交推送 |
+| 全部同步   | 执行前置拉取 → A → B → 构建验证 → 提交推送       |

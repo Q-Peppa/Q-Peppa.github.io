@@ -50,34 +50,34 @@ export ANTHROPIC_API_KEY=sk-ant-...
 pi
 ```
 
-| Provider | 环境变量 | `auth.json` key |
-|----------|---------|-----------------|
-| Anthropic | `ANTHROPIC_API_KEY` | `anthropic` |
-| Azure OpenAI Responses | `AZURE_OPENAI_API_KEY` | `azure-openai-responses` |
-| OpenAI | `OPENAI_API_KEY` | `openai` |
-| DeepSeek | `DEEPSEEK_API_KEY` | `deepseek` |
-| Google Gemini | `GEMINI_API_KEY` | `google` |
-| Mistral | `MISTRAL_API_KEY` | `mistral` |
-| Groq | `GROQ_API_KEY` | `groq` |
-| Cerebras | `CEREBRAS_API_KEY` | `cerebras` |
-| Cloudflare AI Gateway | `CLOUDFLARE_API_KEY`（+ `CLOUDFLARE_ACCOUNT_ID`、`CLOUDFLARE_GATEWAY_ID`） | `cloudflare-ai-gateway` |
-| Cloudflare Workers AI | `CLOUDFLARE_API_KEY`（+ `CLOUDFLARE_ACCOUNT_ID`） | `cloudflare-workers-ai` |
-| xAI | `XAI_API_KEY` | `xai` |
-| OpenRouter | `OPENROUTER_API_KEY` | `openrouter` |
-| Vercel AI Gateway | `AI_GATEWAY_API_KEY` | `vercel-ai-gateway` |
-| ZAI | `ZAI_API_KEY` | `zai` |
-| OpenCode Zen | `OPENCODE_API_KEY` | `opencode` |
-| OpenCode Go | `OPENCODE_API_KEY` | `opencode-go` |
-| Hugging Face | `HF_TOKEN` | `huggingface` |
-| Fireworks | `FIREWORKS_API_KEY` | `fireworks` |
-| Together AI | `TOGETHER_API_KEY` | `together` |
-| Kimi For Coding | `KIMI_API_KEY` | `kimi-coding` |
-| MiniMax | `MINIMAX_API_KEY` | `minimax` |
-| MiniMax（中国） | `MINIMAX_CN_API_KEY` | `minimax-cn` |
-| Xiaomi MiMo | `XIAOMI_API_KEY` | `xiaomi` |
-| Xiaomi MiMo Token Plan（中国） | `XIAOMI_TOKEN_PLAN_CN_API_KEY` | `xiaomi-token-plan-cn` |
-| Xiaomi MiMo Token Plan（阿姆斯特丹） | `XIAOMI_TOKEN_PLAN_AMS_API_KEY` | `xiaomi-token-plan-ams` |
-| Xiaomi MiMo Token Plan（新加坡） | `XIAOMI_TOKEN_PLAN_SGP_API_KEY` | `xiaomi-token-plan-sgp` |
+| Provider                             | 环境变量                                                                   | `auth.json` key          |
+| ------------------------------------ | -------------------------------------------------------------------------- | ------------------------ |
+| Anthropic                            | `ANTHROPIC_API_KEY`                                                        | `anthropic`              |
+| Azure OpenAI Responses               | `AZURE_OPENAI_API_KEY`                                                     | `azure-openai-responses` |
+| OpenAI                               | `OPENAI_API_KEY`                                                           | `openai`                 |
+| DeepSeek                             | `DEEPSEEK_API_KEY`                                                         | `deepseek`               |
+| Google Gemini                        | `GEMINI_API_KEY`                                                           | `google`                 |
+| Mistral                              | `MISTRAL_API_KEY`                                                          | `mistral`                |
+| Groq                                 | `GROQ_API_KEY`                                                             | `groq`                   |
+| Cerebras                             | `CEREBRAS_API_KEY`                                                         | `cerebras`               |
+| Cloudflare AI Gateway                | `CLOUDFLARE_API_KEY`（+ `CLOUDFLARE_ACCOUNT_ID`、`CLOUDFLARE_GATEWAY_ID`） | `cloudflare-ai-gateway`  |
+| Cloudflare Workers AI                | `CLOUDFLARE_API_KEY`（+ `CLOUDFLARE_ACCOUNT_ID`）                          | `cloudflare-workers-ai`  |
+| xAI                                  | `XAI_API_KEY`                                                              | `xai`                    |
+| OpenRouter                           | `OPENROUTER_API_KEY`                                                       | `openrouter`             |
+| Vercel AI Gateway                    | `AI_GATEWAY_API_KEY`                                                       | `vercel-ai-gateway`      |
+| ZAI                                  | `ZAI_API_KEY`                                                              | `zai`                    |
+| OpenCode Zen                         | `OPENCODE_API_KEY`                                                         | `opencode`               |
+| OpenCode Go                          | `OPENCODE_API_KEY`                                                         | `opencode-go`            |
+| Hugging Face                         | `HF_TOKEN`                                                                 | `huggingface`            |
+| Fireworks                            | `FIREWORKS_API_KEY`                                                        | `fireworks`              |
+| Together AI                          | `TOGETHER_API_KEY`                                                         | `together`               |
+| Kimi For Coding                      | `KIMI_API_KEY`                                                             | `kimi-coding`            |
+| MiniMax                              | `MINIMAX_API_KEY`                                                          | `minimax`                |
+| MiniMax（中国）                      | `MINIMAX_CN_API_KEY`                                                       | `minimax-cn`             |
+| Xiaomi MiMo                          | `XIAOMI_API_KEY`                                                           | `xiaomi`                 |
+| Xiaomi MiMo Token Plan（中国）       | `XIAOMI_TOKEN_PLAN_CN_API_KEY`                                             | `xiaomi-token-plan-cn`   |
+| Xiaomi MiMo Token Plan（阿姆斯特丹） | `XIAOMI_TOKEN_PLAN_AMS_API_KEY`                                            | `xiaomi-token-plan-ams`  |
+| Xiaomi MiMo Token Plan（新加坡）     | `XIAOMI_TOKEN_PLAN_SGP_API_KEY`                                            | `xiaomi-token-plan-sgp`  |
 
 环境变量和 `auth.json` 键的参考：[`const envMap`](https://github.com/earendil-works/pi-mono/blob/main/packages/ai/src/env-api-keys.ts) 位于 [`packages/ai/src/env-api-keys.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/ai/src/env-api-keys.ts)。
 
@@ -95,7 +95,7 @@ pi
   "opencode-go": { "type": "api_key", "key": "..." },
   "together": { "type": "api_key", "key": "..." },
   "xiaomi": { "type": "api_key", "key": "..." },
-  "xiaomi-token-plan-cn":  { "type": "api_key", "key": "..." },
+  "xiaomi-token-plan-cn": { "type": "api_key", "key": "..." },
   "xiaomi-token-plan-ams": { "type": "api_key", "key": "..." },
   "xiaomi-token-plan-sgp": { "type": "api_key", "key": "..." }
 }
@@ -204,12 +204,12 @@ pi --provider cloudflare-ai-gateway --model "claude-sonnet-4-5"
 
 AI Gateway 认证使用 `CLOUDFLARE_API_KEY` 作为 `cf-aig-authorization`。上游认证可以是以下之一：
 
-| 模式 | 请求认证 | 上游认证 |
-|------|---------|---------|
-| Workers AI | 仅 Cloudflare Token | Cloudflare 原生 |
-| 统一计费 | 仅 Cloudflare Token | Cloudflare 处理上游认证并扣除额度 |
-| 存储的 BYOK | 仅 Cloudflare Token | Cloudflare 注入存储在 AI Gateway 仪表板中的 Provider 密钥 |
-| 内联 BYOK | Cloudflare Token 加上上游 `Authorization` 头 | 请求提供上游 Provider 密钥 |
+| 模式        | 请求认证                                     | 上游认证                                                  |
+| ----------- | -------------------------------------------- | --------------------------------------------------------- |
+| Workers AI  | 仅 Cloudflare Token                          | Cloudflare 原生                                           |
+| 统一计费    | 仅 Cloudflare Token                          | Cloudflare 处理上游认证并扣除额度                         |
+| 存储的 BYOK | 仅 Cloudflare Token                          | Cloudflare 注入存储在 AI Gateway 仪表板中的 Provider 密钥 |
+| 内联 BYOK   | Cloudflare Token 加上上游 `Authorization` 头 | 请求提供上游 Provider 密钥                                |
 
 对于普通的 Pi 使用，建议使用统一计费或存储的 BYOK。内联 BYOK 需要配置额外的上游 `Authorization` 头给 Cloudflare AI Gateway Provider，例如通过 `models.json` 的 Provider/模型覆盖。
 

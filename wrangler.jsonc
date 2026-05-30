@@ -4,6 +4,6 @@
   "account_id": "f02893cb4b044805aa042f1ae3fe01e3",
   "compatibility_date": "2026-05-24",
   "assets": {
-    "directory": "doc_build"
-  }
+    "directory": "doc_build",
+  },
 }

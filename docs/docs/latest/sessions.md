@@ -23,18 +23,18 @@ JSONL 文件格式和 SessionManager API 详见 [Session Format](session-format.
 
 ## 会话命令
 
-| 命令 | 说明 |
-|---|---|
-| `/resume` | 浏览并选择历史会话 |
-| `/new` | 开始新会话 |
-| `/name <name>` | 设置当前会话显示名称 |
-| `/session` | 显示会话信息 |
-| `/tree` | 导航当前会话树 |
-| `/fork` | 从之前的用户消息创建新会话 |
-| `/clone` | 复制当前活跃分支到新会话 |
+| 命令                | 说明                                               |
+| ------------------- | -------------------------------------------------- |
+| `/resume`           | 浏览并选择历史会话                                 |
+| `/new`              | 开始新会话                                         |
+| `/name <name>`      | 设置当前会话显示名称                               |
+| `/session`          | 显示会话信息                                       |
+| `/tree`             | 导航当前会话树                                     |
+| `/fork`             | 从之前的用户消息创建新会话                         |
+| `/clone`            | 复制当前活跃分支到新会话                           |
 | `/compact [prompt]` | 总结较早的上下文；参阅 [Compaction](compaction.md) |
-| `/export [file]` | 导出会话为 HTML |
-| `/share` | 上传为私有 GitHub Gist 并生成可分享的 HTML 链接 |
+| `/export [file]`    | 导出会话为 HTML                                    |
+| `/share`            | 上传为私有 GitHub Gist 并生成可分享的 HTML 链接    |
 
 ## 恢复和删除会话
 
@@ -86,16 +86,16 @@ pi --name "CI audit" -p "Review this build failure"
 
 ### 树操作键
 
-| 按键 | 操作 |
-|---|---|
-| ↑/↓ | 导航可见条目 |
-| ←/→ | 翻页 |
-| Ctrl+←/Ctrl+→ 或 Alt+←/Alt+→ | 折叠/展开或跳转分支段 |
-| Shift+L | 设置或清除选中条目上的标签 |
-| Shift+T | 切换标签时间戳显示 |
-| Enter | 选择条目 |
-| Escape/Ctrl+C | 取消 |
-| Ctrl+O | 循环过滤模式 |
+| 按键                         | 操作                       |
+| ---------------------------- | -------------------------- |
+| ↑/↓                          | 导航可见条目               |
+| ←/→                          | 翻页                       |
+| Ctrl+←/Ctrl+→ 或 Alt+←/Alt+→ | 折叠/展开或跳转分支段      |
+| Shift+L                      | 设置或清除选中条目上的标签 |
+| Shift+T                      | 切换标签时间戳显示         |
+| Enter                        | 选择条目                   |
+| Escape/Ctrl+C                | 取消                       |
+| Ctrl+O                       | 循环过滤模式               |
 
 过滤模式包括：default、no-tools、user-only、labeled-only 和 all。可通过 [Settings](settings.md) 中的 `treeFilterMode` 配置默认值。
 
@@ -117,12 +117,12 @@ pi --name "CI audit" -p "Review this build failure"
 
 ## `/tree`、`/fork` 和 `/clone` 对比
 
-| 功能 | `/tree` | `/fork` | `/clone` |
-|---|---|---|---|
-| 输出 | 同一会话文件 | 新会话文件 | 新会话文件 |
-| 视图 | 完整树 | 用户消息选择器 | 当前活跃分支 |
+| 功能     | `/tree`          | `/fork`                    | `/clone`             |
+| -------- | ---------------- | -------------------------- | -------------------- |
+| 输出     | 同一会话文件     | 新会话文件                 | 新会话文件           |
+| 视图     | 完整树           | 用户消息选择器             | 当前活跃分支         |
 | 典型用途 | 原地探索替代方案 | 从之前的 Prompt 开始新会话 | 在继续前复制当前工作 |
-| 摘要 | 可选分支摘要 | 无 | 无 |
+| 摘要     | 可选分支摘要     | 无                         | 无                   |
 
 当你希望将替代方案保存在一起时使用 `/tree`；当你希望创建单独的会话文件时使用 `/fork` 或 `/clone`。
 

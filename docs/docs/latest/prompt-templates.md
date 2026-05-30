@@ -24,7 +24,9 @@ Pi 从以下位置加载 Prompt 模板：
 ---
 description: Review staged git changes
 ---
+
 Review the staged changes (`git diff --cached`). Focus on:
+
 - Bugs and logic errors
 - Security issues
 - Error handling gaps
@@ -41,7 +43,7 @@ Review the staged changes (`git diff --cached`). Focus on:
 ```markdown
 ---
 description: Review PRs from URLs with structured issue and code analysis
-argument-hint: "<PR-URL>"
+argument-hint: '<PR-URL>'
 ---
 ```
 
@@ -79,6 +81,7 @@ argument-hint: "<PR-URL>"
 ---
 description: Create a component
 ---
+
 Create a React component named $1 with features: $@
 ```
 

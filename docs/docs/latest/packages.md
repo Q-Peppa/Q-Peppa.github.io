@@ -93,6 +93,7 @@ ssh://git@github.com/user/repo@v1
 - 当协调改变了检出时，Pi 会重置并清理克隆，然后若存在 `package.json` 则运行 `npm install`。
 
 **SSH 示例：**
+
 ```bash
 # git@host:path 简写（需要 git: 前缀）
 pi install git:git@github.com:user/repo
@@ -181,14 +182,8 @@ Pi 为扩展和 Skills 打包了核心包。如果你导入以下任何包，请
   },
   "bundledDependencies": ["shitty-extensions"],
   "pi": {
-    "extensions": [
-      "extensions",
-      "node_modules/shitty-extensions/extensions"
-    ],
-    "skills": [
-      "skills",
-      "node_modules/shitty-extensions/skills"
-    ]
+    "extensions": ["extensions", "node_modules/shitty-extensions/extensions"],
+    "skills": ["skills", "node_modules/shitty-extensions/skills"]
   }
 }
 ```
@@ -230,6 +225,7 @@ Pi 为扩展和 Skills 打包了核心包。如果你导入以下任何包，请
 包可以同时出现在全局和项目设置中。如果同一个包同时出现在两者中，项目条目优先。
 
 身份判定规则：
+
 - npm：包名
 - git：不含 ref 的仓库 URL
 - 本地：解析后的绝对路径

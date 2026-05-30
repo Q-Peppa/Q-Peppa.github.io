@@ -36,16 +36,17 @@ pi hello world
 
 ```typescript
 #!/usr/bin/env node
-import { main } from "./main.ts";
+import { main } from './main.ts';
 
-process.title = APP_NAME;                // 第 11 行：在 ps/top 中显示为 "pi"
-process.env.PI_CODING_AGENT = "true";     // 第 12 行：标记这是 coding-agent 进程
-configureHttpDispatcher();                // 第 16 行：配置 HTTP 请求池
+process.title = APP_NAME; // 第 11 行：在 ps/top 中显示为 "pi"
+process.env.PI_CODING_AGENT = 'true'; // 第 12 行：标记这是 coding-agent 进程
+configureHttpDispatcher(); // 第 16 行：配置 HTTP 请求池
 
-main(process.argv.slice(2));              // 第 17 行：传入去掉 node/cli 的参数
+main(process.argv.slice(2)); // 第 17 行：传入去掉 node/cli 的参数
 ```
 
 这个文件只有 18 行，但做了三件重要的事：
+
 1. **设置进程名** — 让你在 `ps aux | grep pi` 中能看到
 2. **标记环境变量** — 子进程（bash 工具）可以检测自己是否在 Pi 中运行
 3. **启动主流程** — `cli.ts` 本身不做事，只负责启动 `main()`
@@ -66,17 +67,17 @@ const parsed = parseArgs(args);
 
 ```typescript
 interface Args {
-  model?: string;        // --model 或 --provider + --model
-  thinking?: string;     // --thinking level
-  session?: string;      // --session <path|id>
-  continue?: boolean;    // -c 继续最近会话
-  resume?: boolean;      // -r 浏览选择历史会话
-  noSession?: boolean;   // --no-session 不持久化
-  help?: boolean;        // --help
-  version?: boolean;     // --version
-  print?: boolean;       // -p "prompt" 非交互模式
-  mode?: "rpc" | "json"; // --mode
-  verbose?: boolean;     // --verbose
+  model?: string; // --model 或 --provider + --model
+  thinking?: string; // --thinking level
+  session?: string; // --session <path|id>
+  continue?: boolean; // -c 继续最近会话
+  resume?: boolean; // -r 浏览选择历史会话
+  noSession?: boolean; // --no-session 不持久化
+  help?: boolean; // --help
+  version?: boolean; // --version
+  print?: boolean; // -p "prompt" 非交互模式
+  mode?: 'rpc' | 'json'; // --mode
+  verbose?: boolean; // --verbose
   // ... 更多
 }
 ```
@@ -92,21 +93,21 @@ let appMode = resolveAppMode(parsed, process.stdin.isTTY);
 
 ```typescript
 function resolveAppMode(parsed: Args, stdinIsTTY: boolean): AppMode {
-  if (parsed.mode === "rpc")    return "rpc";       // RPC 模式（进程集成）
-  if (parsed.mode === "json")   return "json";      // JSON 事件流模式
-  if (parsed.print || !stdinIsTTY) return "print";  // 一次性输出（-p 或管道输入）
-  return "interactive";                             // 默认交互模式
+  if (parsed.mode === 'rpc') return 'rpc'; // RPC 模式（进程集成）
+  if (parsed.mode === 'json') return 'json'; // JSON 事件流模式
+  if (parsed.print || !stdinIsTTY) return 'print'; // 一次性输出（-p 或管道输入）
+  return 'interactive'; // 默认交互模式
 }
 ```
 
 四种模式的区别：
 
-| 模式 | 触发方式 | 用途 |
-|------|---------|------|
-| **interactive** | 直接 `pi` | 日常使用，TUI 界面 |
-| **print** | `pi -p "prompt"` | 一次性问答，适合脚本 |
-| **json** | `pi --mode json` | 输出结构化 JSON 事件 |
-| **rpc** | `pi --mode rpc` | 作为其他程序的子进程 |
+| 模式            | 触发方式         | 用途                 |
+| --------------- | ---------------- | -------------------- |
+| **interactive** | 直接 `pi`        | 日常使用，TUI 界面   |
+| **print**       | `pi -p "prompt"` | 一次性问答，适合脚本 |
+| **json**        | `pi --mode json` | 输出结构化 JSON 事件 |
+| **rpc**         | `pi --mode rpc`  | 作为其他程序的子进程 |
 
 #### 2c. 创建 SessionManager
 
@@ -251,6 +252,7 @@ private _startRenderLoop(): void {
 ```
 
 **差分渲染**是 Pi TUI 的核心性能优化：
+
 1. 每帧渲染时，先收集所有组件的 `render(width)` 输出
 2. 与上一帧的输出对比，**只输出变化的行**
 3. 使用 ANSI 转义码定位光标、清除行、写入新内容
@@ -323,6 +325,7 @@ async getUserInput(): Promise<string> {
 ```
 
 当用户在编辑器中输入文本并按 Enter 时：
+
 1. 编辑器组件的 `handleInput()` 检测到 Enter 键
 2. 编辑器调用 `this.onInputCallback(text)`
 3. Promise 解析，`getUserInput()` 返回
@@ -377,14 +380,14 @@ async getUserInput(): Promise<string> {
 
 ### 关键概念总结
 
-| 概念 | 解释 | 代码位置 |
-|------|------|---------|
-| **raw mode** | 终端逐按键读取，不按行缓冲 | `terminal.ts` |
-| **差分渲染** | 只更新变化的行，减少闪烁 | `tui.ts:_startRenderLoop()` |
-| **备用屏幕** | 退出 Pi 后恢复原终端内容 | `terminal.ts` |
-| **bracketed paste** | 区分键盘输入和粘贴内容 | `terminal.ts` |
-| **Component 接口** | 所有 UI 组件的基类 | `tui.ts:Component` |
-| **主循环** | `while(true) { getInput → prompt }` | `interactive-mode.ts:run()` |
+| 概念                | 解释                                | 代码位置                    |
+| ------------------- | ----------------------------------- | --------------------------- |
+| **raw mode**        | 终端逐按键读取，不按行缓冲          | `terminal.ts`               |
+| **差分渲染**        | 只更新变化的行，减少闪烁            | `tui.ts:_startRenderLoop()` |
+| **备用屏幕**        | 退出 Pi 后恢复原终端内容            | `terminal.ts`               |
+| **bracketed paste** | 区分键盘输入和粘贴内容              | `terminal.ts`               |
+| **Component 接口**  | 所有 UI 组件的基类                  | `tui.ts:Component`          |
+| **主循环**          | `while(true) { getInput → prompt }` | `interactive-mode.ts:run()` |
 
 ## 下一步
 

@@ -43,7 +43,7 @@ npm run build
 **始终使用 `src/config.ts`** 访问包资源：
 
 ```typescript
-import { getPackageDir, getThemeDir } from "./config.js";
+import { getPackageDir, getThemeDir } from './config.js';
 ```
 
 切勿直接使用 `__dirname` 访问包资源。

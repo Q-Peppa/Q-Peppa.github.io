@@ -151,90 +151,90 @@ vim ~/.pi/agent/themes/my-theme.json
 
 ### 核心 UI（11 个）
 
-| Token | 用途 |
-|---|---|
-| `accent` | 主强调色（Logo、选中项、光标） |
-| `border` | 普通边框 |
-| `borderAccent` | 高亮边框 |
-| `borderMuted` | 微妙边框（编辑器） |
-| `success` | 成功状态 |
-| `error` | 错误状态 |
-| `warning` | 警告状态 |
-| `muted` | 次要文本 |
-| `dim` | 三级文本 |
-| `text` | 默认文本（通常为 `""`） |
-| `thinkingText` | Thinking 块文本 |
+| Token          | 用途                           |
+| -------------- | ------------------------------ |
+| `accent`       | 主强调色（Logo、选中项、光标） |
+| `border`       | 普通边框                       |
+| `borderAccent` | 高亮边框                       |
+| `borderMuted`  | 微妙边框（编辑器）             |
+| `success`      | 成功状态                       |
+| `error`        | 错误状态                       |
+| `warning`      | 警告状态                       |
+| `muted`        | 次要文本                       |
+| `dim`          | 三级文本                       |
+| `text`         | 默认文本（通常为 `""`）        |
+| `thinkingText` | Thinking 块文本                |
 
 ### 背景和内容（11 个）
 
-| Token | 用途 |
-|---|---|
-| `selectedBg` | 选中行背景 |
-| `userMessageBg` | 用户消息背景 |
-| `userMessageText` | 用户消息文本 |
-| `customMessageBg` | 扩展消息背景 |
-| `customMessageText` | 扩展消息文本 |
-| `customMessageLabel` | 扩展消息标签 |
-| `toolPendingBg` | 工具框（等待中） |
-| `toolSuccessBg` | 工具框（成功） |
-| `toolErrorBg` | 工具框（错误） |
-| `toolTitle` | 工具标题 |
-| `toolOutput` | 工具输出文本 |
+| Token                | 用途             |
+| -------------------- | ---------------- |
+| `selectedBg`         | 选中行背景       |
+| `userMessageBg`      | 用户消息背景     |
+| `userMessageText`    | 用户消息文本     |
+| `customMessageBg`    | 扩展消息背景     |
+| `customMessageText`  | 扩展消息文本     |
+| `customMessageLabel` | 扩展消息标签     |
+| `toolPendingBg`      | 工具框（等待中） |
+| `toolSuccessBg`      | 工具框（成功）   |
+| `toolErrorBg`        | 工具框（错误）   |
+| `toolTitle`          | 工具标题         |
+| `toolOutput`         | 工具输出文本     |
 
 ### Markdown（10 个）
 
-| Token | 用途 |
-|---|---|
-| `mdHeading` | 标题 |
-| `mdLink` | 链接文本 |
-| `mdLinkUrl` | 链接 URL |
-| `mdCode` | 行内代码 |
-| `mdCodeBlock` | 代码块内容 |
-| `mdCodeBlockBorder` | 代码块边框 |
-| `mdQuote` | 引用文本 |
-| `mdQuoteBorder` | 引用边框 |
-| `mdHr` | 水平分割线 |
-| `mdListBullet` | 列表项目符号 |
+| Token               | 用途         |
+| ------------------- | ------------ |
+| `mdHeading`         | 标题         |
+| `mdLink`            | 链接文本     |
+| `mdLinkUrl`         | 链接 URL     |
+| `mdCode`            | 行内代码     |
+| `mdCodeBlock`       | 代码块内容   |
+| `mdCodeBlockBorder` | 代码块边框   |
+| `mdQuote`           | 引用文本     |
+| `mdQuoteBorder`     | 引用边框     |
+| `mdHr`              | 水平分割线   |
+| `mdListBullet`      | 列表项目符号 |
 
 ### 工具 Diff（3 个）
 
-| Token | 用途 |
-|---|---|
-| `toolDiffAdded` | 新增行 |
-| `toolDiffRemoved` | 删除行 |
+| Token             | 用途     |
+| ----------------- | -------- |
+| `toolDiffAdded`   | 新增行   |
+| `toolDiffRemoved` | 删除行   |
 | `toolDiffContext` | 上下文行 |
 
 ### 语法高亮（9 个）
 
-| Token | 用途 |
-|---|---|
-| `syntaxComment` | 注释 |
-| `syntaxKeyword` | 关键字 |
-| `syntaxFunction` | 函数名 |
-| `syntaxVariable` | 变量 |
-| `syntaxString` | 字符串 |
-| `syntaxNumber` | 数字 |
-| `syntaxType` | 类型 |
-| `syntaxOperator` | 运算符 |
+| Token               | 用途     |
+| ------------------- | -------- |
+| `syntaxComment`     | 注释     |
+| `syntaxKeyword`     | 关键字   |
+| `syntaxFunction`    | 函数名   |
+| `syntaxVariable`    | 变量     |
+| `syntaxString`      | 字符串   |
+| `syntaxNumber`      | 数字     |
+| `syntaxType`        | 类型     |
+| `syntaxOperator`    | 运算符   |
 | `syntaxPunctuation` | 标点符号 |
 
 ### Thinking Level 边框（6 个）
 
 编辑器边框颜色，指示思维级别（从微妙到突出的视觉层次）：
 
-| Token | 用途 |
-|---|---|
-| `thinkingOff` | 思维关闭 |
+| Token             | 用途     |
+| ----------------- | -------- |
+| `thinkingOff`     | 思维关闭 |
 | `thinkingMinimal` | 最简思维 |
-| `thinkingLow` | 低思维 |
-| `thinkingMedium` | 中等思维 |
-| `thinkingHigh` | 高思维 |
-| `thinkingXhigh` | 超高思维 |
+| `thinkingLow`     | 低思维   |
+| `thinkingMedium`  | 中等思维 |
+| `thinkingHigh`    | 高思维   |
+| `thinkingXhigh`   | 超高思维 |
 
 ### Bash 模式（1 个）
 
-| Token | 用途 |
-|---|---|
+| Token      | 用途                              |
+| ---------- | --------------------------------- |
 | `bashMode` | Bash 模式编辑器边框（`!` 前缀时） |
 
 ### HTML Export（可选）
@@ -255,12 +255,12 @@ vim ~/.pi/agent/themes/my-theme.json
 
 支持四种格式：
 
-| 格式 | 示例 | 说明 |
-|---|---|---|
-| Hex | `"#ff0000"` | 6 位十六进制 RGB |
-| 256 色 | `39` | xterm 256 色调色板索引（0-255） |
-| 变量 | `"primary"` | 引用 `vars` 条目 |
-| 默认 | `""` | 终端默认颜色 |
+| 格式   | 示例        | 说明                            |
+| ------ | ----------- | ------------------------------- |
+| Hex    | `"#ff0000"` | 6 位十六进制 RGB                |
+| 256 色 | `39`        | xterm 256 色调色板索引（0-255） |
+| 变量   | `"primary"` | 引用 `vars` 条目                |
+| 默认   | `""`        | 终端默认颜色                    |
 
 ### 256 色调色板
 
@@ -289,6 +289,7 @@ echo $COLORTERM   # 应输出 "truecolor" 或 "24bit"
 ## 示例
 
 查看内置主题：
+
 - [dark.json](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/modes/interactive/theme/dark.json)
 - [light.json](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/modes/interactive/theme/light.json)
 

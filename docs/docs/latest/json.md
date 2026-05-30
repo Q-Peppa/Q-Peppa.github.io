@@ -18,31 +18,31 @@ pi --mode json "Your prompt"
 type AgentSessionEvent =
   | AgentEvent
   | {
-      type: "queue_update";
+      type: 'queue_update';
       steering: readonly string[];
       followUp: readonly string[];
     }
   | {
-      type: "compaction_start";
-      reason: "manual" | "threshold" | "overflow";
+      type: 'compaction_start';
+      reason: 'manual' | 'threshold' | 'overflow';
     }
   | {
-      type: "compaction_end";
-      reason: "manual" | "threshold" | "overflow";
+      type: 'compaction_end';
+      reason: 'manual' | 'threshold' | 'overflow';
       result: CompactionResult | undefined;
       aborted: boolean;
       willRetry: boolean;
       errorMessage?: string;
     }
   | {
-      type: "auto_retry_start";
+      type: 'auto_retry_start';
       attempt: number;
       maxAttempts: number;
       delayMs: number;
       errorMessage: string;
     }
   | {
-      type: "auto_retry_end";
+      type: 'auto_retry_end';
       success: boolean;
       attempt: number;
       finalError?: string;
@@ -58,42 +58,42 @@ type AgentSessionEvent =
 ```typescript
 type AgentEvent =
   // Agent 生命周期
-  | { type: "agent_start" }
-  | { type: "agent_end"; messages: AgentMessage[] }
+  | { type: 'agent_start' }
+  | { type: 'agent_end'; messages: AgentMessage[] }
 
   // Turn 生命周期
-  | { type: "turn_start" }
+  | { type: 'turn_start' }
   | {
-      type: "turn_end";
+      type: 'turn_end';
       message: AgentMessage;
       toolResults: ToolResultMessage[];
     }
 
   // 消息生命周期
-  | { type: "message_start"; message: AgentMessage }
+  | { type: 'message_start'; message: AgentMessage }
   | {
-      type: "message_update";
+      type: 'message_update';
       message: AgentMessage;
       assistantMessageEvent: AssistantMessageEvent;
     }
-  | { type: "message_end"; message: AgentMessage }
+  | { type: 'message_end'; message: AgentMessage }
 
   // 工具执行
   | {
-      type: "tool_execution_start";
+      type: 'tool_execution_start';
       toolCallId: string;
       toolName: string;
       args: any;
     }
   | {
-      type: "tool_execution_update";
+      type: 'tool_execution_update';
       toolCallId: string;
       toolName: string;
       args: any;
       partialResult: any;
     }
   | {
-      type: "tool_execution_end";
+      type: 'tool_execution_end';
       toolCallId: string;
       toolName: string;
       result: any;
@@ -103,15 +103,15 @@ type AgentEvent =
 
 ### 事件说明
 
-| 事件 | 说明 |
-|---|---|
-| `agent_start` / `agent_end` | Agent 生命周期，`agent_end` 包含最终消息列表 |
-| `turn_start` / `turn_end` | 回合生命周期，`turn_end` 包含该轮消息和工具结果 |
-| `message_start` / `message_update` / `message_end` | 消息生命周期，`message_update` 流式传输增量 |
-| `tool_execution_start` / `tool_execution_update` / `tool_execution_end` | 工具执行，支持流式部分结果 |
-| `queue_update` | 队列更新（steering + follow-up 队列） |
-| `compaction_start` / `compaction_end` | 上下文压缩事件 |
-| `auto_retry_start` / `auto_retry_end` | 自动重试事件 |
+| 事件                                                                    | 说明                                            |
+| ----------------------------------------------------------------------- | ----------------------------------------------- |
+| `agent_start` / `agent_end`                                             | Agent 生命周期，`agent_end` 包含最终消息列表    |
+| `turn_start` / `turn_end`                                               | 回合生命周期，`turn_end` 包含该轮消息和工具结果 |
+| `message_start` / `message_update` / `message_end`                      | 消息生命周期，`message_update` 流式传输增量     |
+| `tool_execution_start` / `tool_execution_update` / `tool_execution_end` | 工具执行，支持流式部分结果                      |
+| `queue_update`                                                          | 队列更新（steering + follow-up 队列）           |
+| `compaction_start` / `compaction_end`                                   | 上下文压缩事件                                  |
+| `auto_retry_start` / `auto_retry_end`                                   | 自动重试事件                                    |
 
 ## 消息类型
 
@@ -133,7 +133,7 @@ type AgentEvent =
 每行是一个 JSON 对象。第一行是会话头：
 
 ```json
-{"type":"session","version":3,"id":"uuid","timestamp":"...","cwd":"/path"}
+{ "type": "session", "version": 3, "id": "uuid", "timestamp": "...", "cwd": "/path" }
 ```
 
 随后是事件流，按发生顺序输出：

@@ -60,7 +60,8 @@ export default defineConfig({
   root: path.join(__dirname, 'docs'),
   lang: 'zh-CN',
   title: 'Pi 中文文档',
-  description: 'Pi Coding Agent 中文文档 - 终端 AI 编码助手。提供扩展、Skills、Provider 和 Pi 包的中文参考，帮助开发者快速上手终端编码助手。',
+  description:
+    'Pi Coding Agent 中文文档 - 终端 AI 编码助手。提供扩展、Skills、Provider 和 Pi 包的中文参考，帮助开发者快速上手终端编码助手。',
   icon: '/rspress-icon.png',
   logo: {
     light: '/rspress-light-logo.png',
@@ -70,14 +71,26 @@ export default defineConfig({
   globalStyles: path.join(__dirname, 'styles/global.css'),
   head: [
     // Canonical URL — 每页自动生成，防止 GitHub Pages 默认域名造成重复内容
-    (route) => ['link', { rel: 'canonical', href: `${SITE_URL}${route.routePath === '/' ? '/index' : route.routePath}.html` }],
+    (route) => [
+      'link',
+      {
+        rel: 'canonical',
+        href: `${SITE_URL}${route.routePath === '/' ? '/index' : route.routePath}.html`,
+      },
+    ],
     // Open Graph image for social sharing
     ['meta', { property: 'og:image', content: `${SITE_URL}/rspress-icon.png` }],
     ['meta', { property: 'og:image:width', content: '512' }],
     ['meta', { property: 'og:image:height', content: '512' }],
     ['meta', { name: 'twitter:card', content: 'summary' }],
     ['meta', { name: 'twitter:title', content: 'Pi 中文文档' }],
-    ['meta', { name: 'twitter:description', content: 'Pi Coding Agent 中文文档 - 终端 AI 编码助手' }],
+    [
+      'meta',
+      {
+        name: 'twitter:description',
+        content: 'Pi Coding Agent 中文文档 - 终端 AI 编码助手',
+      },
+    ],
   ],
   themeConfig: {
     nav: [
@@ -119,7 +132,11 @@ export default defineConfig({
         {
           text: 'Customization',
           items: [
-            { text: 'Extensions', link: '/docs/latest/extensions', tag: 'updated' },
+            {
+              text: 'Extensions',
+              link: '/docs/latest/extensions',
+              tag: 'updated',
+            },
             { text: 'Skills', link: '/docs/latest/skills' },
             { text: 'Prompt Templates', link: '/docs/latest/prompt-templates' },
             { text: 'Themes', link: '/docs/latest/themes' },
@@ -130,9 +147,7 @@ export default defineConfig({
         },
         {
           text: 'Reference',
-          items: [
-            { text: 'Session Format', link: '/docs/latest/session-format' },
-          ],
+          items: [{ text: 'Session Format', link: '/docs/latest/session-format' }],
         },
         {
           text: 'Programmatic Usage',
@@ -155,19 +170,35 @@ export default defineConfig({
         },
         {
           text: 'Development',
-          items: [
-            { text: 'Development', link: '/docs/latest/development' },
-          ],
+          items: [{ text: 'Development', link: '/docs/latest/development' }],
         },
         {
           text: '源码深入',
           items: [
             { text: '概述', link: '/docs/latest/source/' },
-            { text: '前置知识与学习路径', link: '/docs/latest/source/prerequisites' },
-            { text: '环境搭建与调试', link: '/docs/latest/source/setup-and-debug' },
-            { text: '从终端到 TUI', link: '/docs/latest/source/cli-to-tui', tag: '核心' },
-            { text: '从输入到 LLM 循环', link: '/docs/latest/source/input-to-llm', tag: '核心' },
-            { text: '核心架构与设计哲学', link: '/docs/latest/source/architecture', tag: '深入' },
+            {
+              text: '前置知识与学习路径',
+              link: '/docs/latest/source/prerequisites',
+            },
+            {
+              text: '环境搭建与调试',
+              link: '/docs/latest/source/setup-and-debug',
+            },
+            {
+              text: '从终端到 TUI',
+              link: '/docs/latest/source/cli-to-tui',
+              tag: '核心',
+            },
+            {
+              text: '从输入到 LLM 循环',
+              link: '/docs/latest/source/input-to-llm',
+              tag: '核心',
+            },
+            {
+              text: '核心架构与设计哲学',
+              link: '/docs/latest/source/architecture',
+              tag: '深入',
+            },
           ],
         },
       ],

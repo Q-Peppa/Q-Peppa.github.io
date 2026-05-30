@@ -125,16 +125,16 @@ tsx packages/coding-agent/src/cli.ts -p "Say hello"
 
 ### 关键断点位置
 
-| 断点位置 | 文件 | 行号 | 观察什么 |
-|----------|------|------|---------|
-| CLI 入口 | `packages/coding-agent/src/cli.ts` | 第 17 行 | `process.argv` 参数 |
-| 主流程开始 | `packages/coding-agent/src/main.ts` | `main()` 函数 | 参数解析结果、appMode 选择 |
-| TUI 创建 | `packages/coding-agent/src/modes/interactive/interactive-mode.ts` | 构造函数 | TUI 初始化参数 |
-| TUI 启动 | 同上 | `init()` 方法中 `ui.start()` | UI 布局构建 |
-| 主循环 | 同上 | `run()` 方法中 `while(true)` | `getUserInput()` 等待输入 |
-| 消息发送 | `packages/coding-agent/src/core/agent-session.ts` | `prompt()` 方法 | 消息预处理、skill 展开 |
-| Agent 循环 | `packages/agent/src/agent-loop.ts` | `runLoop()` 函数 | ★ 核心循环入口 |
-| LLM 调用 | 同上 | `streamAssistantResponse()` | LLM 请求参数和流式响应 |
+| 断点位置   | 文件                                                              | 行号                         | 观察什么                   |
+| ---------- | ----------------------------------------------------------------- | ---------------------------- | -------------------------- |
+| CLI 入口   | `packages/coding-agent/src/cli.ts`                                | 第 17 行                     | `process.argv` 参数        |
+| 主流程开始 | `packages/coding-agent/src/main.ts`                               | `main()` 函数                | 参数解析结果、appMode 选择 |
+| TUI 创建   | `packages/coding-agent/src/modes/interactive/interactive-mode.ts` | 构造函数                     | TUI 初始化参数             |
+| TUI 启动   | 同上                                                              | `init()` 方法中 `ui.start()` | UI 布局构建                |
+| 主循环     | 同上                                                              | `run()` 方法中 `while(true)` | `getUserInput()` 等待输入  |
+| 消息发送   | `packages/coding-agent/src/core/agent-session.ts`                 | `prompt()` 方法              | 消息预处理、skill 展开     |
+| Agent 循环 | `packages/agent/src/agent-loop.ts`                                | `runLoop()` 函数             | ★ 核心循环入口             |
+| LLM 调用   | 同上                                                              | `streamAssistantResponse()`  | LLM 请求参数和流式响应     |
 
 ### 调试技巧
 
@@ -156,6 +156,7 @@ Pi 使用 **Node.js strip-only 模式**（通过 `tsx`），这意味着：
 3. 所有类必须用**显式字段 + 构造函数赋值**，而非参数属性
 
 示例（正确的写法）：
+
 ```typescript
 // ✅ 正确：显式字段 + 构造函数赋值
 class MyComponent {
@@ -170,7 +171,10 @@ class MyComponent {
 
 // ❌ 错误：参数属性（需要 JS emit）
 class MyComponent {
-  constructor(private width: number, private title: string) {}
+  constructor(
+    private width: number,
+    private title: string,
+  ) {}
 }
 ```
 
