@@ -74,9 +74,99 @@ git log --oneline HEAD..origin/main 2>/dev/null | head -5
 
 ---
 
+## 0. 同步范围探测（自动）
+
+在执行 A 或 B 之前，**先自动算出"自上次同步以来，源站到底改了什么"**，避免人肉翻 `git log`。
+
+### 0.1 建立同步基线
+
+约定：翻译站的同步 commit 以 `sync:` 开头（参见末尾"提交并推送"）。用上一条 `sync:` commit 作为本次同步的起点。
+
+```bash
+# 在翻译站查找上一条 sync: 提交
+cd .
+LAST_SYNC=$(git log --oneline --grep="^sync:" -1 --format="%H" 2>/dev/null)
+
+if [ -z "$LAST_SYNC" ]; then
+  # 首次同步：回退到源站最近一个发布版本对应的 commit
+  cd ../pi-repo
+  LAST_SYNC=$(git log --oneline --grep="^Release v" -1 --format="%H" 2>/dev/null)
+  cd ..
+  echo "⚠️ 未找到历史 sync commit，使用源站最近发布版本作为基线: $LAST_SYNC"
+else
+  echo "✅ 上次同步基线: $LAST_SYNC"
+fi
+```
+
+### 0.2 列出本次同步的源站变更
+
+```bash
+cd ../pi-repo
+SINCE="$LAST_SYNC"
+
+echo ""
+echo "=== 自基线以来的源站 commit ==="
+git log --oneline ${SINCE}..HEAD
+
+echo ""
+echo "=== docs/ 变更文件（影响 B 翻译同步） ==="
+git diff --stat ${SINCE}..HEAD -- packages/coding-agent/docs/
+
+echo ""
+echo "=== CHANGELOG 变更文件（影响 A 新闻同步） ==="
+git diff --stat ${SINCE}..HEAD -- packages/*/CHANGELOG.md
+
+echo ""
+echo "=== 图片资产变更 ==="
+git diff --stat ${SINCE}..HEAD -- packages/coding-agent/docs/images/
+```
+
+**判定标准：**
+
+- `docs/` 有变更 → 走 B 步骤，重点对比变更文件
+- `CHANGELOG.md` 有变更且**含已发布版本** → 走 A 步骤，提取新版本写入 news.md
+- `images/` 有变更 → 复制到翻译站 `./docs/public/images/`
+- 全部为空 → ✅ 源站已与翻译站同步，直接进入"构建验证"
+
+### 0.3 提取 CHANGELOG 中"自基线以来"的新增已发布版本
+
+注意：**只输出 `[Unreleased]` 之后、下一个未发布版本之前**的所有带日期的 `## [x.y.z] - YYYY-MM-DD`。
+
+```bash
+cd ../pi-repo
+for pkg in coding-agent ai agent tui; do
+  file="packages/$pkg/CHANGELOG.md"
+  echo "=== $pkg ==="
+  awk '
+    /^## \[Unreleased\]/ { in_unrel=1; next }
+    in_unrel && /^## \[/ { in_unrel=0 }
+    !in_unrel && /^## \[[0-9]+\.[0-9]+\.[0-9]+\] - [0-9]{4}-[0-9]{2}-[0-9]{2}/ { print }
+  ' "$file"
+  echo ""
+done
+```
+
+将输出的版本号集合交给 A 步骤。**输出为空说明无新发布版本，跳过 A。**
+
+---
+
 ## A. 更新新闻页面（Update News）
 
 从各包 CHANGELOG 提取新增版本记录，写入 `docs/news.md`。
+
+> ⚠️ **不要写入 `[Unreleased]` 区的条目**
+>
+> CHANGELOG 顶部的 `[Unreleased]` 区是**尚未发布的变更**，`docs/news.md` 只反映**已发布**版本。
+>
+> | 标题形态                   | 是否写入 news.md            |
+> | -------------------------- | --------------------------- |
+> | `## [Unreleased]`          | ❌ 跳过（未发布）           |
+> | `## [0.78.0] - 2026-05-29` | ✅ 写入（含发布日期）       |
+> | `## [0.78.0]`（无日期）    | ⚠️ 视为已发布，谨慎核对日期 |
+>
+> **如何判断"已发布"**：源站 git tag（如 `v0.78.0`）存在 + CHANGELOG 该版本有日期。三者缺一则视为未发布。
+>
+> Unreleased 条目仅作为"待发布预告"参考，不出现在公开新闻中——下一版发布时再统一提取。
 
 ### 第 1 步：对比版本差异
 
@@ -173,9 +263,25 @@ done
 
 **链接处理规则：**
 
-- 站内文档链接（如 `usage.md`、`extensions.md#xxx`）改为绝对路径 `/docs/latest/xxx`
-- GitHub Issue/PR 链接保留原样
-- `README.md`、`docs/` 等相对链接改为完整 GitHub URL
+写入 `news.md` 时，按下表转换源站链接形态：
+
+| 源站链接形态                                          | 翻译站链接                                                   | 备注                                     |
+| ----------------------------------------------------- | ------------------------------------------------------------ | ---------------------------------------- |
+| `usage.md`                                            | `/docs/latest/usage`                                         | 站内同级文件                             |
+| `extensions.md`                                       | `/docs/latest/extensions`                                    | 同上                                     |
+| `extensions.md#overlay-options`                       | `/docs/latest/extensions#overlay-options`                    | ⚠️ **必须保留锚点**，不能丢              |
+| `themes.md#dark-theme`                                | `/docs/latest/themes#dark-theme`                             | 同上                                     |
+| `tui.md#overlay-focus`                                | `/docs/latest/tui#overlay-focus`                             | 同上                                     |
+| `../README.md`                                        | `https://github.com/earendil-works/pi/blob/main/README.md`   | 仓库根 README 改为 GitHub 绝对 URL       |
+| `docs/foo.md`                                         | `https://github.com/earendil-works/pi/blob/main/docs/foo.md` | `docs/` 前缀相对链接改为 GitHub 绝对 URL |
+| `https://github.com/earendil-works/pi/issues/1234`    | （原样保留）                                                 | Issue 链接                               |
+| `https://github.com/earendil-works/pi-mono/pull/1234` | （原样保留）                                                 | PR 链接（注意旧仓库 `pi-mono`）          |
+
+**最容易出错的 3 个点：**
+
+1. 带锚点的相对链接 → **锚点 + 文件名都要保留**（最常见丢失）
+2. 旧仓库 `pi-mono` 链接 → 保留 `pi-mono`，不要改成 `pi`
+3. `../README.md` → 不要变成 `/docs/latest/README`，必须是 GitHub URL
 
 ---
 
