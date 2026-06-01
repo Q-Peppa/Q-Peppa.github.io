@@ -44,6 +44,79 @@ description: >-
 
 > 源站是完全克隆（非浅克隆），每次操作前先 `git pull` 拉取最新内容。
 
+### 第 0 步：检查仓库工作区状态（必做，硬约束）
+
+> ⚠️ **本步骤在任何 `git pull` / `git commit` / `git push` 之前必须执行。**
+> 脏工作区会导致：源站 rebase 失败、翻译站 commit 污染、推送内容与预期不符等事故。
+
+需要检查**两个仓库**（不要遗漏任何一个）：
+
+| 仓库   | 路径         | 检查原因                                       |
+| ------ | ------------ | ---------------------------------------------- |
+| 翻译站 | `.`          | 后续要 `commit` + `push`，脏状态会污染 commit  |
+| 源站   | `../pi-repo` | 后续要 `pull --rebase`，脏状态会让 rebase 失败 |
+
+#### 检测脚本
+
+```bash
+check_clean() {
+  local repo_name="$1"
+  local repo_path="$2"
+  local dirty=$(git -C "$repo_path" status --porcelain 2>/dev/null)
+  if [ -n "$dirty" ]; then
+    echo "⚠️ $repo_name 仓库脏（$repo_path）："
+    echo "$dirty" | sed 's/^/    /'
+    return 1
+  else
+    echo "✅ $repo_name 仓库干净"
+    return 0
+  fi
+}
+
+DIRTY=0
+check_clean "翻译站" "." || DIRTY=1
+check_clean "源站" "../pi-repo" || DIRTY=1
+[ $DIRTY -eq 0 ] && echo "✅ 两个仓库都干净，继续执行" || echo "❌ 检测到脏仓库，必须处理后才能继续"
+```
+
+#### 检测到脏仓库时：AI 必须停下并询问用户
+
+**严禁**以下 4 种行为：
+
+1. ❌ 默默 `git stash` 而不告知用户
+2. ❌ 默默 `git reset --hard`（可能毁掉用户工作）
+3. ❌ 忽略脏状态继续 `git pull`（会 rebase 失败）
+4. ❌ 忽略脏状态继续 `git commit -a`（会污染 commit）
+
+**正确做法**：AI 调用 `ask_user_question` 工具，**每个脏仓库独立询问一次**（不要把两个仓库合并问，因为它们的修改可能语义完全不同）。
+
+**问题模板**：
+
+- 问题：`{翻译站 / 源站} 仓库有 N 个未提交修改，如何处理？`
+- 选项 1（推荐）：**stash 暂存** — 执行 `git stash push -u -m "sync-upstream: pre-sync stash"`，同步完成后用 `git stash pop` 恢复
+- 选项 2：**放弃修改** — 执行 `git reset --hard HEAD` + `git clean -fd`，**不可恢复**
+- 选项 3：**退出** — 停止 skill 执行，由用户手动处理
+
+**示例调用**（翻译站脏时）：
+
+```
+ask_user_question(
+  questions: [{
+    question: "翻译站仓库有 1 个未提交修改（pnpm-workspace.yaml），如何处理？",
+    header: "脏仓库",
+    options: [
+      { label: "stash 暂存（推荐）", description: "执行 git stash push -u，同步完成后用 git stash pop 恢复" },
+      { label: "放弃修改", description: "执行 git reset --hard HEAD + git clean -fd，不可恢复" },
+      { label: "退出", description: "停止 skill 执行，由用户手动处理" }
+    ]
+  }]
+)
+```
+
+**如果用户选择"退出"**：AI 立即停止执行，输出"已退出，请手动处理脏工作区后重新运行 skill"，不进入后续步骤。
+
+**如果用户选择"stash"或"放弃"**：执行对应命令后**重新运行第 0 步的检测脚本**，确认返回 ✅ 后才进入下一步。
+
 ```bash
 cd ../pi-repo
 git pull --rebase
@@ -450,8 +523,10 @@ git push
 
 ## 工作流快捷键
 
-| 只看这个   | 运行以下                                         |
-| ---------- | ------------------------------------------------ |
-| 只更新新闻 | 执行前置拉取 → 执行 A 部分 → 构建验证 → 提交推送 |
-| 只审核翻译 | 执行前置拉取 → 执行 B 部分 → 构建验证 → 提交推送 |
-| 全部同步   | 执行前置拉取 → A → B → 构建验证 → 提交推送       |
+| 只看这个   | 运行以下                                                      |
+| ---------- | ------------------------------------------------------------- |
+| 只更新新闻 | 检查工作区 → 前置拉取 → 0 探测 → A 部分 → 构建验证 → 提交推送 |
+| 只审核翻译 | 检查工作区 → 前置拉取 → 0 探测 → B 部分 → 构建验证 → 提交推送 |
+| 全部同步   | 检查工作区 → 前置拉取 → 0 探测 → A → B → 构建验证 → 提交推送  |
+
+> **工作区检查不可跳过**：如果任一仓库脏，必须先按"第 0 步"处理（stash / 放弃 / 退出），不处理不能继续。
