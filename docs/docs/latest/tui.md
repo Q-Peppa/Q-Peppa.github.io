@@ -145,13 +145,22 @@ const result = await ctx.ui.custom<string | null>((tui, theme, keybindings, done
     // 响应式：在窄终端上隐藏
     visible: (termWidth, termHeight) => termWidth >= 80,
   },
-  // 获取用于程序化控制可见性的句柄
+  // 获取用于程序化控制焦点和可见性的句柄
   onHandle: (handle) => {
+    // handle.focus() - 聚焦此覆盖层并将其带到视觉最前
+    // handle.unfocus() - 将输入释放回正常回退
+    // handle.unfocus({ target }) - 将输入释放给指定组件或 null
     // handle.setHidden(true/false) - 切换可见性
     // handle.hide() - 永久移除
   },
 });
 ```
+
+### 覆盖层焦点
+
+聚焦且可见的覆盖层可在临时非覆盖层 UI 期间持续持有输入所有权。如果覆盖层打开了另一个未传 `{ overlay: true }` 的 `ctx.ui.custom()` 组件，则该替换 UI 在活跃期间会接收输入；待其关闭后，聚焦的覆盖层可重新获取输入。
+
+当你希望可见的覆盖层停止持有输入、并让 TUI 回退至其他可见的捕获型覆盖层或上一焦点目标时，使用 `handle.unfocus()`。当你希望特定组件在覆盖层保持可见期间接收输入时，使用 `handle.unfocus({ target })`。传入 `{ target: null }` 会在显式再次设置焦点前有意保留无组件被聚焦的状态。
 
 ### 覆盖层生命周期
 

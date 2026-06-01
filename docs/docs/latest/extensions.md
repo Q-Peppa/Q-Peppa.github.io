@@ -2384,7 +2384,7 @@ const result = await ctx.ui.custom<string | null>(
 );
 ```
 
-对于高级定位（锚点、边距、百分比、响应式可见性），传递 `overlayOptions`。使用 `onHandle` 以编程方式控制可见性：
+对于高级定位（锚点、边距、百分比、响应式可见性），传递 `overlayOptions`。使用 `onHandle` 以编程方式控制焦点或可见性：
 
 ```typescript
 const result = await ctx.ui.custom<string | null>(
@@ -2393,13 +2393,18 @@ const result = await ctx.ui.custom<string | null>(
     overlay: true,
     overlayOptions: { anchor: 'top-right', width: '50%', margin: 2 },
     onHandle: (handle) => {
-      /* handle.setHidden(true/false) */
+      handle.focus(); // 聚焦此覆盖层并将其带到视觉最前
+      // handle.unfocus({ target: editorComponent }); // 将输入释放给指定组件
+      // handle.setHidden(true/false); // 切换可见性
+      // handle.hide(); // 永久移除
     },
   },
 );
 ```
 
-完整的 `OverlayOptions` API 请参见 [tui.md](tui.md)，示例请参见 [overlay-qa-tests.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/overlay-qa-tests.ts)。
+聚焦且可见的覆盖层可在临时非覆盖层自定义 UI 关闭后重新获取输入。如果你希望另一组件在覆盖层保持可见期间继续接收输入，可调用 `handle.unfocus({ target })`。传入 `{ target: null }` 会在未聚焦任何组件的情况下释放覆盖层，直到再次设置焦点。
+
+完整的 `OverlayOptions` 和 `OverlayHandle` API 请参见 [tui.md](/docs/latest/tui)，示例请参见 [overlay-qa-tests.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/overlay-qa-tests.ts)。
 
 ### 自定义编辑器
 
