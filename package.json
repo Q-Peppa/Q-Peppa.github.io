@@ -17,7 +17,6 @@
     "@rspress/core": "^2.0.12"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.15",
     "@types/node": "^25.9.1",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.5",
@@ -28,5 +27,5 @@
   "lint-staged": {
     "*": "oxfmt --no-error-on-unmatched-pattern"
   },
-  "packageManager": "pnpm@11.1.1+sha512.d1fdf5f73c617b64fa1a56a81c3c8dfe0e966e33a6010aa256b517ae77be21d93e05affc0de1a83b0e4f29d569f68b446ae8f068cd7247c0bb3df0fb4d7bdf9a"
+  "packageManager": "pnpm@11.5.0+sha512.dbfcc4f81cf48597afd4bc391ffdf12c11f1a9fb83a395bfa6b0a2d9cc2fd8ffebafdb1ccbd529632153f793904c2615b7f09fe1a345473fd1c35845172a8eb1"
 }
