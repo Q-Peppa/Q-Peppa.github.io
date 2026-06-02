@@ -1083,7 +1083,7 @@ Agent 完成时发出。包含此次运行中生成的所有消息。
 - `getTheme()` 返回 `undefined`
 - `setTheme()` 返回 `{ success: false, error: "..." }`
 
-注意：`ctx.hasUI` 在 RPC 模式下为 `true`，因为对话框和即发即弃方法通过扩展 UI 子协议是功能性的。
+注意：`ctx.mode` 为 `"rpc"` 且 `ctx.hasUI` 在 RPC 模式下为 `true`，因为对话框和即发即弃方法通过扩展 UI 子协议是功能性的。使用 `ctx.mode === "tui"` 来保护需要真实终端的 TUI 特定功能，如 `custom()`。
 
 ### 扩展 UI 请求（stdout）
 

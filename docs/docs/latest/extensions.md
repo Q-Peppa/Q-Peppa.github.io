@@ -859,9 +859,13 @@ pi.on('input', async (event, ctx) => {
 
 用于用户交互的 UI 方法。完整详情请参见 [自定义 UI](#自定义-ui)。
 
+### ctx.mode
+
+当前运行模式：`"tui"`、`"rpc"`、`"json"` 或 `"print"`。使用 `ctx.mode === "tui"` 来保护仅终端功能，如 `custom()`、组件工厂、终端输入和直接 TUI 渲染。
+
 ### ctx.hasUI
 
-在打印模式（`-p`）和 JSON 模式下为 `false`。在交互式和 RPC 模式下为 `true`。在 RPC 模式下，对话框方法（`select`、`confirm`、`input`、`editor`）通过扩展 UI 子协议工作，而即发即弃方法（`notify`、`setStatus`、`setWidget`、`setTitle`、`setEditorText`）向客户端发出请求。某些 TUI 特定方法是无操作或返回默认值（参见 [rpc.md](rpc.md#extension-ui-protocol)）。
+在 TUI 和 RPC 模式下为 `true`。在打印模式（`-p`）和 JSON 模式下为 `false`。使用此属性来保护对话框方法（`select`、`confirm`、`input`、`editor`）和即发即弃方法（`notify`、`setStatus`、`setWidget`、`setTitle`、`setEditorText`），这些方法在 TUI 和 RPC 模式下均可工作。在 RPC 模式下，某些 TUI 特定方法是无操作或返回默认值（参见 [rpc.md](rpc.md#extension-ui-protocol)）。
 
 ### ctx.cwd
 
@@ -977,6 +981,19 @@ pi.on('before_agent_start', (event, ctx) => {
 ## ExtensionCommandContext
 
 命令处理程序接收 `ExtensionCommandContext`，它扩展了 `ExtensionContext` 并添加了会话控制方法。这些方法仅在命令中可用，因为在事件处理程序中调用它们可能导致死锁。
+
+### ctx.getSystemPromptOptions()
+
+返回 Pi 当前用于构建系统提示的基础输入。
+
+```typescript
+const options = ctx.getSystemPromptOptions();
+const contextPaths = options.contextFiles?.map((file) => file.path) ?? [];
+```
+
+其形状和可变性与 `before_agent_start` 的 `event.systemPromptOptions` 相同：自定义提示、活跃工具、工具代码片段、提示指南、追加的系统提示文本、cwd、已加载的上下文文件和已加载的 Skill。它可能包含完整的上下文文件内容，因此请将其视为敏感的扩展本地数据，避免通过命令列表、日志或自动补全元数据暴露它。
+
+此方法报告当前的基础提示输入。它不包括每轮 `before_agent_start` 链式系统提示更改、后续的 `context` 事件消息修改或 `before_provider_request` 负载重写。
 
 ### ctx.waitForIdle()
 
@@ -2528,14 +2545,14 @@ const highlighted = highlightCode(code, lang, theme);
 
 ## 模式行为
 
-| 模式                  | UI 方法   | 说明                                     |
-| --------------------- | --------- | ---------------------------------------- |
-| 交互模式              | 完整 TUI  | 正常运行                                 |
-| RPC（`--mode rpc`）   | JSON 协议 | 主机处理 UI，参见 [rpc.md](rpc.md)       |
-| JSON（`--mode json`） | 无操作    | 事件流到 stdout，参见 [json.md](json.md) |
-| 打印（`-p`）          | 无操作    | 扩展运行但不能提示                       |
+| 模式                  | `ctx.mode` | `ctx.hasUI` | 说明                                                                               |
+| --------------------- | ---------- | ----------- | ---------------------------------------------------------------------------------- |
+| 交互模式              | `"tui"`    | `true`      | 完整 TUI，含终端渲染                                                               |
+| RPC（`--mode rpc`）   | `"rpc"`    | `true`      | 通过 JSON 协议进行对话框和通知；`custom()` 返回 `undefined`。参见 [rpc.md](rpc.md) |
+| JSON（`--mode json`） | `"json"`   | `false`     | 事件流到 stdout；UI 方法为无操作                                                   |
+| 打印（`-p`）          | `"print"`  | `false`     | 扩展运行但不能提示                                                                 |
 
-在非交互模式下，使用 UI 方法前请检查 `ctx.hasUI`。
+在 TUI 特定功能（`custom()`、组件工厂、终端输入）之前使用 `ctx.mode === "tui"`。在 TUI 和 RPC 模式下均可工作的对话框和通知方法之前使用 `ctx.hasUI`。
 
 ## 示例参考
 
