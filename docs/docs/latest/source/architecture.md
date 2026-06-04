@@ -339,15 +339,238 @@ Pi 的扩展是一个 TypeScript 模块，通过 `ExtensionFactory` 函数创建
    └── 事件监听注册到事件总线
 ```
 
+### 扩展深入：输入拦截机制
+
+当用户输入文本时，扩展可以在多个层级拦截和修改：
+
+```
+用户输入 "@review src/index.ts"
+  │
+  ▼
+┌────────────────────────────────────────────┐
+│ 扩展 input 事件拦截                         │
+│                                            │
+│  extension_1: on('input')                  │
+│    → 检查是否需要处理                       │
+│    → 返回 { action: 'pass' } 跳过          │
+│                                            │
+│  extension_2: on('input')                  │
+│    → 检测到 @review 前缀                   │
+│    → 返回 { action: 'handled' }           │
+│    → 扩展自己处理这个输入                   │
+│    → 输入不再发送给 LLM                    │
+└────────────────────────────────────────────┘
+```
+
+**输入拦截的三种返回值：**
+
+| 返回值                                 | 效果                             |
+| -------------------------------------- | -------------------------------- |
+| `{ action: 'pass' }`                   | 跳过，让下一个扩展或默认流程处理 |
+| `{ action: 'handled' }`                | 扩展已处理，不再发送给 LLM       |
+| `{ action: 'transform', text: '...' }` | 修改输入内容后继续处理           |
+
+**实际应用示例：**
+
+```typescript
+// 自动将 #issue 标记转换为 GitHub 链接
+pi.on('input', (event) => {
+  const match = event.text.match(/#(\d+)/);
+  if (match) {
+    const issueUrl = `https://github.com/${repo}/issues/${match[1]}`;
+    return {
+      action: 'transform',
+      text: event.text.replace(/#\d+/, `[Issue #${match[1]}](${issueUrl})`),
+    };
+  }
+  return { action: 'pass' };
+});
+```
+
+### 扩展深入：工具注册
+
+扩展注册的工具与内置工具完全平等，LLM 可以自由调用：
+
+```typescript
+pi.registerTool({
+  name: 'database-query',
+  description: 'Execute a read-only SQL query',
+  parameters: Type.Object({
+    query: Type.String({ description: 'SQL query to execute' }),
+  }),
+  // 工具渲染器（可选）：控制工具在 TUI 中的显示
+  renderCall: (args) => `🔍 查询: ${args.query}`,
+  renderResult: (result) => `📊 结果: ${result.rowCount} 行`,
+  execute: async (args, context) => {
+    // context 包含当前会话信息
+    const rows = await db.query(args.query);
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(rows, null, 2),
+        },
+      ],
+    };
+  },
+});
+```
+
+**工具执行流程：**
+
+```
+LLM 返回 ToolCall { name: 'database-query', arguments: { query: '...' } }
+  │
+  ▼
+ToolRegistry 查找工具定义
+  │
+  ▼
+TypeBox schema 校验参数
+  │
+  ▼
+执行扩展的 execute 函数
+  │
+  ▼
+返回 ToolResult → 写入上下文 → LLM 继续
+```
+
+### 扩展深入：UI 组件注册
+
+扩展可以在编辑器的上方或下方渲染自定义 UI 组件：
+
+```typescript
+pi.on('session_start', (event, ctx) => {
+  // 在编辑器上方添加一个状态指示器
+  ctx.ui.setWidget('above', {
+    render: (width) => {
+      const status = getProjectStatus();
+      return [`📁 ${status.branch} | ✅ ${status.tests} tests passing`];
+    },
+    invalidate: () => true, // 始终重新渲染
+  });
+});
+```
+
+**UI 组件位置：**
+
+```
+┌─────────────────────────────────┐
+│ header (Logo + 快捷键提示)       │
+├─────────────────────────────────┤
+│ chatContainer (聊天消息)         │
+├─────────────────────────────────┤
+│ widgetContainerAbove ← 扩展组件 │
+├─────────────────────────────────┤
+│ editor (编辑器)                  │
+├─────────────────────────────────┤
+│ widgetContainerBelow ← 扩展组件 │
+├─────────────────────────────────┤
+│ footer (状态栏)                  │
+└─────────────────────────────────┘
+```
+
+### 扩展上下文（v0.78.1+）
+
+v0.78.1 为扩展提供了更丰富的上下文信息：
+
+#### `ctx.mode` — 运行模式感知
+
+扩展可以检测当前的运行模式，根据不同模式适配行为：
+
+```typescript
+pi.on('before_agent_start', (event, ctx) => {
+  switch (ctx.mode) {
+    case 'tui':
+      // 交互模式：可以使用丰富的 UI 组件
+      ctx.ui.setStatus('正在处理...');
+      break;
+    case 'rpc':
+      // RPC 模式：作为其他程序的子进程运行
+      // 避免使用 UI 组件，专注于数据处理
+      break;
+    case 'json':
+      // JSON 事件流模式：输出结构化事件
+      break;
+    case 'print':
+      // 打印模式：一次性输出
+      break;
+  }
+});
+```
+
+四种运行模式：
+
+| 模式    | 触发方式         | 扩展适配建议          |
+| ------- | ---------------- | --------------------- |
+| `tui`   | 直接 `pi`        | 可使用完整 UI 组件    |
+| `rpc`   | `pi --mode rpc`  | 避免 UI，专注数据处理 |
+| `json`  | `pi --mode json` | 输出结构化事件        |
+| `print` | `pi -p "prompt"` | 简化输出，避免交互    |
+
+#### `ctx.getSystemPromptOptions()` — 系统 Prompt 检查
+
+扩展命令可以检查当前的基础系统 Prompt 输入，用于审计或条件逻辑：
+
+```typescript
+pi.registerCommand({
+  name: 'audit-prompt',
+  description: '显示当前系统 Prompt 的组成部分',
+  execute: async (args, ctx) => {
+    const options = ctx.getSystemPromptOptions();
+
+    // 检查系统 Prompt 包含哪些部分
+    const parts = [];
+    if (options.includeCodingInstructions) parts.push('编码指令');
+    if (options.includeProjectContext) parts.push('项目上下文');
+    if (options.includeToolDescriptions) parts.push('工具描述');
+
+    return `当前系统 Prompt 包含：${parts.join('、')}`;
+  },
+});
+```
+
+这对于调试和理解 Agent 的行为非常有用——你可以检查系统 Prompt 是否包含特定的指令或上下文。
+
+### 扩展生命周期
+
+扩展的完整生命周期：
+
+```
+1. 发现阶段
+   └── 扫描扩展目录，加载模块
+
+2. 注册阶段
+   ├── registerTool() → ToolRegistry
+   ├── registerCommand() → SlashCommands
+   ├── registerShortcut() → Keybindings
+   └── on() → EventListeners
+
+3. 会话启动
+   └── session_start 事件触发
+       ├── 初始化 UI 组件
+       └── 注册快捷键
+
+4. 运行阶段
+   ├── input 事件 → 拦截/修改用户输入
+   ├── before_agent_start → 修改系统 Prompt
+   ├── tool_call → 监听工具执行
+   ├── message_end → 处理 LLM 响应
+   └── agent_end → Agent 完成
+
+5. 会话关闭
+   └── session_shutdown 事件触发
+       └── 清理资源
+```
+
 ### 扩展 API 示例
 
 ```typescript
-// 一个简单的扩展
+// 一个完整的扩展示例
 export default function extension(cwd: string) {
   return {
     name: 'my-extension',
     setup(pi: ExtensionAPI) {
-      // 注册工具
+      // 1. 注册工具
       pi.registerTool({
         name: 'deploy',
         description: 'Deploy the current project',
@@ -360,16 +583,34 @@ export default function extension(cwd: string) {
         },
       });
 
-      // 监听工具调用
+      // 2. 注册斜杠命令
+      pi.registerCommand({
+        name: 'status',
+        description: 'Show deployment status',
+        execute: async () => {
+          const status = await getDeploymentStatus();
+          return `当前部署状态: ${status}`;
+        },
+      });
+
+      // 3. 监听事件
       pi.on('tool_call', (event) => {
         console.log(`Tool called: ${event.toolName}`);
       });
 
-      // 拦截用户输入
+      // 4. 拦截用户输入
       pi.on('input', (event) => {
         if (event.text.startsWith('# ')) {
-          // 将注释标记为特殊消息
           return { action: 'transform', text: `[COMMENT] ${event.text}` };
+        }
+        return { action: 'pass' };
+      });
+
+      // 5. 修改系统 Prompt
+      pi.on('before_agent_start', (event, ctx) => {
+        // 根据运行模式适配
+        if (ctx.mode === 'tui') {
+          ctx.ui.setStatus('准备部署...');
         }
       });
     },

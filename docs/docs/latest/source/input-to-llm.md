@@ -10,7 +10,7 @@
   ▼
 ┌──────────────────────────────────────────────────┐
 │ 阶段 A：TUI → AgentSession                        │
-│ interactive-mode.ts:run()                         │
+│ InteractiveMode.run()                             │
 │   getUserInput() → "帮我重构这个函数"              │
 │   session.prompt(userInput)                       │
 └────────────────────┬─────────────────────────────┘
@@ -18,7 +18,6 @@
                      ▼
 ┌──────────────────────────────────────────────────┐
 │ 阶段 B：消息预处理 (AgentSession.prompt)           │
-│ agent-session.ts:983                              │
 │   1. 检查是否斜杠命令 → 否                         │
 │   2. 扩展事件触发（扩展可拦截/修改输入）            │
 │   3. 展开 skill / prompt template                  │
@@ -31,7 +30,6 @@
                      ▼
 ┌──────────────────────────────────────────────────┐
 │ 阶段 C：Agent 启动 (Agent.prompt)                 │
-│ agent.ts:327                                      │
 │   normalizePromptInput() → AgentMessage[]         │
 │   runPromptMessages(messages)                     │
 │     → runWithLifecycle() → runAgentLoop()        │
@@ -40,7 +38,6 @@
                      ▼
 ┌──────────────────────────────────────────────────┐
 │ 阶段 D：★ Agent Loop（核心循环）                    │
-│ agent-loop.ts:155                                 │
 │                                                  │
 │   while (true) { // 外层：follow-up 循环           │
 │     while (hasMoreToolCalls || pendingMessages) { │
@@ -66,10 +63,9 @@
 ## 阶段 A：TUI 传递输入
 
 **文件**：`packages/coding-agent/src/modes/interactive/interactive-mode.ts`
-**关键方法**：`run()`（约第 1000 行）、`getUserInput()`（第 3233 行）
+**关键方法**：`run()` — TUI 主循环、`getUserInput()` — 等待用户输入
 
 ```typescript
-// interactive-mode.ts:1025-1035
 async run(): Promise<void> {
   await this.init();
 
@@ -88,7 +84,7 @@ async run(): Promise<void> {
 }
 ```
 
-`getUserInput()` 的实现（第 3233 行）是一个简单的 Promise 挂起模式：
+`getUserInput()` 的实现是一个简单的 Promise 挂起模式：
 
 ```typescript
 async getUserInput(): Promise<string> {
@@ -106,14 +102,13 @@ async getUserInput(): Promise<string> {
 ## 阶段 B：消息预处理
 
 **文件**：`packages/coding-agent/src/core/agent-session.ts`
-**关键方法**：`prompt()`（第 983 行）
+**关键方法**：`prompt()` — 消息预处理入口
 
 这是**输入到 LLM 之间最重要的关卡**。`prompt()` 方法对用户的输入做了多层处理：
 
-### B1. 斜杠命令（第 989-996 行）
+### B1. 斜杠命令
 
 ```typescript
-// agent-session.ts:989
 if (expandPromptTemplates && text.startsWith('/')) {
   const handled = await this._tryExecuteExtensionCommand(text);
   if (handled) {
@@ -125,10 +120,9 @@ if (expandPromptTemplates && text.startsWith('/')) {
 以 `/` 开头的输入是**斜杠命令**：`/model`、`/login`、`/settings`、`/clear` 等。
 这些命令在发送给 LLM 之前被拦截并本地执行。
 
-### B2. 扩展事件拦截（第 998-1010 行）
+### B2. 扩展事件拦截
 
 ```typescript
-// agent-session.ts:998
 if (this._extensionRunner.hasHandlers('input')) {
   const inputResult = await this._extensionRunner.emitInput(
     currentText,
@@ -147,10 +141,9 @@ if (this._extensionRunner.hasHandlers('input')) {
 
 扩展可以在输入到达 LLM 之前**拦截、修改、或完全处理**它。
 
-### B3. Skill 和 Prompt Template 展开（第 1013-1017 行）
+### B3. Skill 和 Prompt Template 展开
 
 ```typescript
-// agent-session.ts:1013
 if (expandPromptTemplates) {
   expandedText = this._expandSkillCommand(expandedText);
   expandedText = expandPromptTemplate(expandedText, [...this.promptTemplates]);
@@ -183,10 +176,9 @@ You are a code reviewer. Review the following code:
 ... (@src/index.ts 的内容) ...
 ```
 
-### B4. 流式处理检查（第 1019-1030 行）
+### B4. 流式处理检查
 
 ```typescript
-// agent-session.ts:1019
 if (this.isStreaming) {
   // Agent 正在工作中，输入作为 steer 或 follow-up 排队
   if (options.streamingBehavior === 'followUp') {
@@ -207,10 +199,9 @@ if (this.isStreaming) {
 
 这允许用户在 LLM 工作时输入新消息（"引导"或"追问"）。
 
-### B5. 验证与 Compaction（第 1032-1054 行）
+### B5. 验证与 Compaction
 
 ```typescript
-// agent-session.ts:1045
 // 检查是否需要压缩上下文
 const lastAssistant = this._findLastAssistantMessage();
 if (lastAssistant && (await this._checkCompaction(lastAssistant, false))) {
@@ -227,10 +218,9 @@ if (lastAssistant && (await this._checkCompaction(lastAssistant, false))) {
 2. 用摘要替换详细消息
 3. 释放 token 空间
 
-### B6. 构建消息并发送（第 1056-1140 行）
+### B6. 构建消息并发送
 
 ```typescript
-// agent-session.ts:1056
 messages = [];
 
 // 添加用户消息
@@ -252,12 +242,11 @@ await this._runAgentPrompt(messages);
 
 ## 阶段 C：Agent 启动
 
-**文件**：`packages/coding-agent/src/core/agent-session.ts`（`_runAgentPrompt`，约 933 行）
-→ `packages/agent/src/agent.ts`（`prompt()`，第 327 行）
-→ `packages/agent/src/agent-loop.ts`（`runAgentLoop()`，第 95 行）
+**文件**：`packages/coding-agent/src/core/agent-session.ts`（`_runAgentPrompt`）
+→ `packages/agent/src/agent.ts`（`prompt()`）
+→ `packages/agent/src/agent-loop.ts`（`runAgentLoop()`）
 
 ```typescript
-// agent-session.ts:933-941
 private async _runAgentPrompt(messages: AgentMessage[]): Promise<void> {
   try {
     await this.agent.prompt(messages);          // → Agent.prompt()
@@ -271,7 +260,6 @@ private async _runAgentPrompt(messages: AgentMessage[]): Promise<void> {
 ```
 
 ```typescript
-// agent.ts:327-334
 async prompt(input: string | AgentMessage | AgentMessage[], images?: ImageContent[]): Promise<void> {
   if (this.activeRun) {
     throw new Error("Agent is already processing...");
@@ -282,7 +270,6 @@ async prompt(input: string | AgentMessage | AgentMessage[], images?: ImageConten
 ```
 
 ```typescript
-// agent.ts:386-400
 private async runPromptMessages(
   messages: AgentMessage[],
   options: { skipInitialSteeringPoll?: boolean } = {},
@@ -305,14 +292,13 @@ private async runPromptMessages(
 ## 阶段 D：★ Agent Loop 核心循环
 
 **文件**：`packages/agent/src/agent-loop.ts`
-**关键函数**：`runLoop()`（第 155 行起）
+**关键函数**：`runLoop()` — 核心循环入口
 
 这是整个智能体的**心脏**。理解了它，你就理解了所有编码智能体的运作原理。
 
 ### 双层循环结构
 
 ```typescript
-// agent-loop.ts:155-250（核心结构）
 async function runLoop(
   initialContext: AgentContext,
   newMessages: AgentMessage[],
@@ -459,10 +445,9 @@ async function runLoop(
 ### streamAssistantResponse 详解
 
 **文件**：`packages/agent/src/agent-loop.ts`
-**关键函数**：`streamAssistantResponse()`（约第 260 行）
+**关键函数**：`streamAssistantResponse()` — LLM 调用入口
 
 ```typescript
-// agent-loop.ts: 核心逻辑
 async function streamAssistantResponse(
   context: AgentContext,
   config: AgentLoopConfig,
@@ -532,7 +517,7 @@ async function streamAssistantResponse(
 ### executeToolCalls 详解
 
 **文件**：`packages/agent/src/agent-loop.ts`
-**关键函数**：`executeToolCalls()`（约第 350 行）
+**关键函数**：`executeToolCalls()` — 工具执行入口
 
 工具执行的流程：
 
@@ -594,17 +579,17 @@ Agent Loop 在以下情况下退出：
 
 ## 关键概念总结
 
-| 概念                        | 解释                                     | 代码位置                              |
-| --------------------------- | ---------------------------------------- | ------------------------------------- |
-| **AgentSession**            | 业务逻辑中枢，处理消息预处理             | `agent-session.ts`                    |
-| **Agent**                   | 智能体运行时，管理状态和生命周期         | `agent.ts`                            |
-| **runAgentLoop**            | ★ 核心循环，LLM → 工具 → 循环            | `agent-loop.ts:155`                   |
-| **streamAssistantResponse** | LLM 调用入口，处理流式事件               | `agent-loop.ts:260`                   |
-| **executeToolCalls**        | 工具执行，验证 → 执行 → 返回结果         | `agent-loop.ts:350`                   |
-| **Steer**                   | Agent 工作中注入消息，当前工具完成后生效 | `agent-session.ts:steer()`            |
-| **Follow-up**               | Agent 完成后排队的新消息                 | `agent-session.ts:followUp()`         |
-| **Compaction**              | 上下文压缩，释放 token 空间              | `agent-session.ts:_checkCompaction()` |
-| **事件驱动**                | 所有状态变化通过事件通知 TUI             | `emit()` 调用                         |
+| 概念                        | 解释                                     | 代码位置           |
+| --------------------------- | ---------------------------------------- | ------------------ |
+| **AgentSession**            | 业务逻辑中枢，处理消息预处理             | `agent-session.ts` |
+| **Agent**                   | 智能体运行时，管理状态和生命周期         | `agent.ts`         |
+| **runAgentLoop**            | ★ 核心循环，LLM → 工具 → 循环            | `agent-loop.ts`    |
+| **streamAssistantResponse** | LLM 调用入口，处理流式事件               | `agent-loop.ts`    |
+| **executeToolCalls**        | 工具执行，验证 → 执行 → 返回结果         | `agent-loop.ts`    |
+| **Steer**                   | Agent 工作中注入消息，当前工具完成后生效 | `agent-session.ts` |
+| **Follow-up**               | Agent 完成后排队的新消息                 | `agent-session.ts` |
+| **Compaction**              | 上下文压缩，释放 token 空间              | `agent-session.ts` |
+| **事件驱动**                | 所有状态变化通过事件通知 TUI             | `emit()` 调用      |
 
 ## 下一步
 
