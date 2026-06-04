@@ -166,6 +166,7 @@ export default defineConfig({
             { text: 'tmux', link: '/docs/latest/tmux' },
             { text: 'Terminal Setup', link: '/docs/latest/terminal-setup' },
             { text: 'Shell Aliases', link: '/docs/latest/shell-aliases' },
+            { text: 'Containerization', link: '/docs/latest/containerization', tag: 'new' },
           ],
         },
         {

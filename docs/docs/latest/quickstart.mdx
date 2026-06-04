@@ -12,6 +12,26 @@ import { PackageManagerTabs } from '@rspress/core/theme';
 
 `--ignore-scripts` 在安装期间禁用依赖生命周期脚本。Pi 的正常 npm 安装不需要安装脚本。
 
+### 卸载
+
+使用安装 Pi 时所用的包管理器进行卸载。curl 安装器使用全局 npm，因此 curl 和 npm 安装都可以通过 npm 移除：
+
+```bash
+# curl 安装器或 npm install -g
+npm uninstall -g @earendil-works/pi-coding-agent
+
+# pnpm
+pnpm remove -g @earendil-works/pi-coding-agent
+
+# Yarn
+yarn global remove @earendil-works/pi-coding-agent
+
+# Bun
+bun uninstall -g @earendil-works/pi-coding-agent
+```
+
+卸载 Pi 后，设置、凭证、会话和已安装的 Pi 包仍保留在 `~/.pi/agent/` 目录中。
+
 然后在你希望运行的项目目录中启动 Pi：
 
 ```bash

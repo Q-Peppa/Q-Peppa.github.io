@@ -2,6 +2,76 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.78.1（2026-06-04）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **更广泛的内置 Provider 覆盖** — 新增 Ant Ling 和 NVIDIA NIM Provider 设置文档，以及 MiniMax-M3 对直接 MiniMax Provider 的支持。参见 [Providers](/docs/latest/providers)。
+- **更丰富的扩展上下文** — 扩展可使用 `ctx.mode` 和 `ctx.getSystemPromptOptions()` 在 TUI、RPC、JSON 和 print 模式间适配行为，并检查基础系统 Prompt 输入。参见 [Extensions](/docs/latest/extensions)。
+
+新增
+
+- 添加了容器化文档和 Gondolin 扩展示例，用于将内置工具路由到本地 micro-VM。
+- 添加了 Ant Ling Provider 选择和设置文档。
+- 添加了 MiniMax-M3 模型支持，继承自 `@earendil-works/pi-ai`，适用于 `minimax` 和 `minimax-cn` 直接 Provider（[\#5313](https://github.com/earendil-works/pi/issues/5313)）。
+- 添加了 NVIDIA NIM Provider 选择、设置文档和直接 NIM 请求归属头。
+- 在扩展上下文中添加了 `ctx.mode`，使扩展能够区分 TUI、RPC、JSON 和 print 模式。
+- 为扩展命令添加了 `ctx.getSystemPromptOptions()`，用于检查当前基础系统 Prompt 输入（[\#5306](https://github.com/earendil-works/pi/pull/5306)，感谢 [@xl0](https://github.com/xl0)）。
+
+修复
+
+- 修复了临时扩展包安装使用带 `0700` 权限的私有 `~/.pi/agent/tmp/extensions` 目录，而非 `os.tmpdir()/pi-extensions`。
+- 修复了 git 包源处理，拒绝不安全的主机/路径组件，并将托管克隆路径保持在安装根目录内。
+- 修复了 HTML 会话导出中的存储型 XSS，通过剥离控制字符后使用方案白名单清理 Markdown 链接和图片 URL。
+- 修复了 SDK 嵌入在捆绑的 Node 应用中因缺少 `package.json` 而导致 `ENOENT` 失败的问题。包元数据读取器现在通过使用默认值优雅地处理缺失的 `package.json`，无需在运行时提供包相邻文件即可使用 `createAgentSession()`（[\#5226](https://github.com/earendil-works/pi/issues/5226)）。
+- 修复了 HTTP 超时设置未对非 Codex Provider（如通过 OpenAI 兼容 API 的 llama.cpp）生效的问题。`httpIdleTimeoutMs` 设置（通过 `/settings` HTTP 超时设置）现在作为所有支持 Provider 的默认 SDK 请求超时，而不仅仅是 OpenAI Codex Responses。禁用超时（HTTP 超时 = false）现在通过发送最大 int32 值（有效无限）而非 0 来正确禁用所有支持 Provider 的 SDK 超时，因为 SDK 将 timeout=0 视为立即超时（[\#5294](https://github.com/earendil-works/pi/issues/5294)）。
+- 修复了继承的 Amazon Bedrock 请求，用占位符替换空白的必填 user/tool-result 文本，并跳过空白的重放文本块（[\#4975](https://github.com/earendil-works/pi/issues/4975)）。
+- 修复了继承的 Anthropic Claude Opus 4.7+ 请求，抑制已弃用的 temperature 参数（[\#5251](https://github.com/earendil-works/pi/pull/5251)，感谢 [@yzhg1983](https://github.com/yzhg1983)）。
+- 修复了继承的 OpenAI GPT-5.5 生成元数据，省略不支持的 minimal thinking（[\#5243](https://github.com/earendil-works/pi/issues/5243)）。
+- 修复了继承的 OpenRouter Kimi K2.6 thinking 重放和 developer-role 指令处理（[\#5309](https://github.com/earendil-works/pi/issues/5309)）。
+- 修复了继承的 OpenRouter reasoning 指令请求，按需保留 system 角色（[\#5221](https://github.com/earendil-works/pi/pull/5221)，感谢 [@PriNova](https://github.com/PriNova)）。
+- 修复了继承的 overlay 焦点恢复，使非捕获 overlay 在 UI 重渲染和显式焦点释放后保持可交互（[\#5235](https://github.com/earendil-works/pi/pull/5235)，感谢 [@nicobailon](https://github.com/nicobailon)）。
+- 修复了列切片和 overlay 合成中的 tab 宽度计算，使包含 tab 的输出不会超过终端宽度（[\#5218](https://github.com/earendil-works/pi/issues/5218)）。
+- 修复了打开和列出超大 JSONL 会话文件，改为逐行读取会话条目而非将整个文件作为单个字符串实例化（[\#5231](https://github.com/earendil-works/pi/issues/5231)）。
+- 修复了 WSL `/mnt/...` 仓库中页脚分支显示在分支变更后刷新的问题（[\#5264](https://github.com/earendil-works/pi/pull/5264)，感谢 [@psoukie](https://github.com/psoukie)）。
+- 修复了 `renderShell: "self"` 工具渲染器未输出组件行时留下空白聊天行的问题（[\#5299](https://github.com/earendil-works/pi/issues/5299)）。
+- 恢复了继承的 NVIDIA Qwen 3.5 122B NIM 模型支持。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 添加了 Ant Ling 作为内置 OpenAI 兼容 Provider，支持 Ling 2.6 和 Ring 2.6 模型。
+- 为 `minimax` 和 `minimax-cn` 直接 Provider 添加了 MiniMax-M3 模型，并移除了掩盖 models.dev 值的硬编码上下文窗口覆盖（[\#5313](https://github.com/earendil-works/pi/issues/5313)）。
+- 添加了 NVIDIA NIM 作为内置 OpenAI 兼容 Provider，公开支持 tool use 的公共 NIM 模型。
+
+修复
+
+- 修复了 Amazon Bedrock 请求，用占位符替换空白的必填 user/tool-result 文本，并跳过空白的重放文本块（[\#4975](https://github.com/earendil-works/pi/issues/4975)）。
+- 修复了 Anthropic Claude Opus 4.7+ 请求，抑制已弃用的 temperature 参数（[\#5251](https://github.com/earendil-works/pi/pull/5251)，感谢 [@yzhg1983](https://github.com/yzhg1983)）。
+- 修复了 OpenAI GPT-5.5 生成元数据，省略不支持的 minimal thinking（[\#5243](https://github.com/earendil-works/pi/issues/5243)）。
+- 修复了 OpenRouter Kimi K2.6 thinking 重放，并为 OpenRouter OpenAI 和 Anthropic 模型保留 developer-role 指令（[\#5309](https://github.com/earendil-works/pi/issues/5309)）。
+- 修复了 OpenRouter reasoning 指令请求，按需保留 system 角色（[\#5221](https://github.com/earendil-works/pi/pull/5221)，感谢 [@PriNova](https://github.com/PriNova)）。
+- 恢复了 NVIDIA Qwen 3.5 122B NIM 模型。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+修复
+
+- 修复了 overlay 焦点恢复，使非捕获 overlay 在 UI 重渲染和显式焦点释放后保持可交互（[\#5235](https://github.com/earendil-works/pi/pull/5235)，感谢 [@nicobailon](https://github.com/nicobailon)）。
+- 修复了列切片和 overlay 合成中的 tab 宽度计算，使包含 tab 的输出不会超过终端宽度（[\#5218](https://github.com/earendil-works/pi/issues/5218)）。
+
+</details>
+
 ## v0.78.0（2026-05-29）
 
 <details>
