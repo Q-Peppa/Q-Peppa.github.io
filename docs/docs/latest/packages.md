@@ -40,7 +40,9 @@ pi update --extension npm:@foo/bar
 
 这些命令管理 Pi 包，而非 Pi CLI 安装本身。要卸载 Pi 本身，请参阅 [Quickstart](quickstart.mdx#卸载)。
 
-默认情况下 `install` 和 `remove` 写入全局设置（`~/.pi/agent/settings.json`）。使用 `-l` 写入项目设置（`.pi/settings.json`）。项目设置可分享给团队，Pi 启动时会自动安装任何缺失的包。
+默认情况下 `install` 和 `remove` 写入全局设置（`~/.pi/agent/settings.json`）。使用 `-l` 写入项目设置（`.pi/settings.json`）。项目设置可分享给团队，Pi 启动时会在项目被信任后自动安装任何缺失的包。
+
+项目包命令仅在项目被信任时读取项目设置。使用 `--approve` 在单次命令中信任项目本地文件，或使用 `--no-approve` 在单次命令中忽略它们。
 
 要试用一个包而不安装，使用 `--extension` 或 `-e`。这会安装到临时目录，仅对当前运行有效：
 

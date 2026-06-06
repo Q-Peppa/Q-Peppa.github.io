@@ -153,45 +153,112 @@ git log --oneline HEAD..origin/main 2>/dev/null | head -5
 
 ### 0.1 建立同步基线
 
-约定：翻译站的同步 commit 以 `sync:` 开头（参见末尾"提交并推送"）。用上一条 `sync:` commit 作为本次同步的起点。
+> ⚠️ **为什么不用 `sync:` commit 的 hash 作为基线？**
+> 翻译站和源站是**两个独立的 git 仓库**，翻译站 commit `14eaa6f` 在源站根本不存在，`git diff 14eaa6f..HEAD` 会直接 `fatal: bad revision`。
+> 正确做法：用**翻译站 `news.md` 顶部最后一条版本号**（= 翻译站实际已同步到的最高版本）反查**源站**该版本对应的 commit committer time，作为 BASELINE_TS。
+> 后续所有"自基线以来"的查询都用 `--since="@${BASELINE_TS}"`，跨仓库对齐。
+
+#### 步骤 1：提取翻译站最高已同步版本
 
 ```bash
-# 在翻译站查找上一条 sync: 提交
 cd .
-LAST_SYNC=$(git log --oneline --grep="^sync:" -1 --format="%H" 2>/dev/null)
 
-if [ -z "$LAST_SYNC" ]; then
-  # 首次同步：回退到源站最近一个发布版本对应的 commit
-  cd ../pi-repo
-  LAST_SYNC=$(git log --oneline --grep="^Release v" -1 --format="%H" 2>/dev/null)
-  cd ..
-  echo "⚠️ 未找到历史 sync commit，使用源站最近发布版本作为基线: $LAST_SYNC"
+# 从 news.md 顶部找最后一条 `## v{x.y.z}（{date}）`
+# 用 head -20 避免长文件全读
+LAST_TRANSLATED_VER=$(head -20 docs/news.md 2>/dev/null \
+  | grep -oE "^## v[0-9]+\.[0-9]+\.[0-9]+" \
+  | head -1 \
+  | sed -E 's/^## v//')
+
+if [ -z "$LAST_TRANSLATED_VER" ]; then
+  echo "⚠️ 翻译站 news.md 不存在或无版本条目，首次同步"
+  FIRST_SYNC=1
 else
-  echo "✅ 上次同步基线: $LAST_SYNC"
+  echo "✅ 翻译站已同步到的最高版本: v${LAST_TRANSLATED_VER}"
+  FIRST_SYNC=0
 fi
 ```
 
-### 0.2 列出本次同步的源站变更
+#### 步骤 2：反查源站该版本对应 commit 的 committer time
 
 ```bash
 cd ../pi-repo
-SINCE="$LAST_SYNC"
+CHANGELOG="packages/coding-agent/CHANGELOG.md"
+
+if [ "$FIRST_SYNC" = "1" ]; then
+  # 首次同步：取源站最新 [Unreleased] 段首次出现的 commit
+  # 这样"自基线以来"包括 [Unreleased] 中所有变更
+  BASELINE_TS=$(git log --format="%ct" --diff-filter=A -G "^## \[Unreleased\]" -- "$CHANGELOG" 2>/dev/null | tail -1)
+  echo "⚠️ 首次同步，基线 = [Unreleased] 段首次出现 commit ts: $BASELINE_TS"
+else
+  # 找 `## [x.y.z] - date` 段首次被加入 CHANGELOG 的 commit ts
+  # -G 用正则匹配该版本段标题
+  # 取最早一次（tail -1，因为 git log 默认倒序）
+  BASELINE_TS=$(git log --format="%ct" -G "^## \[${LAST_TRANSLATED_VER}\]" -- "$CHANGELOG" 2>/dev/null | tail -1)
+  echo "✅ 基线 ts: $BASELINE_TS (源站 v${LAST_TRANSLATED_VER} 段首次加入 CHANGELOG 的 commit 时刻)"
+fi
+```
+
+#### 步骤 3：保留 BASELINE_TS 供后续步骤使用
+
+后续 `git log` / `git diff` 都用 `--since="@${BASELINE_TS}"` 代替 `SINCE..HEAD`：
+
+```bash
+# 正确（跨仓库安全）：
+git log --since="@${BASELINE_TS}" --oneline
+git diff $(git log --since="@${BASELINE_TS}" --format="%H" | tail -1)^ HEAD
+
+# 错误（commit hash 跨仓库不存在）：
+git diff ${LAST_SYNC}..HEAD   # ← 会 fatal
+```
+
+#### 边界情况处理
+
+| 场景                                                           | 行为                                                       |
+| -------------------------------------------------------------- | ---------------------------------------------------------- |
+| 翻译站 news.md 不存在                                          | 标记 `FIRST_SYNC=1`，基线取源站 `[Unreleased]` 首次出现 ts |
+| 翻译站 news.md 头部有 `# 新闻` 但无版本                        | 同上                                                       |
+| 翻译站 news.md 顶部版本在源站 CHANGELOG 找不到                 | 报错，提示人工检查版本号一致性                             |
+| 翻译站 news.md 顶部版本在源站 CHANGELOG 被 amend 过            | `-G` 仍能匹配到 commit，取最早 ts（可能略早于实际发布日）  |
+| 翻译站 sync: commit 比 news.md 更新（commit 后未更新 news.md） | 优先用 news.md，因为 news.md 反映"翻译站实际已同步的内容"  |
+
+### 0.2 列出本次同步的源站变更
+
+> 用 0.1 步拿到的 `BASELINE_TS` 作为基线，**不要**用 `git diff SINCE..HEAD`（跨仓库会 fatal）。
+
+```bash
+cd ../pi-repo
 
 echo ""
-echo "=== 自基线以来的源站 commit ==="
-git log --oneline ${SINCE}..HEAD
+echo "=== 自基线 (${BASELINE_TS}) 以来的源站 commit ==="
+git log --since="@${BASELINE_TS}" --oneline
 
 echo ""
 echo "=== docs/ 变更文件（影响 B 翻译同步） ==="
-git diff --stat ${SINCE}..HEAD -- packages/coding-agent/docs/
+DOCS_DIFF=$(git log --since="@${BASELINE_TS}" --name-only --pretty=format: -- packages/coding-agent/docs/ | grep -v "^$" | sort -u)
+if [ -z "$DOCS_DIFF" ]; then
+  echo "  (无变更)"
+else
+  echo "$DOCS_DIFF"
+fi
 
 echo ""
 echo "=== CHANGELOG 变更文件（影响 A 新闻同步） ==="
-git diff --stat ${SINCE}..HEAD -- packages/*/CHANGELOG.md
+CHANGELOG_DIFF=$(git log --since="@${BASELINE_TS}" --name-only --pretty=format: -- packages/*/CHANGELOG.md | grep -v "^$" | sort -u)
+if [ -z "$CHANGELOG_DIFF" ]; then
+  echo "  (无变更)"
+else
+  echo "$CHANGELOG_DIFF"
+fi
 
 echo ""
 echo "=== 图片资产变更 ==="
-git diff --stat ${SINCE}..HEAD -- packages/coding-agent/docs/images/
+IMAGE_DIFF=$(git log --since="@${BASELINE_TS}" --name-only --pretty=format: -- packages/coding-agent/docs/images/ | grep -v "^$" | sort -u)
+if [ -z "$IMAGE_DIFF" ]; then
+  echo "  (无变更)"
+else
+  echo "$IMAGE_DIFF"
+fi
 ```
 
 **判定标准：**
@@ -199,27 +266,135 @@ git diff --stat ${SINCE}..HEAD -- packages/coding-agent/docs/images/
 - `docs/` 有变更 → 走 B 步骤，重点对比变更文件
 - `CHANGELOG.md` 有变更且**含已发布版本** → 走 A 步骤，提取新版本写入 news.md
 - `images/` 有变更 → 复制到翻译站 `./docs/public/images/`
-- 全部为空 → ✅ 源站已与翻译站同步，直接进入"构建验证"
+- 全部为空 → ⏭️ **走零变更早退分支**（见下）
+
+#### ⏭️ 零变更早退分支
+
+> **为什么需要这个分支？** skill 之前默认"每次同步一定有内容可改"，但实际可能：
+>
+> - 源站有 commit 但全是非 docs/ 改动（CHANGELOG、源码、tests、CI）
+> - CHANGELOG 改动都在 `[Unreleased]` 段，无新发布版本
+> - 翻译站已经领先于源站
+>
+> 这种情况下，**强行进入 A/B 步骤会导致 LLM 找事做**（乱改文件、空 commit、误译），必须早退。
+
+```bash
+# 统计各项是否有变更
+DOCS_HAS_CHANGE=$([ -n "$DOCS_DIFF" ] && echo 1 || echo 0)
+IMAGES_HAS_CHANGE=$([ -n "$IMAGE_DIFF" ] && echo 1 || echo 0)
+# CHANGELOG 是否含"已发布新版本"由 0.3 步判断，这里先假定 0
+CHANGELOG_HAS_NEW_RELEASE=0  # 0.3 步会更新
+
+# === 零变更判定 ===
+if [ "$DOCS_HAS_CHANGE" = "0" ] && [ "$IMAGES_HAS_CHANGE" = "0" ] && [ "$CHANGELOG_HAS_NEW_RELEASE" = "0" ]; then
+  echo ""
+  echo "═══════════════════════════════════════════════"
+  echo "✅ 零变更：源站已与翻译站同步，无需任何操作"
+  echo "═══════════════════════════════════════════════"
+  echo "翻译站最高已同步版本: v${LAST_TRANSLATED_VER}"
+  echo "基线 ts: ${BASELINE_TS}"
+  echo ""
+  echo "自基线以来的源站 commit:"
+  git -C ../pi-repo log --since="@${BASELINE_TS}" --oneline
+  echo ""
+  echo "(以上 commit 均未影响 docs/ 用户文档、images/ 资产、新发布版本)"
+  echo "(如有特殊需求：source 代码已就位但 docs/ 未补全，请人工处理)"
+  echo ""
+  # 显式退出 skill
+  exit 0
+fi
+
+# 不为零变更，继续走 0.3
+```
+
+**对 AI 的硬约束**：当早退分支触发时，**严禁**以下行为：
+
+1. ❌ 强行走 A/B 步骤（"既然来了就做点什么"）
+2. ❌ 翻译一份源站没有的中文文档（如 trust 功能）
+3. ❌ 提交一个无内容的 `sync: no-op` commit
+4. ❌ 重新构建或重新推送
+
+**只输出"零变更"报告**给用户，等下次源站有实际变更再处理。
 
 ### 0.3 提取 CHANGELOG 中"自基线以来"的新增已发布版本
 
-注意：**只输出 `[Unreleased]` 之后、下一个未发布版本之前**的所有带日期的 `## [x.y.z] - YYYY-MM-DD`。
+> 之前用 awk 一把梭会输出所有历史版本（本次实际跑出 100+ 行），因为它只跳过 `[Unreleased]`，没有按基线过滤。
+> 新版用 **版本号字典序比较 + date 字段辅助** 双过滤，**只输出基线之后**发布的新版本。
+
+#### 算法
+
+1. 从 `docs/news.md` 顶部拿到 `LAST_TRANSLATED_VER`（翻译站已同步的最高版本，如 `0.78.1`）
+2. 对每个包的 CHANGELOG，提取**所有** `## [x.y.z] - YYYY-MM-DD` 段
+3. 对每个版本号，用 `sort -V` 字典序比较，**只保留 > `LAST_TRANSLATED_VER`** 的版本
+4. 辅助检查：date 字段应 >= `BASELINE_TS` 对应日期（防止版本号乱序或翻译站漏更新）
 
 ```bash
 cd ../pi-repo
+
+# 如果是首次同步，LAST_TRANSLATED_VER 为空，用 "0.0.0" 兜底
+# 这样会输出所有已发布版本（首次同步需要全部提取）
+COMPARE_VER="${LAST_TRANSLATED_VER:-0.0.0}"
+
+NEW_RELEASES=""  # 收集所有新版本，格式 "pkg:ver:date"
+
 for pkg in coding-agent ai agent tui; do
   file="packages/$pkg/CHANGELOG.md"
-  echo "=== $pkg ==="
-  awk '
-    /^## \[Unreleased\]/ { in_unrel=1; next }
-    in_unrel && /^## \[/ { in_unrel=0 }
-    !in_unrel && /^## \[[0-9]+\.[0-9]+\.[0-9]+\] - [0-9]{4}-[0-9]{2}-[0-9]{2}/ { print }
-  ' "$file"
   echo ""
+  echo "=== $pkg (新于 v${COMPARE_VER} 的已发布版本) ==="
+
+  # 提取所有 `## [x.y.z] - YYYY-MM-DD` 行 → 输出 "x.y.z YYYY-MM-DD"
+  grep -E "^## \[[0-9]+\.[0-9]+\.[0-9]+\] - [0-9]{4}-[0-9]{2}-[0-9]{2}" "$file" \
+    | sed -E 's/^## \[([0-9.]+)\] - ([0-9-]+).*$/\1 \2/' \
+    | while read ver date; do
+        # 用 sort -V 比较：若 ver > COMPARE_VER，则输出
+        # sort -V 会按字典序+数字序排序，"0.78.1" > "0.78.0" > "0.10.0"
+        higher=$(printf '%s\n%s\n' "$COMPARE_VER" "$ver" | sort -V | tail -1)
+        if [ "$higher" = "$ver" ] && [ "$ver" != "$COMPARE_VER" ]; then
+          echo "  $ver  ($date)"
+          # 同时累加到 NEW_RELEASES 全局变量
+          echo "${pkg}:${ver}:${date}" >> /tmp/sync_new_releases.txt
+        fi
+      done
 done
+
+# 汇总
+echo ""
+echo "═══════════════════════════════════════════════"
+echo "新发布版本汇总 (共 $(wc -l < /tmp/sync_new_releases.txt 2>/dev/null || echo 0) 条):"
+cat /tmp/sync_new_releases.txt 2>/dev/null
+echo "═══════════════════════════════════════════════"
+rm -f /tmp/sync_new_releases.txt
+
+# 回写 0.2 步的 CHANGELOG_HAS_NEW_RELEASE 标志
+CHANGELOG_HAS_NEW_RELEASE=$([ -s /tmp/sync_new_releases.txt ] && echo 1 || echo 0)
 ```
 
-将输出的版本号集合交给 A 步骤。**输出为空说明无新发布版本，跳过 A。**
+**关键设计点**：
+
+| 设计                                                    | 为什么                                                                  |
+| ------------------------------------------------------- | ----------------------------------------------------------------------- |
+| 主过滤用 `sort -V` 比较版本号                           | 字典序+数字序正确处理 `0.10.0 > 0.9.0`，不依赖时区或 commit time        |
+| 兜底 `COMPARE_VER=0.0.0`                                | 首次同步时 `LAST_TRANSLATED_VER` 为空，会输出所有版本（首次需要全量）   |
+| 输出格式 `pkg:ver:date`                                 | 供 A 步骤直接 awk/sed 处理，避免重复提取                                |
+| 用临时文件 `/tmp/sync_new_releases.txt` 跨 for 循环传递 | shell 变量在管道 `while read` 中是子 shell，主 shell 看不到，必须用文件 |
+| `echo "0"`/`echo "1"` 写入                              | 0.2 步的零变更判定需要这个标志                                          |
+
+**双保险**（可选）：如果担心 `sort -V` 误判，可在每个版本后再加 date 检查：
+
+```bash
+# date 转 unix ts，跟 BASELINE_TS 对比
+ver_ts=$(date -d "$date" +%s 2>/dev/null)
+# 留 24h buffer：发布日期可能在基线 ts 之前的 24 小时内（罕见但可能）
+if [ "$ver_ts" -ge $((BASELINE_TS - 86400)) ]; then
+  # 二次确认（用 git log -G 找该版本 commit ts）
+  commit_ts=$(git log -G "^## \\[$ver\\]" --format="%ct" -- "$file" 2>/dev/null | tail -1)
+  if [ -n "$commit_ts" ] && [ "$commit_ts" -gt "$BASELINE_TS" ]; then
+    echo "  $ver  ($date)  [commit ts=$commit_ts]"
+  fi
+fi
+```
+
+但一般不需要这层——`sort -V` 已经能正确处理绝大多数情况。
 
 ---
 

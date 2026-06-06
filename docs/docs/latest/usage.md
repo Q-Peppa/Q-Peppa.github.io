@@ -98,14 +98,24 @@ pi --fork <path|id>    # 从会话分叉到新会话文件
 Pi 在启动时加载 `AGENTS.md` 或 `CLAUDE.md`：
 
 - `~/.pi/agent/AGENTS.md` —— 全局指令
-- 从当前工作目录向上遍历的父目录
-- 当前目录
+- 从当前工作目录向上遍历的父目录（项目已信任时）
+- 当前目录（项目已信任时）
 
 使用上下文文件来定义项目规范、命令、安全规则和偏好。使用 `--no-context-files` 或 `-nc` 禁用加载。
 
 ### 系统 Prompt 文件
 
 使用 `.pi/SYSTEM.md` 替换项目默认系统 Prompt，或 `~/.pi/agent/SYSTEM.md` 全局替换。使用 `APPEND_SYSTEM.md` 在相同位置追加到默认 Prompt 之后，而不替换它。
+
+### 项目信任
+
+在交互式启动时，如果项目目录包含项目本地输入且在 `~/.pi/agent/trust.json` 中没有已保存的决策，Pi 会询问是否信任该目录。信任项目后，Pi 可以读取项目说明文件（`AGENTS.md`/`CLAUDE.md`）、加载 `.pi/settings.json` 和 `.pi` 资源、自动安装缺失的项目包，并执行项目扩展。
+
+非交互模式（`-p`、`--mode json` 和 `--mode rpc`）不显示信任提示。在没有已保存的信任决策时，除非传入 `--approve`/`-a`，否则会忽略项目本地输入。即使项目已信任，也可使用 `--no-approve`/`-na` 在单次运行中忽略项目本地输入。
+
+`pi config` 命令假定该项目已被信任，以便你在启动会话前查看和更改项目资源设置。但它不保存信任决策；在该目录中启动会话仍会提示。传入 `--no-approve` 可在 `pi config` 中隐藏项目本地输入。
+
+在交互模式中使用 `/trust` 保存项目的信任决策以供未来会话使用。该命令仅写入 `~/.pi/agent/trust.json`；当前会话不会重新加载，需要重启 Pi 才能使更改生效。
 
 ## 导出和分享会话
 
@@ -135,7 +145,7 @@ pi list                      # 列出已安装的包
 pi config                    # 启用/禁用包资源
 ```
 
-这些命令管理 Pi 包，而非 Pi CLI 安装本身。要卸载 Pi 本身，请参阅 [Quickstart](quickstart)。
+这些命令管理 Pi 包，而非 Pi CLI 安装本身。要卸载 Pi 本身，请参阅 [Quickstart](quickstart)。项目包命令接受 `--approve`/`--no-approve`，以便在单次命令中信任或忽略项目本地包设置。
 
 包来源和安全说明请参阅 [Pi Packages](packages.md)。
 
@@ -216,6 +226,8 @@ pi --no-extensions -e ./my-extension.ts
 | `--system-prompt <text>`        | 替换默认 Prompt；上下文文件和 Skills 仍会被追加 |
 | `--append-system-prompt <text>` | 追加到系统 Prompt                               |
 | `--verbose`                     | 强制详细启动                                    |
+| `-a`、`--approve`               | 在本次运行中信任项目本地文件                    |
+| `-na`、`--no-approve`           | 在本次运行中忽略项目本地文件                    |
 | `-h`、`--help`                  | 显示帮助                                        |
 | `-v`、`--version`               | 显示版本                                        |
 

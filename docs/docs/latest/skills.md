@@ -28,7 +28,7 @@ Pi 从多个来源加载 Skills：
 - **全局**：
   - `~/.pi/agent/skills/`
   - `~/.agents/skills/`
-- **项目**：
+- **项目**（仅在项目被信任后加载）：
   - `.pi/skills/`
   - `.agents/skills/`（当前目录及向上到 git 仓库根目录或文件系统根目录的祖先目录）
 - **包**：`skills/` 目录或 `package.json` 中的 `pi.skills` 条目

@@ -23,7 +23,7 @@ Pi 从以下位置加载主题：
 
 - 内置主题：`dark` 和 `light`
 - 全局：`~/.pi/agent/themes/*.json`
-- 项目：`.pi/themes/*.json`
+- 项目：`.pi/themes/*.json`（仅在项目被信任后加载）
 - 包：`themes/` 目录或 `package.json` 中的 `pi.themes` 条目
 - 设置：`themes` 数组，包含文件或目录
 - CLI：`--theme <path>`（可重复）

@@ -11,7 +11,7 @@ Prompt 模板是**可以展开为完整 Prompt 的 Markdown 片段**。输入 `/
 Pi 从以下位置加载 Prompt 模板：
 
 - **全局**：`~/.pi/agent/prompts/*.md`
-- **项目**：`.pi/prompts/*.md`
+- **项目**：`.pi/prompts/*.md`（仅在项目被信任后加载）
 - **包**：`prompts/` 目录或 `package.json` 中的 `pi.prompts` 条目
 - **设置**：`prompts` 数组，包含文件或目录
 - **CLI**：`--prompt-template <path>`（可重复）
