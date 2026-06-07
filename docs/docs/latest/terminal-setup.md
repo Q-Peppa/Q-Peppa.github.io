@@ -40,7 +40,7 @@ keybind = shift+enter=text:\n
 
 ## WezTerm
 
-创建 `~/.wezterm.lua`：
+WezTerm 通常通过 xterm modifyOtherKeys 开箱即用地支持 `Shift+Enter`。若要显式使用 Kitty 键盘协议，创建 `~/.wezterm.lua`：
 
 ```lua
 local wezterm = require 'wezterm'
@@ -49,9 +49,43 @@ config.enable_kitty_keyboard = true
 return config
 ```
 
+在 macOS 上，WezTerm 默认将 `Option+Enter` 绑定为全屏。若要使用 `Option+Enter` 进行 pi follow-up 队列，添加此按键覆盖：
+
+```lua
+local wezterm = require 'wezterm'
+local config = wezterm.config_builder()
+config.keys = {
+  {
+    key = 'Enter',
+    mods = 'ALT',
+    action = wezterm.action.SendString('\x1b[13;3u'),
+  },
+}
+return config
+```
+
+如果你已有 `config.keys` 表，将条目添加到其中。
+
 在 WSL 上，WezTerm 可能需要可见的硬件光标来定位 IME 候选窗口。如果中日韩 IME 候选不跟随文本光标，请在运行 Pi 前设置 `PI_HARDWARE_CURSOR=1` 或在设置中将 `showHardwareCursor` 设为 `true`。
 
+## Alacritty
+
+Alacritty 通常开箱即用地支持 `Shift+Enter`。在 macOS 上，`Option+Enter` 可能被识别为普通 `Enter`。若要使用 `Option+Enter` 进行 pi follow-up 队列，添加到 `~/.config/alacritty/alacritty.toml`：
+
+```toml
+[[keyboard.bindings]]
+key = "Enter"
+mods = "Alt"
+chars = "\u001b[13;3u"
+```
+
+更改配置后重新启动 Alacritty。
+
 ## VS Code（集成终端）
+
+VS Code 1.109.5 及更新版本默认在集成终端中启用了 Kitty 键盘协议，因此 `Shift+Enter` 应开箱即用。
+
+VS Code 版本低于 1.109.5 需要显式添加终端快捷键以支持 `Shift+Enter`。
 
 `keybindings.json` 位置：
 
@@ -59,7 +93,7 @@ return config
 - **Linux**：`~/.config/Code/User/keybindings.json`
 - **Windows**：`%APPDATA%\Code\User\keybindings.json`
 
-添加以启用 `Shift+Enter` 多行输入：
+添加到 `keybindings.json`：
 
 ```json
 {

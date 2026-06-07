@@ -1113,6 +1113,11 @@ createEventBus
 
 // 帮助函数
 defineTool
+getAgentDir
+getPackageDir
+getReadmePath
+getDocsPath
+getExamplesPath
 
 // 会话管理
 SessionManager

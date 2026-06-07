@@ -20,7 +20,7 @@ tmux kill-server
 tmux
 ```
 
-当 Kitty 键盘协议不可用时，Pi 会自动请求扩展按键报告。使用 `extended-keys-format csi-u` 时，tmux 以 CSI-u 格式转发修饰键，这是最可靠的配置。
+当 Kitty 键盘协议不可用时，Pi 会自动请求扩展按键报告。使用 `extended-keys-format csi-u` 时，tmux 以 CSI-u 格式转发修饰键，这是最可靠的配置。`extended-keys-format` 选项需要 tmux 3.5 或更高版本。
 
 ## 为什么推荐 `csi-u`
 
@@ -59,8 +59,10 @@ Pi 支持两种格式，但对于 tmux 推荐使用 `csi-u`。
 
 ## 要求
 
-- tmux 3.2 或更高版本（`tmux -V` 检查）
+- tmux 3.5 或更高版本支持 `extended-keys-format csi-u`（`tmux -V` 检查）
 - 支持扩展按键的终端模拟器：Ghostty、Kitty、iTerm2、WezTerm、Windows Terminal
+
+使用 tmux 3.2 至 3.4 时，省略 `extended-keys-format csi-u`；Pi 仍支持 tmux 默认的 xterm `modifyOtherKeys` 格式。
 
 ---
 
