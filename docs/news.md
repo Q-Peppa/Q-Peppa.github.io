@@ -2,6 +2,75 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.79.0（2026-06-08）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **项目信任保护本地输入** — Pi 现在在加载项目本地设置、资源、指令和包之前会请求确认，支持 `--approve` / `--no-approve` 非交互模式控制与保存决策。参见 [项目信任](/docs/latest/index#project-trust)。
+- **扩展控制的信任决策** — 全局和 CLI 扩展可处理 `project_trust`，在项目本地资源加载前决定、记住或推迟项目信任。参见 [`project_trust`](/docs/latest/extensions#project_trust)。
+- **页脚缓存命中率可见** — 交互式页脚现在显示最新的 Prompt 缓存命中率（`CH`）。参见 [交互模式](/docs/latest/index#interactive-mode)。
+- **更丰富的 SDK 和 RPC 扩展接口** — 公共导出现包含 RPC 扩展 UI 请求/响应类型与包资源路径助手。参见 [扩展 UI 协议](/docs/latest/rpc#extension-ui-protocol) 和 [SDK 导出](/docs/latest/sdk#exports)。
+
+新增
+
+- 添加了 `project_trust` 扩展事件，使全局和 CLI 扩展可在启动与运行时 cwd 切换期间决定或推迟项目信任。
+- 添加了项目信任门控，用于项目本地设置、资源、指令和包（[#5332](https://github.com/earendil-works/pi/pull/5332)）。
+- 在交互式页脚中添加了最新 Prompt 缓存命中率。
+- 从公共 API 导出了 RPC 扩展 UI 请求与响应类型（[#5455](https://github.com/earendil-works/pi/issues/5455)）。
+- 从公共 API 导出了 coding-agent 包资源路径助手（[#5415](https://github.com/earendil-works/pi/issues/5415)）。
+
+修复
+
+- 修复了包导出，移除指向不存在构建产物的过时 `./hooks` 子路径。
+- 修复了继承的 TUI 渲染在内容缩为零时清除过时行的问题。
+- 修复了继承的自动补全建议在编辑器光标移动后刷新的问题（[#5499](https://github.com/earendil-works/pi/pull/5499)，感谢 [@Roman-Galeev](https://github.com/Roman-Galeev)）。
+- 修复了 `/reload` 在隐式信任会话创建项目 `.pi` 目录时持久化项目信任的问题。
+- 修复了项目信任输入发现以可移植方式遍历父目录的问题。
+- 修复了继承的间歇性 Shift+Enter 处理，使 Kitty 键盘协议回退变为响应驱动而非超时驱动（[#5188](https://github.com/earendil-works/pi/issues/5188)）。
+- 修复了压缩摘要系统 Prompt，为非 coding agent 使用中立的 AI 助手措辞（[#5401](https://github.com/earendil-works/pi/issues/5401)）。
+- 修复了 `models.json` schema 支持与继承的 OpenAI Responses 自定义 Provider 对 `compat.supportsDeveloperRole: false` 的处理（[#5456](https://github.com/earendil-works/pi/issues/5456)）。
+- 修复了继承的 Prompt 历史导航，使向上浏览时光标位于开头、向下浏览时光标位于末尾（[#5454](https://github.com/earendil-works/pi/issues/5454)）。
+- 修复了 tmux 设置文档，要求 tmux 3.5 以使用 `extended-keys-format csi-u`，并记录 tmux 3.2-3.4 回退方案（[#5432](https://github.com/earendil-works/pi/issues/5432)）。
+- 修复了继承的 OpenRouter 路由偏好，使 OpenAI 兼容自定义 Provider 在 base URL 不直接指向 OpenRouter 时也能正常工作（[#5347](https://github.com/earendil-works/pi/issues/5347)）。
+- 修复了内置工具展开提示中闭合括号样式不一致的问题（[#5359](https://github.com/earendil-works/pi/issues/5359)）。
+- 修复了 Skill 包装的 Prompt 在 Skill 指令与用户消息之间插入间距的问题（[#5371](https://github.com/earendil-works/pi/pull/5371)，感谢 [@Perlence](https://github.com/Perlence)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+修复
+
+- 修复了 OpenAI Responses 自定义 Provider 对推理模型 `compat.supportsDeveloperRole: false` 的处理（[#5456](https://github.com/earendil-works/pi/issues/5456)）。
+- 修复了 OpenRouter 路由偏好，使 OpenAI 兼容自定义 Provider 在 `baseUrl` 不直接指向 OpenRouter 时也能发送 `compat.openRouterRouting`（[#5347](https://github.com/earendil-works/pi/issues/5347)）。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+修复
+
+- 修复了压缩摘要系统 Prompt，为非 coding agent 使用中立的 AI 助手措辞（[#5401](https://github.com/earendil-works/pi/issues/5401)）。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+修复
+
+- 修复了 Prompt 历史导航，使向上浏览时光标位于开头、向下浏览时光标位于末尾，确保重复按 Up/Down 能立即遍历多行 Prompt（[#5454](https://github.com/earendil-works/pi/issues/5454)）。
+- 修复了间歇性 Shift+Enter 处理，使 Kitty 键盘协议回退变为响应驱动而非超时驱动（[#5188](https://github.com/earendil-works/pi/issues/5188)）。
+- 修复了 TUI 渲染在内容缩为零时清除过时行的问题。
+- 修复了自动补全建议在编辑器光标移动后重新查询的问题（[#5499](https://github.com/earendil-works/pi/pull/5499)，感谢 [@Roman-Galeev](https://github.com/Roman-Galeev)）。
+
+</details>
+
 ## v0.78.1（2026-06-04）
 
 <details>

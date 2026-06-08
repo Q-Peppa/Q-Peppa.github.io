@@ -267,6 +267,7 @@ export default async function (pi: ExtensionAPI) {
 ```
 pi 启动
   │
+  ├─► project_trust（仅全局和 CLI 扩展参与，在项目资源加载前触发）
   ├─► session_start { reason: "startup" }
   └─► resources_discover { reason: "startup" }
       │
@@ -330,6 +331,25 @@ pi 启动
 退出（Ctrl+C、Ctrl+D、SIGHUP、SIGTERM）
   └─► session_shutdown
 ```
+
+### 启动事件
+
+#### project_trust
+
+在 Pi 决定是否信任包含信任输入（`.pi`、`AGENTS.md`/`CLAUDE.md` 或 `.agents/skills`）的项目之前触发。在启动时和会话替换（例如 `/resume`）进入一个在当前进程中尚未解决信任的 cwd 时运行。仅全局扩展和 CLI `-e` 扩展参与；项目本地扩展在信任解决之前不会加载。
+
+```typescript
+pi.on('project_trust', async (event, ctx) => {
+  // event.cwd - 当前工作目录
+  // ctx 具有有限的信任上下文：cwd、mode、hasUI，以及 select/confirm/input/notify UI 助手
+  if (await ctx.ui.confirm('信任项目？', event.cwd)) {
+    return { trusted: 'yes', remember: true };
+  }
+  return { trusted: 'undecided' };
+});
+```
+
+`project_trust` 处理程序必须返回 `{ trusted: "yes" | "no" | "undecided" }`。返回 `"yes"` 或 `"no"` 的全局扩展或 CLI 扩展拥有该决策；第一个 yes/no 决策获胜并抑制内置的信任提示。使用 `remember: true` 持久化 yes/no 决策；否则仅对当前进程生效。返回 `"undecided"` 让后续处理程序或内置信任流程决定。在提示之前检查 `ctx.hasUI`。如果没有处理程序返回 yes/no，则继续正常的信任解析，包括在有 UI 可用时的内置信任提示。
 
 ### 资源事件
 
@@ -2579,6 +2599,7 @@ const highlighted = highlightCode(code, lang, theme);
 | `shutdown-command.ts`          | 优雅关闭命令                                                                             | `registerCommand`、`shutdown()`                                                                                                |
 | **事件和门控**                 |                                                                                          |                                                                                                                                |
 | `permission-gate.ts`           | 阻止危险命令                                                                             | `on("tool_call")`、`ui.confirm`                                                                                                |
+| `project-trust.ts`             | 从全局或 CLI 扩展决定或推迟项目信任                                                      | `on("project_trust")`、信任 UI、必需的信任结果                                                                                 |
 | `protected-paths.ts`           | 阻止写入特定路径                                                                         | `on("tool_call")`                                                                                                              |
 | `confirm-destructive.ts`       | 确认会话更改                                                                             | `on("session_before_switch")`、`on("session_before_fork")`                                                                     |
 | `dirty-repo-guard.ts`          | 在 Git 仓库脏时警告                                                                      | `on("session_before_*")`、`exec`                                                                                               |
