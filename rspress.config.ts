@@ -123,6 +123,7 @@ export default defineConfig({
             { text: 'Quickstart', link: '/docs/latest/quickstart' },
             { text: 'Using Pi', link: '/docs/latest/usage', tag: 'updated' },
             { text: 'Providers', link: '/docs/latest/providers', tag: '推荐' },
+            { text: 'Security', link: '/docs/latest/security', tag: 'new' },
             { text: 'Settings', link: '/docs/latest/settings' },
             { text: 'Keybindings', link: '/docs/latest/keybindings' },
             { text: 'Sessions', link: '/docs/latest/sessions' },

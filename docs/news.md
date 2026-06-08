@@ -9,9 +9,9 @@
 
 新功能
 
-- **项目信任保护本地输入** — Pi 现在在加载项目本地设置、资源、指令和包之前会请求确认，支持 `--approve` / `--no-approve` 非交互模式控制与保存决策。参见 [项目信任](/docs/latest/index#project-trust)。
+- **项目信任保护本地输入** — Pi 现在在加载项目本地设置、资源、指令和包之前会请求确认，支持 `--approve` / `--no-approve` 非交互模式控制与保存决策。参见 [项目信任](/docs/latest/security#项目信任)。
 - **扩展控制的信任决策** — 全局和 CLI 扩展可处理 `project_trust`，在项目本地资源加载前决定、记住或推迟项目信任。参见 [`project_trust`](/docs/latest/extensions#project_trust)。
-- **页脚缓存命中率可见** — 交互式页脚现在显示最新的 Prompt 缓存命中率（`CH`）。参见 [交互模式](/docs/latest/index#interactive-mode)。
+- **页脚缓存命中率可见** — 交互式页脚现在显示最新的 Prompt 缓存命中率（`CH`）。参见 [交互模式](/docs/latest/usage#interactive-mode)。
 - **更丰富的 SDK 和 RPC 扩展接口** — 公共导出现包含 RPC 扩展 UI 请求/响应类型与包资源路径助手。参见 [扩展 UI 协议](/docs/latest/rpc#extension-ui-protocol) 和 [SDK 导出](/docs/latest/sdk#exports)。
 
 新增
