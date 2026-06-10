@@ -336,7 +336,7 @@ pi 启动
 
 #### project_trust
 
-在 Pi 决定是否信任包含信任输入（`.pi`、`AGENTS.md`/`CLAUDE.md` 或 `.agents/skills`）的项目之前触发。在启动时和会话替换（例如 `/resume`）进入一个在当前进程中尚未解决信任的 cwd 时运行。仅全局扩展和 CLI `-e` 扩展参与；项目本地扩展在信任解决之前不会加载。
+在 Pi 决定是否信任包含动态配置（`.pi` 或 `.agents/skills`）的项目之前触发。在启动时和会话替换（例如 `/resume`）进入一个在当前进程中尚未解决信任的 cwd 时运行。仅全局扩展和 CLI `-e` 扩展参与；项目本地扩展在信任解决之前不会加载。
 
 ```typescript
 pi.on('project_trust', async (event, ctx) => {
@@ -349,7 +349,7 @@ pi.on('project_trust', async (event, ctx) => {
 });
 ```
 
-`project_trust` 处理程序必须返回 `{ trusted: "yes" | "no" | "undecided" }`。返回 `"yes"` 或 `"no"` 的全局扩展或 CLI 扩展拥有该决策；第一个 yes/no 决策获胜并抑制内置的信任提示。使用 `remember: true` 持久化 yes/no 决策；否则仅对当前进程生效。返回 `"undecided"` 让后续处理程序或内置信任流程决定。在提示之前检查 `ctx.hasUI`。如果没有处理程序返回 yes/no，则继续正常的信任解析，包括在有 UI 可用时的内置信任提示。
+`project_trust` 处理程序必须返回 `{ trusted: "yes" | "no" | "undecided" }`。返回 `"yes"` 或 `"no"` 的全局扩展或 CLI 扩展拥有该决策；第一个 yes/no 决策获胜并抑制内置的信任提示。使用 `remember: true` 持久化 yes/no 决策；否则仅对当前进程生效。返回 `"undecided"` 让后续处理程序或内置信任流程决定。在提示之前检查 `ctx.hasUI`。如果没有处理程序返回 yes/no，则继续正常的信任解析：先应用 `trust.json` 中保存的决策，然后由 `defaultProjectTrust` 控制 Pi 是询问、信任还是默认拒绝。
 
 ### 资源事件
 
@@ -890,6 +890,12 @@ pi.on('input', async (event, ctx) => {
 ### ctx.cwd
 
 当前工作目录。
+
+### ctx.isProjectTrusted()
+
+返回项目本地信任在当前会话上下文中是否生效。这包括临时信任决策和 CLI 信任覆盖，而不仅仅是全局信任存储中保存的决策。
+
+在读取只应对受信任项目生效的项目本地扩展配置之前使用此方法。
 
 ### ctx.sessionManager
 
@@ -2287,6 +2293,7 @@ ctx.ui.pasteToEditor('粘贴的内容');
 
 // 在内置提供者之上堆叠自定义自动补全行为
 ctx.ui.addAutocompleteProvider((current) => ({
+  triggerCharacters: ['#'],
   async getSuggestions(lines, line, col, options) {
     const beforeCursor = (lines[line] ?? '').slice(0, col);
     const match = beforeCursor.match(/(?:^|[ \t])#([^\s#]*)$/);
@@ -2335,7 +2342,7 @@ ctx.ui.theme.fg('accent', '带样式的文本'); // 访问当前主题
 
 ### 自动补全提供者
 
-使用 `ctx.ui.addAutocompleteProvider()` 在内置斜杠命令和路径提供者之上堆叠自定义自动补全逻辑。
+使用 `ctx.ui.addAutocompleteProvider()` 在内置斜杠命令和路径提供者之上堆叠自定义自动补全逻辑。设置 `triggerCharacters` 以使用例如 `$` 这样的自定义自然触发字符。
 
 典型模式：
 
@@ -2347,6 +2354,7 @@ ctx.ui.theme.fg('accent', '带样式的文本'); // 访问当前主题
 ```typescript
 pi.on('session_start', (_event, ctx) => {
   ctx.ui.addAutocompleteProvider((current) => ({
+    triggerCharacters: ['#'],
     async getSuggestions(lines, cursorLine, cursorCol, options) {
       const line = lines[cursorLine] ?? '';
       const beforeCursor = line.slice(0, cursorCol);

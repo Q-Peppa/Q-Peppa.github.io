@@ -2,6 +2,90 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.79.1（2026-06-09）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **Claude Fable 5** — Claude Fable 5 现已在 Anthropic 和 Amazon Bedrock Provider 上可用，支持 adaptive thinking 与 `xhigh` 推理强度。
+- **Prompt 模板默认值** — Prompt 模板可使用 `${1:-7}` 这样的位置参数默认值。参见 [Prompt 模板参数](/docs/latest/prompt-templates#参数)。
+- **可配置的项目信任默认值** — `defaultProjectTrust` 允许用户选择未解析的项目信任询问是默认通过、始终信任还是从不信任，扩展也可以检视生效的信任决策。参见 [项目信任](/docs/latest/security#项目信任) 和 [`ctx.isProjectTrusted()`](/docs/latest/extensions#ctxisprojecttrusted)。
+- **扩展自动补全的触发字符** — 扩展的自动补全 Provider 可以声明 `#` 或 `$` 这样的触发字符，让建议无需斜杠命令前缀即可弹出。参见 [自动补全 Provider](/docs/latest/extensions#autocomplete-providers)。
+
+新增
+
+- 为 Prompt 模板位置参数添加了默认值展开，例如 `${1:-7}`（[#5553](https://github.com/earendil-works/pi/pull/5553)，感谢 [@dannote](https://github.com/dannote)）。
+- 添加了 `areExperimentalFeaturesEnabled` 特性开关，让用户能够选择启用实验性功能（[#5547](https://github.com/earendil-works/pi/pull/5547)，感谢 [@vegarsti](https://github.com/vegarsti)）。
+- 添加了 `ctx.isProjectTrusted()`，使扩展能够观察生效的项目信任决策，包括临时信任决策（[#5523](https://github.com/earendil-works/pi/issues/5523)）。
+- 添加了全局的 `defaultProjectTrust` 设置，用于选择未解析的项目信任询问是默认通过、始终信任还是从不信任。
+- 为 `ctx.ui.addAutocompleteProvider()` 包装器添加了扩展自动补全触发字符支持（[#4703](https://github.com/earendil-works/pi/issues/4703)）。
+- 在 Anthropic 和 Amazon Bedrock Provider 上添加了继承自 `@earendil-works/pi-ai` 的 Claude Fable 5 模型支持，支持 adaptive thinking 与 `xhigh` 推理强度。
+
+修复
+
+- 修复了继承自 Amazon Bedrock 的推理配置文件 ARN 区域解析，优先使用 ARN 内嵌的区域而非 `AWS_REGION`（[#5527](https://github.com/earendil-works/pi/pull/5527)，感谢 [@AJM10565](https://github.com/AJM10565)）。
+- 修复了继承的 IME 硬件光标定位，在斜杠命令自动补全可见时正确显示（[#5283](https://github.com/earendil-works/pi/pull/5283)，感谢 [@smoosex](https://github.com/smoosex)）。
+- 修复了继承的 z.ai 关闭 thinking 请求，使其发送 Provider 的 `thinking: { type: "disabled" }` 兼容性参数（[#5330](https://github.com/earendil-works/pi/issues/5330)）。
+- 修复了继承的 OpenCode completions 模型元数据，将显式的 `maxTokens` 作为 `max_tokens` 发送（[#5331](https://github.com/earendil-works/pi/issues/5331)）。
+- 修复了继承的 Moonshot Kimi 关闭 thinking 请求，使其发送 Provider 的 `thinking: { type: "disabled" }` 兼容性参数（[#5531](https://github.com/earendil-works/pi/issues/5531)）。
+- 修复了继承的 Azure OpenAI Responses 请求，禁用服务器端的响应存储（[#5530](https://github.com/earendil-works/pi/issues/5530)）。
+- 修复了继承的 Azure GPT-5.4 和 GPT-5.5 上下文窗口元数据为 1,050,000 Token，与 Azure Foundry 部署保持一致，而非 OpenAI 的 272k 上限（[#5559](https://github.com/earendil-works/pi/issues/5559)）。
+- 修复了继承的 OpenAI 和 Azure GPT-5 Pro `maxTokens` 元数据为 128,000，修正了上游错误地将 272,000 输入子限制复制为输出限制的值（[#5559](https://github.com/earendil-works/pi/issues/5559)）。
+- 修复了继承的 Prompt 历史导航，使浏览历史返回时能恢复当前草稿（[#5494](https://github.com/earendil-works/pi/issues/5494)）。
+- 修复了混合拉丁文与 CJK 文本的换行行为，使无空格 CJK 序列能在字素边界处断行，避免留下过大的尾部空白（[#5495](https://github.com/earendil-works/pi/issues/5495)）。
+- 修复了扩展 OAuth 登录提示，使先前提交的提示行保持稳定，而不再镜像当前输入值（[#5433](https://github.com/earendil-works/pi/issues/5433)）。
+- 修复了 `/reload` 会将更新后的 `steeringMode` 和 `followUpMode` 设置应用到当前会话（[#5377](https://github.com/earendil-works/pi/issues/5377)）。
+- 修复了 `models.json` 语法无效时跳过启动配置迁移并按文件路径感知的方式报告正常的 models 错误，而非抛出原始的 JSON 解析堆栈（[#5418](https://github.com/earendil-works/pi/issues/5418)）。
+- 修复了 GitHub 发布说明和交互式 changelog 链接，使其能正确解析包相对文档 URL（[#5516](https://github.com/earendil-works/pi/issues/5516)）。
+- 修复了 CLI 帮助与版本输出，包括纯重定向的 `--help`/`--version` 输出，并简化了 `list`/`config` 帮助文本。
+- 修复了临时会话的 `/new` 默认将新会话也保持为临时会话而非持久化（[#5045](https://github.com/earendil-works/pi/issues/5045)）。
+- 澄清了自定义模型文档中 `name` 和 `modelOverrides.name` 不会替换页脚或主模型列表中的模型 ID（[#4841](https://github.com/earendil-works/pi/issues/4841)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 在 Anthropic 和 Amazon Bedrock 模型元数据中添加了 Claude Fable 5，支持 adaptive thinking 与 `xhigh` 推理强度。
+
+修复
+
+- 修复了 Amazon Bedrock 推理配置文件 ARN 区域解析，优先使用 ARN 内嵌的区域而非 `AWS_REGION`（[#5527](https://github.com/earendil-works/pi/pull/5527)，感谢 [@AJM10565](https://github.com/AJM10565)）。
+- 修复了 z.ai 关闭 thinking 请求，使其发送 Provider 的 `thinking: { type: "disabled" }` 兼容性参数（[#5330](https://github.com/earendil-works/pi/issues/5330)）。
+- 修复了 OpenCode completions 模型元数据，将显式的 `maxTokens` 作为 `max_tokens` 发送（[#5331](https://github.com/earendil-works/pi/issues/5331)）。
+- 修复了 Moonshot Kimi 关闭 thinking 请求，使其发送 Provider 的 `thinking: { type: "disabled" }` 兼容性参数（[#5531](https://github.com/earendil-works/pi/issues/5531)）。
+- 修复了 Azure OpenAI Responses 请求，禁用了服务器端的响应存储（[#5530](https://github.com/earendil-works/pi/issues/5530)）。
+- 修复了 Azure GPT-5.4 和 GPT-5.5 上下文窗口元数据为 1,050,000 Token，与 Azure Foundry 部署保持一致，而非 OpenAI 的 272k 上限（[#5559](https://github.com/earendil-works/pi/issues/5559)）。
+- 修复了 OpenAI 和 Azure GPT-5 Pro `maxTokens` 元数据为 128,000，修正了上游错误地将 272,000 输入子限制复制为输出限制的值（[#5559](https://github.com/earendil-works/pi/issues/5559)）。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+无变更。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+新增
+
+- 添加了 `AutocompleteProvider.triggerCharacters`，使编辑器自动补全能自然地在 Provider 定义的 Token 前缀上触发（[#4703](https://github.com/earendil-works/pi/issues/4703)）。
+
+修复
+
+- 修复了斜杠命令自动补全可见时的 IME 硬件光标定位（[#5283](https://github.com/earendil-works/pi/pull/5283)，感谢 [@smoosex](https://github.com/smoosex)）。
+- 修复了 Prompt 历史导航，使浏览历史返回时能恢复当前草稿（[#5494](https://github.com/earendil-works/pi/issues/5494)）。
+- 修复了混合拉丁文与 CJK 文本的换行行为，使无空格 CJK 序列能在字素边界处断行，避免留下过大的尾部空白（[#5495](https://github.com/earendil-works/pi/issues/5495)）。
+
+</details>
+
 ## v0.79.0（2026-06-08）
 
 <details>

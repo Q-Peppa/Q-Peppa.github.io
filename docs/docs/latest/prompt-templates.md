@@ -68,10 +68,11 @@ argument-hint: '<PR-URL>'
 
 ## 参数
 
-模板支持位置参数和简单切片：
+模板支持位置参数、默认值和简单切片：
 
 - `$1`、`$2` 等 —— 位置参数
 - `$@` 或 `$ARGUMENTS` —— 所有参数连接
+- `${1:-default}` —— 当参数 1 存在且非空时使用参数 1，否则使用 `default`
 - `${@:N}` —— 从第 N 个位置开始的参数（1-indexed）
 - `${@:N:L}` —— 从 N 开始取 L 个参数
 
@@ -83,6 +84,12 @@ description: Create a component
 ---
 
 Create a React component named $1 with features: $@
+```
+
+默认值对可选参数很有用：
+
+```markdown
+Summarize the current state in ${1:-7} bullet points.
 ```
 
 用法：`/component Button "onClick handler" "disabled support"`

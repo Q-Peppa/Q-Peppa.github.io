@@ -204,7 +204,7 @@
 | 字段               | 必需 | 默认值               | 说明                                                                         |
 | ------------------ | ---- | -------------------- | ---------------------------------------------------------------------------- |
 | `id`               | 是   | —                    | 模型标识符（传递给 API）                                                     |
-| `name`             | 否   | `id`                 | 人类可读的模型标签。用于匹配（`--model` 模式）并显示在模型详情/状态文本中    |
+| `name`             | 否   | `id`                 | 人类可读的模型标签。用于匹配（`--model` 模式）并作为次要模型详情文本显示     |
 | `api`              | 否   | Provider 的 `api`    | 为此模型覆盖 Provider 的 API                                                 |
 | `reasoning`        | 否   | `false`              | 是否支持 extended thinking                                                   |
 | `thinkingLevelMap` | 否   | 省略                 | 将 Pi 的 thinking level 映射到 Provider 值，并标记不支持的 level（见下文）   |
@@ -216,8 +216,8 @@
 
 当前行为：
 
-- `/model` 和 `--list-models` 按模型 `id` 列出条目。
-- 配置的 `name` 用于模型匹配和详情/状态文本。
+- `/model`、`--list-models` 和交互式页脚按模型 `id` 显示条目。
+- 配置的 `name` 用于模型匹配和次要模型详情文本。它不会替换页脚/状态栏中的模型 id。
 
 ### Thinking Level Map
 
@@ -329,6 +329,7 @@
 - `modelOverrides` 应用于内置 Provider 的模型。
 - 未知模型 ID 被忽略。
 - 你可以将 Provider 级别的 `baseUrl`/`headers` 与 `modelOverrides` 结合使用。
+- 覆盖 `name` 仅会改变模型匹配和次要详情文本；页脚和主模型列表仍继续显示模型 `id`。
 - 如果 Provider 也定义了 `models`，自定义模型在内置覆盖之后合并。具有相同 `id` 的自定义模型会替换已覆盖的内置模型条目。
 
 ## Anthropic Messages 兼容性

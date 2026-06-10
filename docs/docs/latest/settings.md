@@ -13,13 +13,15 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 
 ## 项目信任
 
-在交互式启动时，如果项目目录包含项目本地输入且在 `~/.pi/agent/trust.json` 中没有已保存的决策，Pi 会询问是否信任该目录。信任项目后，Pi 可以读取项目说明文件（`AGENTS.md`/`CLAUDE.md`）、加载 `.pi/settings.json` 和 `.pi` 资源、自动安装缺失的项目包，并执行项目扩展。
+在交互式启动时，如果项目目录包含受信任门控的项目输入，且在 `~/.pi/agent/trust.json` 中该目录或父目录没有已保存的决策，Pi 会询问是否信任该目录。信任项目后，Pi 可以加载 `.pi/settings.json` 和 `.pi` 资源、自动安装缺失的项目包，并执行项目扩展。
 
-非交互模式（`-p`、`--mode json` 和 `--mode rpc`）不显示信任提示。在没有已保存的信任决策时，除非传入 `--approve`/`-a`，否则会忽略项目本地输入。即使项目已信任，也可使用 `--no-approve`/`-na` 在单次运行中忽略项目本地输入。
+非交互模式（`-p`、`--mode json` 和 `--mode rpc`）不显示信任提示。在没有适用的已保存信任决策时，它们使用全局设置中的 `defaultProjectTrust`：`ask`（默认）和 `never` 忽略受信任门控的项目输入，而 `always` 则信任它们。传入 `--approve`/`-a` 或 `--no-approve`/`-na` 可在单次运行中覆盖项目信任。
 
-`pi config` 命令假定该项目已被信任，以便你在启动会话前查看和更改项目资源设置。但它不保存信任决策；在该目录中启动会话仍会提示。传入 `--no-approve` 可在 `pi config` 中隐藏项目本地输入。
+如果没有扩展或已保存决策适用，则由 `defaultProjectTrust` 控制回退行为。可在 `~/.pi/agent/settings.json` 中将其设置为 `"ask"`、`"always"` 或 `"never"`，或通过 `/settings` 更改。
 
-在交互模式中使用 `/trust` 保存项目的信任决策以供未来会话使用。该命令仅写入 `~/.pi/agent/trust.json`；当前会话不会重新加载，需要重启 Pi 才能使更改生效。
+`pi config` 与包命令使用相同的项目信任流程。传入 `--approve` 即可在单次命令中信任项目本地设置，或传入 `--no-approve` 忽略它们。
+
+在交互模式中使用 `/trust` 保存项目的信任决策以供未来会话使用，包括对直接父目录的信任。该命令仅写入 `~/.pi/agent/trust.json`；当前会话不会重新加载，需要重启 Pi 才能使更改生效。
 
 ## 所有设置项
 
@@ -52,6 +54,7 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 | ------------------------ | ------- | ----------- | ----------------------------------------------------------------------------------------- |
 | `theme`                  | string  | `"dark"`    | 主题名称（`"dark"`、`"light"` 或自定义）                                                  |
 | `quietStartup`           | boolean | `false`     | 隐藏启动头部                                                                              |
+| `defaultProjectTrust`    | string  | `"ask"`     | 回退项目信任行为：`"ask"`、`"always"` 或 `"never"`。仅作为全局设置                        |
 | `collapseChangelog`      | boolean | `false`     | 更新后显示精简的 changelog                                                                |
 | `enableInstallTelemetry` | boolean | `true`      | 首次安装或 changelog 检测到更新时发送匿名安装/更新版本 ping。这不控制更新检查             |
 | `doubleEscapeAction`     | string  | `"tree"`    | 双击 Esc 的行为：`"tree"`、`"fork"` 或 `"none"`                                           |
