@@ -57,6 +57,8 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 | `defaultProjectTrust`    | string  | `"ask"`     | 回退项目信任行为：`"ask"`、`"always"` 或 `"never"`。仅作为全局设置                        |
 | `collapseChangelog`      | boolean | `false`     | 更新后显示精简的 changelog                                                                |
 | `enableInstallTelemetry` | boolean | `true`      | 首次安装或 changelog 检测到更新时发送匿名安装/更新版本 ping。这不控制更新检查             |
+| `enableAnalytics`        | boolean | `false`     | 选择加入的数据分析共享。目前仅在实验性首次设置流程中询问（`PI_EXPERIMENTAL=1`）           |
+| `trackingId`             | string  | -           | 数据分析追踪标识符，在开启 `enableAnalytics` 时自动生成                                   |
 | `doubleEscapeAction`     | string  | `"tree"`    | 双击 Esc 的行为：`"tree"`、`"fork"` 或 `"none"`                                           |
 | `treeFilterMode`         | string  | `"default"` | `/tree` 的默认过滤器：`"default"`、`"no-tools"`、`"user-only"`、`"labeled-only"`、`"all"` |
 | `editorPaddingX`         | number  | `0`         | 编辑器水平内边距（0-3）                                                                   |
