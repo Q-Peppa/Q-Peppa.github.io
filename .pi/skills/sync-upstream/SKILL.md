@@ -115,8 +115,7 @@ fi
 set -e
 
 # ── 0.1 提取翻译站最高已同步版本 ──
-LAST_TRANSLATED_VER=$(head -20 ./docs/news.md 2>/dev/null \
-  | grep -oE "^## v[0-9]+\.[0-9]+\.[0-9]+" \
+LAST_TRANSLATED_VER=$(grep -oE '^## v[0-9]+\.[0-9]+\.[0-9]+' ./docs/news.md 2>/dev/null \
   | head -1 | sed -E 's/^## v//' || true)
 
 if [ -z "$LAST_TRANSLATED_VER" ]; then
@@ -150,14 +149,22 @@ echo ""
 echo "=== docs/ 变更 ==="
 DOCS_DIFF=$(git log --since="@${BASELINE_TS}" --name-only --pretty=format: -- packages/coding-agent/docs/ \
   | grep -v "^$" | sort -u || true)
-DOCS_COUNT=$(echo "$DOCS_DIFF" | grep -c . 2>/dev/null || echo 0)
+if [ -n "$DOCS_DIFF" ]; then
+  DOCS_COUNT=$(printf '%s\n' "$DOCS_DIFF" | grep -c .)
+else
+  DOCS_COUNT=0
+fi
 [ -n "$DOCS_DIFF" ] && echo "$DOCS_DIFF" || echo "  (无)"
 
 echo ""
 echo "=== images/ 变更 ==="
 IMAGE_DIFF=$(git log --since="@${BASELINE_TS}" --name-only --pretty=format: -- packages/coding-agent/docs/images/ \
   | grep -v "^$" | sort -u || true)
-IMAGE_COUNT=$(echo "$IMAGE_DIFF" | grep -c . 2>/dev/null || echo 0)
+if [ -n "$IMAGE_DIFF" ]; then
+  IMAGE_COUNT=$(printf '%s\n' "$IMAGE_DIFF" | grep -c .)
+else
+  IMAGE_COUNT=0
+fi
 [ -n "$IMAGE_DIFF" ] && echo "$IMAGE_DIFF" || echo "  (无)"
 
 echo ""
@@ -175,15 +182,23 @@ COMPARE_VER="$LAST_TRANSLATED_VER"
 
 for pkg in coding-agent ai agent tui; do
   file="packages/$pkg/CHANGELOG.md"
-  grep -E "^## \[[0-9]+\.[0-9]+\.[0-9]+\] - [0-9]{4}-[0-9]{2}-[0-9]{2}" "$file" 2>/dev/null \
-    | sed -E 's/^## \[([0-9.]+)\] - ([0-9-]+).*$/\1 \2/' \
-    | while read ver date; do
-        higher=$(printf '%s\n%s\n' "$COMPARE_VER" "$ver" | sort -V | tail -1)
-        if [ "$higher" = "$ver" ] && [ "$ver" != "$COMPARE_VER" ]; then
-          echo "  $pkg: $ver ($date)"
-          echo "${pkg}:${ver}:${date}" >> /tmp/sync_new_releases.txt
-        fi
-      done
+  awk -v cmp="$COMPARE_VER" -v pkg="$pkg" '
+    /^## \[[0-9]+\.[0-9]+\.[0-9]+\] - [0-9]{4}-[0-9]{2}-[0-9]{2}/ {
+      line = $0
+      sub(/^## \[/, "", line)
+      split(line, parts, "] - ")
+      ver = parts[1]
+      date = parts[2]
+      split(ver, a, ".")
+      split(cmp, b, ".")
+      if (a[1]+0 > b[1]+0 ||
+          (a[1] == b[1] && a[2]+0 > b[2]+0) ||
+          (a[1] == b[1] && a[2] == b[2] && a[3]+0 > b[3]+0)) {
+        printf "  %s: %s (%s)\n", pkg, ver, date
+        printf "%s:%s:%s\n", pkg, ver, date >> "/tmp/sync_new_releases.txt"
+      }
+    }
+  ' "$file" 2>/dev/null
 done
 
 NEW_VER_COUNT=$(wc -l < /tmp/sync_new_releases.txt | tr -d ' ')
