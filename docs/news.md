@@ -2,6 +2,26 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.79.3（2026-06-13）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+修复
+
+- 修复了压缩摘要系统 Prompt，对非编码 Agent 使用中性 AI 助手措辞（[#5401](https://github.com/earendil-works/pi/issues/5401)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+修复
+
+- 将 OpenAI GPT-5.4/GPT-5.5 和 OpenAI Codex GPT-5.4/GPT-5.4 mini/GPT-5.5 上下文窗口元数据恢复至实际观测的 272k Token Codex 后端限制，避免发送超出 Codex 接受限制的 Prompt 产生计费风险（感谢 [@trethore](https://github.com/trethore) 反馈）。
+
+</details>
+
 ## v0.79.2（2026-06-12）
 
 <details>
