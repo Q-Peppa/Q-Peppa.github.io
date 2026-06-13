@@ -109,15 +109,15 @@ Pi 在启动时加载 `AGENTS.md` 或 `CLAUDE.md`：
 
 ### 项目信任
 
-在交互式启动时，如果项目目录包含项目本地扩展或设置，且在 `~/.pi/agent/trust.json` 中该目录或父目录没有已保存的决策，Pi 会询问是否信任该目录。信任项目后，Pi 可以加载 `.pi/settings.json` 和 `.pi` 资源、自动安装缺失的项目包，并执行项目扩展。
+在交互式启动时，如果项目目录包含项目本地设置、资源或项目 `.agents/skills`，且在 `~/.pi/agent/trust.json` 中该目录或父目录没有已保存的决策，Pi 会询问是否信任该目录。信任项目后，Pi 可以加载 `.pi/settings.json` 和 `.pi` 资源、自动安装缺失的项目包，并执行项目扩展。
 
 在信任决策之前，Pi 只加载上下文文件、用户/全局扩展和 CLI `-e` 扩展，以便它们能够处理 `project_trust` 事件。项目本地扩展、项目包管理的扩展和项目设置仅在项目被信任后才会加载。当切换到来自不同 cwd 的会话（且该 cwd 的信任在当前进程中尚未解决）时，此分割同样适用。
 
-非交互模式（`-p`、`--mode json` 和 `--mode rpc`）不显示信任提示。在没有适用的已保存信任决策时，它们使用全局设置中的 `defaultProjectTrust`：`ask`（默认）和 `never` 忽略受信任门控的项目输入，而 `always` 则信任它们。传入 `--approve`/`-a` 或 `--no-approve`/`-na` 可在单次运行中覆盖项目信任。
+非交互模式（`-p`、`--mode json` 和 `--mode rpc`）不显示信任提示。在没有适用的已保存信任决策时，它们使用全局设置中的 `defaultProjectTrust`：`ask`（默认）和 `never` 忽略这些项目资源，而 `always` 则信任它们。传入 `--approve`/`-a` 或 `--no-approve`/`-na` 可在单次运行中覆盖项目信任。
 
 如果没有扩展或已保存决策适用，则由 `defaultProjectTrust` 控制回退行为。可在 `~/.pi/agent/settings.json` 中将其设置为 `"ask"`、`"always"` 或 `"never"`，或通过 `/settings` 更改。
 
-`pi config` 与包命令使用相同的项目信任流程。传入 `--approve` 即可在单次命令中信任项目本地设置，或传入 `--no-approve` 忽略它们。
+`pi config` 与包命令使用相同的项目信任流程，但 `pi update` 从不进行提示。传入 `--approve` 即可在单次命令中信任项目本地设置，或传入 `--no-approve` 忽略它们。
 
 在交互模式中使用 `/trust` 保存项目的信任决策以供未来会话使用，包括对直接父目录的信任。该命令仅写入 `~/.pi/agent/trust.json`；当前会话不会重新加载，需要重启 Pi 才能使更改生效。
 
@@ -149,7 +149,7 @@ pi list                      # 列出已安装的包
 pi config                    # 启用/禁用包资源
 ```
 
-这些命令管理 Pi 包，而非 Pi CLI 安装本身。要卸载 Pi 本身，请参阅 [Quickstart](quickstart)。`pi config` 与项目包命令接受 `--approve`/`--no-approve`，以便在单次命令中信任或忽略项目本地设置。
+这些命令管理 Pi 包，而非 Pi CLI 安装本身。要卸载 Pi 本身，请参阅 [Quickstart](quickstart)。`pi config` 与项目包命令接受 `--approve`/`--no-approve`，以便在单次命令中信任或忽略项目本地设置。`pi update` 从不提示项目信任。
 
 包来源和安全说明请参阅 [Pi Packages](packages.md)。
 

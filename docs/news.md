@@ -2,6 +2,81 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.79.2（2026-06-12）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **更清晰的 Bedrock 验证指引** — Amazon Bedrock 数据保留验证错误现在会链接到 AWS 数据保留文档。参见 [Amazon Bedrock](/docs/latest/providers#amazon-bedrock)。
+
+新增
+
+- 在 `PI_EXPERIMENTAL=1` 下添加了实验性首次设置流程，询问深浅色主题选择（预选检测到的外观）以及首次启动时选择加入的数据分析共享；选择加入会在 `settings.json` 中存储 `trackingId`（[#5587](https://github.com/earendil-works/pi/pull/5587)，感谢 [@vegarsti](https://github.com/vegarsti)）。
+- 为继承的 Amazon Bedrock 不支持的数据保留模式验证错误添加了 AWS 数据保留文档链接（[#5561](https://github.com/earendil-works/pi/pull/5561)，感谢 [@unexge](https://github.com/unexge)）。
+
+修复
+
+- 修复了项目信任检测，当从 `$HOME` 运行时忽略全局 `~/.pi/agent` 状态，并让 `pi update` 仅使用已保存或显式的项目信任而不进行提示（[#5619](https://github.com/earendil-works/pi/issues/5619)）。
+- 修复了实验性首次设置，使其跳过已分叉的会话而非重新运行设置提示（[#5627](https://github.com/earendil-works/pi/pull/5627)，感谢 [@vegarsti](https://github.com/vegarsti)）。
+- 修复了继承的 OpenAI 兼容上下文溢出检测，支持带括号的 `maximum context length (N)` 错误（[#5677](https://github.com/earendil-works/pi/issues/5677)）。
+- 修复了继承的 OpenAI GPT-5.4/GPT-5.5 和 OpenAI Codex GPT-5.4/GPT-5.4 mini/GPT-5.5 上下文窗口元数据，以匹配当前 OpenAI 限制（[#5644](https://github.com/earendil-works/pi/issues/5644)）。
+- 修复了继承的 Anthropic 拒绝停止，在错误消息中保留 Provider 的 `stop_details` 说明（[#5666](https://github.com/earendil-works/pi/pull/5666)，感谢 [@rwachtler](https://github.com/rwachtler)）。
+- 将继承的 OpenAI Codex Responses SSE 响应头超时增加到 20 秒，以减少误报暂停，同时保留为零事件挂起引入的有界等待（[#4945](https://github.com/earendil-works/pi/issues/4945)）。
+- 修复了继承的 Claude Fable 5 关闭 thinking 请求，省略了 Anthropic 不支持的 `thinking.type: "disabled"` 负载（[#5567](https://github.com/earendil-works/pi/pull/5567)，感谢 [@tmustier](https://github.com/tmustier)）。
+- 修复了继承的工具执行后延迟的 tool progress 回调在工具结算后被忽略的问题，而非发出陈旧的 `tool_execution_update` 事件（[#5573](https://github.com/earendil-works/pi/issues/5573)）。
+- 修复了继承的用户消息转录渲染，使独立的 `+` 消息不再渲染为 `-`（[#5657](https://github.com/earendil-works/pi/issues/5657)）。
+- 修复了继承的斜杠分隔模糊查询，使 Provider/模型补全在插入后仍可匹配。
+- 修复了继承的 WezTerm 内联 Kitty 图片渲染，使保留行清除不再擦除除顶部条带之外的所有工具图片预览（[#5618](https://github.com/earendil-works/pi/issues/5618)）。
+- 修复了继承的 CJK 编辑器换行，使其在字符边界处断行而非留下较大的尾部空白（[#5585](https://github.com/earendil-works/pi/pull/5585)，感谢 [@haoqixu](https://github.com/haoqixu)）。
+- 修复了继承的宽松 Markdown 列表渲染，保留了列表项之间的空行分隔（[#5562](https://github.com/earendil-works/pi/pull/5562)，感谢 [@Perlence](https://github.com/Perlence)）。
+- 修复了 `--model` 解析，对于斜杠前缀与未认证的内置 Provider 匹配的已认证自定义模型 ID（[#5643](https://github.com/earendil-works/pi/issues/5643)）。
+- 修复了 `/fork` 在分叉路径包含标签时保持会话父链的连接（[#5669](https://github.com/earendil-works/pi/issues/5669)）。
+- 修复了 `/share` 和 `/export` HTML 导出在配置的自定义主题不再存在时使用活动的回退主题（[#5596](https://github.com/earendil-works/pi/issues/5596)）。
+- 修复了带有 `:<thinking>` 后缀的自定义回退模型 ID，在 Provider 模板模型未声明推理能力时保留请求的 thinking 级别（[#5560](https://github.com/earendil-works/pi/pull/5560)，感谢 [@haoqixu](https://github.com/haoqixu)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 为 Amazon Bedrock 不支持的数据保留模式验证错误添加了 AWS 数据保留文档链接（[#5561](https://github.com/earendil-works/pi/pull/5561)，感谢 [@unexge](https://github.com/unexge)）。
+
+修复
+
+- 修复了 OpenAI 兼容上下文溢出检测，支持带括号的 `maximum context length (N)` 错误（[#5677](https://github.com/earendil-works/pi/issues/5677)）。
+- 修复了 OpenAI GPT-5.4/GPT-5.5 和 OpenAI Codex GPT-5.4/GPT-5.4 mini/GPT-5.5 上下文窗口元数据，以匹配当前 OpenAI 限制（[#5644](https://github.com/earendil-works/pi/issues/5644)）。
+- 将 OpenAI Codex Responses SSE 响应头超时增加到 20 秒，以减少误报暂停，同时保留为零事件挂起引入的有界等待（[#4945](https://github.com/earendil-works/pi/issues/4945)）。
+- 修复了 Anthropic 拒绝停止，在错误消息中保留 Provider 的 `stop_details` 说明（[#5666](https://github.com/earendil-works/pi/pull/5666)，感谢 [@rwachtler](https://github.com/rwachtler)）。
+- 修复了 Claude Fable 5 关闭 thinking 请求，省略了 Anthropic 不支持的 `thinking.type: "disabled"` 负载（[#5567](https://github.com/earendil-works/pi/pull/5567)，感谢 [@tmustier](https://github.com/tmustier)）。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+修复
+
+- 修复了工具执行后延迟的 tool progress 回调在工具结算后被忽略的问题，而非发出陈旧的 `tool_execution_update` 事件（[#5573](https://github.com/earendil-works/pi/issues/5573)）。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+修复
+
+- 修复了 Markdown 源码列表标记保留，使无序标记也能被保留，这样独立的 `+` 用户消息不再渲染为 `-`（[#5657](https://github.com/earendil-works/pi/issues/5657)）。
+- 修复了斜杠分隔的模糊查询，使 Provider/模型补全在插入后仍可匹配。
+- 修复了 WezTerm 内联 Kitty 图片渲染，使保留行清除不再擦除除顶部条带之外的所有工具图片预览（[#5618](https://github.com/earendil-works/pi/issues/5618)）。
+- 修复了 CJK 编辑器换行，使其在字符边界处断行而非留下较大的尾部空白（[#5585](https://github.com/earendil-works/pi/pull/5585)，感谢 [@haoqixu](https://github.com/haoqixu)）。
+- 修复了宽松 Markdown 列表渲染，保留了列表项之间的空行分隔（[#5562](https://github.com/earendil-works/pi/pull/5562)，感谢 [@Perlence](https://github.com/Perlence)）。
+
+</details>
+
 ## v0.79.1（2026-06-09）
 
 <details>
