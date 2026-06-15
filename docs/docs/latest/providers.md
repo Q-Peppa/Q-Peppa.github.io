@@ -123,9 +123,11 @@ pi
   { "type": "api_key", "key": "$$literal-dollar-prefix" }
   { "type": "api_key", "key": "$!literal-bang-prefix" }
   ```
-- **字面值：** 其他任何值都是普通字符串。`"public"` 是用于不需要认证的 Provider 的有效字面值 API Key。
-
-旧版大写环境变量格式的值（如 `MY_API_KEY`）会在启动时自动迁移为 `$MY_API_KEY`。
+- **字面值：** 直接使用。纯大写字符串如 `MY_API_KEY` 是字面量；使用 `$MY_API_KEY` 表示环境变量。
+  ```json
+  { "type": "api_key", "key": "sk-ant-..." }
+  { "type": "api_key", "key": "public" }
+  ```
 
 OAuth 凭证在使用 `/login` 后也会存储在这里，并自动管理。
 

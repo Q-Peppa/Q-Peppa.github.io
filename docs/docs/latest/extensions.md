@@ -213,6 +213,12 @@ export default async function (pi: ExtensionAPI) {
 
 这种模式使得获取的模型在正常启动期间和 `pi --list-models` 中都可用。
 
+### 长生命周期资源与关闭
+
+扩展工厂函数可能在从不启动会话的调用中运行。不要从工厂启动后台资源，如进程、socket、文件监视器或定时器。
+
+将后台资源启动推迟到 `session_start` 或需要该资源的命令/工具/事件。注册一个幂等的 `session_shutdown` 处理程序来关闭您启动的任何会话级资源。
+
 ### 扩展风格
 
 **单文件**——最简单，适用于小型扩展：
@@ -468,7 +474,7 @@ pi.on('session_tree', async (event, ctx) => {
 
 #### session_shutdown
 
-在扩展运行时被销毁前触发。
+在已启动的会话运行时被销毁前触发。用于清理从 `session_start` 或其他会话级钩子中打开的资源。
 
 ```typescript
 pi.on('session_shutdown', async (event, ctx) => {
@@ -1534,20 +1540,21 @@ const result = await pi.exec('git', ['status'], { signal, timeout: 5000 });
 
 ### pi.getActiveTools() / pi.getAllTools() / pi.setActiveTools(names)
 
-管理活动工具。适用于内置工具和动态注册的工具。
+管理活动工具。适用于内置工具和动态注册的工具。`pi.getActiveTools()` 返回活跃工具名称，类型为 `string[]`；`pi.getAllTools()` 返回所有已配置工具的元数据。
 
 ```typescript
-const active = pi.getActiveTools();
+const active = pi.getActiveTools(); // ["read", "bash", ...]
 const all = pi.getAllTools();
-// [{
+// all = [{
 //   name: "read",
 //   description: "读取文件内容...",
 //   parameters: ...,
+//   promptGuidelines: ["Use read to examine files instead of cat or sed."],
 //   sourceInfo: { path: "<builtin:read>", source: "builtin", scope: "temporary", origin: "top-level" }
 // }, ...]
-const names = all.map((t) => t.name);
 const builtinTools = all.filter((t) => t.sourceInfo.source === 'builtin');
 const extensionTools = all.filter((t) => t.sourceInfo.source !== 'builtin' && t.sourceInfo.source !== 'sdk');
+pi.setActiveTools([...new Set([...active, 'my_custom_tool'])]); // 保留当前工具并启用 my_custom_tool
 pi.setActiveTools(['read', 'bash']); // 切换到只读
 ```
 

@@ -2,6 +2,65 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.79.4（2026-06-15）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **首次运行自动主题选择** — pi 在首次运行时会检测终端背景，并默认使用 `dark` 或 `light` 主题。参见 [选择主题](/docs/latest/themes#selecting-a-theme)。
+- **独立二进制完整性校验** — GitHub 发布资源现在包含 `SHA256SUMS` 文件，用于校验独立二进制下载。参见 [快速开始安装](/docs/latest/quickstart#install)。
+
+新增
+
+- 为独立二进制 GitHub 发布资源添加了 `SHA256SUMS` 完整性文件（[#5739](https://github.com/earendil-works/pi/issues/5739)）。
+- 添加了首次运行时通过终端背景检测进行交互式主题选择（[#5385](https://github.com/earendil-works/pi/pull/5385)，感谢 [@vegarsti](https://github.com/vegarsti)）。
+
+修复
+
+- 修复了 bash 工具输出收集，在子进程退出但后代仍在写入时继续排空 stdout/stderr，避免截断延迟输出（[#5753](https://github.com/earendil-works/pi/pull/5753)，感谢 [@Mearman](https://github.com/Mearman)）。
+- 修复了 `/tree` 帮助渲染，在窄终端上显示紧凑的换行控件而非截断（[#5055](https://github.com/earendil-works/pi/issues/5055)）。
+- 修复了 SIGTERM/SIGHUP 交互式关闭，在终端清理完成前保持信号处理程序安装，防止 `signal-exit` 重新发送信号并导致终端停留在 raw/Kitty 键盘模式（[#5724](https://github.com/earendil-works/pi/issues/5724)）。
+- 修复了扩展文档，澄清 `pi.getActiveTools()` 返回活跃工具名称，而 `pi.getAllTools()` 返回工具元数据（[#5729](https://github.com/earendil-works/pi/issues/5729)）。
+- 修复了 question 和 questionnaire 扩展示例，对长 Prompt、选项和帮助文本进行换行而非截断（[#5708](https://github.com/earendil-works/pi/pull/5708)，感谢 [@xl0](https://github.com/xl0)）。
+- 修复了 `pi list`、`pi install` 和 `pi update` 等包命令，在完成后即使扩展留下后台句柄也能正常终止（[#5687](https://github.com/earendil-works/pi/issues/5687)）。
+- 修复了 pnpm 全局安装的 `pi update`，当其配置的 `global-bin-dir` 与活动的 pnpm home 不匹配时（[#5689](https://github.com/earendil-works/pi/issues/5689)）。
+- 修复了使用范围或标签（如 `@^1.2.7`）的 npm 包规范，使已安装的包资源仍能加载，而不会被视为不匹配的确切固定版本（[#5695](https://github.com/earendil-works/pi/issues/5695)）。
+- 修复了继承的 Anthropic 1 小时 Prompt 缓存写入成本计算，将 1 小时缓存写入定价为 2 倍输入，而非 5 分钟缓存写入费率（[#5738](https://github.com/earendil-works/pi/pull/5738)，感谢 [@theBucky](https://github.com/theBucky)）。
+- 修复了继承的 GitHub Copilot Claude adaptive thinking 元数据，以匹配手动检查的 Copilot 模型能力（[#4637](https://github.com/earendil-works/pi/issues/4637)）。
+- 修复了继承的 OpenCode/OpenCode Go 补全模型元数据，对拒绝 `prompt_cache_retention` 的路由省略长保留缓存字段（[#5702](https://github.com/earendil-works/pi/issues/5702)）。
+- 修复了继承的 overlay 在 CJK 宽字符上的合成，使 overlay 在全宽单元格内开始时边框保持对齐（[#5297](https://github.com/earendil-works/pi/issues/5297)）。
+- 修复了继承的 WezTerm 内联 Kitty 图片在全量重绘回退期间的渲染，在绘制之前预留图片填充行，且不回归高图放置（[#5618](https://github.com/earendil-works/pi/issues/5618)、[#4415](https://github.com/earendil-works/pi/issues/4415)）。
+- 修复了自定义 Provider 配置，使纯大写 API key 和 header 值保持为字面量而非被视为旧版环境变量引用；使用显式的 `$ENV_VAR` 语法表示环境变量（[#5661](https://github.com/earendil-works/pi/issues/5661)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+修复
+
+- 修复了 Anthropic 1 小时 Prompt 缓存写入成本计算，将 1 小时缓存写入定价为 2 倍输入，而非 5 分钟缓存写入费率（[#5738](https://github.com/earendil-works/pi/pull/5738)，感谢 [@theBucky](https://github.com/theBucky)）。
+- 修复了 GitHub Copilot Claude adaptive thinking 元数据，以匹配手动检查的 Copilot 模型能力（[#4637](https://github.com/earendil-works/pi/issues/4637)）。
+- 修复了拒绝 `prompt_cache_retention` 的 OpenCode/OpenCode Go 补全模型，在 `cacheRetention` 为 `long` 时省略长保留缓存字段（[#5702](https://github.com/earendil-works/pi/issues/5702)）。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+新增
+
+- 添加了终端背景色查询支持，用于 OSC 11 回复（[#5385](https://github.com/earendil-works/pi/pull/5385)，感谢 [@vegarsti](https://github.com/vegarsti)）。
+
+修复
+
+- 修复了 overlay 在 CJK 宽字符上的合成，使 overlay 在全宽单元格内开始时边框保持对齐（[#5297](https://github.com/earendil-works/pi/issues/5297)）。
+- 修复了 WezTerm 内联 Kitty 图片在全量重绘回退期间的渲染，在绘制之前预留图片填充行，且不回归高图放置（[#5618](https://github.com/earendil-works/pi/issues/5618)、[#4415](https://github.com/earendil-works/pi/issues/4415)）。
+
+</details>
+
 ## v0.79.3（2026-06-13）
 
 <details>
