@@ -5,6 +5,7 @@ import { pluginGoogleAnalytics } from 'rsbuild-plugin-google-analytics';
 const SITE_URL = 'https://pi-doc.com';
 
 export default defineConfig({
+  llms: true,
   builderConfig: {
     plugins: [
       pluginGoogleAnalytics({
@@ -24,32 +25,6 @@ export default defineConfig({
     output: {
       // 对 JS 产物使用内容哈希，最大化浏览器缓存命中率
       filenameHash: true,
-    },
-    html: {
-      tags: [
-        {
-          tag: 'script',
-          children: `var _hmt = _hmt || [];
-(function() {
-  var hm = document.createElement("script");
-  hm.src = "https://hm.baidu.com/hm.js?3873eeac604350a6d04903cde2d9e64b";
-  var s = document.getElementsByTagName("script")[0];
-  s.parentNode.insertBefore(hm, s);
-})();`,
-          head: true,
-        },
-        {
-          tag: 'script',
-          children: `var _hmt = _hmt || [];
-(function() {
-  var hm = document.createElement("script");
-  hm.src = "https://hm.baidu.com/hm.js?9a9cdab657ea4999c9c12dbd6111ec44";
-  var s = document.getElementsByTagName("script")[0];
-  s.parentNode.insertBefore(hm, s);
-})();`,
-          head: true,
-        },
-      ],
     },
   },
   // 搜索优化：不索引代码块内容，减小搜索索引体积
@@ -167,7 +142,11 @@ export default defineConfig({
             { text: 'tmux', link: '/docs/latest/tmux' },
             { text: 'Terminal Setup', link: '/docs/latest/terminal-setup' },
             { text: 'Shell Aliases', link: '/docs/latest/shell-aliases' },
-            { text: 'Containerization', link: '/docs/latest/containerization', tag: 'new' },
+            {
+              text: 'Containerization',
+              link: '/docs/latest/containerization',
+              tag: 'new',
+            },
           ],
         },
         {
