@@ -53,9 +53,11 @@ pi
 | Provider                             | 环境变量                                                                   | `auth.json` key          |
 | ------------------------------------ | -------------------------------------------------------------------------- | ------------------------ |
 | Anthropic                            | `ANTHROPIC_API_KEY`                                                        | `anthropic`              |
+| Ant Ling                             | `ANT_LING_API_KEY`                                                         | `ant-ling`               |
 | Azure OpenAI Responses               | `AZURE_OPENAI_API_KEY`                                                     | `azure-openai-responses` |
 | OpenAI                               | `OPENAI_API_KEY`                                                           | `openai`                 |
 | DeepSeek                             | `DEEPSEEK_API_KEY`                                                         | `deepseek`               |
+| NVIDIA NIM                           | `NVIDIA_API_KEY`                                                           | `nvidia`                 |
 | Google Gemini                        | `GEMINI_API_KEY`                                                           | `google`                 |
 | Mistral                              | `MISTRAL_API_KEY`                                                          | `mistral`                |
 | Groq                                 | `GROQ_API_KEY`                                                             | `groq`                   |
@@ -66,6 +68,7 @@ pi
 | OpenRouter                           | `OPENROUTER_API_KEY`                                                       | `openrouter`             |
 | Vercel AI Gateway                    | `AI_GATEWAY_API_KEY`                                                       | `vercel-ai-gateway`      |
 | ZAI                                  | `ZAI_API_KEY`                                                              | `zai`                    |
+| ZAI Coding Plan（中国）              | `ZAI_CODING_CN_API_KEY`                                                    | `zai-coding-cn`          |
 | OpenCode Zen                         | `OPENCODE_API_KEY`                                                         | `opencode`               |
 | OpenCode Go                          | `OPENCODE_API_KEY`                                                         | `opencode-go`            |
 | Hugging Face                         | `HF_TOKEN`                                                                 | `huggingface`            |
@@ -88,8 +91,10 @@ pi
 ```json
 {
   "anthropic": { "type": "api_key", "key": "sk-ant-..." },
+  "ant-ling": { "type": "api_key", "key": "..." },
   "openai": { "type": "api_key", "key": "sk-..." },
   "deepseek": { "type": "api_key", "key": "sk-..." },
+  "nvidia": { "type": "api_key", "key": "nvapi-..." },
   "google": { "type": "api_key", "key": "..." },
   "opencode": { "type": "api_key", "key": "..." },
   "opencode-go": { "type": "api_key", "key": "..." },
@@ -102,6 +107,24 @@ pi
 ```
 
 文件以 `0600` 权限创建（仅用户可读写）。Auth 文件凭证优先于环境变量。
+
+API Key 凭证还可以包含 Provider 作用域的环境变量值。在解析凭证 Key、Provider/模型请求头和 Provider 配置（如 Cloudflare 账户 ID、Azure OpenAI 设置、Vertex 项目/区域、Bedrock 设置、`PI_CACHE_RETENTION` 和 `HTTP_PROXY`/`HTTPS_PROXY`）时，这些值会优先于进程环境变量。
+
+```json
+{
+  "cloudflare-ai-gateway": {
+    "type": "api_key",
+    "key": "$CLOUDFLARE_API_KEY",
+    "env": {
+      "CLOUDFLARE_API_KEY": "...",
+      "CLOUDFLARE_ACCOUNT_ID": "account-id",
+      "CLOUDFLARE_GATEWAY_ID": "gateway-id"
+    }
+  }
+}
+```
+
+当 Pi 应使用与项目 Shell 环境不同的 Provider 设置时，可使用此功能。
 
 ### Key 解析
 
@@ -193,7 +216,7 @@ export AWS_BEDROCK_FORCE_HTTP1=1
 
 ### Cloudflare AI Gateway
 
-`CLOUDFLARE_API_KEY` 可通过 `/login` 设置。账户 ID 和网关 slug 必须通过环境变量设置。
+`CLOUDFLARE_API_KEY` 可通过 `/login` 设置。账户 ID 和网关 slug 可通过环境变量或 API Key 凭证中的 `env` 对象在 `auth.json` 中设置。
 
 ```bash
 export CLOUDFLARE_API_KEY=...           # 或使用 /login
@@ -217,7 +240,7 @@ AI Gateway 认证使用 `CLOUDFLARE_API_KEY` 作为 `cf-aig-authorization`。上
 
 ### Cloudflare Workers AI
 
-`CLOUDFLARE_API_KEY` 可通过 `/login` 设置。`CLOUDFLARE_ACCOUNT_ID` 必须通过环境变量设置。
+`CLOUDFLARE_API_KEY` 可通过 `/login` 设置。`CLOUDFLARE_ACCOUNT_ID` 可通过环境变量或 API Key 凭证中的 `env` 对象在 `auth.json` 中设置。
 
 ```bash
 export CLOUDFLARE_API_KEY=...           # 或使用 /login
