@@ -2,6 +2,93 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.79.6（2026-06-16）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+修复
+
+- 修复了 HTTP dispatcher 配置，保留调用者显式设置的 `fetch` 覆盖，而非在其上重新安装 undici 全局 fetch。
+- 修复了继承的 OpenCode Go DeepSeek V4 关闭 thinking 的请求，发送 Provider 的 `thinking: { type: "disabled" }` 兼容参数。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+修复
+
+- 修复了 OpenCode Go DeepSeek V4 关闭 thinking 的请求，发送 Provider 的 `thinking: { type: "disabled" }` 兼容参数。
+
+</details>
+
+## v0.79.5（2026-06-16）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **Provider 级别的 API 密钥环境变量** — `auth.json` 的 API 密钥条目现在可以包含 `env` 覆盖，用于特定 Provider 的 Cloudflare、Azure OpenAI、Google Vertex、Amazon Bedrock、缓存保留和代理设置，无需修改项目 shell。参见 [Auth File](/docs/latest/providers#auth-file)。
+- **全局 HTTP 代理设置** — 在全局设置中配置 `httpProxy` 即可将 `HTTP_PROXY` 和 `HTTPS_PROXY` 应用于 Pi 管理的 HTTP 客户端。参见 [网络](/docs/latest/settings#network)。
+- **Vercel AI Gateway 归属** — Vercel AI Gateway 请求现在默认包含 Pi 归属头部。参见 [API Keys](/docs/latest/providers#api-keys)。
+
+新增
+
+- 为 Vercel AI Gateway 模型添加了请求归属头部（`http-referer` 和 `x-title`）（[#5798](https://github.com/earendil-works/pi/pull/5798)，感谢 [@rwachtler](https://github.com/rwachtler)）。
+- 在启用实验性功能时添加了 `xp` 页脚标记。
+- 添加了全局 `httpProxy` 设置，作为 `HTTP_PROXY` 和 `HTTPS_PROXY` 应用于 Pi 管理的 HTTP 客户端（[#5790](https://github.com/earendil-works/pi/issues/5790)）。
+- 添加了 `auth.json` API 密钥 `env` 值，使特定 Provider 的环境覆盖可以限定在 Pi 范围内，并传播到继承的 Provider 配置（[#5728](https://github.com/earendil-works/pi/issues/5728)）。
+
+变更
+
+- 将 HTML 会话导出使用的 Markdown 解析器更新为 `marked` 18.0.5。
+
+修复
+
+- 修复了继承的 OpenAI Responses 流式响应，在工具调用前容忍 OpenAI 兼容服务器返回的 null 消息内容（[#5819](https://github.com/earendil-works/pi/issues/5819)）。
+- 修复了继承的 OpenCode DeepSeek V4 thinking 请求，避免同时发送 `thinking` 和 `reasoning_effort`（[#5818](https://github.com/earendil-works/pi/issues/5818)）。
+- 修复了设备码登录，不再自动打开浏览器。
+- 修复了继承的编辑器 Cursor Up 处理，非空草稿在浏览输入历史前先跳转到行首（[#5789](https://github.com/earendil-works/pi/pull/5789)，感谢 [@4h9fbZ](https://github.com/4h9fbZ)）。
+- 修复了继承的 Z.AI GLM-5.2 thinking 请求，发送 `reasoning_effort` 时使用 Provider 的 `high`/`max` 努力映射（[#5770](https://github.com/earendil-works/pi/issues/5770)）。
+- 修复了 Windows 上 `pi update` 成功后的退出，改为自然退出而非调用 `process.exit(0)`，避免版本检查网络请求后的 Node.js/libuv 断言（[#5805](https://github.com/earendil-works/pi/issues/5805)）。
+- 修复了继承的 Google 和 `google-vertex` Gemini 模型元数据，将 `latest` 别名映射到当前模型，为 Vertex 添加 Gemini 3.5 Flash，修正 Gemini 2.5 Flash Vertex 缓存定价，并移除已关闭的 Vertex 预览模型（[#5761](https://github.com/earendil-works/pi/issues/5761)）。
+- 修复了会话选择器，在当前文件夹和全部范围会话列表均为空时保持打开并显示空状态（[#5747](https://github.com/earendil-works/pi/issues/5747)）。
+- 修复了继承的 Moonshot AI China 模型元数据，包含 Kimi K2.7 Code，并针对 Kimi K2.7 Code 模型省略不支持的关闭 thinking 载荷（[#5760](https://github.com/earendil-works/pi/issues/5760)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 添加了 Provider 级别的 `StreamOptions.env` 覆盖，用于 Provider 配置，包括 Cloudflare 端点占位符、Azure OpenAI、Google Vertex、Amazon Bedrock、缓存保留和代理环境变量查找（[#5728](https://github.com/earendil-works/pi/issues/5728)）。
+
+修复
+
+- 修复了 OpenAI Responses 流式响应，在工具调用前容忍 OpenAI 兼容服务器返回的 null 消息内容（[#5819](https://github.com/earendil-works/pi/issues/5819)）。
+- 修复了 OpenCode DeepSeek V4 thinking 请求，避免同时发送 `thinking` 和 `reasoning_effort`（[#5818](https://github.com/earendil-works/pi/issues/5818)）。
+- 修复了 Z.AI GLM-5.2 thinking 请求，发送 `reasoning_effort` 时使用 Provider 的 `high`/`max` 努力映射（[#5770](https://github.com/earendil-works/pi/issues/5770)）。
+- 修复了 Google 和 `google-vertex` Gemini 模型元数据，将 `latest` 别名映射到当前模型，为 Vertex 添加 Gemini 3.5 Flash，修正 Gemini 2.5 Flash Vertex 缓存定价，并移除已关闭的 Vertex 预览模型（[#5761](https://github.com/earendil-works/pi/issues/5761)）。
+- 修复了 Moonshot AI China 模型元数据，包含 Kimi K2.7 Code，并针对 Kimi K2.7 Code 模型省略不支持的关闭 thinking 载荷（[#5760](https://github.com/earendil-works/pi/issues/5760)）。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+变更
+
+- 将 Markdown 解析更新为 `marked` 18.0.5。
+
+修复
+
+- 修复了编辑器 Cursor Up 处理，非空草稿在浏览输入历史前先跳转到行首（[#5789](https://github.com/earendil-works/pi/pull/5789)，感谢 [@4h9fbZ](https://github.com/4h9fbZ)）。
+
+</details>
+
 ## v0.79.4（2026-06-15）
 
 <details>
