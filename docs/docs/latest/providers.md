@@ -5,7 +5,12 @@
 Pi 支持两类 Provider：基于订阅的（通过 OAuth）和 API Key 型（通过环境变量或 auth 文件）。对于每个 Provider，Pi 知道所有可用的模型。模型列表随每次 Pi 发布更新。
 
 :::tip 推广
-使用 [OpenCode](https://opencode.ai/go?ref=WGY3CR98Z0) 订阅 AI 服务可额外获得 **5 美元**！
+🚀 使用 [OpenCode](https://opencode.ai/go?ref=WGY3CR98Z0) 订阅 AI 服务可额外获得 **5 美元**！
+:::
+
+:::tip 推广
+🚀 [方舟 Coding Plan](https://volcengine.com/L/tKuFUmjCbSw/) 最新支持 **GLM-5.2、DeepSeek-V4 系列、Kimi-K2.6、Kimi-K2.7-Code** 等模型，工具不限！
+
 :::
 
 ## 目录
