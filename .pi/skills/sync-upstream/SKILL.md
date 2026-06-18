@@ -280,11 +280,11 @@ if [ "$NEW_VER_COUNT" -eq 0 ] && [ "$DOCS_COUNT" -eq 0 ] && [ "$IMAGE_COUNT" -eq
 fi
 
 # 输出 CURRENT_HEAD 供后续步骤使用（提交时更新状态文件）
-# 同时落盘到 ./.pi/sync-head，避免提交步骤靠人工回填 40 位 SHA（消除人工环节）
+# 落盘到 ./.pi/sync-head（临时文件，已加入 .gitignore，不入库），避免提交步骤靠人工回填 40 位 SHA
 echo "$CURRENT_HEAD" > "$TRANSLATION_ROOT/.pi/sync-head"
 echo ""
-echo ">>> 探测完成，CURRENT_HEAD 已写入 ./.pi/sync-head"
-echo ">>> 「提交并推送」步骤会读取该文件更新 ./.pi/sync-state"
+echo ">>> 探测完成，CURRENT_HEAD 已写入 ./.pi/sync-head（临时文件，不入库）"
+echo ">>> 「提交并推送」步骤会读取该文件更新 ./.pi/sync-state，并在提交后清理它"
 ```
 
 **零变更输出时** → 停止，告知用户同步已完成，**严禁**：❌ 强行走 A/B ❌ 空 commit ❌ 翻译源站不存在的内容。
@@ -525,7 +525,7 @@ pnpm run build
 
 > ⚠️ **必须更新状态文件**：用步骤 0 探测出的 `CURRENT_HEAD` 覆盖 `./.pi/sync-state`，
 > 否则下次同步会重复处理本次已同步的变更。`CURRENT_HEAD` 已由步骤 0 落盘到
-> `./.pi/sync-head`，本步骤读取它，无需人工回填。
+> `./.pi/sync-head`（临时文件，已加入 `.gitignore`），本步骤读取它，无需人工回填。
 
 ```bash
 # 步骤 0 已将 CURRENT_HEAD 写入 ./.pi/sync-head；缺失时回退到源站 HEAD
@@ -538,6 +538,8 @@ fi
 echo "将推进基线至: ${CURRENT_HEAD}"
 
 echo "$CURRENT_HEAD" > ./.pi/sync-state
+# sync-head 是临时文件（已 gitignore），不入库，提交前清理
+rm -f ./.pi/sync-head
 git add -A
 git commit -m "sync: 同步源站文档更新"
 git push
