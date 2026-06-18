@@ -1111,7 +1111,8 @@ DefaultResourceLoader
 type ResourceLoader
 createEventBus
 
-// 帮助函数
+// 常量与帮助函数
+CONFIG_DIR_NAME
 defineTool
 getAgentDir
 getPackageDir

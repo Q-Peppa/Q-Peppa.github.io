@@ -140,7 +140,7 @@ vim ~/.pi/agent/themes/my-theme.json
 }
 ```
 
-- `name`：必需，必须唯一。
+- `name`：必需，必须唯一，且不能包含 `/`。
 - `vars`：可选。在此定义可复用的颜色，然后在 `colors` 中引用。
 - `colors`：必须定义全部 51 个 token。
 - `$schema` 字段启用编辑器自动补全和验证。

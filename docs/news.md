@@ -2,6 +2,59 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.79.7（2026-06-18）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **自动主题模式** — `/settings` 现在可以选择独立的亮色和暗色主题，并跟随终端配色方案的变化。参见 [Selecting a Theme](/docs/latest/themes#selecting-a-theme)。
+- **默认仅更新自身** — `pi update` 现在仅更新 pi，使用 `pi update --all` 可同时更新 pi 和扩展包。参见 [Install and Manage](/docs/latest/packages#install-and-manage)。
+- **扩展 API 辅助工具** — 扩展可以使用 `CONFIG_DIR_NAME` 获取项目配置路径，并导入编辑差异辅助工具生成编辑式差异。参见 [`ctx.cwd`](/docs/latest/extensions#ctxcwd) 和 [SDK Exports](/docs/latest/sdk#exports)。
+- **Warp 内联图片** — Warp 终端现在通过 Kitty 图形检测获得内联图片渲染。参见 [Image](/docs/latest/tui#image)。
+
+新增
+
+- 添加了自动主题模式，使 `/settings` 可以使用独立的亮色和暗色主题并跟随终端配色方案变化（[#5874](https://github.com/earendil-works/pi/pull/5874)）。
+- 添加了继承的 Warp 终端图片能力检测，使内联图片通过 Warp 的 Kitty 图形支持渲染（[#5841](https://github.com/earendil-works/pi/pull/5841)，感谢 [@dodiego](https://github.com/dodiego)）。
+- 从 coding-agent 公共 API 导出了 `CONFIG_DIR_NAME`，使扩展可以解析项目配置路径而无需硬编码 `.pi`（[#5869](https://github.com/earendil-works/pi/pull/5869)，感谢 [@xl0](https://github.com/xl0)）。
+- 从公共 API 导出了编辑差异辅助工具（`generateDiffString`、`generateUnifiedPatch` 和 `EditDiffResult`），供需要编辑式差异的扩展使用（[#5756](https://github.com/earendil-works/pi/pull/5756)，感谢 [@xl0](https://github.com/xl0)）。
+
+变更
+
+- 将裸 `pi update` 改为仅更新 pi，添加 `pi update --all` 用于同时更新 pi 和扩展，并澄清了扩展更新提示。
+- 在主题名称中保留 `/` 用于自动亮/暗主题设置。
+- 更新了扩展文档、示例、运行时帮助、信任提示和配置标签，使用配置的项目配置目录而非硬编码 `.pi` 路径。
+
+修复
+
+- 修复了 RPC 未知命令错误，使其包含请求 id，避免客户端挂起等待响应（[#5868](https://github.com/earendil-works/pi/issues/5868)）。
+- 修复了 `/model` 自动补全和模型选择搜索，无论先输入 Provider 还是模型 token 都能匹配 Provider/模型查询。
+- 修复了树形导航器，对深层条目进行水平平移，使选中项保持可读（[#5830](https://github.com/earendil-works/pi/issues/5830)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 为 OpenCode Go 订阅模型目录添加了 GLM-5.2 模型（[#5860](https://github.com/earendil-works/pi/issues/5860)）。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+新增
+
+- 添加了终端配色方案查询和通知支持，用于亮/暗外观检测（`TUI.queryTerminalColorScheme()`、`TUI.onTerminalColorSchemeChange()` 和 `TUI.setTerminalColorSchemeNotifications()`）（[#5874](https://github.com/earendil-works/pi/pull/5874)）。
+- 添加了 Warp 终端检测以支持 Kitty 图形内联图片（[#5841](https://github.com/earendil-works/pi/pull/5841)，感谢 [@dodiego](https://github.com/dodiego)）。
+- 导出了 `sliceByColumn`，用于感知 ANSI 的水平列切片。
+
+</details>
+
 ## v0.79.6（2026-06-16）
 
 <details>

@@ -897,6 +897,20 @@ pi.on('input', async (event, ctx) => {
 
 当前工作目录。
 
+构造项目本地配置路径时，请使用 `CONFIG_DIR_NAME` 而非硬编码 `.pi`。重新分发的发行版可以使用不同的配置目录名。
+
+```typescript
+import { CONFIG_DIR_NAME, type ExtensionAPI } from '@earendil-works/pi-coding-agent';
+import { join } from 'node:path';
+
+export default function (pi: ExtensionAPI) {
+  pi.on('session_start', (_event, ctx) => {
+    const projectConfigPath = join(ctx.cwd, CONFIG_DIR_NAME, 'my-extension.json');
+    // ...
+  });
+}
+```
+
 ### ctx.isProjectTrusted()
 
 返回项目本地信任在当前会话上下文中是否生效。这包括临时信任决策和 CLI 信任覆盖，而不仅仅是全局信任存储中保存的决策。

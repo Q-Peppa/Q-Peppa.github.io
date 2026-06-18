@@ -30,7 +30,8 @@ pi install ./relative/path/to/package
 
 pi remove npm:@foo/bar
 pi list                                           # 从设置中显示已安装的包
-pi update                    # 更新 Pi、更新包并协调固定的 git ref
+pi update                    # 仅更新 Pi
+pi update --all              # 更新 Pi、更新包并协调固定的 git ref
 pi update --extensions       # 更新包并协调固定的 git ref
 pi update --self             # 仅更新 Pi
 pi update --self --force     # 即使已是最新也重新安装 Pi
@@ -38,7 +39,7 @@ pi update npm:@foo/bar       # 更新一个包
 pi update --extension npm:@foo/bar
 ```
 
-这些命令管理 Pi 包，而非 Pi CLI 安装本身。要卸载 Pi 本身，请参阅 [Quickstart](quickstart.mdx#卸载)。
+这些命令管理 Pi 包，且 `pi update` 可以更新 Pi CLI 安装本身。要卸载 Pi 本身，请参阅 [Quickstart](quickstart.mdx#卸载)。
 
 默认情况下 `install` 和 `remove` 写入全局设置（`~/.pi/agent/settings.json`）。使用 `-l` 写入项目设置（`.pi/settings.json`）。项目设置可分享给团队，Pi 启动时会在项目被信任后自动安装任何缺失的包。
 
@@ -60,7 +61,7 @@ npm:@scope/pkg@1.2.3
 npm:pkg
 ```
 
-- 版本化规格会被固定，跳过包更新（`pi update`、`pi update --extensions`）。
+- 版本化规格会被固定，跳过包更新（`pi update --extensions`、`pi update --all`）。
 - 全局安装位于 `~/.pi/agent/npm/` 下。
 - 项目安装位于 `.pi/npm/` 下。
 - 在 `settings.json` 中设置 `npmCommand`，可将 npm 包的查找和安装操作固定到特定的包装命令，如 `mise` 或 `asdf`。
@@ -87,7 +88,7 @@ ssh://git@github.com/user/repo@v1
 - 支持 HTTPS 和 SSH URL。
 - SSH URL 自动使用你配置的 SSH 密钥（遵循 `~/.ssh/config`）。
 - 对于非交互式运行（如 CI），可设置 `GIT_TERMINAL_PROMPT=0` 禁用凭据提示，并设置 `GIT_SSH_COMMAND`（例如 `ssh -o BatchMode=yes -o ConnectTimeout=5`）以快速失败。
-- Ref 会被固定为 tag 或 commit。`pi update` 和 `pi update --extensions` 不会将其移动到更新的 ref，但会将已有克隆协调到配置的 ref。
+- Ref 会被固定为 tag 或 commit。`pi update --extensions` 和 `pi update --all` 不会将其移动到更新的 ref，但会将已有克隆协调到配置的 ref。
 - 使用 `pi install git:host/user/repo@new-ref` 更新设置并将已有包移动到新的固定 ref。
 - 克隆到 `~/.pi/agent/git/<host>/<path>`（全局）或 `.pi/git/<host>/<path>`（项目）。
 - 当协调改变了检出时，Pi 会重置并清理克隆，然后若存在 `package.json` 则运行 `npm install`。

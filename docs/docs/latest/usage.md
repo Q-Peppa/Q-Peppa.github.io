@@ -141,7 +141,8 @@ pi [options] [@files...] [messages...]
 pi install <source> [-l]     # 安装包，-l 为项目本地安装
 pi remove <source> [-l]      # 移除包
 pi uninstall <source> [-l]   # remove 的别名
-pi update [source|self|pi]   # 更新 Pi 和包；协调固定的 git ref
+pi update [source|self|pi]   # 仅更新 Pi，或更新单个包源
+pi update --all              # 更新 Pi 和包；协调固定的 git ref
 pi update --extensions       # 仅更新包；协调固定的 git ref
 pi update --self             # 仅更新 Pi
 pi update --extension <src>  # 更新单个包
@@ -149,7 +150,7 @@ pi list                      # 列出已安装的包
 pi config                    # 启用/禁用包资源
 ```
 
-这些命令管理 Pi 包，而非 Pi CLI 安装本身。要卸载 Pi 本身，请参阅 [Quickstart](quickstart)。`pi config` 与项目包命令接受 `--approve`/`--no-approve`，以便在单次命令中信任或忽略项目本地设置。`pi update` 从不提示项目信任。
+这些命令管理 Pi 包，且 `pi update` 可以更新 Pi CLI 安装本身。要卸载 Pi 本身，请参阅 [Quickstart](quickstart)。`pi config` 与项目包命令接受 `--approve`/`--no-approve`，以便在单次命令中信任或忽略项目本地设置。`pi update` 从不提示项目信任。
 
 包来源和安全说明请参阅 [Pi Packages](packages.md)。
 

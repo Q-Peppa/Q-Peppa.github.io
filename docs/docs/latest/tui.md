@@ -258,7 +258,7 @@ md.setText('Updated markdown');
 
 ### Image
 
-在支持的终端中渲染图像（Kitty、iTerm2、Ghostty、WezTerm）。
+在支持的终端中渲染图像（Kitty、iTerm2、Ghostty、WezTerm、Warp）。
 
 ```typescript
 const image = new Image(
