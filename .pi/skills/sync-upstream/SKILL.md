@@ -161,6 +161,8 @@ fi
 
 **`git pull` 失败时**：先 `git stash`，然后重新 `git pull --rebase`。
 
+**rebase 冲突时**（`git stash` 解决的是"未提交修改"，解决不了分叉冲突）：`git rebase --abort` 回到拉取前状态，**停止 skill**，告知用户源站存在 rebase 冲突需人工处理，**严禁** ❌ 强行 `git rebase --skip` ❌ 手动改源站文件强行解决。
+
 ---
 
 ## 步骤 0：统一探测（单次 bash 调用）
@@ -175,6 +177,9 @@ set -e
 # ── 0.1 读取基线 SHA（前置 0 已校验存在性，这里读值）──
 LAST_SYNC_SHA=$(cat ./.pi/sync-state | tr -d '[:space:]')
 echo "✅ 基线 SHA: ${LAST_SYNC_SHA}"
+
+# 记录翻译站根路径，供后续在源站目录内回写翻译站文件
+TRANSLATION_ROOT=$(pwd)
 
 cd ../pi-repo
 CURRENT_HEAD=$(git rev-parse HEAD)
@@ -275,8 +280,11 @@ if [ "$NEW_VER_COUNT" -eq 0 ] && [ "$DOCS_COUNT" -eq 0 ] && [ "$IMAGE_COUNT" -eq
 fi
 
 # 输出 CURRENT_HEAD 供后续步骤使用（提交时更新状态文件）
+# 同时落盘到 ./.pi/sync-head，避免提交步骤靠人工回填 40 位 SHA（消除人工环节）
+echo "$CURRENT_HEAD" > "$TRANSLATION_ROOT/.pi/sync-head"
 echo ""
-echo ">>> 探测完成，记得在「提交并推送」步骤用 ${CURRENT_HEAD} 更新 ./.pi/sync-state"
+echo ">>> 探测完成，CURRENT_HEAD 已写入 ./.pi/sync-head"
+echo ">>> 「提交并推送」步骤会读取该文件更新 ./.pi/sync-state"
 ```
 
 **零变更输出时** → 停止，告知用户同步已完成，**严禁**：❌ 强行走 A/B ❌ 空 commit ❌ 翻译源站不存在的内容。
@@ -314,6 +322,14 @@ echo ">>> 探测完成，记得在「提交并推送」步骤用 ${CURRENT_HEAD}
 ### A.3 翻译并写入 news.md
 
 **插入位置**：在 `## v{LAST_TRANSLATED_VER}（...）` 之前插入新版本条目，保持版本号降序。
+
+取翻译站当前最高版本号（确定插入锚点，避免人眼比对）：
+
+```bash
+sed -nE 's/^## v([0-9]+\.[0-9]+\.[0-9]+).*/\1/p' ./docs/news.md | head -1
+```
+
+若该命令输出为空（news.md 无任何已发布版本条目），按下面「news.md 为空」分支处理。
 
 **如果 news.md 为空或不存在**，先写入：
 
@@ -401,7 +417,8 @@ echo ">>> 探测完成，记得在「提交并推送」步骤用 ${CURRENT_HEAD}
 
 ```bash
 echo "=== 源站文档 ==="
-ls -1 ../pi-repo/packages/coding-agent/docs/*.md | xargs -I{} basename {} | sort
+ls -1 ../pi-repo/packages/coding-agent/docs/*.md ../pi-repo/packages/coding-agent/docs/*.mdx 2>/dev/null \
+  | xargs -I{} basename {} | sort
 
 echo ""
 echo "=== 翻译站文档 ==="
@@ -425,10 +442,29 @@ ls -1 ./docs/docs/latest/*.md ./docs/docs/latest/*.mdx 2>/dev/null \
 2. 逐段对比：标题层级、列表项完整性、代码示例一致性、表格完整性
 3. 同步源站新增/修改的内容到翻译站
 
-**图片同步**（当 `IMAGE_CHANGES > 0`）：
+**图片同步**（当 `IMAGE_CHANGES > 0`）：只同步步骤 0 报告的 `IMAGE_DIFF` 文件，不做全量覆盖（避免源站已删除的图在翻译站残留）。先在源站目录内取变更清单，再逐个 cp：
 
 ```bash
-cp ../pi-repo/packages/coding-agent/docs/images/* ./docs/public/images/
+# 在源站目录内执行：列出基线→HEAD 间变更的图片路径（相对源站根）
+cd ../pi-repo
+LAST_SYNC_SHA=$(cat "${OLDPWD}/.pi/sync-state" | tr -d '[:space:]')
+CURRENT_HEAD=$(git rev-parse HEAD)
+git diff --name-only "${LAST_SYNC_SHA}".."${CURRENT_HEAD}" -- packages/coding-agent/docs/images/ \
+  | awk 'NF' > /tmp/sync-image-diff
+# 回翻译站，逐个同步（含删除：源站删了的图，翻译站也删）
+cd - >/dev/null
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  rel="${f#packages/coding-agent/docs/}"   # images/xxx.png
+  src="../pi-repo/packages/coding-agent/docs/$rel"
+  dst="./docs/public/$rel"
+  if [ -f "$src" ]; then
+    mkdir -p "$(dirname "$dst")"
+    cp "$src" "$dst" && echo "✅ 同步图片: $rel"
+  else
+    [ -f "$dst" ] && rm -f "$dst" && echo "🗑️ 删除已移除图片: $rel"
+  fi
+done < /tmp/sync-image-diff
 ```
 
 ### B.3 翻译质量检查
@@ -488,12 +524,18 @@ pnpm run build
 ## 提交并推送
 
 > ⚠️ **必须更新状态文件**：用步骤 0 探测出的 `CURRENT_HEAD` 覆盖 `./.pi/sync-state`，
-> 否则下次同步会重复处理本次已同步的变更。
+> 否则下次同步会重复处理本次已同步的变更。`CURRENT_HEAD` 已由步骤 0 落盘到
+> `./.pi/sync-head`，本步骤读取它，无需人工回填。
 
 ```bash
-# 从步骤 0 的输出取 CURRENT_HEAD（40 位 SHA）
-# 如步骤 0 输出已丢失，可在源站重新获取：cd ../pi-repo && git rev-parse HEAD
-CURRENT_HEAD="<填入步骤 0 输出的 CURRENT_HEAD>"
+# 步骤 0 已将 CURRENT_HEAD 写入 ./.pi/sync-head；缺失时回退到源站 HEAD
+if [ -s ./.pi/sync-head ]; then
+  CURRENT_HEAD=$(cat ./.pi/sync-head | tr -d '[:space:]')
+else
+  echo "⚠️ ./.pi/sync-head 缺失，回退到源站当前 HEAD"
+  CURRENT_HEAD=$(git -C ../pi-repo rev-parse HEAD)
+fi
+echo "将推进基线至: ${CURRENT_HEAD}"
 
 echo "$CURRENT_HEAD" > ./.pi/sync-state
 git add -A
