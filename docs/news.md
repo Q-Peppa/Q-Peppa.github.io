@@ -2,6 +2,53 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.79.8（2026-06-19）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **选择性 Provider 基础入口** — SDK 用户可以将 `@earendil-works/pi-ai/base` 和 `@earendil-works/pi-agent-core/base` 与显式 Provider 注册配合使用，避免打包应用包含未使用的 Provider 传输层。参见 [`pi-ai` Base Entry Point](https://github.com/earendil-works/pi/blob/main/packages/ai/README.md#base-entry-point) 和 [`pi-agent-core` Base Entry Point](https://github.com/earendil-works/pi/blob/main/packages/agent/README.md#base-entry-point)。
+- **Mistral Prompt 缓存** — Mistral 会话现在使用 Provider 端的 Prompt 缓存，具备会话亲和性和缓存 Token 用量/成本核算。参见 [API Keys](/docs/latest/providers#api-keys) 和 [Environment Variables](/docs/latest/usage#environment-variables)。
+- **压缩后 Token 估算** — 压缩结果和压缩事件现在包含压缩后 Token 估算数，使客户端可以展示近似的上下文缩减量。参见 [RPC compact](/docs/latest/rpc#compact) 和 [compaction events](/docs/latest/rpc#compaction_start--compaction_end)。
+- **OpenRouter Fusion 别名** — `openrouter/fusion` 现可作为内置 OpenRouter 模型别名使用。参见 [API Keys](/docs/latest/providers#api-keys)。
+
+新增
+
+- 添加了继承的 `@earendil-works/pi-ai/base` 和 `@earendil-works/pi-agent-core/base` 入口点，用于打包应用中的选择性 Provider 注册（[#5348](https://github.com/earendil-works/pi/pull/5348)，感谢 [@FredKSchott](https://github.com/FredKSchott)）。
+- 添加了继承的 Mistral Prompt 缓存，使用 pi 会话 ID 作为 `prompt_cache_key`，包含缓存 Token 用量和成本核算（[#5854](https://github.com/earendil-works/pi/issues/5854)）。
+- 为压缩结果和压缩事件添加了压缩后 Token 估算数（[#5877](https://github.com/earendil-works/pi/issues/5877)）。
+- 添加了继承的 OpenRouter Fusion 别名 `openrouter/fusion`（[#5866](https://github.com/earendil-works/pi/pull/5866)，感谢 [@dannote](https://github.com/dannote)）。
+
+修复
+
+- 更新了存在漏洞的运行时依赖，包括 `undici` 和打包的 `protobufjs` 传递依赖。
+- 修复了压缩，使其拒绝没有合格消息的会话，而不是产生空摘要（[#4811](https://github.com/earendil-works/pi/issues/4811)）。
+- 修复了成功的溢出触发自动压缩，避免重试已完成的助手响应（[#5720](https://github.com/earendil-works/pi/issues/5720)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 添加了 `@earendil-works/pi-ai/base` 和直接 Provider 注册导出，供希望在不进行根内置注册的情况下选择性使用 Provider 传输层的打包工具使用（[#5348](https://github.com/earendil-works/pi/pull/5348)，感谢 [@FredKSchott](https://github.com/FredKSchott)）。
+- 添加了 Mistral 请求的 Prompt 缓存，使用 pi 会话 ID 作为 `prompt_cache_key`，包含缓存 Token 用量和成本核算（[#5854](https://github.com/earendil-works/pi/issues/5854)）。
+- 添加了 OpenRouter Fusion 别名 `openrouter/fusion`（[#5866](https://github.com/earendil-works/pi/pull/5866)，感谢 [@dannote](https://github.com/dannote)）。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+新增
+
+- 添加了 `@earendil-works/pi-agent-core/base`，供希望将 agent core 与选择性 `@earendil-works/pi-ai/base` Provider 注册配合使用的打包工具使用（[#5348](https://github.com/earendil-works/pi/pull/5348)，感谢 [@FredKSchott](https://github.com/FredKSchott)）。
+
+</details>
+
 ## v0.79.7（2026-06-18）
 
 <details>
