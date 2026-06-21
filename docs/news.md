@@ -2,6 +2,67 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.79.9（2026-06-20）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **Chat-template thinking 兼容** — OpenAI 兼容的自定义 Provider 可以将 Pi 的 thinking 等级映射到 `chat_template_kwargs`，使基于 vLLM/Hugging Face chat-template 的模型（如 DeepSeek）能够使用 Provider 原生的 thinking 控制。参见 [Custom Provider API Types](/docs/latest/custom-provider#api-types) 和 [OpenAI Compatibility](/docs/latest/models#openai-compatibility)。
+- **GLM-5.2 Provider 改进** — GLM-5.2 现在修正了 Fireworks OpenAI 兼容路由，并支持 OpenRouter `xhigh` thinking，使 GLM-5.2 用户在 `/model` 行为和高强度推理方面体验更佳。参见 [Model Options](/docs/latest/usage#model-options)。
+
+新增
+
+- 添加了继承的可配置 `chat-template` thinking 支持，适用于使用 `chat_template_kwargs` 的 OpenAI 兼容 Provider，例如 vLLM 后端的 DeepSeek 模型（[#5673](https://github.com/earendil-works/pi/issues/5673)）。
+
+修复
+
+- 修复了继承的 Fireworks GLM-5.2 元数据，使其使用支持 `reasoning_effort` 的 OpenAI 兼容 Chat Completions 端点（[#5923](https://github.com/earendil-works/pi/issues/5923)）。
+- 修复了同目录会话切换，使其复用已导入的扩展模块，同时保持扩展实例的新鲜性和生命周期事件（[#5905](https://github.com/earendil-works/pi/issues/5905)）。
+- 修复了深层会话分支构建上下文或分支路径时耗时呈平方级增长的问题（[#5909](https://github.com/earendil-works/pi/issues/5909)）。
+- 修复了继承的 OpenRouter GLM-5.2 元数据，使其暴露 `xhigh` 推理并发送 OpenRouter 原生的 `xhigh` effort（[#5770](https://github.com/earendil-works/pi/issues/5770)）。
+- 修复了继承的 Markdown 流式代码围栏渲染，部分闭合围栏不再导致代码块在内容流式输出过程中缩小或闪烁（[#5846](https://github.com/earendil-works/pi/pull/5846)，感谢 [@xl0](https://github.com/xl0)）。
+- 修复了 fuzzy `edit` 匹配，使其保留未触及的行块，而不是通过归一化内容重写整个文件（[#5899](https://github.com/earendil-works/pi/issues/5899)）。
+- 修复了通过旧版 WSL `bash.exe` 执行的 bash 命令，使其通过 stdin 传入脚本，shell 变量得以在目标 bash 中展开（[#5893](https://github.com/earendil-works/pi/issues/5893)）。
+- 修复了 `/model`，使其隐藏当前已认证账号不可用的 GitHub Copilot 模型（[#5897](https://github.com/earendil-works/pi/issues/5897)）。
+- 修复了 `/model` 选择器搜索，使精确的 Provider 前缀匹配排在代理 Provider 模型 ID 匹配之前（[#5892](https://github.com/earendil-works/pi/issues/5892)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 添加了可配置的 `chat-template` thinking 支持，适用于使用 `chat_template_kwargs` 的 OpenAI 兼容 Provider，例如 vLLM 后端的 DeepSeek 模型（[#5673](https://github.com/earendil-works/pi/issues/5673)）。
+
+修复
+
+- 修复了 Fireworks GLM-5.2 元数据，使其使用支持 `reasoning_effort` 的 OpenAI 兼容 Chat Completions 端点（[#5923](https://github.com/earendil-works/pi/issues/5923)）。
+- 修复了 OpenRouter GLM-5.2 元数据，使其暴露 `xhigh` 推理并发送 OpenRouter 原生的 `xhigh` effort（[#5770](https://github.com/earendil-works/pi/issues/5770)）。
+- 修复了 GitHub Copilot OAuth 模型可用性，使其使用已认证账号的模型选择器目录（[#5897](https://github.com/earendil-works/pi/issues/5897)）。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+修复
+
+- 修复了 Node 执行环境通过旧版 WSL `bash.exe` 执行命令时，将脚本通过 stdin 传入，使 shell 变量在目标 bash 中得以展开（[#5893](https://github.com/earendil-works/pi/issues/5893)）。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+修复
+
+- 修复了 Markdown 流式代码围栏渲染，部分闭合围栏不再导致代码块在内容流式输出过程中缩小或闪烁（[#5846](https://github.com/earendil-works/pi/pull/5846)，感谢 [@xl0](https://github.com/xl0)）。
+
+</details>
+
 ## v0.79.8（2026-06-19）
 
 <details>

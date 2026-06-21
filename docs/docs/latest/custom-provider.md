@@ -234,7 +234,7 @@ models: [
 ];
 ```
 
-使用 `openrouter` 实现 OpenRouter 风格的 `reasoning: { effort }` 控制。使用 `deepseek` 实现 DeepSeek 风格的 `thinking: { type: "enabled" | "disabled" }` 控制，启用时还会发送 `reasoning_effort`。使用 `together` 实现 Together 风格的 `reasoning: { enabled }` 控制；配合 `supportsReasoningEffort` 时还会发送 `reasoning_effort`。使用 `qwen-chat-template` 用于读取 `chat_template_kwargs.enable_thinking` 的本地 Qwen 兼容服务器。
+使用 `openrouter` 实现 OpenRouter 风格的 `reasoning: { effort }` 控制。使用 `together` 实现 Together 风格的 `reasoning: { enabled }` 控制；配合 `supportsReasoningEffort` 时还会发送 `reasoning_effort`。使用 `qwen-chat-template` 用于读取 `chat_template_kwargs.enable_thinking` 并需要 `preserve_thinking` 的本地 Qwen 兼容服务器。
 使用 `cacheControlFormat: "anthropic"` 为兼容 OpenAI 的 Provider 启用 Anthropic 风格提示缓存，通过 `cache_control` 标记应用于系统提示、最后一个工具定义和最后一个用户/助手文本内容。
 
 对于使用 `api: "anthropic-messages"` 的 Anthropic 兼容 Provider，对上游模型需要 adaptive thinking（`thinking.type: "adaptive"` 加 `output_config.effort`）的模型或 Provider 设置 `compat.forceAdaptiveThinking: true`。内置的 adaptive Claude 模型会自动设置此项。仅对产生空思考签名并在重放时期望 `signature: ""` 的 Provider 设置 `compat.allowEmptySignature: true`。
@@ -714,7 +714,21 @@ interface ProviderModelConfig {
     requiresAssistantAfterToolResult?: boolean;
     requiresThinkingAsText?: boolean;
     requiresReasoningContentOnAssistantMessages?: boolean;
-    thinkingFormat?: 'openai' | 'openrouter' | 'deepseek' | 'together' | 'zai' | 'qwen' | 'qwen-chat-template';
+    thinkingFormat?:
+      | 'openai'
+      | 'openrouter'
+      | 'deepseek'
+      | 'together'
+      | 'zai'
+      | 'qwen'
+      | 'chat-template'
+      | 'qwen-chat-template'
+      | 'string-thinking'
+      | 'ant-ling';
+    chatTemplateKwargs?: Record<
+      string,
+      string | number | boolean | null | { $var: 'thinking.enabled' | 'thinking.effort'; omitWhenOff?: boolean }
+    >;
     cacheControlFormat?: 'anthropic';
 
     // anthropic-messages
@@ -728,7 +742,7 @@ interface ProviderModelConfig {
 }
 ```
 
-`openrouter` 发送 `reasoning: { effort }`。`deepseek` 发送 `thinking: { type: "enabled" | "disabled" }` 并在启用时发送 `reasoning_effort`。`together` 发送 `reasoning: { enabled }`，并在启用 `supportsReasoningEffort` 时发送 `reasoning_effort`。`qwen` 用于 DashScope 风格的顶层 `enable_thinking`。使用 `qwen-chat-template` 用于读取 `chat_template_kwargs.enable_thinking` 的本地 Qwen 兼容服务器。
+`openrouter` 发送 `reasoning: { effort }`。`deepseek` 发送 `thinking: { type: "enabled" | "disabled" }` 并在启用时发送 `reasoning_effort`。`together` 发送 `reasoning: { enabled }`，并在启用 `supportsReasoningEffort` 时发送 `reasoning_effort`。`qwen` 用于 DashScope 风格的顶层 `enable_thinking`。使用 `qwen-chat-template` 用于读取 `chat_template_kwargs.enable_thinking` 并需要 `preserve_thinking` 的本地 Qwen 兼容服务器。使用 `chat-template` 用于可配置的 `chat_template_kwargs`，例如 vLLM 后端的 DeepSeek V3.x 可使用 `chatTemplateKwargs: { "thinking": { "$var": "thinking.enabled" } }`。
 `cacheControlFormat: "anthropic"` 将 Anthropic 风格的 `cache_control` 标记应用于系统提示、最后一个工具定义和最后一个用户/助手文本内容。
 
 ---

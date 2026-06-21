@@ -411,14 +411,15 @@
 | `requiresAssistantAfterToolResult`            | 在工具结果后、用户消息前插入一条助手消息                                                                                                                                                    |
 | `requiresThinkingAsText`                      | 将 thinking 块转换为纯文本                                                                                                                                                                  |
 | `requiresReasoningContentOnAssistantMessages` | 在启用推理时，在所有重放的助手消息上包含空的 `reasoning_content`                                                                                                                            |
-| `thinkingFormat`                              | 使用 `reasoning_effort`、`openrouter`、`deepseek`、`together`、`zai`、`qwen` 或 `qwen-chat-template` thinking 参数                                                                          |
+| `thinkingFormat`                              | 使用 `reasoning_effort`、`openrouter`、`deepseek`、`together`、`zai`、`qwen`、`chat-template` 或 `qwen-chat-template` thinking 参数                                                         |
+| `chatTemplateKwargs`                          | `thinkingFormat: "chat-template"` 使用的 `chat_template_kwargs` 值；使用 `{ "$var": "thinking.enabled" }` 或 `{ "$var": "thinking.effort" }` 表示由 pi 控制的 thinking 值                   |
 | `cacheControlFormat`                          | 在系统提示、最后一个工具定义和最后一个用户/助手文本内容上使用 Anthropic 风格的 `cache_control` 标记。目前仅支持 `anthropic`                                                                 |
 | `supportsStrictMode`                          | 在工具定义中包含 `strict` 字段                                                                                                                                                              |
 | `supportsLongCacheRetention`                  | Provider 是否在缓存保留为 `long` 时接受长缓存保留：OpenAI 提示缓存的 `prompt_cache_retention: "24h"`，或当 `cacheControlFormat` 为 `anthropic` 时的 `cache_control.ttl: "1h"`。默认：`true` |
 | `openRouterRouting`                           | OpenRouter Provider 路由偏好。此对象按原样作为 [OpenRouter API 请求](https://openrouter.ai/docs/guides/routing/provider-selection) 的 `provider` 字段发送                                   |
 | `vercelGatewayRouting`                        | Vercel AI Gateway 路由配置，用于 Provider 选择（`only`、`order`）                                                                                                                           |
 
-`openrouter` 使用 `reasoning: { effort }`。`together` 使用 `reasoning: { enabled }`，并在 `supportsReasoningEffort` 启用时也使用 `reasoning_effort`。`qwen` 使用顶级 `enable_thinking`。对需要 `chat_template_kwargs.enable_thinking` 的本地 Qwen 兼容服务器，使用 `qwen-chat-template`。
+`openrouter` 使用 `reasoning: { effort }`。`together` 使用 `reasoning: { enabled }`，并在 `supportsReasoningEffort` 启用时也使用 `reasoning_effort`。`qwen` 使用顶级 `enable_thinking`。对需要 `chat_template_kwargs.enable_thinking` 和 `preserve_thinking` 的本地 Qwen 兼容服务器，使用 `qwen-chat-template`。对需要可配置 `chat_template_kwargs` 的 vLLM/Hugging Face chat-template，使用 `chat-template`，例如 DeepSeek V3.x 模板使用 `chatTemplateKwargs: { "thinking": { "$var": "thinking.enabled" } }`。
 
 `cacheControlFormat: "anthropic"` 适用于那些在文本内容和工具定义上通过 `cache_control` 标记暴露 Anthropic 风格提示缓存的 OpenAI 兼容 Provider。
 
