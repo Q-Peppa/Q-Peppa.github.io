@@ -1,6 +1,6 @@
 # 从终端到 TUI：输入 `pi` 后发生了什么
 
-这是理解 Pi 运作机制的**第一道门**。当你在终端输入 `pi` 并按下 Enter 时，一段精密的链条开始运转。
+这是理解 Pi 运作机制的**第一道门**。当你在终端输入 `pi` 并按下 Enter 时，一段精密的链条开始运转。本文基于 **Pi v0.79.10**。
 
 ## 全景图
 
@@ -17,9 +17,10 @@ pi hello world
   │
   ├─ 3. main() 解析参数、组装服务
   │     ├─ parseArgs(args)（解析 CLI 参数）
-  │     ├─ resolveAppMode() → "interactive"（决定运行模式）
-  │     ├─ createSessionManager()（创建会话管理器）
-  │     ├─ createAgentSessionRuntime()（组装所有服务）
+  │     ├─ resolveAppMode() → "interactive"
+  │     ├─ 项目信任决策（project trust）
+  │     ├─ createAgentSessionServices()（创建服务）
+  │     ├─ createAgentSessionRuntime()（组装 runtime）
   │     └─ InteractiveMode.run()（启动 TUI）
   │
   └─ 4. InteractiveMode 启动 TUI
@@ -28,11 +29,13 @@ pi hello world
         └─ run()（进入主循环）
 ```
 
+与旧版相比，v0.79 在主流程中增加了**项目信任（project trust）** 和更清晰的 **Runtime 工厂** 模式：同一个 `createRuntime` 工厂会被复用于 `/new`、`/resume`、`/fork` 等会话切换场景。
+
 ## 详细拆解
 
 ### 阶段 1：CLI 入口（`cli.ts`）
 
-**文件**：`packages/coding-agent/src/cli.ts`（全文件 18 行）
+**文件**：`packages/coding-agent/src/cli.ts`
 
 ```typescript
 #!/usr/bin/env node
@@ -45,7 +48,7 @@ configureHttpDispatcher(); // 配置 HTTP 请求池
 main(process.argv.slice(2)); // 传入去掉 node/cli 的参数
 ```
 
-这个文件只有 18 行，但做了三件重要的事：
+这个文件只做三件事：
 
 1. **设置进程名** — 让你在 `ps aux | grep pi` 中能看到
 2. **标记环境变量** — 子进程（bash 工具）可以检测自己是否在 Pi 中运行
@@ -54,7 +57,6 @@ main(process.argv.slice(2)); // 传入去掉 node/cli 的参数
 ### 阶段 2：`main()` 参数解析与服务组装
 
 **文件**：`packages/coding-agent/src/main.ts`
-**关键函数**：`main()` — 程序主入口
 
 #### 2a. 参数解析
 
@@ -77,6 +79,7 @@ interface Args {
   print?: boolean; // -p "prompt" 非交互模式
   mode?: 'rpc' | 'json'; // --mode
   verbose?: boolean; // --verbose
+  apiKey?: string; // --api-key（runtime 覆盖）
   // ... 更多
 }
 ```
@@ -107,25 +110,62 @@ function resolveAppMode(parsed: Args, stdinIsTTY: boolean): AppMode {
 | **json**        | `pi --mode json` | 输出结构化 JSON 事件 |
 | **rpc**         | `pi --mode rpc`  | 作为其他程序的子进程 |
 
-#### 2c. 创建 SessionManager
+#### 2c. 项目信任（v0.79 新增）
+
+在加载项目本地 `.pi` 目录、扩展、资源之前，`main()` 会调用 `resolveProjectTrusted()`：
+
+```
+项目信任决策
+  ├── 检查 trust store（~/.pi/agent/trust.json）是否已记录该 cwd 的信任决策
+  ├── 如果没有，检查是否有需要信任的项目资源（.pi、AGENTS.md、.agents/skills 等）
+  ├── 触发 project_trust 扩展事件（仅限 user/global/CLI 扩展）
+  └── 必要时弹出 TUI 选择器询问用户
+```
+
+只有项目被信任后，才会继续加载项目本地扩展和 `.pi` 配置。详见 [项目信任与认证体系](trust-and-auth.md)。
+
+#### 2d. 创建服务（`createAgentSessionServices`）
+
+**文件**：`packages/coding-agent/src/core/agent-session-services.ts`
 
 ```typescript
-let sessionManager = await createSessionManager(parsed, cwd, sessionDir, startupSettingsManager);
+const services = await createAgentSessionServices({
+  agentDir,
+  cwd,
+  settingsManager,
+  authStorage,
+  httpDispatcher,
+  // ...
+});
 ```
 
-SessionManager 负责**会话的持久化和生命周期**。根据参数不同：
+这里创建并连接所有核心服务：
 
 ```
-pi                     → SessionManager.create()     创建新会话
-pi -c                  → SessionManager.continueRecent() 继续最近会话
-pi -r                  → 显示选择器 → SessionManager.open() 打开选中会话
-pi --session abc.json  → SessionManager.open("abc.json") 打开指定会话
-pi --fork abc.json    → SessionManager.forkFrom()   从现有会话创建分支
+┌─────────────────────────────────────────────┐
+│          AgentSessionServices               │
+│                                             │
+│  ┌────────────────┐  ┌───────────────────┐  │
+│  │ SettingsManager│  │ AuthStorage       │  │
+│  │ (全局/项目设置) │  │ (auth.json 读写)  │  │
+│  ├────────────────┤  ├───────────────────┤  │
+│  │ ModelRegistry  │  │ ResourceLoader    │  │
+│  │ (模型/认证解析) │  │ (扩展/Skill/提示词)│  │
+│  ├────────────────┤  ├───────────────────┤  │
+│  │ ModelResolver  │  │ ExtensionRunner   │  │
+│  │ (CLI 模型解析)  │  │ (扩展事件分发)    │  │
+│  ├────────────────┤  ├───────────────────┤  │
+│  │ BashExecutor   │  │ TrustManager      │  │
+│  │ (bash 执行封装) │  │ (项目信任存储)    │  │
+│  └────────────────┘  └───────────────────┘  │
+└─────────────────────────────────────────────┘
 ```
 
-每个会话是一个 **JSONL 文件**（每行一条 JSON 消息），保存在项目目录中。
+#### 2e. 创建 Runtime（`createAgentSessionRuntime`）
 
-#### 2d. 创建 AgentSessionRuntime
+**文件**：`packages/coding-agent/src/core/agent-session-runtime.ts`
+
+`main()` 构造一个 `createRuntime` 工厂函数，然后传给 `createAgentSessionRuntime()`：
 
 ```typescript
 const runtime = await createAgentSessionRuntime(createRuntime, {
@@ -135,26 +175,22 @@ const runtime = await createAgentSessionRuntime(createRuntime, {
 });
 ```
 
-`createAgentSessionRuntime()` 是**服务组装的核心**。它创建并连接所有服务：
+关键设计：**同一个 `createRuntime` 工厂会被保存到 `AgentSessionRuntime` 中**，后续 `/new`、`/resume`、`/fork`、导入会话时都会复用它重新创建服务与 session。
 
-```
-┌──────────────────────────────────────────┐
-│       AgentSessionRuntime                │
-│                                          │
-│  ┌────────────┐  ┌────────────────────┐  │
-│  │ AgentSession│──│ SettingsManager    │  │
-│  │            │  │ (设置/配置)          │  │
-│  ├────────────┤  ├────────────────────┤  │
-│  │ Agent       │  │ ModelRegistry      │  │
-│  │ (agent-core)│  │ (模型元数据)        │  │
-│  ├────────────┤  ├────────────────────┤  │
-│  │ ResourceLoader│ │ AuthStorage       │  │
-│  │ (扩展/skills)│ │ (认证信息)          │  │
-│  ├────────────┤  ├────────────────────┤  │
-│  │ ExtensionRunner│ │ ToolRegistry     │  │
-│  │ (事件分发)   │  │ (工具注册)         │  │
-│  └────────────┘  └────────────────────┘  │
-└──────────────────────────────────────────┘
+```typescript
+export async function createAgentSessionRuntime(
+  createRuntime: CreateAgentSessionRuntimeFactory,
+  options: { cwd: string; agentDir: string; sessionManager: SessionManager; sessionStartEvent?: SessionStartEvent },
+): Promise<AgentSessionRuntime> {
+  const result = await createRuntime(options);
+  return new AgentSessionRuntime(
+    result.session,
+    result.services,
+    createRuntime,
+    result.diagnostics,
+    result.modelFallbackMessage,
+  );
+}
 ```
 
 ### 阶段 3：InteractiveMode 启动 TUI
@@ -167,7 +203,7 @@ const runtime = await createAgentSessionRuntime(createRuntime, {
 this.ui = new TUI(new ProcessTerminal(), settingsManager.getShowHardwareCursor());
 ```
 
-**这里发生了关键的事**：`ProcessTerminal` 接管了终端。
+`ProcessTerminal` 接管终端：
 
 ```
 ProcessTerminal 初始化
@@ -178,123 +214,92 @@ ProcessTerminal 初始化
   → write("\x1b[?2004h")              // 启用 bracketed paste
 ```
 
-**raw mode 是终端编程的核心概念**。正常模式下，终端按行缓冲（你按 Enter 才发送数据）。raw mode 下，**每个按键立即发送**。这是 TUI 能实时响应的基础。
+**raw mode** 是终端编程的核心：正常模式下终端按行缓冲，raw mode 下每个按键立即发送，TUI 才能实时响应。
 
 #### 3b. `init()` 构建 UI 布局
 
 ```typescript
 async init(): Promise<void> {
-  // 1. 注册信号处理（Ctrl+C, SIGTERM）
   this.registerSignalHandlers();
 
-  // 2. 确保 fd 和 rg 工具可用（自动下载）
+  // 确保 fd 和 rg 工具可用（自动下载）
   const [fdPath] = await Promise.all([ensureTool("fd"), ensureTool("rg")]);
 
-  // 3. 构建 UI 布局（从顶到底）
-  this.ui.addChild(this.headerContainer);     // Logo + 快捷键提示
-  this.ui.addChild(this.chatContainer);       // 聊天消息区域
-  this.ui.addChild(this.pendingMessagesContainer); // 排队的消息
-  this.ui.addChild(this.statusContainer);     // 状态栏（"Working..."）
-  this.ui.addChild(this.widgetContainerAbove);// 扩展组件（上方）
-  this.ui.addChild(this.editorContainer);     // ★ 编辑器
-  this.ui.addChild(this.widgetContainerBelow);// 扩展组件（下方）
-  this.ui.addChild(this.footer);              // 底部状态栏
+  // 从顶到底构建布局
+  this.ui.addChild(this.headerContainer);
+  this.ui.addChild(this.chatContainer);
+  this.ui.addChild(this.pendingMessagesContainer);
+  this.ui.addChild(this.statusContainer);
+  this.ui.addChild(this.widgetContainerAbove);
+  this.ui.addChild(this.editorContainer);
+  this.ui.addChild(this.widgetContainerBelow);
+  this.ui.addChild(this.footer);
 
-  // 4. 设置编辑器为焦点组件
   this.ui.setFocus(this.editor);
-
-  // 5. 注册按键处理
   this.setupKeyHandlers();
   this.setupEditorSubmitHandler();
 
-  // 6. ★ 启动 TUI 渲染循环
-  this.ui.start();
+  this.ui.start(); // 启动 TUI 渲染循环
 }
 ```
 
 #### 3c. `ui.start()` 启动渲染循环
 
 **文件**：`packages/tui/src/tui.ts`
-**关键方法**：`start()` — 启动 TUI 渲染循环
 
 ```typescript
-start(): void {
-  // 设置 stdin 监听
-  this.terminal.onInput((data) => {
-    // 解码按键事件
-    const key = parseKey(data);
-    // 分发给聚焦组件
-    this.focusedComponent?.handleInput(data);
-  });
+private handleInput(data: string): void {
+  // 处理 OSC 11 终端背景色回复、颜色方案变化等
+  if (this.consumeOsc11BackgroundResponse(data)) return;
+  if (this.consumeTerminalColorSchemeReport(data)) return;
 
-  // 启动渲染循环
-  this._startRenderLoop();
-}
+  // 分发给 input listener
+  for (const listener of this.inputListeners) {
+    const result = listener(current);
+    if (result?.consumed) return;
+  }
 
-private _startRenderLoop(): void {
-  const loop = () => {
-    // 收集所有组件的渲染输出
-    const lines = this._renderAll();
-    // 差分渲染：只输出变化的行
-    this._differentialRender(lines);
-    // 下一帧（使用 setImmediate 或 setTimeout）
-    this._renderTimer = setTimeout(loop, this._frameInterval);
-  };
-  loop();
+  // 分发给聚焦组件
+  this.focusedComponent?.handleInput?.(data);
 }
 ```
 
-**差分渲染**是 Pi TUI 的核心性能优化：
+渲染循环：
 
-1. 每帧渲染时，先收集所有组件的 `render(width)` 输出
-2. 与上一帧的输出对比，**只输出变化的行**
-3. 使用 ANSI 转义码定位光标、清除行、写入新内容
-
-#### 3d. 启动帮助信息
-
-TUI 启动后，你会看到：
-
+```typescript
+private scheduleRender(): void {
+  const elapsed = performance.now() - this.lastRenderAt;
+  const delay = Math.max(0, TUI.MIN_RENDER_INTERVAL_MS - elapsed);
+  this.renderTimer = setTimeout(() => {
+    this.doRender();
+  }, delay);
+}
 ```
-pi v1.0.0
-Ctrl+C 中断 · Ctrl+D 退出 · / 命令 · ! bash
 
-按 Tab 展开完整帮助和已加载资源。
-
-Pi 可以解释自身功能并查阅文档。询问如何使用或扩展 Pi。
-
-╭──────────────────────────────────────────────────╮
-│                                                  │
-│  > _                                              │
-│                                                  │
-╰──────────────────────────────────────────────────╯
-
- Ctrl+L 模型  Ctrl+P 循环  Tab 补全  / 命令
-```
+**差分渲染**：每帧收集所有组件的 `render(width)` 输出，与上一帧对比，只输出变化的行。
 
 ### 阶段 4：主循环等待输入
 
 **文件**：`packages/coding-agent/src/modes/interactive/interactive-mode.ts`
-**关键方法**：`run()` — TUI 主循环
 
 ```typescript
 async run(): Promise<void> {
-  await this.init();  // 初始化 UI
+  await this.init();
 
-  // 异步后台任务（不阻塞主循环）
-  checkForNewPiVersion(this.version);       // 版本检查
-  this.checkForPackageUpdates();            // 包更新检查
-  this.checkTmuxKeyboardSetup();            // tmux 键盘检查
+  // 异步后台任务
+  checkForNewPiVersion(this.version);
+  this.checkForPackageUpdates();
+  this.checkTmuxKeyboardSetup();
 
-  // 处理初始消息（如果通过 CLI 传入了 prompt）
   if (initialMessage) {
     await this.session.prompt(initialMessage);
   }
 
   // ★ 主循环
   while (true) {
-    const userInput = await this.getUserInput();  // 等待用户输入
+    const userInput = await this.getUserInput();
     try {
-      await this.session.prompt(userInput);        // 发送到 Agent
+      await this.session.prompt(userInput);
     } catch (error) {
       this.showError(errorMessage);
     }
@@ -302,7 +307,7 @@ async run(): Promise<void> {
 }
 ```
 
-`getUserInput()` 的实现很简单，但背后是复杂的 TUI 交互：
+`getUserInput()` 用一个 Promise 挂起等待编辑器回调：
 
 ```typescript
 async getUserInput(): Promise<string> {
@@ -315,70 +320,53 @@ async getUserInput(): Promise<string> {
 }
 ```
 
-当用户在编辑器中输入文本并按 Enter 时：
-
-1. 编辑器组件的 `handleInput()` 检测到 Enter 键
-2. 编辑器调用 `this.onInputCallback(text)`
-3. Promise 解析，`getUserInput()` 返回
-4. 主循环继续，调用 `session.prompt(userInput)`
+当用户按 Enter 时，编辑器调用回调，主循环继续，调用 `session.prompt(userInput)`。
 
 ### 完整流程图
 
 ```
-┌─────────────────────────────────────────────────┐
-│ 终端 (shell)                                     │
-│   $ pi hello world                              │
-└──────────────────────┬──────────────────────────┘
+┌──────────────────────────────────────────────┐
+│ 终端 (shell)                                  │
+│   $ pi hello world                            │
+└──────────────────────┬───────────────────────┘
                        │
                        ▼
-┌─────────────────────────────────────────────────┐
-│ cli.ts                                          │
-│   main(process.argv.slice(2))                   │
-└──────────────────────┬──────────────────────────┘
+┌──────────────────────────────────────────────┐
+│ cli.ts                                         │
+│   main(process.argv.slice(2))                  │
+└──────────────────────┬───────────────────────┘
                        │
                        ▼
-┌─────────────────────────────────────────────────┐
-│ main.ts                                         │
-│   parseArgs() → ["hello", "world"]              │
-│   resolveAppMode() → "interactive"              │
-│   createSessionManager() → 新建会话              │
-│   createAgentSessionRuntime() → 组装所有服务     │
-└──────────────────────┬──────────────────────────┘
+┌──────────────────────────────────────────────┐
+│ main.ts                                        │
+│   parseArgs() → ["hello", "world"]             │
+│   resolveAppMode() → "interactive"             │
+│   resolveProjectTrusted() → 项目信任           │
+│   createAgentSessionServices() → 服务          │
+│   createAgentSessionRuntime() → Runtime        │
+└──────────────────────┬───────────────────────┘
                        │
                        ▼
-┌─────────────────────────────────────────────────┐
-│ InteractiveMode (interactive-mode.ts)            │
-│                                                  │
-│   构造函数: new TUI(new ProcessTerminal())       │
-│   init():                                      │
-│     ├── header (logo + 快捷键提示)               │
-│     ├── chatContainer (聊天消息)                 │
-│     ├── editor (编辑器 ← 焦点)                   │
-│     └── footer (状态栏)                          │
-│                                                  │
-│   ui.start():                                  │
-│     ├── stdin raw mode → 逐按键读取              │
-│     ├── 渲染循环启动 → 差分渲染                  │
-│     └── 按键事件分发到编辑器                     │
-│                                                  │
-│   run():                                       │
-│     └── while(true) {                           │
-│           userInput = await getUserInput()      │
-│           await session.prompt(userInput)       │
-│         }                                       │
-└─────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────┐
+│ InteractiveMode                                │
+│   new TUI(new ProcessTerminal())               │
+│   init() → header/chat/editor/footer           │
+│   ui.start() → raw mode + 差分渲染循环          │
+│   run() → while(true) { getUserInput(); prompt() }
+└──────────────────────────────────────────────┘
 ```
 
-### 关键概念总结
+## 关键概念总结
 
-| 概念                | 解释                                | 代码位置                    |
-| ------------------- | ----------------------------------- | --------------------------- |
-| **raw mode**        | 终端逐按键读取，不按行缓冲          | `terminal.ts`               |
-| **差分渲染**        | 只更新变化的行，减少闪烁            | `tui.ts:_startRenderLoop()` |
-| **备用屏幕**        | 退出 Pi 后恢复原终端内容            | `terminal.ts`               |
-| **bracketed paste** | 区分键盘输入和粘贴内容              | `terminal.ts`               |
-| **Component 接口**  | 所有 UI 组件的基类                  | `tui.ts:Component`          |
-| **主循环**          | `while(true) { getInput → prompt }` | `interactive-mode.ts:run()` |
+| 概念                | 解释                            | 代码位置                                |
+| ------------------- | ------------------------------- | --------------------------------------- |
+| **raw mode**        | 终端逐按键读取，不按行缓冲      | `terminal.ts`                           |
+| **差分渲染**        | 只更新变化的行，减少闪烁        | `tui.ts`                                |
+| **备用屏幕**        | 退出 Pi 后恢复原终端内容        | `terminal.ts`                           |
+| **bracketed paste** | 区分键盘输入和粘贴内容          | `terminal.ts`                           |
+| **Component 接口**  | 所有 UI 组件的基类              | `tui.ts`                                |
+| **Runtime 工厂**    | 复用于 `/new` `/resume` `/fork` | `agent-session-runtime.ts`              |
+| **项目信任**        | 加载项目资源前的用户确认        | `project-trust.ts` / `trust-manager.ts` |
 
 ## 下一步
 

@@ -1,88 +1,113 @@
 # 深入理解 Pi 源码
 
-> 本系列文档从架构设计、数据流、设计模式三个维度，带你深入理解 Pi Coding Agent 的运作机制。读完本系列后，你将掌握一个**生产级终端编码智能体**的完整实现。
+> 本系列文档基于 **Pi v0.79.10** 源码，从架构设计、数据流、设计模式三个维度，带你深入理解 Pi Coding Agent 的运作机制。读完本系列后，你将掌握一个**生产级终端编码智能体**的完整实现。
 
 ## 系列导航
 
-| 文档                                   | 内容                                                         | 难度 |
-| -------------------------------------- | ------------------------------------------------------------ | ---- |
-| [前置知识与学习路径](prerequisites.md) | 需要掌握的技能栈、建议的阅读顺序、预期学习时间               | 入门 |
-| [环境搭建与调试](setup-and-debug.md)   | 克隆源码、本地调试、断点调试、日志追踪                       | 入门 |
-| [从终端到 TUI](cli-to-tui.md)          | 输入 `pi` 后发生了什么：CLI 解析、服务组装、TUI 启动         | 进阶 |
-| [从输入到 LLM 循环](input-to-llm.md)   | 用户输入文本 → 消息预处理 → Agent Loop → LLM 调用 → 工具执行 | 进阶 |
-| [核心架构与设计哲学](architecture.md)  | Provider 抽象层、事件驱动架构、TUI 差异渲染、扩展系统        | 深入 |
+| 文档                                                      | 内容                                                            | 难度 |
+| --------------------------------------------------------- | --------------------------------------------------------------- | ---- |
+| [前置知识与学习路径](prerequisites.md)                    | 需要掌握的技能栈、建议阅读顺序、预期学习时间                    | 入门 |
+| [环境搭建与调试](setup-and-debug.md)                      | 克隆源码、本地调试、断点调试、目录结构                          | 入门 |
+| [从终端到 TUI](cli-to-tui.md)                             | 输入 `pi` 后发生了什么：CLI 解析、服务组装、TUI 启动            | 进阶 |
+| [从输入到 LLM 循环](input-to-llm.md)                      | 用户输入 → 消息预处理 → Agent Loop → LLM 调用 → 工具执行        | 进阶 |
+| [核心架构与设计哲学](architecture.md)                     | 事件驱动、TUI 差分渲染、扩展系统、关注点分离                    | 深入 |
+| [pi-ai：Models 运行时与 Provider 架构](models-runtime.md) | `createModels()` / Provider factory / `api/` / 认证 / 模型目录  | 深入 |
+| [项目信任与认证体系](trust-and-auth.md)                   | project trust、AuthStorage、ModelRegistry、CredentialStore      | 深入 |
+| [上下文压缩与会话分支](compaction-and-branches.md)        | compaction 流程、threshold/overflow、reason/willRetry、分支摘要 | 深入 |
 
 ## 速览：Pi 是什么？
 
 Pi 是一个**终端 AI 编码智能体**（Terminal AI Coding Agent）。它的核心理念：
 
 ```
-┌─────────────────────────────────────────────────┐
-│                  终端（Terminal）                  │
-│                                                   │
-│   ┌─────────┐    ┌──────────────┐    ┌─────────┐ │
-│   │  用户    │◄──►│   TUI 界面   │◄──►│  Agent  │ │
-│   │  输入    │    │  (编辑器/渲染) │    │  循环   │ │
-│   └─────────┘    └──────────────┘    └────┬────┘ │
-│                                           │      │
-│                                    ┌──────▼──────┐│
-│                                    │  LLM 提供商  ││
-│                                    │ (OpenAI 等)  ││
-│                                    └──────┬──────┘│
-│                                           │      │
-│                                    ┌──────▼──────┐│
-│                                    │  工具执行    ││
-│                                    │ read/write/  ││
-│                                    │ bash/edit    ││
-│                                    └─────────────┘│
-└─────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────┐
+│                        终端（Terminal）                       │
+│                                                            │
+│   ┌─────────┐    ┌──────────────────┐    ┌──────────────┐  │
+│   │  用户    │◄──►│   TUI 界面        │◄──►│  Agent 循环   │  │
+│   │  输入    │    │  (编辑器 / 渲染)   │    │              │  │
+│   └─────────┘    └──────────────────┘    └──────┬───────┘  │
+│                                                  │          │
+│   项目信任 / 认证 / 模型解析 / 扩展 / Skill / 工具  │          │
+│                                       ┌──────────▼───────┐  │
+│                                       │  LLM 提供商       │  │
+│                                       │ (OpenAI / Anthropic│  │
+│                                       │  / 30+ 自定义)     │  │
+│                                       └──────────┬───────┘  │
+│                                                  │          │
+│                                       ┌──────────▼───────┐  │
+│                                       │  工具执行         │  │
+│                                       │ read / write /   │  │
+│                                       │ bash / edit / ...│  │
+│                                       └──────────────────┘  │
+└────────────────────────────────────────────────────────────┘
 ```
 
-### 四个核心包
+### 四个核心包（v0.79.10）
 
-| 包名                  | 职责                             | 代码量  | 类比           |
-| --------------------- | -------------------------------- | ------- | -------------- |
-| **`pi-ai`**           | 统一 LLM API，支持 30+ 提供商    | ~13K 行 | "数据库驱动层" |
-| **`pi-agent-core`**   | 智能体运行时：工具调用、状态管理 | ~7K 行  | "ORM / 事务层" |
-| **`pi-coding-agent`** | CLI 入口 + 扩展 + 会话管理       | ~8K 行  | "应用层"       |
-| **`pi-tui`**          | 独立可复用的终端 UI 库           | ~23K 行 | "UI 框架"      |
+| 包名                  | 职责                                                          | 规模（非测试 `.ts`）                        | 类比           |
+| --------------------- | ------------------------------------------------------------- | ------------------------------------------- | -------------- |
+| **`pi-ai`**           | 统一 LLM API：Models 运行时、Provider factory、API 实现、认证 | ~144 个文件，含大量生成的 Provider 模型目录 | "数据库驱动层" |
+| **`pi-agent-core`**   | 智能体运行时：`AgentLoop`、工具调用、事件流、`AgentHarness`   | ~25 个文件                                  | "ORM / 事务层" |
+| **`pi-coding-agent`** | CLI 入口、项目信任、扩展、会话管理、TUI 集成、工具实现        | ~157 个文件                                 | "应用层"       |
+| **`pi-tui`**          | 独立可复用的终端 UI 库                                        | ~28 个文件                                  | "UI 框架"      |
+
+> 注意：`pi-ai` 和 `pi-coding-agent` 的文件数看起来很多，其中相当一部分是**按 Provider 生成的模型目录**（`providers/*.models.ts`）和工具实现，手写核心逻辑仍然集中在几千行内。
 
 ### 核心数据流
 
 ```
 用户输入
-  → AgentSession.prompt(text)         // 消息预处理
-  → Agent.prompt(messages)            // 启动 prompt
-  → runAgentLoop(messages, context)   // ★ 核心循环
-      → streamAssistantResponse()     // 调用 LLM，stream 回复
-      → executeToolCalls()            // 执行工具调用
-      → 将工具结果写入 context
+  → AgentSession.prompt(text)            // 消息预处理、扩展拦截、skill 展开
+  → Agent.prompt(messages)               // 启动 prompt
+  → runAgentLoop(messages, context)      // ★ 核心循环
+      → streamAssistantResponse()        // 通过 pi-ai Models 调用 LLM
+      → executeToolCalls()               // 执行工具调用
+      → 将 tool result 写入 context
       → 循环直到 LLM 不再调用工具
 ```
+
+与旧版最大的区别：从 v0.79 开始，LLM 调用不再经过旧的全局 `stream()` / `complete()`，而是通过 **Models 运行时** (`createModels()` + Provider factory) 完成，认证也统一走 `CredentialStore` / `AuthContext`。
 
 ## 为什么读这份文档？
 
 读完本系列，你将：
 
-1. **理解一个生产级编码智能体如何工作** — 不只是 demo，而是处理了边缘情况、错误恢复、性能优化的真实产品
-2. **掌握 LLM Agent 的核心模式** — Provider 抽象、事件驱动、流式处理、工具调用循环
+1. **理解一个生产级编码智能体如何工作** — 不只是 demo，而是处理了边缘情况、错误恢复、性能优化、项目安全的真实产品
+2. **掌握 LLM Agent 的核心模式** — Provider 抽象、Models 运行时、事件驱动、流式处理、工具调用循环
 3. **学会终端 UI 的构建方法** — 差分渲染、ANSI 转义、Kitty 协议、IME 支持
-4. **能够独立扩展 Pi** — 写 Extension、Skill、Tool、Theme
-5. **获得调试大型 TypeScript 项目的实战经验**
+4. **理解 v0.79 的新架构** — 项目信任、`createModels()`、`api/` 与 `providers/` 分离、认证体系
+5. **能够独立扩展 Pi** — 写 Extension、Skill、Tool、Theme、自定义 Provider
 
 ## 快速开始
 
 ```bash
-# 1. 克隆源码
-git clone https://github.com/earendil-works/pi-mono.git
-cd pi-mono
+# 1. 克隆源码（注意仓库已从 pi-mono 迁移到 pi）
+git clone https://github.com/earendil-works/pi.git
+cd pi
 
 # 2. 安装依赖（不执行生命周期脚本）
 npm install --ignore-scripts
 
-# 3. 检查代码质量
+# 3. 检查代码质量（类型 + lint + 依赖检查）
 npm run check
 
 # 4. 直接运行源码（无需构建）
-node packages/coding-agent/src/cli.ts
+npx tsx packages/coding-agent/src/cli.ts --help
 ```
+
+> Node.js 版本要求：`>= 22.19.0`。Pi 使用 TypeScript 的 `tsgo` 原生编译预览版进行构建，开发时可直接通过 `tsx` 运行源码。
+
+## 阅读建议
+
+如果你只有半小时，建议按这个顺序读：
+
+1. [从终端到 TUI](cli-to-tui.md) — 建立全局流程
+2. [从输入到 LLM 循环](input-to-llm.md) — 理解核心业务
+3. [pi-ai：Models 运行时与 Provider 架构](models-runtime.md) — 补齐 v0.79 最大的架构变化
+
+然后按需深入：
+
+- 做扩展开发 → [核心架构与设计哲学](architecture.md) 的扩展系统部分 + [项目信任与认证体系](trust-and-auth.md)
+- 做 TUI 定制 → [核心架构与设计哲学](architecture.md) 的 TUI 部分
+- 做长会话优化 → [上下文压缩与会话分支](compaction-and-branches.md)

@@ -1,6 +1,6 @@
 # 从输入到 LLM 循环：智能体的心脏
 
-本文档带你追踪用户输入文本后的**完整数据流**，从 TUI 编辑器到 LLM 调用，再到工具执行的循环。
+本文档带你追踪用户输入文本后的**完整数据流**，从 TUI 编辑器到 LLM 调用，再到工具执行的循环。基于 **Pi v0.79.10**。
 
 ## 全景图
 
@@ -8,117 +8,95 @@
 用户在编辑器中输入 "帮我重构这个函数" 并按 Enter
   │
   ▼
-┌──────────────────────────────────────────────────┐
-│ 阶段 A：TUI → AgentSession                        │
-│ InteractiveMode.run()                             │
-│   getUserInput() → "帮我重构这个函数"              │
-│   session.prompt(userInput)                       │
-└────────────────────┬─────────────────────────────┘
-                     │
-                     ▼
-┌──────────────────────────────────────────────────┐
-│ 阶段 B：消息预处理 (AgentSession.prompt)           │
-│   1. 检查是否斜杠命令 → 否                         │
-│   2. 扩展事件触发（扩展可拦截/修改输入）            │
-│   3. 展开 skill / prompt template                  │
-│   4. 验证模型和 API key                           │
-│   5. 检查是否需要压缩（compaction）                │
-│   6. 构建 AgentMessage[]                          │
-│   7. _runAgentPrompt(messages)                    │
-└────────────────────┬─────────────────────────────┘
-                     │
-                     ▼
-┌──────────────────────────────────────────────────┐
-│ 阶段 C：Agent 启动 (Agent.prompt)                 │
-│   normalizePromptInput() → AgentMessage[]         │
-│   runPromptMessages(messages)                     │
-│     → runWithLifecycle() → runAgentLoop()        │
-└────────────────────┬─────────────────────────────┘
-                     │
-                     ▼
-┌──────────────────────────────────────────────────┐
-│ 阶段 D：★ Agent Loop（核心循环）                    │
+┌─────────────────────────────────────────────────────────┐
+│ 阶段 A：TUI → AgentSession                               │
+│ InteractiveMode.run()                                    │
+│   getUserInput() → "帮我重构这个函数"                     │
+│   session.prompt(userInput)                              │
+└─────────────────────────┬───────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│ 阶段 B：消息预处理 (AgentSession.prompt)                  │
+│   1. 检查是否斜杠命令 → 否                                │
+│   2. 扩展事件触发（扩展可拦截/修改输入）                   │
+│   3. 展开 skill / prompt template                         │
+│   4. 验证模型和认证（通过 ModelRegistry）                 │
+│   5. 检查是否需要压缩（compaction）                       │
+│   6. 构建 AgentMessage[]                                  │
+│   7. _runAgentPrompt(messages)                            │
+└─────────────────────────┬───────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│ 阶段 C：Agent 启动 (Agent.prompt)                         │
+│   normalizePromptInput() → AgentMessage[]                │
+│   runPromptMessages(messages)                            │
+│     → runWithLifecycle() → runAgentLoop()                │
+└─────────────────────────┬───────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│ 阶段 D：★ Agent Loop（核心循环）                           │
+│                                                          │
+│   while (true) { // 外层：follow-up 循环                  │
+│     while (hasMoreToolCalls || pendingMessages) {        │
 │                                                  │
-│   while (true) { // 外层：follow-up 循环           │
-│     while (hasMoreToolCalls || pendingMessages) { │
-│                                                  │
-│       ① streamAssistantResponse()                │
-│          → LLM 调用，stream 回复                  │
-│                                                  │
-│       ② 检查 stopReason                          │
-│          → error/aborted → 退出                   │
-│                                                  │
-│       ③ 提取 tool calls                          │
-│          → 有 → executeToolCalls()               │
-│          → 无 → hasMoreToolCalls = false          │
-│     }                                             │
-│                                                  │
-│     检查 follow-up messages                       │
-│     → 有 → 设为 pending → continue 外层循环        │
-│     → 无 → break，退出                            │
-│   }                                              │
-└──────────────────────────────────────────────────┘
+│       ① 注入 pending messages（steer/follow-up）         │
+│       ② streamAssistantResponse()                        │
+│          → 通过 Models 运行时调用 LLM                    │
+│       ③ 检查 stopReason                                  │
+│          → error/aborted → 退出                          │
+│       ④ 提取 tool calls                                  │
+│          → 有 → executeToolCalls()                       │
+│          → 无 → hasMoreToolCalls = false                 │
+│     }                                                    │
+│                                                          │
+│     检查 follow-up messages                              │
+│     → 有 → 设为 pending → continue 外层循环              │
+│     → 无 → break，退出                                   │
+│   }                                                      │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ## 阶段 A：TUI 传递输入
 
 **文件**：`packages/coding-agent/src/modes/interactive/interactive-mode.ts`
-**关键方法**：`run()` — TUI 主循环、`getUserInput()` — 等待用户输入
 
 ```typescript
 async run(): Promise<void> {
   await this.init();
 
-  // ... 异步后台任务、初始消息处理 ...
-
-  // ★ 主循环
+  // 主循环
   while (true) {
-    const userInput = await this.getUserInput();  // ← 挂起在这里等输入
+    const userInput = await this.getUserInput(); // ← 挂起等待输入
     try {
-      await this.session.prompt(userInput);        // ← 输入到达
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      await this.session.prompt(userInput);      // ← 输入到达
+    } catch (error) {
       this.showError(errorMessage);
     }
   }
 }
 ```
 
-`getUserInput()` 的实现是一个简单的 Promise 挂起模式：
-
-```typescript
-async getUserInput(): Promise<string> {
-  return new Promise((resolve) => {
-    this.onInputCallback = (text: string) => {
-      this.onInputCallback = undefined;
-      resolve(text);
-    };
-  });
-}
-```
-
-当编辑器检测到 Enter 键时，调用这个回调。在此之前，编辑器一直在积累用户的按键输入。
+`getUserInput()` 用 Promise 挂起，编辑器提交时 resolve。
 
 ## 阶段 B：消息预处理
 
 **文件**：`packages/coding-agent/src/core/agent-session.ts`
-**关键方法**：`prompt()` — 消息预处理入口
 
-这是**输入到 LLM 之间最重要的关卡**。`prompt()` 方法对用户的输入做了多层处理：
+这是**输入到 LLM 之间最重要的关卡**。`prompt()` 方法对输入做多层处理：
 
 ### B1. 斜杠命令
 
 ```typescript
 if (expandPromptTemplates && text.startsWith('/')) {
   const handled = await this._tryExecuteExtensionCommand(text);
-  if (handled) {
-    return; // 扩展命令已处理，不再发送 LLM
-  }
+  if (handled) return;
 }
 ```
 
-以 `/` 开头的输入是**斜杠命令**：`/model`、`/login`、`/settings`、`/clear` 等。
-这些命令在发送给 LLM 之前被拦截并本地执行。
+以 `/` 开头的输入先尝试执行扩展命令；若未被处理，再作为普通消息发送。
 
 ### B2. 扩展事件拦截
 
@@ -130,16 +108,21 @@ if (this._extensionRunner.hasHandlers('input')) {
     options?.source ?? 'interactive',
     this.isStreaming ? options?.streamingBehavior : undefined,
   );
-  if (inputResult.action === 'handled') return; // 扩展处理了
+  if (inputResult.action === 'handled') return;
   if (inputResult.action === 'transform') {
-    // 扩展修改了输入
     currentText = inputResult.text;
     currentImages = inputResult.images ?? currentImages;
   }
 }
 ```
 
-扩展可以在输入到达 LLM 之前**拦截、修改、或完全处理**它。
+扩展可返回三种动作：
+
+| 动作        | 效果                           |
+| ----------- | ------------------------------ |
+| `pass`      | 跳过，继续下一个扩展或默认流程 |
+| `handled`   | 扩展已处理，不再发送给 LLM     |
+| `transform` | 修改输入后继续处理             |
 
 ### B3. Skill 和 Prompt Template 展开
 
@@ -150,37 +133,10 @@ if (expandPromptTemplates) {
 }
 ```
 
-**Skill 展开**示例：
-
-```
-用户输入：/skill:react-best-practices 如何优化这个组件？
-
-展开后：
-<skill name="react-best-practices" location="/path/to/skill.md">
-References are relative to /path/to.
-
-# React Best Practices
-... (skill 的完整内容) ...
-</skill>
-
-如何优化这个组件？
-```
-
-**Prompt Template 展开**示例：
-
-```
-用户输入：/review @src/index.ts
-
-展开后：
-You are a code reviewer. Review the following code:
-... (@src/index.ts 的内容) ...
-```
-
 ### B4. 流式处理检查
 
 ```typescript
 if (this.isStreaming) {
-  // Agent 正在工作中，输入作为 steer 或 follow-up 排队
   if (options.streamingBehavior === 'followUp') {
     await this._queueFollowUp(expandedText, currentImages);
   } else {
@@ -190,19 +146,35 @@ if (this.isStreaming) {
 }
 ```
 
-**关键概念：steer vs follow-up**
+**Steer** 与 **Follow-up** 的区别：
 
-| 行为          | 触发条件             | 效果                                                |
-| ------------- | -------------------- | --------------------------------------------------- |
-| **Steer**     | Agent 正在工作中输入 | 在**当前工具执行完成后、下一次 LLM 调用前**注入消息 |
-| **Follow-up** | Agent 正在工作中输入 | 在 Agent 完全完成后作为**新问题**排队               |
+| 行为          | 触发条件             | 效果                                          |
+| ------------- | -------------------- | --------------------------------------------- |
+| **Steer**     | Agent 正在工作中输入 | 当前工具执行完成后、下一次 LLM 调用前注入消息 |
+| **Follow-up** | Agent 正在工作中输入 | Agent 完全完成后作为新问题排队                |
 
-这允许用户在 LLM 工作时输入新消息（"引导"或"追问"）。
-
-### B5. 验证与 Compaction
+### B5. 验证模型与认证
 
 ```typescript
-// 检查是否需要压缩上下文
+// 在发送给 LLM 前，AgentSession 会通过 ModelRegistry 解析认证
+const auth = await this._modelRegistry.getApiKeyAndHeaders(model);
+if (!auth.ok) {
+  throw new Error(formatNoApiKeyFoundMessage(model.provider));
+}
+```
+
+`ModelRegistry` 会按以下优先级解析认证：
+
+1. runtime 覆盖（`--api-key`）
+2. `auth.json` 中保存的 API key / OAuth token
+3. Provider 配置中的 `apiKey`（如 `auth.json` 的 `env` 覆盖）
+4. 环境变量（通过 pi-ai `envApiKeyAuth`）
+
+详见 [项目信任与认证体系](trust-and-auth.md)。
+
+### B6. 检查是否需要压缩
+
+```typescript
 const lastAssistant = this._findLastAssistantMessage();
 if (lastAssistant && (await this._checkCompaction(lastAssistant, false))) {
   await this.agent.continue();
@@ -212,45 +184,37 @@ if (lastAssistant && (await this._checkCompaction(lastAssistant, false))) {
 }
 ```
 
-**Compaction**（上下文压缩）是长会话的关键机制。当上下文接近 LLM 的 token 限制时：
+压缩的触发时机包括：
 
-1. 将历史消息发送给一个快模型进行摘要
-2. 用摘要替换详细消息
-3. 释放 token 空间
+- **手动**：用户输入 `/compact`
+- **阈值**：上下文 token 数超过设置阈值
+- **溢出**：LLM 返回 context overflow 错误
 
-### B6. 构建消息并发送
+v0.79.10 中，compaction 事件新增了 `reason`（`manual` / `threshold` / `overflow`）和 `willRetry` 字段。详见 [上下文压缩与会话分支](compaction-and-branches.md)。
+
+### B7. 构建消息并发送
 
 ```typescript
-messages = [];
+messages = [
+  {
+    role: 'user',
+    content: [{ type: 'text', text: expandedText }, ...(currentImages ?? [])],
+    timestamp: Date.now(),
+  },
+];
 
-// 添加用户消息
-const userContent: (TextContent | ImageContent)[] = [{ type: 'text', text: expandedText }];
-if (currentImages) {
-  userContent.push(...currentImages);
-}
-messages.push({
-  role: 'user',
-  content: userContent,
-  timestamp: Date.now(),
-});
-
-// ... 扩展事件、自定义消息 ...
-
-// 最终发送
 await this._runAgentPrompt(messages);
 ```
 
 ## 阶段 C：Agent 启动
 
-**文件**：`packages/coding-agent/src/core/agent-session.ts`（`_runAgentPrompt`）
-→ `packages/agent/src/agent.ts`（`prompt()`）
-→ `packages/agent/src/agent-loop.ts`（`runAgentLoop()`）
+**文件**：`packages/coding-agent/src/core/agent-session.ts` `_runAgentPrompt` → `packages/agent/src/agent.ts` → `packages/agent/src/agent-loop.ts`
 
 ```typescript
 private async _runAgentPrompt(messages: AgentMessage[]): Promise<void> {
   try {
-    await this.agent.prompt(messages);          // → Agent.prompt()
-    while (await this._handlePostAgentRun()) {  // 后处理
+    await this.agent.prompt(messages);
+    while (await this._handlePostAgentRun()) {
       await this.agent.continue();
     }
   } finally {
@@ -259,44 +223,28 @@ private async _runAgentPrompt(messages: AgentMessage[]): Promise<void> {
 }
 ```
 
-```typescript
-async prompt(input: string | AgentMessage | AgentMessage[], images?: ImageContent[]): Promise<void> {
-  if (this.activeRun) {
-    throw new Error("Agent is already processing...");
-  }
-  const messages = this.normalizePromptInput(input, images);
-  await this.runPromptMessages(messages);
-}
-```
+`Agent.prompt()` 将输入归一化为 `AgentMessage[]`，然后调用 `runPromptMessages()`：
 
 ```typescript
-private async runPromptMessages(
-  messages: AgentMessage[],
-  options: { skipInitialSteeringPoll?: boolean } = {},
-): Promise<void> {
+private async runPromptMessages(messages: AgentMessage[]): Promise<void> {
   await this.runWithLifecycle(async (signal) => {
     await runAgentLoop(
-      messages,                    // 新消息
-      this.createContextSnapshot(),// 当前上下文（历史消息 + 系统提示 + 工具）
-      this.createLoopConfig(),     // 循环配置（API key、模型、工具执行器等）
-      (event) => this.processEvents(event), // 事件回调（用于 TUI 更新）
-      signal,                      // 中止信号
-      this.streamFn,              // LLM 流式函数
+      messages,
+      this.createContextSnapshot(),
+      this.createLoopConfig(),
+      (event) => this.processEvents(event),
+      signal,
+      this.streamFn,
     );
   });
 }
 ```
 
-**关键**：`runPromptMessages()` 将 Agent 的状态快照和配置传递给 `runAgentLoop()`。这是 Agent 层与 LLM 层的边界。
+关键：`createLoopConfig()` 中配置的 `streamFn` 是调用 pi-ai 的入口。在 coding-agent 中，它通常通过 `modelRegistry.getApiKeyAndHeaders(model)` 解析认证后，调用 pi-ai Models 运行时。
 
-## 阶段 D：★ Agent Loop 核心循环
+## 阶段 D：Agent Loop 核心循环
 
 **文件**：`packages/agent/src/agent-loop.ts`
-**关键函数**：`runLoop()` — 核心循环入口
-
-这是整个智能体的**心脏**。理解了它，你就理解了所有编码智能体的运作原理。
-
-### 双层循环结构
 
 ```typescript
 async function runLoop(
@@ -308,25 +256,15 @@ async function runLoop(
   streamFn?: StreamFn,
 ): Promise<void> {
   let currentContext = initialContext;
-  let config = initialConfig;
-  let firstTurn = true;
-
-  // 启动时检查是否有转向消息（用户可能在等待时输入了）
   let pendingMessages: AgentMessage[] = (await config.getSteeringMessages?.()) || [];
 
-  // ★ 外层循环：有新 follow-up 消息时继续
   while (true) {
     let hasMoreToolCalls = true;
 
-    // ★ 内层循环：处理工具调用
     while (hasMoreToolCalls || pendingMessages.length > 0) {
-      if (!firstTurn) {
-        await emit({ type: 'turn_start' });
-      } else {
-        firstTurn = false;
-      }
+      if (!firstTurn) await emit({ type: 'turn_start' });
 
-      // ① 注入 pending messages（steer/follow-up）
+      // 注入 pending messages
       if (pendingMessages.length > 0) {
         for (const message of pendingMessages) {
           currentContext.messages.push(message);
@@ -335,25 +273,23 @@ async function runLoop(
         pendingMessages = [];
       }
 
-      // ② 调用 LLM，stream 回复
+      // ① 调用 LLM
       const message = await streamAssistantResponse(currentContext, config, signal, emit, streamFn);
       newMessages.push(message);
 
-      // ③ 检查是否出错
       if (message.stopReason === 'error' || message.stopReason === 'aborted') {
+        await emit({ type: 'turn_end', message, toolResults: [] });
+        await emit({ type: 'agent_end', messages: newMessages });
         return;
       }
 
-      // ④ 提取 tool calls
+      // ② 提取 tool calls
       const toolCalls = message.content.filter((c) => c.type === 'toolCall');
       hasMoreToolCalls = false;
 
       if (toolCalls.length > 0) {
-        // ⑤ 执行工具
         const executedToolBatch = await executeToolCalls(currentContext, message, config, signal, emit);
         hasMoreToolCalls = !executedToolBatch.terminate;
-
-        // 工具结果写入上下文
         for (const result of executedToolBatch.messages) {
           currentContext.messages.push(result);
           newMessages.push(result);
@@ -363,89 +299,21 @@ async function runLoop(
       await emit({ type: 'turn_end', message, toolResults: executedToolBatch.messages });
     }
 
-    // ⑥ 检查 follow-up 消息
+    // ③ 检查 follow-up
     const followUpMessages = (await config.getFollowUpMessages?.()) || [];
     if (followUpMessages.length > 0) {
       pendingMessages = followUpMessages;
-      continue; // 继续外层循环
+      continue;
     }
 
-    break; // 所有完成，退出
+    break;
   }
 
   await emit({ type: 'agent_end', messages: newMessages });
 }
 ```
 
-### 单轮执行的时序图
-
-以用户输入 `"读取 package.json 并告诉我有哪些依赖"` 为例：
-
-```
-┌─ Turn 1 ─────────────────────────────────────────┐
-│                                                   │
-│  streamAssistantResponse()                        │
-│    ↓                                              │
-│    LLM 收到：                                     │
-│      System: "你是一个编码助手..."                  │
-│      User: "读取 package.json 并告诉我有哪些依赖"    │
-│      Tools: [read, bash, grep, find, ls, edit...] │
-│                                                   │
-│    LLM 回复（streaming）:                          │
-│      [toolCall_start]                             │
-│        name: "read"                               │
-│        arguments: {"path": "package.json"}        │
-│      [toolCall_end]                               │
-│      [text_start]                                 │
-│        好的，让我先读取 package.json...            │
-│      [text_end]                                   │
-│      [done] stopReason: "toolUse"                 │
-│                                                   │
-│  executeToolCalls()                               │
-│    ↓                                              │
-│    执行 read("package.json")                      │
-│      ↓                                            │
-│      读取文件内容，返回 ToolResult                  │
-│                                                   │
-│    工具结果写入 context:                           │
-│      { role: "toolResult",                        │
-│        toolName: "read",                           │
-│        content: [{type: "text", text: "..."}] }   │
-│                                                   │
-│  hasMoreToolCalls = true → 继续内层循环            │
-└───────────────────────────────────────────────────┘
-
-┌─ Turn 2 ─────────────────────────────────────────┐
-│                                                   │
-│  streamAssistantResponse()                        │
-│    ↓                                              │
-│    LLM 收到：                                     │
-│      System: "你是一个编码助手..."                  │
-│      User: "读取 package.json 并告诉我有哪些依赖"    │
-│      Assistant: [toolCall: read] + text           │
-│      ToolResult: {文件内容}                        │
-│                                                   │
-│    LLM 回复（streaming）:                          │
-│      [text_start]                                 │
-│        根据 package.json，项目有以下依赖：          │
-│        - typescript: ^5.0.0                       │
-│        - chalk: ^4.1.2                            │
-│        - ...                                      │
-│      [text_end]                                   │
-│      [done] stopReason: "stop"                    │
-│                                                   │
-│  toolCalls = [] (没有工具调用)                     │
-│  hasMoreToolCalls = false → 内层循环退出            │
-│  followUpMessages = [] → 外层循环退出               │
-│                                                   │
-│  agent_end 事件触发 → TUI 更新完成                  │
-└───────────────────────────────────────────────────┘
-```
-
 ### streamAssistantResponse 详解
-
-**文件**：`packages/agent/src/agent-loop.ts`
-**关键函数**：`streamAssistantResponse()` — LLM 调用入口
 
 ```typescript
 async function streamAssistantResponse(
@@ -455,35 +323,19 @@ async function streamAssistantResponse(
   emit: AgentEventSink,
   streamFn?: StreamFn,
 ): Promise<AssistantMessage> {
-  // ① AgentMessage → LLM Message（格式转换）
   const llmMessages = await config.convertToLlm(messages);
-
-  // ② 构建 LLM Context
   const llmContext: Context = {
     systemPrompt: context.systemPrompt,
     messages: llmMessages,
     tools: context.tools,
   };
 
-  // ③ 解析 API key（处理过期 token）
-  const resolvedApiKey =
-    (config.getApiKey ? await config.getApiKey(config.model.provider) : undefined) || config.apiKey;
+  // v0.79：认证由 streamFn  closure 通过 ModelRegistry / Models 运行时解析
+  const response = await streamFunction(config.model, llmContext, { signal });
 
-  // ④ 调用 LLM（streaming）
-  const response = await streamFunction(config.model, llmContext, {
-    ...config,
-    apiKey: resolvedApiKey,
-    signal,
-  });
-
-  // ⑤ 处理流式事件
   for await (const event of response) {
     switch (event.type) {
       case 'start':
-        partialMessage = event.partial;
-        context.messages.push(partialMessage);
-        break;
-
       case 'text_delta':
       case 'thinking_delta':
       case 'toolcall_delta':
@@ -491,14 +343,9 @@ async function streamAssistantResponse(
         context.messages[context.messages.length - 1] = partialMessage;
         await emit({ type: 'message_update', assistantMessageEvent: event, message: { ...partialMessage } });
         break;
-
       case 'done':
-        // 流结束
-        break;
-
       case 'error':
-        // 错误处理
-        break;
+      // ...
     }
   }
 
@@ -506,91 +353,51 @@ async function streamAssistantResponse(
 }
 ```
 
-**关键设计**：LLM 的回复是**流式的**（SSE，Server-Sent Events）。每个 delta 事件都会：
-
-1. 更新 `partialMessage`（累积的助手消息）
-2. 更新 `context.messages` 中的最后一条消息
-3. 发出 `message_update` 事件 → TUI 收到后实时更新显示
-
-这就是为什么你能看到 LLM 的输出**逐字出现**，而不是等全部生成完才显示。
+v0.79 的 `streamFn` 不再接收 per-request 的 `apiKey`，而是接收 `Models` 实例（或 `ModelRegistry`），由 pi-ai 的认证基础设施自行解析凭证。
 
 ### executeToolCalls 详解
 
-**文件**：`packages/agent/src/agent-loop.ts`
-**关键函数**：`executeToolCalls()` — 工具执行入口
-
-工具执行的流程：
-
-```
+```typescript
 LLM 返回 ToolCall { name: "read", arguments: { path: "package.json" } }
   │
   ▼
 executeToolCalls()
   │
   ├─ 1. 查找工具定义
-  │     const tool = config.tools.find(t => t.name === "read")
-  │
-  ├─ 2. 验证参数（TypeBox schema 校验）
-  │     validateToolArguments(tools, toolCall)
-  │     → 如果校验失败，返回错误作为 toolResult
-  │
-  ├─ 3. 发出 tool_call_start 事件（TUI 显示 "📖 读取文件"）
-  │
-  ├─ 4. 执行工具
-  │     const handler = config.getToolHandler(toolCall.name)
-  │     const result = await handler(toolCall.arguments, signal)
-  │
-  │     read 工具的实现:
-  │       const content = fs.readFileSync(path, 'utf8')
-  │       return { type: "text", text: content }
-  │
-  ├─ 5. 发出 tool_result 事件（TUI 显示输出）
-  │
+  ├─ 2. validateToolArguments() — TypeBox schema 校验
+  ├─ 3. 发出 tool_call_start 事件
+  ├─ 4. 执行工具（handler）
+  │     read 工具：fs.readFileSync(path, 'utf8')
+  ├─ 5. 发出 tool_result 事件
   └─ 6. 返回 ToolResultMessage
-        { role: "toolResult", content: [{type: "text", text: "..."}] }
 ```
-
-**内置工具列表**（`packages/coding-agent/src/core/tools/`）：
-
-| 工具        | 文件           | 功能                 |
-| ----------- | -------------- | -------------------- |
-| `read`      | `read.ts`      | 读取文件内容         |
-| `write`     | `write.ts`     | 创建或覆盖文件       |
-| `edit`      | `edit.ts`      | 精确文本替换         |
-| `edit-diff` | `edit-diff.ts` | 基于 diff 的补丁应用 |
-| `bash`      | `bash.ts`      | 执行 Shell 命令      |
-| `grep`      | `grep.ts`      | 文件内容搜索         |
-| `find`      | `find.ts`      | 文件名搜索           |
-| `ls`        | `ls.ts`        | 列出目录             |
 
 ## 循环终止条件
 
-Agent Loop 在以下情况下退出：
-
-| 条件               | stopReason  | 退出层级         |
-| ------------------ | ----------- | ---------------- |
-| LLM 正常回复完成   | `"stop"`    | 内层循环退出     |
-| LLM 调用工具       | `"toolUse"` | 继续内层循环     |
-| 输出超过最大 token | `"length"`  | 内层循环退出     |
-| 发生错误           | `"error"`   | 直接 return      |
-| 用户中断（Ctrl+C） | `"aborted"` | 直接 return      |
-| 用户输入 steer     | —           | steer 注入后继续 |
-| 用户输入 follow-up | —           | 外层循环继续     |
+| 条件               | stopReason  | 行为         |
+| ------------------ | ----------- | ------------ |
+| LLM 正常回复完成   | `"stop"`    | 内层循环退出 |
+| LLM 调用工具       | `"toolUse"` | 继续内层循环 |
+| 输出超过最大 token | `"length"`  | 内层循环退出 |
+| 发生错误           | `"error"`   | 直接 return  |
+| 用户中断（Ctrl+C） | `"aborted"` | 直接 return  |
+| 用户输入 steer     | —           | 注入后继续   |
+| 用户输入 follow-up | —           | 外层循环继续 |
 
 ## 关键概念总结
 
-| 概念                        | 解释                                     | 代码位置           |
-| --------------------------- | ---------------------------------------- | ------------------ |
-| **AgentSession**            | 业务逻辑中枢，处理消息预处理             | `agent-session.ts` |
-| **Agent**                   | 智能体运行时，管理状态和生命周期         | `agent.ts`         |
-| **runAgentLoop**            | ★ 核心循环，LLM → 工具 → 循环            | `agent-loop.ts`    |
-| **streamAssistantResponse** | LLM 调用入口，处理流式事件               | `agent-loop.ts`    |
-| **executeToolCalls**        | 工具执行，验证 → 执行 → 返回结果         | `agent-loop.ts`    |
-| **Steer**                   | Agent 工作中注入消息，当前工具完成后生效 | `agent-session.ts` |
-| **Follow-up**               | Agent 完成后排队的新消息                 | `agent-session.ts` |
-| **Compaction**              | 上下文压缩，释放 token 空间              | `agent-session.ts` |
-| **事件驱动**                | 所有状态变化通过事件通知 TUI             | `emit()` 调用      |
+| 概念                        | 解释                                     | 代码位置            |
+| --------------------------- | ---------------------------------------- | ------------------- |
+| **AgentSession**            | 业务逻辑中枢，处理消息预处理             | `agent-session.ts`  |
+| **Agent**                   | 智能体运行时，管理状态和生命周期         | `agent.ts`          |
+| **runAgentLoop**            | ★ 核心循环，LLM → 工具 → 循环            | `agent-loop.ts`     |
+| **streamAssistantResponse** | LLM 调用入口，处理流式事件               | `agent-loop.ts`     |
+| **executeToolCalls**        | 工具执行，验证 → 执行 → 返回结果         | `agent-loop.ts`     |
+| **Steer**                   | Agent 工作中注入消息，当前工具完成后生效 | `agent-session.ts`  |
+| **Follow-up**               | Agent 完成后排队的新消息                 | `agent-session.ts`  |
+| **ModelRegistry**           | 认证与模型解析                           | `model-registry.ts` |
+| **事件驱动**                | 所有状态变化通过事件通知 TUI             | `emit()` 调用       |
 
 ## 下一步
 
-→ [核心架构与设计哲学](architecture.md) — Provider 抽象、差分渲染、扩展系统
+→ [核心架构与设计哲学](architecture.md) — Provider 抽象、事件流、TUI 差分渲染、扩展系统

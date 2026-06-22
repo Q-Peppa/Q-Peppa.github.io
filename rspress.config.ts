@@ -180,6 +180,21 @@ export default defineConfig({
               link: '/docs/latest/source/architecture',
               tag: '深入',
             },
+            {
+              text: 'pi-ai 运行时与 Provider',
+              link: '/docs/latest/source/models-runtime',
+              tag: 'new',
+            },
+            {
+              text: '项目信任与认证',
+              link: '/docs/latest/source/trust-and-auth',
+              tag: 'new',
+            },
+            {
+              text: '上下文压缩与分支',
+              link: '/docs/latest/source/compaction-and-branches',
+              tag: 'new',
+            },
           ],
         },
       ],
