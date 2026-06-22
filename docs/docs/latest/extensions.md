@@ -434,7 +434,10 @@ pi.on('session_before_fork', async (event, ctx) => {
 
 ```typescript
 pi.on('session_before_compact', async (event, ctx) => {
-  const { preparation, branchEntries, customInstructions, signal } = event;
+  const { preparation, branchEntries, customInstructions, reason, willRetry, signal } = event;
+
+  // reason - "manual"（/compact）、"threshold" 或 "overflow"
+  // willRetry - 压缩后是否重试被中止的轮次（溢出恢复）
 
   // 取消：
   return { cancel: true };
@@ -452,6 +455,8 @@ pi.on('session_before_compact', async (event, ctx) => {
 pi.on('session_compact', async (event, ctx) => {
   // event.compactionEntry - 保存的压缩
   // event.fromExtension - 是否由扩展提供
+  // event.reason - "manual"（/compact）、"threshold" 或 "overflow"
+  // event.willRetry - 压缩后是否重试被中止的轮次（溢出恢复）
 });
 ```
 

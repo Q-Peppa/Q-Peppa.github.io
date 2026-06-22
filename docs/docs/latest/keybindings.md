@@ -54,11 +54,11 @@
 
 ### TUI 输入
 
-| ID                  | 默认键        | 说明           |
-| ------------------- | ------------- | -------------- |
-| `tui.input.newLine` | `shift+enter` | 插入新行       |
-| `tui.input.submit`  | `enter`       | 提交输入       |
-| `tui.input.tab`     | `tab`         | Tab / 自动补全 |
+| ID                  | 默认键                  | 说明           |
+| ------------------- | ----------------------- | -------------- |
+| `tui.input.newLine` | `shift+enter`、`ctrl+j` | 插入新行       |
+| `tui.input.submit`  | `enter`                 | 提交输入       |
+| `tui.input.tab`     | `tab`                   | Tab / 自动补全 |
 
 ### TUI Kill Ring
 

@@ -30,13 +30,7 @@ keybind = shift+enter=text:\n
 
 该映射发送原始的换行符字节。在 Pi 内部，这与 `Ctrl+J` 无法区分，因此 tmux 和 Pi 不再看到真正的 `shift+enter` 按键事件。
 
-如果仅为 Claude Code 2.x+ 添加的该映射，可以删除，除非你想在 tmux 中使用 Claude Code，它仍然需要该 Ghostty 映射。如果你希望在 tmux 中通过此重映射让 `Shift+Enter` 继续工作，请在 `~/.pi/agent/keybindings.json` 中将 `ctrl+j` 添加到 pi 的 `newLine` 快捷键中：
-
-```json
-{
-  "newLine": ["shift+enter", "ctrl+j"]
-}
-```
+如果仅为 Claude Code 2.x+ 添加的该映射，可以删除，除非你想在 tmux 中使用 Claude Code，它仍然需要该 Ghostty 映射。Pi 默认将 `Ctrl+J` 绑定为换行别名，因此 `Shift+Enter` 无需额外 Pi 配置即可在 tmux 中通过该重映射继续工作。
 
 ## WezTerm
 

@@ -747,7 +747,7 @@ ctx.ui.setStatus('my-ext', ctx.ui.theme.fg('accent', '\u25cf active'));
 ctx.ui.setStatus('my-ext', undefined);
 ```
 
-**示例：** [status-line.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/status-line.ts)、[plan-mode.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/plan-mode.ts)、[preset.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/preset.ts)
+**示例：** [status-line.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/status-line.ts)、[plan-mode/index.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/plan-mode/index.ts)、[preset.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/preset.ts)
 
 ### 模式 4b：工作指示器自定义
 
@@ -805,7 +805,7 @@ ctx.ui.setWidget('my-widget', (_tui, theme) => {
 ctx.ui.setWidget('my-widget', undefined);
 ```
 
-**示例：** [plan-mode.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/plan-mode.ts)
+**示例：** [plan-mode/index.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/plan-mode/index.ts)
 
 ### 模式 6：自定义底部
 
@@ -930,7 +930,7 @@ export default function (pi: ExtensionAPI) {
 - **选择 UI**：[examples/extensions/preset.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/preset.ts) - SelectList 配合 DynamicBorder 边框
 - **带取消的异步**：[examples/extensions/qna.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/qna.ts) - LLM 调用的 BorderedLoader
 - **设置切换**：[examples/extensions/tools.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/tools.ts) - 工具启用/禁用的 SettingsList
-- **状态指示器**：[examples/extensions/plan-mode.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/plan-mode.ts) - setStatus 和 setWidget
+- **状态指示器**：[examples/extensions/plan-mode/index.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/plan-mode/index.ts) - setStatus 和 setWidget
 - **工作指示器**：[examples/extensions/working-indicator.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/working-indicator.ts) - setWorkingIndicator
 - **自定义底部**：[examples/extensions/custom-footer.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/custom-footer.ts) - 带统计信息的 setFooter
 - **自定义编辑器**：[examples/extensions/modal-editor.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/modal-editor.ts) - Vim 风格模态编辑

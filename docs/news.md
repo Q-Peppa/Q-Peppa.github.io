@@ -2,6 +2,42 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.79.10（2026-06-22）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **扩展压缩事件上下文** — Extension `session_before_compact` 和 `session_compact` 事件现在包含 `reason` 和 `willRetry`，使扩展可以区分手动 `/compact`、阈值自动压缩和溢出重试流程。参见 [session_before_compact / session_compact](/docs/latest/extensions#session_before_compact--session_compact) 和 [通过扩展自定义摘要](/docs/latest/compaction#custom-summarization-via-extensions)。
+- **更安全的更新流程** — `pi update` 会安装精确匹配的已检出 Pi 版本，更新通知会显示 changelog URL，使升级更可预期。参见 [安装与管理](/docs/latest/packages#install-and-manage)。
+
+新增
+
+- 为扩展 `session_before_compact` 和 `session_compact` 事件添加了 `reason` 和 `willRetry` 元数据，使扩展可以区分手动、阈值和溢出压缩流程（[#5962](https://github.com/earendil-works/pi/pull/5962)，感谢 [@PizzaMarinara](https://github.com/PizzaMarinara)）。
+
+修复
+
+- 修复了 `find` 工具，使其在父 `.gitignore` 规则忽略嵌套仓库时仍能尊重嵌套 git 仓库边界（[#5960](https://github.com/earendil-works/pi/issues/5960)）。
+- 修复了 usage 文档的斜杠命令表，补全 `/trust` 和 `/import`（[#5959](https://github.com/earendil-works/pi/issues/5959)）。
+- 修复了继承的 OpenAI 兼容流式传输，保留在匹配 tool call delta 之前到达的加密 `reasoning_details`（[#5114](https://github.com/earendil-works/pi/issues/5114)）。
+- 修复了损坏的 TUI 文档链接，指向计划模式扩展示例（[#5957](https://github.com/earendil-works/pi/issues/5957)）。
+- 修复了会话替换或重载期间发出的瞬时扩展 UI 和会话启动消息，使其保持可见，并在重载完成前保持重载输入阻塞（[#5943](https://github.com/earendil-works/pi/issues/5943)）。
+- 修复了 plan-mode 示例，使其保留活跃自定义工具、未找到计划时跳过动作提示，并从 `agent_end` 正确排队细化/执行 follow-up（[#5940](https://github.com/earendil-works/pi/issues/5940)）。
+- 修复了 `pi update`，使其安装 Pi 更新检查返回的确切版本，`--force` 重新安装该检查版本，无可用版本时失败而不是回退到无版本重装，并报告旧版本和更新后的版本。
+- 修复了更新通知，将实际 changelog URL 显示为超链接文本。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+修复
+
+- 修复了 OpenAI 兼容流式传输，保留在匹配 tool call delta 之前到达的加密 `reasoning_details`（[#5114](https://github.com/earendil-works/pi/issues/5114)）。
+
+</details>
+
 ## v0.79.9（2026-06-20）
 
 <details>

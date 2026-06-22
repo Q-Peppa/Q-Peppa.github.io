@@ -291,7 +291,7 @@ path/to/changed.ts
 
 ```typescript
 pi.on('session_before_compact', async (event, ctx) => {
-  const { preparation, branchEntries, customInstructions, signal } = event;
+  const { preparation, branchEntries, customInstructions, reason, willRetry, signal } = event;
 
   // preparation.messagesToSummarize - 要总结的消息
   // preparation.turnPrefixMessages - 拆分轮次前缀（如果是 isSplitTurn）
@@ -302,6 +302,8 @@ pi.on('session_before_compact', async (event, ctx) => {
   // preparation.settings - 压缩设置
 
   // branchEntries - 当前分支上的所有条目（用于自定义状态）
+  // reason - "manual"（/compact）、"threshold" 或 "overflow"
+  // willRetry - 压缩后是否重试被中止的轮次（溢出恢复）
   // signal - AbortSignal（传递给 LLM 调用）
 
   // 取消：
