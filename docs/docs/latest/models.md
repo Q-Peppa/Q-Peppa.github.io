@@ -43,7 +43,7 @@
 }
 ```
 
-`apiKey` 是必填字段，但 Ollama 会忽略它，所以任意值都可以。
+`apiKey` 值只是一个占位符，因为 Ollama 会忽略它。Pi 仍然将模型视为需要认证后才会出现在 `/model` 中，因此无密钥的本地服务器应保留一个虚拟值、通过 `/login` 为该 Provider 保存密钥，或在选择模型时传入 `--api-key`。
 
 某些 OpenAI 兼容服务器不支持用于推理能力模型的 `developer` 角色。对于这些 Provider，设置 `compat.supportsDeveloperRole` 为 `false`，这样 Pi 会将系统提示作为 `system` 消息发送。如果服务器也不支持 `reasoning_effort`，同时设置 `compat.supportsReasoningEffort` 为 `false`。
 
@@ -140,15 +140,17 @@
 
 ## Provider 配置
 
-| 字段             | 说明                                                  |
-| ---------------- | ----------------------------------------------------- |
-| `baseUrl`        | API 端点 URL                                          |
-| `api`            | API 类型（见上表）                                    |
-| `apiKey`         | API Key（见下面的值解析）                             |
-| `headers`        | 自定义请求头（见下面的值解析）                        |
-| `authHeader`     | 设为 `true` 自动添加 `Authorization: Bearer <apiKey>` |
-| `models`         | 模型配置数组                                          |
-| `modelOverrides` | 此 Provider 上内置模型的逐模型覆盖                    |
+| 字段             | 说明                                                                                                         |
+| ---------------- | ------------------------------------------------------------------------------------------------------------ |
+| `baseUrl`        | API 端点 URL                                                                                                 |
+| `api`            | API 类型（见上表）                                                                                           |
+| `apiKey`         | 可选的 API Key 配置（见下面的值解析）。当认证由 `/login`/`auth.json` 或 CLI `--api-key` 提供时，可省略此项。 |
+| `headers`        | 自定义请求头（见下面的值解析）                                                                               |
+| `authHeader`     | 设为 `true` 自动添加 `Authorization: Bearer <apiKey>`                                                        |
+| `models`         | 模型配置数组                                                                                                 |
+| `modelOverrides` | 此 Provider 上内置模型的逐模型覆盖                                                                           |
+
+对于带 `models` 的 Provider，非内置 Provider 配置需要在 Provider 或模型级别提供 `baseUrl` 和 `api` 值。`apiKey` 不是加载文件的必要条件：当通过 `/login`/`auth.json`、CLI `--api-key` 或 Provider 的 `apiKey` 配置认证后，模型才可用。如果未配置认证，模型仍会加载，但在 `/model` 和 `--list-models` 中不可用。
 
 ### 值解析
 
