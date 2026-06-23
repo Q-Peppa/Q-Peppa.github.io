@@ -2,6 +2,75 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.80.0（2026-06-23）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+变更
+
+- 添加 `Ctrl+J` 作为默认换行快捷键，与 `Shift+Enter` 并列。
+- 将显示的 `zai` Provider 标签重命名为 ZAI Coding Plan (Global) 以提高清晰度（[#5965](https://github.com/earendil-works/pi/issues/5965)）。
+- pi-ai 的旧全局 API（`stream`/`complete`/`completeSimple`、`getModel`/`getModels`/`getProviders`、`registerApiProvider`、`getEnvApiKey` 等）已从 `@earendil-works/pi-ai` 根入口点移至 `@earendil-works/pi-ai/compat`。扩展在运行时不受影响：扩展加载器会将 pi-ai 根解析为 compat 入口点（严格超集），因此现有扩展可继续正常工作。对 pi-ai 已发布类型进行类型检查的扩展应将这些导入切换为 `@earendil-works/pi-ai/compat`（或迁移到新的 `createModels()`/Provider-factory API）。compat 入口点和加载器别名将在未来版本中通过迁移指南移除。
+
+修复
+
+- 修复会话名称，在存储或显示标签前规范化换行符（[#5999](https://github.com/earendil-works/pi/pull/5999)，感谢 [@haoqixu](https://github.com/haoqixu)）。
+- 修复会话选择器，按每个子树中最新活动对线程化会话树排序（[#5784](https://github.com/earendil-works/pi/pull/5784)，感谢 [@Perlence](https://github.com/Perlence)）。
+- 修复与扩展相关的崩溃和启动失败报告，建议使用 `pi -ne` 重启。
+- 修复继承的 OpenAI Responses 流，使其在缺失终端事件前失败，并修复上下文使用和压缩估算，在截断响应后忽略格式错误的全零助手使用情况（[#5526](https://github.com/earendil-works/pi/pull/5526)，感谢 [@dmmulroy](https://github.com/dmmulroy)）。
+- 修复继承的 OpenAI Codex Responses WebSocket 会话，在输出开始前达到 OpenAI 连接限制时重新连接一次（[#5973](https://github.com/earendil-works/pi/issues/5973)）。
+- 修复继承的 Amazon Bedrock 端点解析，使其遵循作用域内的 `AWS_PROFILE` 值。
+- 修复继承的 Cloudflare Providers，要求账户/网关配置并通过 Provider 身份验证路由内置兼容调用。
+- 修复 Provider 作用域内的身份验证环境变量值，使其能够到达继承的 `Models`/`ImagesModels` API 调用和兼容 API 密钥注入。
+- 修复继承的 OpenCode Go GLM-5.2 元数据，以暴露 `xhigh` 推理并发送 Provider 的最大推理强度（[#5967](https://github.com/earendil-works/pi/issues/5967)）。
+- 修复 `pi --resume`，使其加载用户包主题并解析自动亮/暗主题设置。
+- 修复 `models.json` 自定义 Providers，使存储的凭据无需冗余 Provider 级别 `apiKey` 即可满足身份验证要求（[#5953](https://github.com/earendil-works/pi/issues/5953)）。
+
+移除
+
+- 移除了继承的选择性 Provider `@earendil-works/pi-ai/base` 和 `@earendil-works/pi-agent-core/base` 入口点；请改用带有显式 `Models` Provider 工厂的根包。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+不兼容变更
+
+- 根入口点（`@earendil-works/pi-ai`）现在仅包含核心功能且无副作用。旧的全局 API 已移至临时的 `@earendil-works/pi-ai/compat` 入口点，这是根的严格超集：只需更改文件的导入路径即可完成迁移。被移动的符号包括 `stream`/`complete`/`streamSimple`/`completeSimple`、`getModel`/`getModels`/`getProviders`（现在是 `@earendil-works/pi-ai/providers/all` 中 `getBuiltinModel`/`getBuiltinModels`/`getBuiltinProviders` 的已弃用别名）、`registerApiProvider`/`unregisterApiProviders`/`resetApiProviders`/`getApiProvider`、`getEnvApiKey`/`findEnvKeys`、`setBedrockProviderModule`、每个 API 的惰性流包装器（`anthropicMessagesApi` 等）以及图像生成 API。
+- 将 `Provider` 类型重命名为 `ProviderId`。`Provider` 现在是运行时 Provider 接口的名称（id、name、auth、模型列表、流行为）。
+- API 实现模块已从 `src/providers/` 移至 `@earendil-works/pi-ai/api/*`，按 API id 重命名（`anthropic` -> `api/anthropic-messages`、`google` -> `api/google-generative-ai`、`mistral` -> `api/mistral-conversations`、`amazon-bedrock` -> `api/bedrock-converse-stream`），每个模块恰好导出 `stream` 和 `streamSimple`。旧的按实现导出的名称（`streamAnthropic`、`streamSimpleAnthropic` 等）和旧的原始 API 子路径（`./anthropic`、`./google`、`./openai-completions` 等）已移除；请通过 `@earendil-works/pi-ai/api/*` 导入原始 API 实现。
+- 移除了 `@earendil-works/pi-ai/base` 选择性 Provider 入口点；请将根/核心 API 与显式的 `createModels()` 集合和 Provider 工厂一起使用，以实现隔离的 bundle。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+不兼容变更
+
+- `AgentHarnessOptions.models` 是必需的，且是唯一的身份验证路径：Harness 通过提供的 `Models` 实例（`models.streamSimple()`/`completeSimple()`）流处理轮次、压缩和分支摘要，通过 Providers 解析身份验证。已移除 `AgentHarnessOptions.getApiKeyAndHeaders` — 按请求解析密钥的应用现在应将其表示为 `Models` 集合中 Providers 的身份验证（`ApiKeyAuth`/`OAuthAuth`）。使用 `createModels()` + Provider 工厂（或 `@earendil-works/pi-ai/providers/all` 中的 `builtinModels()`）构建；测试使用 `fauxProvider()`。
+- `compact()`、`generateSummary()` 和 `generateBranchSummary()` 接受 `Models` 参数，不再接受显式的 `apiKey`/`headers`。
+- `StreamFn` 以结构形式定义（`(model, context, options?) => AssistantMessageEventStream | Promise<...>`）；`Models.streamSimple` 满足它。
+- 移除了 `@earendil-works/pi-agent-core/base` 选择性 Provider 入口点；请改用带有显式 `Models` 实例的根包。
+
+修复
+
+- 修复 Harness 会话名称，在存储标签前规范化换行符（[#5999](https://github.com/earendil-works/pi/pull/5999)，感谢 [@haoqixu](https://github.com/haoqixu)）。
+- 修复 Harness 压缩估算，在截断响应后忽略格式错误的全零助手使用情况（[#5526](https://github.com/earendil-works/pi/pull/5526)，感谢 [@dmmulroy](https://github.com/dmmulroy)）。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+变更
+
+- 添加 `Ctrl+J` 作为默认换行快捷键，与 `Shift+Enter` 并列。
+
+</details>
+
 ## v0.79.10（2026-06-22）
 
 <details>
