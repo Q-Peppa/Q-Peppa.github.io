@@ -1,6 +1,6 @@
 # pi-ai：Models 运行时与 Provider 架构
 
-`pi-ai` 是 Pi 与各家大模型对话的"驱动层"。从 v0.79 开始，它经历了一次重大重构：从旧的全局 API registry 转向 **Models 运行时**。本文基于 **Pi v0.79.10** 深入讲解新架构。
+`pi-ai` 是 Pi 与各家大模型对话的"驱动层"。从 v0.79 开始，它经历了一次重大重构：从旧的全局 API registry 转向 **Models 运行时**。v0.80.0 进一步深化了这一重构，清理了模块边界和类型系统。本文基于 **Pi v0.80.0** 深入讲解新架构。
 
 ## 为什么重构？
 
@@ -108,11 +108,20 @@ export function anthropicProvider(): Provider<'anthropic-messages'> {
 }
 ```
 
+> **v0.80.0 重要变化**：`Provider` 现在是完整的运行时接口（包含 id、name、auth、models、api），而不再是 string 类型的别名。Provider ID 的类型现在是 `ProviderId`（string 的别名）。
+
 `createProvider()` 会做一些标准化工作（如给 api 实现绑定 Provider 上下文），返回一个 `Provider` 对象。
 
 ## API：只负责协议实现
 
-**目录**：`packages/ai/src/api/`
+**目录**：`packages/ai/src/api/`（v0.80.0 从 `src/providers/` 移至此处）
+
+> **v0.80.0 路径变化**：API 实现模块从 `src/providers/*.ts` 移至 `src/api/*`，并按 API id 命名：
+>
+> - `anthropic.ts` → `api/anthropic-messages.ts`
+> - `google.ts` → `api/google-generative-ai.ts`
+> - `mistral.ts` → `api/mistral-conversations.ts`
+> - `amazon-bedrock.ts` → `api/bedrock-converse-stream.ts`
 
 每种 LLM 协议一个文件，只导出两个函数：
 
@@ -314,13 +323,46 @@ export interface Model<TApi extends Api> {
 
 **文件**：`packages/ai/src/compat.ts`
 
-旧全局 API 没有直接删除，而是移到 `@earendil-works/pi-ai/compat`：
+> **v0.80.0 重大变化**：根入口点 `@earendil-works/pi-ai` 现在是纯核心、无副作用。旧的全局 API 完全移到 `@earendil-works/pi-ai/compat` 入口点。
 
 ```typescript
-import { stream, complete, getBuiltinModel, registerApiProvider } from '@earendil-works/pi-ai/compat';
+import {
+  stream,
+  complete,
+  streamSimple,
+  completeSimple,
+  getBuiltinModel,
+  getBuiltinModels,
+  getBuiltinProviders,
+  registerApiProvider,
+  unregisterApiProviders,
+  resetApiProviders,
+  getApiProvider,
+  getEnvApiKey,
+  findEnvKeys,
+  setBedrockProviderModule,
+} from '@earendil-works/pi-ai/compat';
 ```
 
-这是临时兼容入口，未来会随 coding-agent 的 `ModelManager` 迁移而删除。新代码应使用 `createModels()` 和 Provider factory。
+这是临时兼容入口，未来会移除。新代码应使用 `createModels()` 和 Provider factory。
+
+### 迁移路径
+
+1. **保持旧行为**：只需将导入从 `@earendil-works/pi-ai` 改为 `@earendil-works/pi-ai/compat`
+2. **迁移到新 API**：使用 `createModels()` + Provider factory
+
+```typescript
+// 新方式
+import { createModels } from '@earendil-works/pi-ai';
+import { anthropicProvider } from '@earendil-works/pi-ai/providers/anthropic';
+
+const models = createModels();
+models.setProvider(anthropicProvider());
+```
+
+### 已移除的入口点
+
+> **v0.80.0 移除**：选择性 Provider 入口点 `@earendil-works/pi-ai/base` 和 `@earendil-works/pi-agent-core/base` 已移除。请使用根包配合显式的 `Models` 实例和 Provider factory。
 
 ## coding-agent 中如何组装 pi-ai
 
@@ -349,6 +391,46 @@ streamFn: async (model, context, options) => {
     env,
   });
 };
+```
+
+## Agent Harness 中的变化（v0.80.0）
+
+**文件**：`packages/agent/src/harness.ts`
+
+> **v0.80.0 不兼容变更**：`AgentHarnessOptions.models` 现在是**必填项**，也是唯一的认证路径。
+
+```typescript
+// 之前（v0.79.x）
+const harness = new AgentHarness({
+  getApiKeyAndHeaders: async (model) => { ... }, // 已移除
+  // ...
+});
+
+// 现在（v0.80.0）
+const harness = new AgentHarness({
+  models: myModelsInstance, // 必填！
+  // ...
+});
+```
+
+Harness 通过 `models.streamSimple()` / `completeSimple()` 处理：
+
+- 对话回合流传输
+- 会话压缩
+- 分支摘要生成
+
+认证完全通过 `Models` 实例中各 Provider 的 `auth` 配置解析。
+
+### 压缩和摘要函数
+
+`compact()`、`generateSummary()`、`generateBranchSummary()` 现在也接受 `Models` 参数，不再接受独立的 `apiKey` / `headers`：
+
+```typescript
+// v0.79.x（已过时）
+const result = await compact(messages, model, { apiKey, headers });
+
+// v0.80.0
+const result = await compact(messages, model, models);
 ```
 
 ## 关键设计决策
