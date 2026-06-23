@@ -2,6 +2,30 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.80.1（2026-06-23）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+修复
+
+- 修复继承的 Amazon Bedrock 作用域内 `AWS_PROFILE` 端点解析，适用于内置推理配置文件端点。
+- 修复继承的 Fireworks Anthropic 兼容请求，为自定义 Fireworks 模型应用会话亲和性和不支持的工具字段默认值。
+- 修复继承的 Together MiniMax M2.7 元数据，以避免不支持的 Together 推理切换。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+修复
+
+- 修复 Amazon Bedrock 作用域内 `AWS_PROFILE` 端点解析的回归问题，适用于内置推理配置文件端点。
+- 修复 Fireworks Anthropic 兼容请求，为自定义 Fireworks 模型应用会话亲和性和不支持的工具字段默认值。
+- 修复 Together MiniMax M2.7 元数据，以避免不支持的 Together 推理切换。
+
+</details>
+
 ## v0.80.0（2026-06-23）
 
 <details>
