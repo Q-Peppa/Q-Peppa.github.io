@@ -2,6 +2,50 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.80.2（2026-06-23）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+变更
+
+- 将继承的 pi-ai `ApiKeyCredential` 更改为使用与 `auth.json` 兼容的鉴别器 `type: "api_key"` 和 Provider 作用域内的 `env` 值，而非 `type: "api-key"` 和元数据。
+- 将继承的 agent-core 公共 harness shell 执行选项类型从 `ExecutionEnvExecOptions` 重命名为 `ShellExecOptions`。
+
+修复
+
+- 修复继承的 Anthropic 兼容自定义模型，使其使用显式兼容性元数据，而非用于会话亲和性头部和不支持的工具字段省略的 Provider 名称启发式方法。
+- 修复继承的请求作用域内的 `apiKey` 和 `env` 值，使其参与 Provider 身份验证解析，以便 Cloudflare 等 Provider 可以从显式调用选项中派生请求特定的基础 URL（[#6021](https://github.com/earendil-works/pi/issues/6021)）。
+- 恢复 pi-ai compat 入口点上继承的临时传统逐 API 流别名，如 `streamSimpleOpenAICompletions`（[#6016](https://github.com/earendil-works/pi/issues/6016)、[#6017](https://github.com/earendil-works/pi/issues/6017)）。
+- 恢复 `openai-completions` 中继承的运行时 `detectCompat` 回退，用于没有显式兼容性元数据的模型（[#6020](https://github.com/earendil-works/pi/issues/6020)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+变更
+
+- 将 `ApiKeyCredential` 更改为使用与 `auth.json` 兼容的鉴别器 `type: "api_key"` 和 Provider 作用域内的 `env` 值，而非 `type: "api-key"` 和元数据。
+
+修复
+
+- 修复 Anthropic 兼容自定义模型，使其使用显式兼容性元数据，而非用于会话亲和性头部和不支持的工具字段省略的 Provider 名称启发式方法。
+- 修复请求作用域内的 `apiKey` 和 `env` 值，使其参与 Provider 身份验证解析，以便 Cloudflare 等 Provider 可以从显式调用选项中派生请求特定的基础 URL（[#6021](https://github.com/earendil-works/pi/issues/6021)）。
+- 恢复 compat 入口点上的临时传统逐 API 流别名，如 `streamSimpleOpenAICompletions`（[#6016](https://github.com/earendil-works/pi/issues/6016)、[#6017](https://github.com/earendil-works/pi/issues/6017)）。
+- 恢复 `openai-completions` 中的运行时 `detectCompat` 回退，用于没有显式兼容性元数据的模型（[#6020](https://github.com/earendil-works/pi/issues/6020)）。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+变更
+
+- 将公共 harness shell 执行选项类型从 `ExecutionEnvExecOptions` 重命名为 `ShellExecOptions`。
+
+</details>
+
 ## v0.80.1（2026-06-23）
 
 <details>
