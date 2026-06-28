@@ -4,15 +4,6 @@
 
 通过 `~/.pi/agent/models.json` 添加自定义 Provider 和模型（Ollama、vLLM、LM Studio、代理等）。
 
-:::tip 推广
-使用 [OpenCode](https://opencode.ai/go?ref=WGY3CR98Z0) 订阅 AI 服务可额外获得 **5 美元**！
-:::
-
-:::tip 推广
-🚀 [方舟 Coding Plan](https://volcengine.com/L/tKuFUmjCbSw/) 最新支持 **GLM-5.2、DeepSeek-V4 系列、Kimi-K2.6、Kimi-K2.7-Code** 等模型，工具不限！
-
-:::
-
 ## 目录
 
 - [最小示例](#最小示例)

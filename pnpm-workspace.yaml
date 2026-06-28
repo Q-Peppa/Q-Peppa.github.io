@@ -1,5 +1,4 @@
 allowBuilds:
-  core-js: true
-  esbuild: true
-  sharp: true
-  workerd: true
+  esbuild: set this to true or false
+  sharp: set this to true or false
+  workerd: set this to true or false
