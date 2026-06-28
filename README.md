@@ -12,16 +12,16 @@
 ## 开发
 
 ```bash
-pnpm install
-pnpm run dev     # 启动开发服务器
-pnpm run build   # 构建
-pnpm run preview # 预览构建结果
+bun install
+bun run dev     # 启动开发服务器
+bun run build   # 构建
+bun run preview # 预览构建结果
 ```
 
 ## 技术栈
 
 - [Rspress](https://rspress.dev/) v2
-- pnpm
+- Bun
 
 ## License
 
