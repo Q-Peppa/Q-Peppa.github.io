@@ -19,15 +19,15 @@
 
 ### 编辑器功能
 
-| 功能            | 操作                                            |
-| --------------- | ----------------------------------------------- |
-| 文件引用        | 输入 `@` 来模糊搜索项目文件                     |
-| 路径补全        | 按 Tab 补全路径                                 |
-| 多行输入        | Shift+Enter（Windows Terminal 上为 Ctrl+Enter） |
-| 图像            | Ctrl+V 粘贴（Windows 为 Alt+V），或拖入终端     |
-| Shell 命令      | `!command` 执行命令，输出发送给模型             |
-| 隐藏 Shell 命令 | `!!command` 执行命令但不发送输出给模型          |
-| 外部编辑器      | Ctrl+G 打开 `$VISUAL` 或 `$EDITOR`              |
+| 功能            | 操作                                                                                        |
+| --------------- | ------------------------------------------------------------------------------------------- |
+| 文件引用        | 输入 `@` 来模糊搜索项目文件                                                                 |
+| 路径补全        | 按 Tab 补全路径                                                                             |
+| 多行输入        | Shift+Enter（Windows Terminal 上为 Ctrl+Enter）                                             |
+| 图像            | Ctrl+V 粘贴（Windows 为 Alt+V），或拖入终端                                                 |
+| Shell 命令      | `!command` 执行命令，输出发送给模型                                                         |
+| 隐藏 Shell 命令 | `!!command` 执行命令但不发送输出给模型                                                      |
+| 外部编辑器      | Ctrl+G 打开 `externalEditor`、`$VISUAL`、`$EDITOR`，Windows 上为 Notepad，其他平台为 `nano` |
 
 有关所有快捷键和自定义设置，请参阅 [Keybindings](keybindings.md)。
 
@@ -284,16 +284,16 @@ pi --exclude-tools ask_question
 
 ### 环境变量
 
-| 变量                          | 说明                                                                    |
-| ----------------------------- | ----------------------------------------------------------------------- |
-| `PI_CODING_AGENT_DIR`         | 覆盖配置目录；默认 `~/.pi/agent`                                        |
-| `PI_CODING_AGENT_SESSION_DIR` | 覆盖会话存储目录；被 `--session-dir` 覆盖                               |
-| `PI_PACKAGE_DIR`              | 覆盖包目录，适用于 Nix/Guix store 路径                                  |
-| `PI_OFFLINE`                  | 禁用启动时网络操作，包括更新检查、包更新检查和安装/更新遥测             |
-| `PI_SKIP_VERSION_CHECK`       | 跳过启动时的 Pi 版本更新检查。阻止 `pi.dev` 最新版本请求                |
-| `PI_TELEMETRY`                | 覆盖安装/更新遥测：`1`/`true`/`yes` 或 `0`/`false`/`no`。不影响更新检查 |
-| `PI_CACHE_RETENTION`          | 设为 `long` 以在支持的 Provider 上启用扩展提示缓存                      |
-| `VISUAL`、`EDITOR`            | Ctrl+G 使用的外部编辑器                                                 |
+| 变量                          | 说明                                                                                 |
+| ----------------------------- | ------------------------------------------------------------------------------------ |
+| `PI_CODING_AGENT_DIR`         | 覆盖配置目录；默认 `~/.pi/agent`                                                     |
+| `PI_CODING_AGENT_SESSION_DIR` | 覆盖会话存储目录；被 `--session-dir` 覆盖                                            |
+| `PI_PACKAGE_DIR`              | 覆盖包目录，适用于 Nix/Guix store 路径                                               |
+| `PI_OFFLINE`                  | 禁用启动时网络操作，包括更新检查、包更新检查和安装/更新遥测                          |
+| `PI_SKIP_VERSION_CHECK`       | 跳过启动时的 Pi 版本更新检查。阻止 `pi.dev` 最新版本请求                             |
+| `PI_TELEMETRY`                | 覆盖安装/更新遥测：`1`/`true`/`yes` 或 `0`/`false`/`no`。不影响更新检查              |
+| `PI_CACHE_RETENTION`          | 设为 `long` 以在支持的 Provider 上启用扩展提示缓存                                   |
+| `VISUAL`、`EDITOR`            | `externalEditor` 未设置时回退的外部编辑器；Windows 默认为 Notepad，其他平台为 `nano` |
 
 ## 设计原则
 

@@ -82,14 +82,14 @@
 
 ### 应用程序
 
-| ID                         | 默认键                         | 说明                                       |
-| -------------------------- | ------------------------------ | ------------------------------------------ |
-| `app.interrupt`            | `escape`                       | 取消/中断                                  |
-| `app.clear`                | `ctrl+c`                       | 清空编辑器                                 |
-| `app.exit`                 | `ctrl+d`                       | 退出（编辑器为空时）                       |
-| `app.suspend`              | `ctrl+z`（Windows 上无）       | 挂起到后台                                 |
-| `app.editor.external`      | `ctrl+g`                       | 在外部编辑器打开（`$VISUAL` 或 `$EDITOR`） |
-| `app.clipboard.pasteImage` | `ctrl+v`（Windows 为 `alt+v`） | 从剪贴板粘贴图像                           |
+| ID                         | 默认键                         | 说明                                                                                                |
+| -------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------- |
+| `app.interrupt`            | `escape`                       | 取消/中断                                                                                           |
+| `app.clear`                | `ctrl+c`                       | 清空编辑器                                                                                          |
+| `app.exit`                 | `ctrl+d`                       | 退出（编辑器为空时）                                                                                |
+| `app.suspend`              | `ctrl+z`（Windows 上无）       | 挂起到后台                                                                                          |
+| `app.editor.external`      | `ctrl+g`                       | 在外部编辑器打开（`externalEditor`、`$VISUAL`、`$EDITOR`，Windows 上为 Notepad，其他平台为 `nano`） |
+| `app.clipboard.pasteImage` | `ctrl+v`（Windows 为 `alt+v`） | 从剪贴板粘贴图像                                                                                    |
 
 ### 会话
 

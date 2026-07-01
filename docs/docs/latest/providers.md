@@ -160,8 +160,9 @@ OAuth 凭证在使用 `/login` 后也会存储在这里，并自动管理。
 
 ```bash
 export AZURE_OPENAI_API_KEY=...
-export AZURE_OPENAI_BASE_URL=https://your-resource.openai.azure.com
+export AZURE_OPENAI_BASE_URL=https://your-resource.ai.azure.com
 # 也支持：https://your-resource.cognitiveservices.azure.com
+# 也支持：https://your-resource.openai.azure.com
 # 根端点会自动规范化为 /openai/v1
 # 或使用资源名称代替 base URL
 export AZURE_OPENAI_RESOURCE_NAME=your-resource

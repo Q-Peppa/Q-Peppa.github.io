@@ -319,6 +319,9 @@ pi 启动
   ├─► session_start { reason: "fork", previousSessionFile }
   └─► resources_discover { reason: "startup" }
 
+/name 或 pi.setSessionName()
+  └─► session_info_changed
+
 /compact 或自动压缩
   ├─► session_before_compact（可取消或自定义）
   └─► session_compact
@@ -389,6 +392,17 @@ pi.on('session_start', async (event, ctx) => {
   // event.reason - "startup" | "reload" | "new" | "resume" | "fork"
   // event.previousSessionFile - 在 "new"、"resume" 和 "fork" 时存在
   ctx.ui.notify(`会话：${ctx.sessionManager.getSessionFile() ?? '临时'}`, 'info');
+});
+```
+
+#### session_info_changed
+
+当通过 `/name`、RPC 或 `pi.setSessionName()` 设置当前会话显示名称时触发。
+
+```typescript
+pi.on('session_info_changed', async (event, ctx) => {
+  // event.name - 当前规范化名称，清除后为 undefined
+  ctx.ui.notify(`会话重命名：${event.name ?? '(无)'}`, 'info');
 });
 ```
 

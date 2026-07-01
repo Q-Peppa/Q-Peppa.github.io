@@ -2,6 +2,107 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.80.3（2026-06-30）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **Anthropic Claude Sonnet 5 支持** — Claude Sonnet 5 通过继承的 Anthropic 兼容和 Bedrock Provider 目录可用，并启用了自适应 thinking。详见 [Providers](/docs/latest/providers) 和 [Model Options](/docs/latest/usage#model-options)。
+- **可配置的输出间距** — `outputPad` 可控制用户消息、助手消息和 thinking 块的水平内边距。详见 [Settings](/docs/latest/settings#ui--display)。
+- **外部编辑器配置** — `externalEditor` 允许 Ctrl+G 使用配置的编辑器，再回退到 `$VISUAL`/`$EDITOR`。详见 [Settings](/docs/latest/settings#ui--display) 和 [Keybindings](/docs/latest/keybindings)。
+- **更丰富的 RPC 会话树访问** — RPC 客户端可以通过 `get_entries` 和 `get_tree` 检查会话条目和树快照。详见 [get_entries](/docs/latest/rpc#get_entries) 和 [get_tree](/docs/latest/rpc#get_tree)。
+- **扩展会话元数据更新** — 扩展可以通过 `session_info_changed` 观察会话名称变化。详见 [session_info_changed](/docs/latest/extensions#session_info_changed)。
+- **现代 Azure Foundry 端点支持** — Azure OpenAI Responses Provider 设置支持当前的 Microsoft Foundry 端点 URL。详见 [Azure OpenAI](/docs/latest/providers#azure-openai)。
+
+新增
+
+- 添加了继承的 Anthropic Claude Sonnet 5 模型支持。
+- 添加了 `get_entries` 和 `get_tree` RPC 命令，用于通过 RPC 读取会话条目和树快照（[#6078](https://github.com/earendil-works/pi/pull/6078)）。
+- 添加了 `./rpc-entry` 包导出，用于直接以 RPC 模式启动 Pi。
+- 添加了扩展的会话名称变更事件（[#6175](https://github.com/earendil-works/pi/pull/6175)）。
+- 添加了继承的 Azure OpenAI Responses 支持，用于现代 Microsoft Foundry 端点 URL（[#6004](https://github.com/earendil-works/pi/pull/6004)）。
+- 添加了继承的 `Usage.reasoning` token 计数，用于报告 reasoning/thinking token 使用情况的 Provider（[#6057](https://github.com/earendil-works/pi/issues/6057)）。
+- 添加了 `externalEditor` settings.json 覆盖项，用于 Ctrl+G 外部编辑器命令，默认回退到 Windows 上的 Notepad 和其他平台上的 `nano`（[#6122](https://github.com/earendil-works/pi/issues/6122)）。
+- 添加了 `outputPad` 设置，用于用户消息、助手消息和 thinking 的水平内边距（[#6168](https://github.com/earendil-works/pi/issues/6168)）。
+
+变更
+
+- 将默认 OpenAI 模型更改为 `gpt-5.5`。
+- 将继承的 OpenAI Codex Responses SSE 响应头等待时间更改为使用配置的 HTTP 超时，而非之前的固定 20 秒超时，减少慢连接上的假超时（[#4945](https://github.com/earendil-works/pi/issues/4945)）。
+
+修复
+
+- 修复了继承的 Claude Sonnet 5 元数据，使其对 Anthropic 兼容和 Bedrock 请求使用自适应 thinking 负载。
+- 修复了继承的生成式 Xiaomi MiMo 模型定价，使其与 models.dev 当前的按量付费定价一致（[#6138](https://github.com/earendil-works/pi/issues/6138)）。
+- 修复了继承的 Provider HTTP 错误，使其包含响应体而非不透明的 SDK 消息（[#5832](https://github.com/earendil-works/pi/pull/5832)）。
+- 修复了继承的 `streamSimple()` max-token 上限，使那些将输入和输出计入同一上下文窗口的 Provider 不会拒绝长请求（[#5595](https://github.com/earendil-works/pi/issues/5595)）。
+- 修复了继承的 OpenAI Responses 流，使其在输出项乱序完成时保留 reasoning 回放状态（[#6009](https://github.com/earendil-works/pi/issues/6009)）。
+- 修复了继承的 Z.AI preserved thinking 请求，使其在启用 thinking 时发送 `thinking.clear_thinking: false`，允许回放的 `reasoning_content` 参与 Provider 缓存（[#6083](https://github.com/earendil-works/pi/issues/6083)）。
+- 修复了前导 Prompt 压缩，使其在压缩后停止而非立即继续（[#6074](https://github.com/earendil-works/pi/pull/6074)）。
+- 修复了恢复会话时资源通知保持在消息之前的问题（[#6048](https://github.com/earendil-works/pi/pull/6048)）。
+- 修复了启动基准计时输出，使其在 TUI 关闭后打印、保留扩展计时，并在停止基准模式前耗尽终端查询回复（[#6030](https://github.com/earendil-works/pi/pull/6030)、[#6063](https://github.com/earendil-works/pi/pull/6063)）。
+- 修复了扩展工具变更，使其在同一 agent 运行中的下一次 Provider 请求前应用，而不丢失 `before_agent_start` 系统提示覆盖（[#6162](https://github.com/earendil-works/pi/issues/6162)）。
+- 修复了 undici 在终止流中 HTTP 响应时发出内部客户端错误导致的崩溃（[#6133](https://github.com/earendil-works/pi/issues/6133)）。
+- 修复了压缩事件回归测试，以覆盖状态指示器清理并保持 CI 通过。
+- 修复了交互式状态指示器，使结束工作、重试、压缩或分支摘要指示器在启用 clear-on-shrink 时不再缩小 TUI（[#6026](https://github.com/earendil-works/pi/pull/6026)）。
+- 修复了 `--session` 和 `SessionManager.open()`，使其拒绝非空无效的会话文件而不覆盖它们（[#6002](https://github.com/earendil-works/pi/issues/6002)）。
+- 修复了用户消息转译渲染，使 Markdown 转义序列（如 `\"`）中的可见反斜杠得以保留（[#6105](https://github.com/earendil-works/pi/issues/6105)）。
+- 修复了因输出长度而停止的助手消息，使其显示可见的不完整响应错误（[#4290](https://github.com/earendil-works/pi/issues/4290)）。
+- 修复了 `--no-session --session-id`，使临时 CLI 运行可以使用确定性会话 ID 以获得 Provider 缓存亲和性（[#6070](https://github.com/earendil-works/pi/issues/6070)）。
+- 修复了磁盘 BMP 图像文件，使其被检测、转换为 PNG，并通过 `read` 和 CLI `@file` 输入附加（[#6047](https://github.com/earendil-works/pi/issues/6047)）。
+- 修复了针对明确告知调用者重试请求的 Provider 流错误的自动重试（[#6019](https://github.com/earendil-works/pi/issues/6019)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 为 Anthropic 兼容、Bedrock、OpenRouter 和 Vercel AI Gateway Provider 添加了 Anthropic Claude Sonnet 5 模型元数据。
+- 添加了 Azure OpenAI Responses 对现代 Microsoft Foundry 端点 URL 的支持（[#6004](https://github.com/earendil-works/pi/pull/6004)）。
+- 在 `Usage` 中添加了可选的 `reasoning` 字段，报告 reasoning/thinking token 计数作为 `output` 的子集。Anthropic（`output_tokens_details.thinking_tokens`）、OpenAI Responses/Codex/Azure（`output_tokens_details.reasoning_tokens`）、OpenAI Completions（`completion_tokens_details.reasoning_tokens`）以及 Google Generative AI / Vertex（`thoughtsTokenCount`）均已填充。Bedrock Converse 和 Mistral 未填充，因为这些 API 不返回 reasoning token 细分（[#6057](https://github.com/earendil-works/pi/issues/6057)）。
+
+变更
+
+- 将 OpenAI Codex Responses SSE 响应头等待时间更改为使用配置的 HTTP 超时，而非之前的固定 20 秒超时，减少慢连接上的假超时（[#4945](https://github.com/earendil-works/pi/issues/4945)）。
+
+修复
+
+- 修复了 Claude Sonnet 5 元数据，使其对 Anthropic 兼容和 Bedrock 请求使用自适应 thinking 负载。
+- 修复了生成的 Xiaomi MiMo 模型定价，使其与 models.dev 当前的按量付费定价一致（[#6138](https://github.com/earendil-works/pi/issues/6138)）。
+- 修复了 Provider HTTP 错误，使其包含响应体而非不透明的 SDK 消息（[#5832](https://github.com/earendil-works/pi/pull/5832)）。
+- 修复了 `streamSimple()` 发送上下文感知的 max-token 上限，使那些将输入和输出计入同一上下文窗口的 Provider 不会拒绝长请求（[#5595](https://github.com/earendil-works/pi/issues/5595)）。
+- 修复了 OpenAI Responses 流，使其在输出项乱序完成时保留 reasoning 回放状态（[#6009](https://github.com/earendil-works/pi/issues/6009)）。
+- 修复了针对明确告知调用者重试请求的 Provider 错误的重试分类（[#6019](https://github.com/earendil-works/pi/issues/6019)）。
+- 修复了 Z.AI preserved thinking 请求，使其在启用 thinking 时发送 `thinking.clear_thinking: false`，允许回放的 `reasoning_content` 参与 Provider 缓存（[#6083](https://github.com/earendil-works/pi/issues/6083)）。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+新增
+
+- 为需要下一轮循环上下文的 `Agent` 用户添加了 `prepareNextTurnWithContext`。
+
+修复
+
+- 修复了 `Agent.prepareNextTurn`，使其持续接收运行中止信号而非下一轮上下文。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+新增
+
+- 添加了可选的 Markdown 渲染器选项，用于保留转译渲染中的源反斜杠转义（[#6105](https://github.com/earendil-works/pi/issues/6105)）。
+
+</details>
+
 ## v0.80.2（2026-06-23）
 
 <details>

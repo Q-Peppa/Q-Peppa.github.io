@@ -717,6 +717,73 @@ drwxr-xr-x ...
 }
 ```
 
+#### get_entries
+
+按追加顺序获取所有会话条目（不包括会话头）。会话是一个仅可追加的条目录树，具有稳定的 ID，因此条目标识符可用作持久游标：将你看到的最后一个条目 ID 作为 `since` 传递，以仅获取它之后的条目，即使在客户端重启后也有效。与 `get_messages` 不同，这包括压缩前历史和已废弃的分支。
+
+```json
+{ "type": "get_entries" }
+```
+
+带游标：
+
+```json
+{ "type": "get_entries", "since": "abc123" }
+```
+
+响应：
+
+```json
+{
+  "type": "response",
+  "command": "get_entries",
+  "success": true,
+  "data": {
+    "entries": [
+      {
+        "type": "message",
+        "id": "def456",
+        "parentId": "abc123",
+        "timestamp": "...",
+        "message": { "role": "user", "...": "..." }
+      }
+    ],
+    "leafId": "def456"
+  }
+}
+```
+
+`leafId` 是当前叶条目 ID（空会话时为 `null`），因此客户端一次往返即可判断活动分支是否已移动。如果 `since` 不匹配任何条目 ID，则返回 `success: false`。
+
+#### get_tree
+
+将会话获取为条目树。每个节点为 `{entry, children, label?, labelTimestamp?}`。一个格式良好的会话有单个根节点；孤儿条目（父链断裂）也会作为根节点出现。
+
+```json
+{ "type": "get_tree" }
+```
+
+响应：
+
+```json
+{
+  "type": "response",
+  "command": "get_tree",
+  "success": true,
+  "data": {
+    "tree": [
+      {
+        "entry": { "type": "message", "id": "abc123", "parentId": null, "...": "..." },
+        "children": [
+          { "entry": { "type": "message", "id": "def456", "parentId": "abc123", "...": "..." }, "children": [] }
+        ]
+      }
+    ],
+    "leafId": "def456"
+  }
+}
+```
+
 #### get_last_assistant_text
 
 获取最后一条助手消息的文本内容。

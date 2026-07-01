@@ -50,20 +50,30 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 
 ### UI 和显示
 
-| 设置项                   | 类型    | 默认值      | 说明                                                                                      |
-| ------------------------ | ------- | ----------- | ----------------------------------------------------------------------------------------- |
-| `theme`                  | string  | `"dark"`    | 主题名称（`"dark"`、`"light"` 或自定义）                                                  |
-| `quietStartup`           | boolean | `false`     | 隐藏启动头部                                                                              |
-| `defaultProjectTrust`    | string  | `"ask"`     | 回退项目信任行为：`"ask"`、`"always"` 或 `"never"`。仅作为全局设置                        |
-| `collapseChangelog`      | boolean | `false`     | 更新后显示精简的 changelog                                                                |
-| `enableInstallTelemetry` | boolean | `true`      | 首次安装或 changelog 检测到更新时发送匿名安装/更新版本 ping。这不控制更新检查             |
-| `enableAnalytics`        | boolean | `false`     | 选择加入的数据分析共享。目前仅在实验性首次设置流程中询问（`PI_EXPERIMENTAL=1`）           |
-| `trackingId`             | string  | -           | 数据分析追踪标识符，在开启 `enableAnalytics` 时自动生成                                   |
-| `doubleEscapeAction`     | string  | `"tree"`    | 双击 Esc 的行为：`"tree"`、`"fork"` 或 `"none"`                                           |
-| `treeFilterMode`         | string  | `"default"` | `/tree` 的默认过滤器：`"default"`、`"no-tools"`、`"user-only"`、`"labeled-only"`、`"all"` |
-| `editorPaddingX`         | number  | `0`         | 编辑器水平内边距（0-3）                                                                   |
-| `autocompleteMaxVisible` | number  | `5`         | 自动补全下拉框最大可见项（3-20）                                                          |
-| `showHardwareCursor`     | boolean | `false`     | TUI 为 IME 输入法定位时显示终端硬件光标                                                   |
+| 设置项                   | 类型    | 默认值                                                               | 说明                                                                                      |
+| ------------------------ | ------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `theme`                  | string  | `"dark"`                                                             | 主题名称（`"dark"`、`"light"` 或自定义）                                                  |
+| `externalEditor`         | string  | `$VISUAL`，然后是 `$EDITOR`，Windows 上为 Notepad，其他平台为 `nano` | Ctrl+G 外部编辑器命令；优先级高于环境变量                                                 |
+| `quietStartup`           | boolean | `false`                                                              | 隐藏启动头部                                                                              |
+| `defaultProjectTrust`    | string  | `"ask"`                                                              | 回退项目信任行为：`"ask"`、`"always"` 或 `"never"`。仅作为全局设置                        |
+| `collapseChangelog`      | boolean | `false`                                                              | 更新后显示精简的 changelog                                                                |
+| `enableInstallTelemetry` | boolean | `true`                                                               | 首次安装或 changelog 检测到更新时发送匿名安装/更新版本 ping。这不控制更新检查             |
+| `enableAnalytics`        | boolean | `false`                                                              | 选择加入的数据分析共享。目前仅在实验性首次设置流程中询问（`PI_EXPERIMENTAL=1`）           |
+| `trackingId`             | string  | -                                                                    | 数据分析追踪标识符，在开启 `enableAnalytics` 时自动生成                                   |
+| `doubleEscapeAction`     | string  | `"tree"`                                                             | 双击 Esc 的行为：`"tree"`、`"fork"` 或 `"none"`                                           |
+| `treeFilterMode`         | string  | `"default"`                                                          | `/tree` 的默认过滤器：`"default"`、`"no-tools"`、`"user-only"`、`"labeled-only"`、`"all"` |
+| `editorPaddingX`         | number  | `0`                                                                  | 编辑器水平内边距（0-3）                                                                   |
+| `outputPad`              | number  | `1`                                                                  | 用户消息、助手消息和 thinking 的水平内边距（0 或 1）                                      |
+| `autocompleteMaxVisible` | number  | `5`                                                                  | 自动补全下拉框最大可见项（3-20）                                                          |
+| `showHardwareCursor`     | boolean | `false`                                                              | TUI 为 IME 输入法定位时显示终端硬件光标                                                   |
+
+对于 VS Code，请包含 `--wait` 以便编辑器退出后 Pi 恢复：
+
+```json
+{
+  "externalEditor": "code --wait"
+}
+```
 
 ### 遥测和更新检查
 
