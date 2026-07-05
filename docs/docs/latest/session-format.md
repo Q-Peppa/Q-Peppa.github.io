@@ -300,7 +300,7 @@ interface SessionEntryBase {
 }
 ```
 
-使用 `customType` 在重新加载时识别你的扩展条目。
+使用 `customType` 在重新加载时识别你的扩展条目。交互模式下可通过 `pi.registerEntryRenderer(customType, renderer)` 渲染自定义条目，但它们仍不参与 LLM 上下文。
 
 ### CustomMessageEntry
 
@@ -374,15 +374,24 @@ interface SessionEntryBase {
 
 ## 上下文构建
 
-`buildSessionContext()` 从当前叶节点向根节点遍历，生成发送给 LLM 的消息列表：
+`buildContextEntries()` 从当前叶节点向根节点遍历，生成活跃的条目列表，同时遵循压缩：
 
 1. 收集路径上的所有条目
-2. 提取当前模型和 thinking level 设置
-3. 如果路径上存在 `CompactionEntry`：
-   - 首先输出摘要
-   - 然后是从 `firstKeptEntryId` 到压缩的消息
-   - 然后是压缩之后的消息
-4. 将 `BranchSummaryEntry` 和 `CustomMessageEntry` 转换为适当的消息格式
+2. 如果路径上存在 `CompactionEntry`：
+   - 首先包含压缩条目
+   - 然后是从 `firstKeptEntryId` 到压缩之间的条目
+   - 然后是压缩之后的条目
+3. 保留选中范围内的非消息条目，以便交互模式可以渲染它们
+
+`buildSessionContext()` 在该条目列表之上构建发送给 LLM 的消息列表：
+
+1. 从完整路径中提取当前模型和 thinking level 设置
+2. 将选中的条目转换为消息：
+   - `message` -> 存储的 `AgentMessage`
+   - `compaction` -> `compactionSummary`
+   - `branch_summary` -> `branchSummary`
+   - `custom_message` -> `CustomMessage`
+   - `custom` -> 无上下文消息
 
 ## 解析示例
 
@@ -475,6 +484,7 @@ for (const line of lines) {
 
 ### 实例方法 - 上下文和信息
 
+- `buildContextEntries()` - 获取应用了压缩的活跃分支条目
 - `buildSessionContext()` - 获取 LLM 所需的消息、thinkingLevel 和模型
 - `getEntries()` - 所有条目（不包括头部）
 - `getHeader()` - 会话头部元数据

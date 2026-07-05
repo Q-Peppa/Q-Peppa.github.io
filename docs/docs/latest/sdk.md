@@ -415,6 +415,29 @@ const { session } = await createAgentSession({
 2. 使用设置中的默认值
 3. 回退到第一个可用模型
 
+为匹配 CLI 的模型解析行为，可使用导出的解析器帮助函数：
+
+```typescript
+import { resolveCliModel, resolveModelScopeWithDiagnostics } from '@earendil-works/pi-coding-agent';
+
+const cliModel = resolveCliModel({
+  cliModel: 'anthropic/claude-opus-4-5:high',
+  modelRegistry,
+});
+if (cliModel.error) throw new Error(cliModel.error);
+if (cliModel.warning) console.warn(cliModel.warning);
+
+const { scopedModels, diagnostics } = await resolveModelScopeWithDiagnostics(
+  ['anthropic/*:high', 'gpt-5'],
+  modelRegistry,
+);
+for (const diagnostic of diagnostics) {
+  console.warn(diagnostic.message);
+}
+```
+
+`resolveCliModel()` 使用全部已注册模型，这样 `--api-key` 形式的首次设置就能在存储凭证存在之前解析模型。`resolveModelScopeWithDiagnostics()` 匹配 `--models` 和 `enabledModels` 的语义，但返回警告而非直接打印。
+
 > 参见 [examples/sdk/02-custom-model.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/sdk/02-custom-model.ts)
 
 ### API Key 和 OAuth
@@ -1105,6 +1128,8 @@ AgentSessionRuntime
 // 认证和模型
 AuthStorage
 ModelRegistry
+resolveCliModel
+resolveModelScopeWithDiagnostics
 
 // 资源加载
 DefaultResourceLoader

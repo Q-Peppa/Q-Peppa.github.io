@@ -945,6 +945,7 @@ export default function (pi: ExtensionAPI) {
 ```typescript
 ctx.sessionManager.getEntries(); // 所有条目
 ctx.sessionManager.getBranch(); // 当前分支
+ctx.sessionManager.buildContextEntries(); // 应用了压缩的活跃分支条目
 ctx.sessionManager.getLeafId(); // 当前叶子条目 ID
 ```
 
@@ -1357,7 +1358,7 @@ pi.registerTool({
 
 ### pi.sendMessage(message, options?)
 
-向会话注入自定义消息。
+向会话注入自定义消息。自定义消息参与 LLM 上下文。对于不应发送给 LLM 的持久 TUI 专用内容，请使用带 [`pi.registerEntryRenderer()`](#piregisterentryrenderercustomtype-renderer) 的 [`pi.appendEntry()`](#piappendentrycustomtype-data)。
 
 ```typescript
 pi.sendMessage({
@@ -1410,10 +1411,11 @@ pi.sendUserMessage('然后进行汇总', { deliverAs: 'followUp' });
 
 ### pi.appendEntry(customType, data?)
 
-持久化扩展状态（不参与 LLM 上下文）。
+持久化扩展数据。自定义条目不参与 LLM 上下文。在交互模式下，当与 `pi.registerEntryRenderer()` 配合使用时，它们也可以在聊天记录中渲染。
 
 ```typescript
 pi.appendEntry('my-state', { count: 42 });
+pi.appendEntry('status-card', { title: '已索引文件', count: 17 });
 
 // 在重载时恢复
 pi.on('session_start', async (_event, ctx) => {
@@ -1530,7 +1532,27 @@ const userScoped = commands.filter((command) => command.sourceInfo.scope === 'us
 
 ### pi.registerMessageRenderer(customType, renderer)
 
-为具有您的 `customType` 的消息注册自定义 TUI 渲染器。参见 [自定义 UI](#自定义-ui)。
+为具有您的 `customType` 的自定义消息注册自定义 TUI 渲染器。自定义消息通过 `pi.sendMessage()` 创建并参与 LLM 上下文。参见 [自定义 UI](#自定义-ui)。
+
+### pi.registerEntryRenderer(customType, renderer)
+
+为具有您的 `customType` 的自定义条目注册自定义 TUI 渲染器。自定义条目通过 `pi.appendEntry()` 创建，不参与 LLM 上下文。
+
+```typescript
+import { Box, Text } from '@earendil-works/pi-tui';
+
+pi.registerEntryRenderer('status-card', (entry, { expanded }, theme) => {
+  const data = entry.data as { title: string; count: number };
+  const box = new Box(1, 1, (text) => theme.bg('customMessageBg', text));
+  box.addChild(new Text(`${theme.bold(data.title)}: ${data.count}`));
+  if (expanded) {
+    box.addChild(new Text(theme.fg('dim', JSON.stringify(data, null, 2))));
+  }
+  return box;
+});
+
+pi.appendEntry('status-card', { title: '已索引文件', count: 17 });
+```
 
 ### pi.registerShortcut(shortcut, options)
 
@@ -2541,9 +2563,9 @@ ctx.ui.setEditorComponent(
 
 完整示例请参见 [tui.md](tui.md) 模式 7，包含模式指示器。
 
-### 消息渲染
+### 消息和条目渲染
 
-为具有您的 `customType` 的消息注册自定义渲染器：
+为具有您的 `customType` 的消息注册自定义渲染器。对于应参与 LLM 上下文的内容，使用消息渲染器：
 
 ```typescript
 import { Text } from '@earendil-works/pi-tui';
@@ -2570,6 +2592,16 @@ pi.sendMessage({
   display: true,               // 在 TUI 中显示
   details: { ... },            // 在渲染器中可用
 });
+```
+
+对于不应发送给 LLM 的 TUI 专用内容，应改为渲染自定义条目：
+
+```typescript
+pi.registerEntryRenderer('my-card', (entry, options, theme) => {
+  return new Text(theme.fg('accent', JSON.stringify(entry.data)));
+});
+
+pi.appendEntry('my-card', { status: 'done' });
 ```
 
 ### 主题颜色
@@ -2697,6 +2729,7 @@ const highlighted = highlightCode(code, lang, theme);
 | `custom-provider-gitlab-duo/`  | GitLab Duo 集成                                                                          | 带 OAuth 的 `registerProvider`                                                                                                 |
 | **消息和通信**                 |                                                                                          |                                                                                                                                |
 | `message-renderer.ts`          | 自定义消息渲染                                                                           | `registerMessageRenderer`、`sendMessage`                                                                                       |
+| `entry-renderer.ts`            | 仅 TUI 的自定义条目渲染                                                                  | `registerEntryRenderer`、`appendEntry`                                                                                         |
 | `event-bus.ts`                 | 扩展间事件                                                                               | `pi.events`                                                                                                                    |
 | **会话元数据**                 |                                                                                          |                                                                                                                                |
 | `session-name.ts`              | 为选择器命名会话                                                                         | `setSessionName`、`getSessionName`                                                                                             |
