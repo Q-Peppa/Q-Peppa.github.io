@@ -612,6 +612,27 @@ const { session } = await createAgentSession({ resourceLoader: loader });
 
 扩展可以注册工具、订阅事件、添加命令等。参见 [extensions.md](extensions.md) 了解完整 API。
 
+**命名内联扩展：** 默认情况下，内联工厂在启动时的 Extensions 列表中显示为 `<inline:1>`、`<inline:2>` 等。要显示描述性名称，请包装工厂：
+
+```typescript
+import type { InlineExtension } from '@earendil-works/pi-coding-agent';
+
+const myProvider: InlineExtension = {
+  name: 'my-provider',
+  factory: (pi) => {
+    pi.on('agent_start', () => {
+      console.log('[my-provider] Agent starting');
+    });
+  },
+};
+
+const loader = new DefaultResourceLoader({
+  extensionFactories: [myProvider],
+});
+```
+
+这样它会显示为 `<inline:my-provider>` 而不是 `<inline:1>`。裸工厂函数仍然受支持，以保持向后兼容。
+
 **事件总线：** 扩展可以通过 `pi.events` 通信。如果需要从外部发出或监听事件，请将共享的 `eventBus` 传递给 `DefaultResourceLoader`：
 
 ```typescript
@@ -1159,6 +1180,7 @@ createGrepTool, createFindTool, createLsTool
 type CreateAgentSessionOptions
 type CreateAgentSessionResult
 type ExtensionFactory
+type InlineExtension
 type ExtensionAPI
 type ToolDefinition
 type Skill

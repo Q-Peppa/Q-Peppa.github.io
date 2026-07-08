@@ -291,6 +291,7 @@ pi 启动
   │   │                                            │       │
   │   ├─► turn_start                               │       │
   │   ├─► context（可修改消息）                     │       │
+  │   ├─► before_provider_headers（可修改请求头）            │
   │   ├─► before_provider_request（可检查或替换负载）          │
   │   ├─► after_provider_response（状态+标头，流消费前）      │
   │   │                                            │       │
@@ -640,6 +641,24 @@ pi.on('context', async (event, ctx) => {
   return { messages: filtered };
 });
 ```
+
+#### before_provider_headers
+
+在出站 HTTP 请求头组装完成后触发。用于添加、覆盖或移除请求头。
+
+处理程序直接修改 `event.headers`。将某个键设置为字符串即可添加或覆盖，设置为 `null` 即可删除。
+
+```typescript
+pi.on('before_provider_headers', (event, ctx) => {
+  // 添加或覆盖 —— 例如用于网关追踪/归因的会话 ID
+  event.headers['x-session-id'] = ctx.sessionManager.getSessionId();
+
+  // 删除 Pi 本次调用添加的追踪头
+  event.headers['X-OpenRouter-Title'] = null;
+});
+```
+
+每个 Provider 请求只会触发一次；重试会复用相同的请求头，不会重新触发该钩子。
 
 #### before_provider_request
 
