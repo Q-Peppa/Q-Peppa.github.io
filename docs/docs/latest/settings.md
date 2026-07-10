@@ -27,13 +27,14 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 
 ### 模型和思维（Model & Thinking）
 
-| 设置项                 | 类型    | 默认值  | 说明                                                           |
-| ---------------------- | ------- | ------- | -------------------------------------------------------------- |
-| `defaultProvider`      | string  | -       | 默认 Provider，如 `"anthropic"`、`"openai"`                    |
-| `defaultModel`         | string  | -       | 默认模型 ID                                                    |
-| `defaultThinkingLevel` | string  | -       | `"off"`、`"minimal"`、`"low"`、`"medium"`、`"high"`、`"xhigh"` |
-| `hideThinkingBlock`    | boolean | `false` | 是否隐藏 thinking block                                        |
-| `thinkingBudgets`      | object  | -       | 每个 thinking level 的自定义 Token 预算                        |
+| 设置项                 | 类型    | 默认值  | 说明                                                                    |
+| ---------------------- | ------- | ------- | ----------------------------------------------------------------------- |
+| `defaultProvider`      | string  | -       | 默认 Provider，如 `"anthropic"`、`"openai"`                             |
+| `defaultModel`         | string  | -       | 默认模型 ID                                                             |
+| `defaultThinkingLevel` | string  | -       | `"off"`、`"minimal"`、`"low"`、`"medium"`、`"high"`、`"xhigh"`、`"max"` |
+| `hideThinkingBlock`    | boolean | `false` | 是否隐藏 thinking block                                                 |
+| `showCacheMissNotices` | boolean | `false` | 显示显著的 Prompt 缓存未命中的转录通知                                  |
+| `thinkingBudgets`      | object  | -       | 每个 thinking level 的自定义 Token 预算                                 |
 
 #### thinkingBudgets
 
@@ -186,7 +187,7 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 
 | 设置项               | 类型     | 默认值 | 说明                                                                              |
 | -------------------- | -------- | ------ | --------------------------------------------------------------------------------- |
-| `shellPath`          | string   | -      | 自定义 shell 路径（例如 Windows 上的 Cygwin）                                     |
+| `shellPath`          | string   | -      | 自定义 shell 路径（例如 Windows 上的 Cygwin）；支持以 `~` 开头的 home 目录路径    |
 | `shellCommandPrefix` | string   | -      | 每个 bash 命令前添加的前缀（例如 `"shopt -s expand_aliases"`）                    |
 | `npmCommand`         | string[] | -      | npm 包查找/安装操作的命令 argv（例如 `["mise", "exec", "node@20", "--", "npm"]`） |
 

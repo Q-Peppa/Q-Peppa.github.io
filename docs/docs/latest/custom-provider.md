@@ -206,7 +206,7 @@ pi.unregisterProvider('my-llm');
 | `google-vertex`           | Google Vertex AI API                |
 | `bedrock-converse-stream` | Amazon Bedrock Converse API         |
 
-大多数兼容 OpenAI 的 Provider 使用 `openai-completions`。使用模型级别的 `thinkingLevelMap` 指定模型特定的思考级别，使用 `compat` 处理 Provider 的特殊行为：
+大多数兼容 OpenAI 的 Provider 使用 `openai-completions`。使用模型级别的 `thinkingLevelMap` 指定模型特定的思考级别，使用 `compat` 处理 Provider 的特殊行为。`xhigh` 和 `max` 级别是可选加入的，需要非 null 的映射条目，且可以被不支持的空洞分隔：
 
 ```typescript
 models: [
@@ -220,7 +220,8 @@ models: [
       low: null,
       medium: null,
       high: 'default',
-      xhigh: 'max',
+      xhigh: null,
+      max: 'max',
     },
     compat: {
       supportsDeveloperRole: false, // 使用 "system" 而非 "developer"
@@ -680,7 +681,7 @@ interface ProviderModelConfig {
   reasoning: boolean;
 
   /** 将 pi 思考级别映射到 Provider/模型特定值；null 标记不支持的级别。 */
-  thinkingLevelMap?: Partial<Record<'off' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh', string | null>>;
+  thinkingLevelMap?: Partial<Record<'off' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max', string | null>>;
 
   /** 支持的输入类型。 */
   input: ('text' | 'image')[];

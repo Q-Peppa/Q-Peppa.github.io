@@ -139,7 +139,7 @@
 | `headers`        | 自定义请求头（见下面的值解析）                                                                               |
 | `authHeader`     | 设为 `true` 自动添加 `Authorization: Bearer <apiKey>`                                                        |
 | `models`         | 模型配置数组                                                                                                 |
-| `modelOverrides` | 此 Provider 上内置模型的逐模型覆盖                                                                           |
+| `modelOverrides` | 此 Provider 上内置模型或扩展注册模型的逐模型覆盖                                                             |
 
 对于带 `models` 的 Provider，非内置 Provider 配置需要在 Provider 或模型级别提供 `baseUrl` 和 `api` 值。`apiKey` 不是加载文件的必要条件：当通过 `/login`/`auth.json`、CLI `--api-key` 或 Provider 的 `apiKey` 配置认证后，模型才可用。如果未配置认证，模型仍会加载，但在 `/model` 和 `--list-models` 中不可用。
 
@@ -197,18 +197,40 @@
 
 ## 模型配置
 
-| 字段               | 必需 | 默认值               | 说明                                                                         |
-| ------------------ | ---- | -------------------- | ---------------------------------------------------------------------------- |
-| `id`               | 是   | —                    | 模型标识符（传递给 API）                                                     |
-| `name`             | 否   | `id`                 | 人类可读的模型标签。用于匹配（`--model` 模式）并作为次要模型详情文本显示     |
-| `api`              | 否   | Provider 的 `api`    | 为此模型覆盖 Provider 的 API                                                 |
-| `reasoning`        | 否   | `false`              | 是否支持 extended thinking                                                   |
-| `thinkingLevelMap` | 否   | 省略                 | 将 Pi 的 thinking level 映射到 Provider 值，并标记不支持的 level（见下文）   |
-| `input`            | 否   | `["text"]`           | 输入类型：`["text"]` 或 `["text", "image"]`                                  |
-| `contextWindow`    | 否   | `128000`             | 上下文窗口大小（Token）                                                      |
-| `maxTokens`        | 否   | `16384`              | 最大输出 Token                                                               |
-| `cost`             | 否   | 全零                 | `{"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0}`（每百万 Token） |
-| `compat`           | 否   | Provider 的 `compat` | Provider 兼容性覆盖。当两者都设置时，与 Provider 级别的 `compat` 合并        |
+| 字段               | 必需 | 默认值               | 说明                                                                       |
+| ------------------ | ---- | -------------------- | -------------------------------------------------------------------------- |
+| `id`               | 是   | —                    | 模型标识符（传递给 API）                                                   |
+| `name`             | 否   | `id`                 | 人类可读的模型标签。用于匹配（`--model` 模式）并作为次要模型详情文本显示   |
+| `api`              | 否   | Provider 的 `api`    | 为此模型覆盖 Provider 的 API                                               |
+| `reasoning`        | 否   | `false`              | 是否支持 extended thinking                                                 |
+| `thinkingLevelMap` | 否   | 省略                 | 将 Pi 的 thinking level 映射到 Provider 值，并标记不支持的 level（见下文） |
+| `input`            | 否   | `["text"]`           | 输入类型：`["text"]` 或 `["text", "image"]`                                |
+| `contextWindow`    | 否   | `128000`             | 上下文窗口大小（Token）                                                    |
+| `maxTokens`        | 否   | `16384`              | 最大输出 Token                                                             |
+| `cost`             | 否   | 全零                 | 每百万 Token 费率，可选请求级输入定价阶梯                                  |
+| `compat`           | 否   | Provider 的 `compat` | Provider 兼容性覆盖。当两者都设置时，与 Provider 级别的 `compat` 合并      |
+
+一个成本阶梯提供一套完整的替代费率，并在总输入使用量（`input + cacheRead + cacheWrite`）超过 `inputTokensAbove` 时应用于整个请求。多个阶梯同时匹配时，最高阈值生效。
+
+```json
+{
+  "cost": {
+    "input": 5,
+    "output": 30,
+    "cacheRead": 0.5,
+    "cacheWrite": 6.25,
+    "tiers": [
+      {
+        "inputTokensAbove": 272000,
+        "input": 10,
+        "output": 45,
+        "cacheRead": 1,
+        "cacheWrite": 12.5
+      }
+    ]
+  }
+}
+```
 
 当前行为：
 
@@ -217,15 +239,15 @@
 
 ### Thinking Level Map
 
-在模型上使用 `thinkingLevelMap` 来描述模型特定的 thinking 控制。键是 Pi 的 thinking level：`off`、`minimal`、`low`、`medium`、`high`、`xhigh`。
+在模型上使用 `thinkingLevelMap` 来描述模型特定的 thinking 控制。键是 Pi 的 thinking level：`off`、`minimal`、`low`、`medium`、`high`、`xhigh`、`max`。映射可以包含空洞；例如，一个模型可以暴露 `high` 和 `max` 而不暴露 `xhigh`。
 
 值为三态：
 
-| 值     | 含义                                        |
-| ------ | ------------------------------------------- |
-| 省略   | 该 level 受支持，使用 Provider 的默认映射   |
-| 字符串 | 该 level 受支持，此值被发送给 Provider      |
-| `null` | 该 level 不受支持，被隐藏/跳过/固定到最近值 |
+| 值     | 含义                                                                                    |
+| ------ | --------------------------------------------------------------------------------------- |
+| 省略   | 到 `high` 的标准 level 使用 Provider 的默认映射；扩展的 `xhigh` 和 `max` level 不受支持 |
+| 字符串 | 该 level 受支持，此值被发送给 Provider                                                  |
+| `null` | 该 level 不受支持，被隐藏/跳过/固定到最近值                                             |
 
 仅支持 off、high 和 max 推理的模型示例：
 
@@ -238,7 +260,8 @@
     "low": null,
     "medium": null,
     "high": "high",
-    "xhigh": "max"
+    "xhigh": null,
+    "max": "max"
   }
 }
 ```
@@ -297,7 +320,7 @@
 
 ## 逐模型覆盖
 
-使用 `modelOverrides` 自定义特定内置模型，无需替换 Provider 的完整模型列表。
+使用 `modelOverrides` 自定义内置模型和匹配的扩展注册模型，无需替换 Provider 的完整模型列表。
 
 ```json
 {
@@ -318,11 +341,29 @@
 }
 ```
 
-`modelOverrides` 支持每个模型的以下字段：`name`、`reasoning`、`input`、`cost`（部分）、`contextWindow`、`maxTokens`、`headers`、`compat`。
+`modelOverrides` 支持每个模型的以下字段：`name`、`reasoning`、`thinkingLevelMap`、`input`、`cost`（部分）、`contextWindow`、`maxTokens`、`headers`、`compat`。
+
+直接 OpenAI 的 GPT-5.6 Sol、Terra 和 Luna 默认使用 `272000` 上下文窗口，使请求保持在 OpenAI 的短上下文定价阶梯内。要选择使用 OpenAI 的 1.05M 上下文窗口，为每个使用的模型增加它：
+
+```json
+{
+  "providers": {
+    "openai": {
+      "modelOverrides": {
+        "gpt-5.6-sol": {
+          "contextWindow": 1050000
+        }
+      }
+    }
+  }
+}
+```
+
+该覆盖会保留内置定价元数据。总输入 token 超过 272K 的请求会在整个请求中使用 GPT-5.6 的长上下文费率。需要时对 `gpt-5.6-terra` 或 `gpt-5.6-luna` 应用相同的覆盖。
 
 行为说明：
 
-- `modelOverrides` 应用于内置 Provider 的模型。
+- `modelOverrides` 应用于内置 Provider 模型和匹配的扩展注册 Provider 模型。
 - 未知模型 ID 被忽略。
 - 你可以将 Provider 级别的 `baseUrl`/`headers` 与 `modelOverrides` 结合使用。
 - 覆盖 `name` 仅会改变模型匹配和次要详情文本；页脚和主模型列表仍继续显示模型 `id`。

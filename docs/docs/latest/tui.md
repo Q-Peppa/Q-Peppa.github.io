@@ -424,7 +424,7 @@ renderResult(result, options, theme, context) {
 | Diffs    | `toolDiffAdded`、`toolDiffRemoved`、`toolDiffContext`                                                                                                     |
 | Markdown | `mdHeading`、`mdLink`、`mdLinkUrl`、`mdCode`、`mdCodeBlock`、`mdCodeBlockBorder`、`mdQuote`、`mdQuoteBorder`、`mdHr`、`mdListBullet`                      |
 | Syntax   | `syntaxComment`、`syntaxKeyword`、`syntaxFunction`、`syntaxVariable`、`syntaxString`、`syntaxNumber`、`syntaxType`、`syntaxOperator`、`syntaxPunctuation` |
-| Thinking | `thinkingOff`、`thinkingMinimal`、`thinkingLow`、`thinkingMedium`、`thinkingHigh`、`thinkingXhigh`                                                        |
+| Thinking | `thinkingOff`、`thinkingMinimal`、`thinkingLow`、`thinkingMedium`、`thinkingHigh`、`thinkingXhigh`、`thinkingMax`                                         |
 | Modes    | `bashMode`                                                                                                                                                |
 
 **背景色**（`theme.bg(color, text)`）：

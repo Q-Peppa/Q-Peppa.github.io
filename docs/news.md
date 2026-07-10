@@ -2,6 +2,160 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.80.6（2026-07-09）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **`max` thinking 级别** — 全新的可选 thinking 级别，位于 `xhigh` 之上，在 GPT-5.6 和 adaptive Claude 模型上原生支持，可通过 CLI（`--thinking max`）、SDK、RPC 和模型选择使用。自定义主题可定义 `thinkingMax`。详见 [CLI 参考](/docs/latest/usage#cli-reference)。
+- **基于输入量的定价阶梯** — 请求级输入 token 定价阶梯，用于精确的长上下文成本核算（如 GPT-5.4/5.5/5.6 长上下文费率），也可在 `models.json` 和 `modelOverrides` 中为自定义模型配置。详见 [模型配置](/docs/latest/models#model-configuration)。
+
+新增
+
+- 在 CLI、SDK、RPC、模型选择和主题中添加了可选的 `max` thinking 级别。自定义主题可定义 `thinkingMax`；已有主题回退到 `thinkingXhigh`。
+- 在 `models.json`、`modelOverrides` 和扩展注册的 Provider 中为自定义模型成本添加了请求级输入 token 定价阶梯。
+- 为 `shellPath` 设置添加了 `~`（home 目录）展开（[#6470](https://github.com/earendil-works/pi/pull/6470)，感谢 [@aaronkyriesenbach](https://github.com/aaronkyriesenbach)）。
+
+修复
+
+- 修复了 compact 后输出 token 预算继承问题，使其忽略 compact 边界之前的过期助手使用量（[#6464](https://github.com/earendil-works/pi/issues/6464)）。
+- 修复了 GPT-5.4 和 GPT-5.5 长上下文成本核算的继承问题，同时保留了需要显式覆盖的模型的 272K 默认上下文限制。
+- 修复了 GPT-5.6 元数据继承问题，使直接 OpenAI 请求保持在 272K 短上下文阶梯，同时暴露 Codex 后端的 372K 上下文窗口及长上下文定价，并移除了不存在的裸 `gpt-5.6` 别名。
+- 修复了 Anthropic 消息转换继承问题，保留 thinking text 为空但有有效签名的 thinking blocks，而非丢弃它们，避免新版 Claude 模型出现 thinking-block 错误（[#6457](https://github.com/earendil-works/pi/pull/6457)，感谢 [@davidbrai](https://github.com/davidbrai)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 添加了独立的可选 `max` thinking 级别，包括 GPT-5.6 和 Anthropic adaptive-thinking effort 的原生 `xhigh` 和 `max` 支持，匹配 Anthropic 文档：所有 adaptive Claude 模型支持 `max`，Opus 4.7/4.8、Sonnet 5 和 Fable 5 支持原生 `xhigh`。
+- 在模型成本元数据和使用量成本计算中添加了请求级输入 token 定价阶梯。
+
+修复
+
+- 修复了 compact 后输出 token 预算，使其忽略 compact 边界之前的过期助手使用量（[#6464](https://github.com/earendil-works/pi/issues/6464)）。
+- 修复了 GPT-5.4 和 GPT-5.5 长上下文成本核算，同时保留需要显式覆盖的模型的 272K 默认上下文限制。
+- 修复了 GPT-5.6 元数据，使直接 OpenAI 请求保持在 272K 短上下文阶梯，同时暴露 Codex 后端的 372K 上下文窗口及长上下文定价，并从 OpenAI 和 Azure OpenAI Responses 目录中移除了不存在的裸 `gpt-5.6` 别名。
+- 修复了 Anthropic 消息转换，保留 thinking text 为空但有有效签名的 thinking blocks，而非丢弃它们，避免新版 Claude 模型出现 thinking-block 错误（[#6457](https://github.com/earendil-works/pi/pull/6457)，感谢 [@davidbrai](https://github.com/davidbrai)）。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+新增
+
+- 在 `xhigh` 之后添加了 `max` 模型 thinking 级别。
+
+</details>
+
+## v0.80.5（2026-07-09）
+
+此版本无面向用户的功能变更，所有包均为内部改进。
+
+## v0.80.4（2026-07-09）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **Prompt 缓存未命中可见性** — 可通过 `showCacheMissNotices` 在转录中显示显著的缓存未命中通知。详见 [模型与 Thinking](/docs/latest/settings#模型与-thinking)。
+- **项目级资源配置** — `pi config -l` 和 Tab 切换管理全局与项目级包资源。详见 [启用和禁用资源](/docs/latest/packages#启用和禁用资源)。
+- **扩展生命周期和 Provider 钩子** — 扩展获得 `agent_settled`、`before_provider_headers`、条目渲染器和 `InlineExtension`。详见 [agent_start / agent_end / agent_settled](/docs/latest/extensions#agent_start--agent_end--agent_settled)、[before_provider_headers](/docs/latest/extensions#before_provider_headers) 和 [InlineExtension](/docs/latest/sdk#inlineextension)。
+- **新的继承模型和传输支持** — GPT-5.6 元数据、Copilot Claude Sonnet 5 和 zstd Codex SSE 传输通过继承的 Provider 支持可用。详见 [Providers](/docs/latest/providers) 和 [模型选项](/docs/latest/usage#模型选项)。
+
+新增
+
+- 添加了继承的 OpenAI GPT-5.6 模型元数据，支持 `gpt-5.6`、`gpt-5.6-sol`、`gpt-5.6-terra` 和 `gpt-5.6-luna`，并验证了 `openai-codex` 对 `gpt-5.6-sol`、`gpt-5.6-terra` 和 `gpt-5.6-luna` 的支持。
+- 在 GitHub Copilot 模型目录中添加了继承的 Claude Sonnet 5（[#6200](https://github.com/earendil-works/pi/issues/6200)）。
+- 为 OpenAI Codex Responses SSE 传输添加了继承的 zstd 请求体压缩。
+- 添加了 `/login <provider>` 支持，含 Provider 自动补全。
+- 添加了 CLI 等效模型和作用域模型解析的公共 SDK 导出（[#6201](https://github.com/earendil-works/pi/issues/6201)）。
+- 添加了扩展和 RPC `agent_settled` 事件，以及完全 settled 的 agent 运行的会话级空闲等待（[#6363](https://github.com/earendil-works/pi/issues/6363)）。
+- 添加了 `before_provider_headers` 扩展钩子，用于注入 Provider 请求头（[#6350](https://github.com/earendil-works/pi/pull/6350)，感谢 [@pmateusz](https://github.com/pmateusz)）。
+- 添加了 `InlineExtension` 类型，用于命名的内联扩展工厂（[#6267](https://github.com/earendil-works/pi/pull/6267)，感谢 [@any-victor](https://github.com/any-victor)）。
+- 添加了扩展条目渲染器，用于持久化的仅显示会话条目，在交互模式下渲染而不发送到模型上下文。
+- 添加了 `pi config` 的项目级资源覆盖管理，包括通过 `pi config -l` 启动项目模式，以及全局和项目作用域之间的 Tab 切换（[#6309](https://github.com/earendil-works/pi/pull/6309)）。
+- 从 agent harness 中添加了继承的 `InMemorySessionStorage` 和 `JsonlSessionStorage` 导出（[#6435](https://github.com/earendil-works/pi/issues/6435)）。
+- 在 JSONL 会话头中添加了继承的自定义元数据支持（[#6417](https://github.com/earendil-works/pi/pull/6417)，感谢 [@ArcadiaLin](https://github.com/ArcadiaLin)）。
+- 添加了 `showCacheMissNotices` 设置和 `/settings` 开关，用于显著的 Prompt 缓存未命中转录通知。
+
+修复
+
+- 修复了 gRPC `ResourceExhausted` Provider 错误（如 NVIDIA NIM 瞬时耗尽响应）的继承重试分类（[#6449](https://github.com/earendil-works/pi/pull/6449)，感谢 [@davidbrai](https://github.com/davidbrai)）。
+- 修复了 Cloudflare 524 超时响应的继承重试分类（[#6239](https://github.com/earendil-works/pi/issues/6239)）。
+- 修复了 GitHub Copilot 设备码登录轮询继承问题，在首次 token 轮询前等待，并遵循服务器提供的 `slow_down` 间隔，避免浏览器授权后的错误失败或挂起（[#6187](https://github.com/earendil-works/pi/issues/6187)）。
+- 修复了 OpenAI Codex WebSocket 会话继承问题，在后端 60 分钟限制之前轮换缓存连接，避免长会话出现连接限制失败（[#6268](https://github.com/earendil-works/pi/issues/6268)）。
+- 修复了 DS4 服务器对 `Prompt has ... tokens, but the configured context size is ... tokens` 错误的上下文溢出检测继承问题（[#6262](https://github.com/earendil-works/pi/issues/6262)）。
+- 修复了 Fireworks GLM 5.2 Fast 继承问题，使其使用 OpenAI 兼容端点和 `thinkingLevelMap`，与 GLM 5.2 对齐（[#6195](https://github.com/earendil-works/pi/issues/6195)）。
+- 修复了 fork 菜单对同一选项重复选择的忽略问题（[#6430](https://github.com/earendil-works/pi/pull/6430)，感谢 [@davidbrai](https://github.com/davidbrai)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 添加了 OpenAI GPT-5.6 模型元数据，支持 `gpt-5.6`、`gpt-5.6-sol`、`gpt-5.6-terra` 和 `gpt-5.6-luna`，并验证了 `openai-codex` 对 `gpt-5.6-sol`、`gpt-5.6-terra` 和 `gpt-5.6-luna` 的支持。
+- 从 models.dev 刷新了生成的模型目录，新增了 Kimi K2.7 Code（GitHub Copilot）和多个 Provider 的 Fable 5 等模型（[#6256](https://github.com/earendil-works/pi/issues/6256)）。
+- 在 GitHub Copilot 模型目录中添加了 Claude Sonnet 5（[#6200](https://github.com/earendil-works/pi/issues/6200)）。
+- 为 OpenAI Codex Responses SSE 传输添加了 zstd 请求体压缩。请求在 Node/Bun 支持 zstd 时发送 `Content-Encoding: zstd`；WebSocket 传输不变。
+
+修复
+
+- 修复了 gRPC `ResourceExhausted` Provider 错误（如 NVIDIA NIM 瞬时耗尽响应）的重试分类（[#6449](https://github.com/earendil-works/pi/pull/6449)，感谢 [@davidbrai](https://github.com/davidbrai)）。
+- 修复了底层消息转换，在 Provider 转换前规范化 `null` 消息内容，避免松散导入转录的崩溃（[#6343](https://github.com/earendil-works/pi/pull/6343)）。
+- 修复了 Xiaomi Token Plan 模型元数据，使其遵循上游 models.dev token-plan 目录，移除不支持的 `mimo-v2-omni` 变体（[#6204](https://github.com/earendil-works/pi/issues/6204)）。
+- 修复了 GitHub Copilot 设备码登录轮询，在首次 token 轮询前等待，避免部分用户在浏览器授权后出现设备码错误（[#6187](https://github.com/earendil-works/pi/issues/6187)）。
+- 修复了 OAuth 设备码轮询，遵循服务器提供的 `slow_down` 间隔，而不仅应用 RFC 8628 的 5 秒增量，使提前到达的轮询（如 WSL/VM 时钟漂移）时 GitHub Copilot 登录恢复而非挂起（[#6187](https://github.com/earendil-works/pi/issues/6187)）。
+- 修复了 OpenAI Codex user-agent 构建，同步加载 Node OS 元数据，避免在 Node/Bun 中报告 `pi (browser)` 的启动竞态。
+- 修复了 Fireworks GLM 5.2 Fast，使其使用 OpenAI 兼容端点和 `thinkingLevelMap`，与 GLM 5.2 对齐（[#6195](https://github.com/earendil-works/pi/issues/6195)）。
+- 修复了 Amazon Bedrock Claude Fable 5 和 Claude Sonnet 5 的 Prompt 缓存点数（[#6235](https://github.com/earendil-works/pi/issues/6235)）。
+- 修复了 Amazon Bedrock Claude 5 Prompt 缓存定价元数据，移除了过期的回退覆盖。
+- 修复了 DS4 服务器对 `Prompt has ... tokens, but the configured context size is ... tokens` 错误的上下文溢出检测（[#6262](https://github.com/earendil-works/pi/issues/6262)）。
+- 修复了 OpenAI Codex WebSocket 会话，在后端 60 分钟限制之前轮换缓存连接，避免长会话出现连接限制失败（[#6268](https://github.com/earendil-works/pi/issues/6268)）。
+- 修复了 OpenAI Completions 和 Responses Provider，在工具结果文本为空且无图片内容时发送 `(no tool output)` 而非 `(see attached image)`，防止模型虚构图片附件。
+- 修复了 OpenAI Responses 和 Azure OpenAI Responses 请求，避免发送低于 Provider 最小值的 `max_output_tokens`（[#6265](https://github.com/earendil-works/pi/issues/6265)）。
+- 修复了 Cloudflare 524 超时响应的重试分类（[#6239](https://github.com/earendil-works/pi/issues/6239)）。
+- 修复了 Bun fetch socket-drop 错误（如 `socket connection was closed`）的重试分类，使瞬时流断开自动重试（[#6431](https://github.com/earendil-works/pi/issues/6431)）。
+- 修复了 GitHub Copilot 扩展上下文窗口模型（Claude Opus 4.7/4.8、Claude Opus 4.6、Claude Sonnet 4.6/5、Claude Fable 5、GPT-5.3 Codex、GPT-5.4、GPT-5.5），使其使用 `contextWindow: 1000000`，防止过早压缩和预算不足（[#6439](https://github.com/earendil-works/pi/issues/6439)）。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+新增
+
+- 添加了可配置的 harness 会话上下文条目变换和自定义条目消息投射器。
+- 在 JSONL 会话头中添加了自定义元数据支持（[#6417](https://github.com/earendil-works/pi/pull/6417)，感谢 [@ArcadiaLin](https://github.com/ArcadiaLin)）。
+- 导出了 `InMemorySessionStorage` 和 `JsonlSessionStorage`（[#6435](https://github.com/earendil-works/pi/issues/6435)）。
+
+修复
+
+- 修复了 harness 分轮压缩，使摘要请求串行化，避免单并发 Provider 被要求运行重叠的生成请求（[#5536](https://github.com/earendil-works/pi/issues/5536)）。
+- 修复了 harness 工具调用，使被长度截断的助手消息中的工具调用失败，而非等待缺失的工具结果（[#6285](https://github.com/earendil-works/pi/pull/6285)）。
+- 修复了 harness 会话导入，在上下文投射前规范化 `null` 消息内容，避免松散导入转录的崩溃（[#6343](https://github.com/earendil-works/pi/pull/6343)）。
+- 修复了非正数或过大的 harness shell 执行超时，使其以明确的验证错误失败，而非被压缩为即时超时（[#6181](https://github.com/earendil-works/pi/issues/6181)）。
+- 修复了 harness 会话存储的短条目 ID，使用生成的 uuidv7 的随机尾部而非时间戳前缀（后者在调用之间近乎恒定）（[#6242](https://github.com/earendil-works/pi/issues/6242)）。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+修复
+
+- 修复了编辑器粘贴标记处理，当粘贴标记被删除或终端状态被清除时防止过期的粘贴状态残留（[#6397](https://github.com/earendil-works/pi/pull/6397)，感谢 [@affanali2k3](https://github.com/affanali2k3)）。
+
+</details>
+
 ## v0.80.3（2026-06-30）
 
 <details>

@@ -112,6 +112,7 @@ vim ~/.pi/agent/themes/my-theme.json
     "thinkingMedium": "#00ffff",
     "thinkingHigh": "#ff00ff",
     "thinkingXhigh": "#ff0000",
+    "thinkingMax": "#ff0088",
     "bashMode": "#ffaa00"
   }
 }
@@ -142,7 +143,7 @@ vim ~/.pi/agent/themes/my-theme.json
 
 - `name`：必需，必须唯一，且不能包含 `/`。
 - `vars`：可选。在此定义可复用的颜色，然后在 `colors` 中引用。
-- `colors`：必须定义全部 51 个 token。
+- `colors`：必须定义全部 51 个必需 token。`thinkingMax` 为可选，缺失时回退到 `thinkingXhigh`。
 - `$schema` 字段启用编辑器自动补全和验证。
 
 ## 颜色 Token
@@ -218,18 +219,19 @@ vim ~/.pi/agent/themes/my-theme.json
 | `syntaxOperator`    | 运算符   |
 | `syntaxPunctuation` | 标点符号 |
 
-### Thinking Level 边框（6 个）
+### Thinking Level 边框（6 个必需，1 个可选）
 
 编辑器边框颜色，指示思维级别（从微妙到突出的视觉层次）：
 
-| Token             | 用途     |
-| ----------------- | -------- |
-| `thinkingOff`     | 思维关闭 |
-| `thinkingMinimal` | 最简思维 |
-| `thinkingLow`     | 低思维   |
-| `thinkingMedium`  | 中等思维 |
-| `thinkingHigh`    | 高思维   |
-| `thinkingXhigh`   | 超高思维 |
+| Token             | 用途                                         |
+| ----------------- | -------------------------------------------- |
+| `thinkingOff`     | 思维关闭                                     |
+| `thinkingMinimal` | 最简思维                                     |
+| `thinkingLow`     | 低思维                                       |
+| `thinkingMedium`  | 中等思维                                     |
+| `thinkingHigh`    | 高思维                                       |
+| `thinkingXhigh`   | 超高思维                                     |
+| `thinkingMax`     | 最高思维；可选，缺失时回退到 `thinkingXhigh` |
 
 ### Bash 模式（1 个）
 

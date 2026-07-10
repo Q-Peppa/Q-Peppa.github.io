@@ -304,7 +304,8 @@ pi 启动
   │   │                                            │       │
   │   └─► turn_end                                 │       │
   │                                                        │
-  └─► agent_end                                            │
+  ├─► agent_end                                            │
+  └─► agent_settled（无剩余重试/压缩/follow-up）           │
                                                            │
 用户发送另一个提示 ◄────────────────────────────────────────┘
 
@@ -543,15 +544,19 @@ pi.on('before_agent_start', async (event, ctx) => {
 
 在 `before_agent_start` 内部，`event.systemPrompt` 和 `ctx.getSystemPrompt()` 都反映当前处理程序的链式系统提示。后面的 `before_agent_start` 处理程序仍可再次修改它。
 
-#### agent_start / agent_end
+#### agent_start / agent_end / agent_settled
 
-每个用户提示触发一次。
+`agent_start` 在底层 agent 运行开始时触发。`agent_end` 在该运行结束时触发，但 Pi 可能仍会自动重试、自动压缩后重试或继续排队的 follow-up 消息。对于需要知道 Pi 不会再自动继续运行的状态集成，使用 `agent_settled`。
 
 ```typescript
 pi.on('agent_start', async (_event, ctx) => {});
 
 pi.on('agent_end', async (event, ctx) => {
-  // event.messages - 此提示产生的消息
+  // event.messages - 此次底层运行产生的消息
+});
+
+pi.on('agent_settled', async (_event, ctx) => {
+  // 除非另一个扩展启动了新的运行，否则此处 ctx.isIdle() 为 true。
 });
 ```
 
@@ -1000,7 +1005,7 @@ pi.on('tool_result', async (event, ctx) => {
 
 ### ctx.isIdle() / ctx.abort() / ctx.hasPendingMessages()
 
-控制流辅助方法。
+控制流辅助方法。当 Pi 正在处理 agent 运行、自动重试、自动压缩重试或排队的继续消息时，`ctx.isIdle()` 为 false。
 
 ### ctx.shutdown()
 
@@ -1082,7 +1087,7 @@ const contextPaths = options.contextFiles?.map((file) => file.path) ?? [];
 
 ### ctx.waitForIdle()
 
-等待 Agent 完成流式输出：
+等待 Agent 完全 settled，包括自动重试、自动压缩重试和排队的继续消息：
 
 ```typescript
 pi.registerCommand('my-cmd', {
@@ -1268,7 +1273,7 @@ pi.registerCommand('handoff', {
 
 ```typescript
 pi.registerCommand('reload-runtime', {
-  description: '重载扩展、Skill、Prompt 和主题',
+  description: '重载扩展、Skill、Prompt、主题和上下文文件',
   handler: async (_args, ctx) => {
     await ctx.reload();
     return;
@@ -1297,7 +1302,7 @@ import { Type } from 'typebox';
 
 export default function (pi: ExtensionAPI) {
   pi.registerCommand('reload-runtime', {
-    description: '重载扩展、Skill、Prompt 和主题',
+    description: '重载扩展、Skill、Prompt、主题和上下文文件',
     handler: async (_args, ctx) => {
       await ctx.reload();
       return;
@@ -1659,7 +1664,7 @@ if (model) {
 获取或设置思考级别。级别会被限制到模型能力范围内（非推理模型始终使用 "off"）。更改会触发 `thinking_level_select`。
 
 ```typescript
-const current = pi.getThinkingLevel(); // "off" | "minimal" | "low" | "medium" | "high" | "xhigh"
+const current = pi.getThinkingLevel(); // "off" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max"
 pi.setThinkingLevel('high');
 ```
 

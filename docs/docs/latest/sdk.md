@@ -396,7 +396,7 @@ const available = await modelRegistry.getAvailable();
 
 const { session } = await createAgentSession({
   model: opus,
-  thinkingLevel: 'medium', // off, minimal, low, medium, high, xhigh
+  thinkingLevel: 'medium', // off, minimal, low, medium, high, xhigh, max
 
   // 用于循环的模型（交互模式中的 Ctrl+P）
   scopedModels: [
