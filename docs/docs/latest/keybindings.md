@@ -118,11 +118,12 @@
 
 ### 显示和消息队列
 
-| ID                     | 默认键      | 说明                 |
-| ---------------------- | ----------- | -------------------- |
-| `app.tools.expand`     | `ctrl+o`    | 折叠/展开工具输出    |
-| `app.message.followUp` | `alt+enter` | 队列 follow-up 消息  |
-| `app.message.dequeue`  | `alt+up`    | 恢复队列消息到编辑器 |
+| ID                     | 默认键      | 说明                                              |
+| ---------------------- | ----------- | ------------------------------------------------- |
+| `app.tools.expand`     | `ctrl+o`    | 折叠/展开工具输出                                 |
+| `app.message.copy`     | `ctrl+x`    | 复制最后一条助手消息，或在 `/tree` 中复制所选消息 |
+| `app.message.followUp` | `alt+enter` | 队列 follow-up 消息                               |
+| `app.message.dequeue`  | `alt+up`    | 恢复队列消息到编辑器                              |
 
 ### 树导航
 

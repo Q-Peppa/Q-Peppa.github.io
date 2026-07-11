@@ -59,6 +59,7 @@ pi
 | DeepSeek                             | `DEEPSEEK_API_KEY`                                                         | `deepseek`               |
 | NVIDIA NIM                           | `NVIDIA_API_KEY`                                                           | `nvidia`                 |
 | Google Gemini                        | `GEMINI_API_KEY`                                                           | `google`                 |
+| Amazon Bedrock                       | `AWS_BEARER_TOKEN_BEDROCK`                                                 | `amazon-bedrock`         |
 | Mistral                              | `MISTRAL_API_KEY`                                                          | `mistral`                |
 | Groq                                 | `GROQ_API_KEY`                                                             | `groq`                   |
 | Cerebras                             | `CEREBRAS_API_KEY`                                                         | `cerebras`               |
@@ -173,6 +174,8 @@ export AZURE_OPENAI_DEPLOYMENT_NAME_MAP=gpt-4=my-gpt4,gpt-4o=my-gpt4o
 ```
 
 ### Amazon Bedrock
+
+使用 `/login amazon-bedrock` 存储 Bedrock API Key，或配置以下环境 AWS 凭证源之一：
 
 ```bash
 # 方式 1：AWS Profile

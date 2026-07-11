@@ -24,6 +24,7 @@
 | 文件引用        | 输入 `@` 来模糊搜索项目文件                                                                 |
 | 路径补全        | 按 Tab 补全路径                                                                             |
 | 多行输入        | Shift+Enter（Windows Terminal 上为 Ctrl+Enter）                                             |
+| 复制回复        | Ctrl+X 复制最后一条助手消息；在 `/tree` 中复制所选消息                                      |
 | 图像            | Ctrl+V 粘贴（Windows 为 Alt+V），或拖入终端                                                 |
 | Shell 命令      | `!command` 执行命令，输出发送给模型                                                         |
 | 隐藏 Shell 命令 | `!!command` 执行命令但不发送输出给模型                                                      |
