@@ -1684,7 +1684,7 @@ pi.events.emit("my:event", { ... });
 
 在扩展工厂函数中进行的调用会排队，并在运行器初始化时应用。之后进行的调用——例如来自用户设置流程后的命令处理程序——立即生效，无需 `/reload`。
 
-如果需要从远程端点发现模型，建议使用异步扩展工厂，而不是将 fetch 推迟到 `session_start`。Pi 会在继续启动前等待工厂，因此注册的模型立即可用，包括对 `pi --list-models`。
+动态 Provider 可以实现 `refreshModels`。Pi 在模型刷新期间调用它，通过 Provider 同步发布返回的列表，并传入规范的凭证/存储/网络/信号上下文。扩展通过 `context.store` 决定是否持久化目录；如 llama.cpp 等实时服务器可以忽略它。
 
 ```typescript
 // 使用自定义模型注册新 Provider
@@ -1709,6 +1709,26 @@ pi.registerProvider("my-proxy", {
 // 覆盖现有 Provider 的 baseUrl（保留所有模型）
 pi.registerProvider("anthropic", {
   baseUrl: "https://proxy.example.com"
+});
+
+// 注册不持久化已发现模型的实时 llama.cpp 目录
+pi.registerProvider("llama.cpp", {
+  baseUrl: "http://localhost:8080/v1",
+  apiKey: "local",
+  api: "openai-completions",
+  async refreshModels({ signal }) {
+    const response = await fetch("http://localhost:8080/v1/models", { signal });
+    const { data } = await response.json();
+    return data.map(({ id }) => ({
+      id,
+      name: id,
+      reasoning: false,
+      input: ["text"],
+      cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+      contextWindow: 128000,
+      maxTokens: 16384
+    }));
+  }
 });
 
 // 注册支持 OAuth 的 Provider 以支持 /login
@@ -1744,6 +1764,7 @@ pi.registerProvider("corporate-ai", {
 - `headers` - 要包含在请求中的自定义标头。
 - `authHeader` - 如果为 true，自动添加 `Authorization: Bearer` 标头。
 - `models` - 模型定义数组。如果提供，替换此 Provider 的所有现有模型。模型定义可以设置 `baseUrl` 以覆盖该模型的 Provider 端点。
+- `refreshModels` - 异步动态发现回调。其返回的模型替换扩展提供的模型。仅在结果需要持久化时使用带作用域的 `context.store`。
 - `oauth` - 支持 `/login` 的 OAuth Provider 配置。提供后，该 Provider 会出现在登录菜单中。
 - `streamSimple` - 用于非标准 API 的自定义流式实现。
 

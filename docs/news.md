@@ -2,6 +2,88 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.80.7（2026-07-14）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+不兼容变更
+
+- 移除了 `openai-responses` 的 `compat.sendSessionIdHeader` 标志。会话亲和行为现在由 `compat.sessionAffinityFormat`（`"openai"`、`"openai-nosession"` 或 `"openrouter"`）控制。将 `sendSessionIdHeader: false` 替换为 `sessionAffinityFormat: "openai-nosession"`（[#6496](https://github.com/earendil-works/pi-mono/pull/6496)，感谢 [@petrroll](https://github.com/petrroll)）。
+
+新功能
+
+- **缓存友好的动态工具加载** — 扩展可以在执行期间添加工具，同时受支持的 Anthropic 和 OpenAI Responses 模型保留 prompt 缓存前缀。详见[动态工具加载](/docs/latest/extensions#dynamic-tool-loading)。
+- **消息复制快捷键** — `Ctrl+X` 复制转录中最后一条助手消息或 `/tree` 中选中的消息，使旧消息和分支消息可直接复制。详见[显示和消息队列](/docs/latest/keybindings#display-and-message-queue)。
+- **Fable 5 `xhigh` 和 `max` thinking** — 在生成的 Provider 目录中提供原生的 `xhigh` 和 `max` thinking 级别。详见[模型选项](/docs/latest/usage#模型选项)。
+
+新增
+
+- 为扩展工具添加了缓存友好的动态工具加载，由 tool result 触发。受支持的 Anthropic 和 OpenAI Responses 模型在工具定义可用时加载定义，保留缓存的 prompt 前缀。详见[动态工具加载](/docs/latest/extensions#dynamic-tool-loading)（[#6474](https://github.com/earendil-works/pi-mono/pull/6474)）。
+- 在所有生成的 Provider 目录中为 Claude Fable 5 添加了继承的原生 `xhigh` 和 `max` thinking 级别（[#6490](https://github.com/earendil-works/pi-mono/pull/6490)，感谢 [@davidbrai](https://github.com/davidbrai)）。
+- 添加了 `Ctrl+X` 复制最后一条助手消息或 `/tree` 中选中的消息。
+- 为 OpenAI 和 Codex Responses 添加了继承的 `toolChoice` 支持，包括 required 和 named 工具选择（[#6588](https://github.com/earendil-works/pi-mono/pull/6588)，感谢 [@xl0](https://github.com/xl0)）。
+
+修复
+
+- 修复了继承的 OpenRouter 模型上下文窗口，使用 top provider 的实际上下文长度（[#6481](https://github.com/earendil-works/pi-mono/pull/6481)，感谢 [@davidbrai](https://github.com/davidbrai)）。
+- 修复了继承的 OpenRouter OpenAI 兼容会话 ID，使用 `x-session-id` 请求头代替 OpenAI 特定的会话亲和字段（[#6496](https://github.com/earendil-works/pi-mono/pull/6496)，感谢 [@petrroll](https://github.com/petrroll)）。
+- 修复了 `Ctrl+V` 在剪贴板不含图片时粘贴文本的行为。
+- 修复了 `/login amazon-bedrock` 提示并保存 Bedrock API key，而非仅显示 ambient AWS 凭据设置说明。
+- 修复了继承的 Amazon Bedrock ambient AWS 凭据，继续使用 SigV4 认证，包括自定义模型 ID（[#6532](https://github.com/earendil-works/pi-mono/pull/6532)，感谢 [@ribelo](https://github.com/ribelo)）。
+- 修复了继承的 Cloudflare Workers AI 和 AI Gateway 认证，在存储的凭据仅包含 API key 时使用 ambient 账户和网关 ID（[#6292](https://github.com/earendil-works/pi-mono/pull/6292)，感谢 [@markphelps](https://github.com/markphelps)）。
+- 修复了继承的旧终端解码中 `Alt+,` 和 `Alt+.` 等 Alt+符号组合键（[#6523](https://github.com/earendil-works/pi-mono/pull/6523)，感谢 [@ribelo](https://github.com/ribelo)）。
+- 修复了 GitHub Copilot `mai-code-1-flash-picker` 模型路由，使其通过 `/responses` 端点（[#6544](https://github.com/earendil-works/pi-mono/pull/6544)，感谢 [@petrroll](https://github.com/petrroll)）。
+- 修复了分支摘要，使其在使用 ambient 认证而非 API key 的 Provider 上正常工作（[#6595](https://github.com/earendil-works/pi-mono/pull/6595)，感谢 [@davidbrai](https://github.com/davidbrai)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+不兼容变更
+
+- 移除了 `OpenAIResponsesCompat.sendSessionIdHeader` 标志。会话亲和行为现在由 `compat.sessionAffinityFormat`（`"openai"`、`"openai-nosession"` 或 `"openrouter"`）控制。将 `sendSessionIdHeader: false` 替换为 `sessionAffinityFormat: "openai-nosession"`（[#6496](https://github.com/earendil-works/pi-mono/pull/6496)，感谢 [@petrroll](https://github.com/petrroll)）。
+
+新增
+
+- 添加了缓存友好的动态工具加载。`ToolResultMessage.addedToolNames` 标记 `Context.tools` 中工具可用的位置；Anthropic 和 OpenAI Responses 使用原生延迟加载，使后加载的工具不进入缓存前缀，其他 Provider 继续正常使用 `Context.tools`（[#6474](https://github.com/earendil-works/pi-mono/pull/6474)）。
+- 在所有生成的 Provider 目录中为 Claude Fable 5 添加了原生 `xhigh` 和 `max` thinking 级别（[#6490](https://github.com/earendil-works/pi-mono/pull/6490)，感谢 [@davidbrai](https://github.com/davidbrai)）。
+- 为 OpenAI 和 Codex Responses 添加了 `toolChoice` 支持，包括 required 和 named 工具选择（[#6588](https://github.com/earendil-works/pi-mono/pull/6588)，感谢 [@xl0](https://github.com/xl0)）。
+
+修复
+
+- 修复了 OpenRouter 模型上下文窗口，使用 top provider 的实际上下文长度（[#6481](https://github.com/earendil-works/pi-mono/pull/6481)，感谢 [@davidbrai](https://github.com/davidbrai)）。
+- 修复了 GitHub Copilot `mai-code-1-flash-picker` 模型路由，使其通过 `/responses` 端点（[#6544](https://github.com/earendil-works/pi-mono/pull/6544)，感谢 [@petrroll](https://github.com/petrroll)）。
+- 修复了 Amazon Bedrock 请求，使用通用 `apiKey` 流选项作为 Bedrock bearer token。
+- 修复了 OpenRouter OpenAI 兼容会话 ID，使用 `x-session-id` 请求头代替 OpenAI 特定的会话亲和字段（[#6496](https://github.com/earendil-works/pi-mono/pull/6496)，感谢 [@petrroll](https://github.com/petrroll)）。
+- 修复了 Amazon Bedrock ambient AWS 凭据，继续使用 SigV4 认证，包括自定义模型 ID（[#6532](https://github.com/earendil-works/pi-mono/pull/6532)，感谢 [@ribelo](https://github.com/ribelo)）。
+- 修复了 Cloudflare Workers AI 和 AI Gateway 认证，在存储的凭据仅包含 API key 时使用 ambient 账户和网关 ID（[#6292](https://github.com/earendil-works/pi-mono/pull/6292)，感谢 [@markphelps](https://github.com/markphelps)）。
+- 修复了 Amazon Bedrock 错误，报告未处理的 provider stop reason，而非仅显示 `An unknown error occurred`（[#6598](https://github.com/earendil-works/pi-mono/pull/6598)，感谢 [@davidbrai](https://github.com/davidbrai)）。
+- 修复了 Azure OpenAI Responses reasoning replay，当 `encrypted_content` 仅出现在终端 response event 中时（[#6608](https://github.com/earendil-works/pi-mono/pull/6608)，感谢 [@davidbrai](https://github.com/davidbrai)）。
+- 修复了省略 `message_delta` 事件中 `usage` 的 Anthropic 兼容代理（[#6611](https://github.com/earendil-works/pi-mono/pull/6611)，感谢 [@davidbrai](https://github.com/davidbrai)）。
+- 修复了 OpenCode OpenAI Responses 模型，省略不支持的 `session-id` 请求头，同时保留其他缓存亲和数据（[#6645](https://github.com/earendil-works/pi-mono/pull/6645)，感谢 [@davidbrai](https://github.com/davidbrai)）。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+新增
+
+- 添加了 `AgentToolResult.addedToolNames` 向 `ToolResultMessage` 的传播，使 result 引入的工具可从该转录点起加载（[#6474](https://github.com/earendil-works/pi-mono/pull/6474)）。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+修复
+
+- 修复了旧终端解码中 `Alt+,` 和 `Alt+.` 等 Alt+符号组合键（[#6523](https://github.com/earendil-works/pi-mono/pull/6523)，感谢 [@ribelo](https://github.com/ribelo)）。
+
+</details>
+
 ## v0.80.6（2026-07-09）
 
 <details>

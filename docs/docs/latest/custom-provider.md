@@ -258,6 +258,8 @@ pi.registerProvider("custom-api", {
 });
 ```
 
+密钥在每次请求时解析。显式的请求 `Authorization` 请求头优先于生成的值。
+
 ## OAuth 支持
 
 添加 OAuth/SSO 认证，集成 `/login`：
@@ -317,15 +319,6 @@ pi.registerProvider("corporate-ai", {
 
     getApiKey(credentials: OAuthCredentials): string {
       return credentials.access;
-    },
-
-    // 可选：根据用户订阅修改模型
-    modifyModels(models, credentials) {
-      const region = decodeRegionFromToken(credentials.access);
-      return models.map(m => ({
-        ...m,
-        baseUrl: `https://${region}.ai.corp.com/v1`
-      }));
     }
   }
 });
@@ -335,7 +328,7 @@ pi.registerProvider("corporate-ai", {
 
 ### OAuthLoginCallbacks
 
-`callbacks` 对象提供三种认证方式：
+`callbacks` 对象为 Provider 自有流程提供 UI 中立的交互方式：
 
 ```typescript
 interface OAuthLoginCallbacks {
@@ -349,6 +342,9 @@ interface OAuthLoginCallbacks {
     intervalSeconds?: number;
     expiresInSeconds?: number;
   }): void;
+
+  // 显示瞬时进度
+  onProgress?(message: string): void;
 
   // 提示用户输入（用于手动输入令牌）
   onPrompt(params: { message: string }): Promise<string>;
@@ -656,7 +652,6 @@ interface ProviderConfig {
     login(callbacks: OAuthLoginCallbacks): Promise<OAuthCredentials>;
     refreshToken(credentials: OAuthCredentials): Promise<OAuthCredentials>;
     getApiKey(credentials: OAuthCredentials): string;
-    modifyModels?(models: Model<Api>[], credentials: OAuthCredentials): Model<Api>[];
   };
 }
 ```
@@ -731,6 +726,8 @@ interface ProviderModelConfig {
       string | number | boolean | null | { $var: 'thinking.enabled' | 'thinking.effort'; omitWhenOff?: boolean }
     >;
     cacheControlFormat?: 'anthropic';
+    sessionAffinityFormat?: 'openai' | 'openai-nosession' | 'openrouter';
+    sendSessionAffinityHeaders?: boolean;
 
     // anthropic-messages
     supportsEagerToolInputStreaming?: boolean;

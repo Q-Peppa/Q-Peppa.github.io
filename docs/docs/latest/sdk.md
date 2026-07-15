@@ -19,16 +19,12 @@ SDK 提供对 pi Agent 能力的编程式访问。用于嵌入其他应用、构
 ## 快速开始
 
 ```typescript
-import { AuthStorage, createAgentSession, ModelRegistry, SessionManager } from '@earendil-works/pi-coding-agent';
+import { createAgentSession, ModelRuntime, SessionManager } from '@earendil-works/pi-coding-agent';
 
-// 设置凭证存储和模型注册表
-const authStorage = AuthStorage.create();
-const modelRegistry = ModelRegistry.create(authStorage);
-
+const modelRuntime = await ModelRuntime.create();
 const { session } = await createAgentSession({
   sessionManager: SessionManager.inMemory(),
-  authStorage,
-  modelRegistry,
+  modelRuntime,
 });
 
 session.subscribe((event) => {
@@ -378,10 +374,9 @@ const { session } = await createAgentSession({
 
 ```typescript
 import { getModel } from '@earendil-works/pi-ai';
-import { AuthStorage, ModelRegistry } from '@earendil-works/pi-coding-agent';
+import { ModelRuntime } from '@earendil-works/pi-coding-agent';
 
-const authStorage = AuthStorage.create();
-const modelRegistry = ModelRegistry.create(authStorage);
+const modelRuntime = await ModelRuntime.create();
 
 // 查找特定的内置模型（不检查 API Key 是否存在）
 const opus = getModel('anthropic', 'claude-opus-4-5');
@@ -389,10 +384,10 @@ if (!opus) throw new Error('Model not found');
 
 // 按 provider/id 查找任何模型，包括来自 models.json 的自定义模型
 // （不检查 API Key 是否存在）
-const customModel = modelRegistry.find('my-provider', 'my-model');
+const customModel = modelRuntime.getModel('my-provider', 'my-model');
 
-// 仅获取配置了有效 API Key 的模型
-const available = await modelRegistry.getAvailable();
+// 仅获取配置了有效认证的模型
+const available = await modelRuntime.getAvailable();
 
 const { session } = await createAgentSession({
   model: opus,
@@ -404,8 +399,7 @@ const { session } = await createAgentSession({
     { model: haiku, thinkingLevel: 'off' },
   ],
 
-  authStorage,
-  modelRegistry,
+  modelRuntime,
 });
 ```
 
@@ -422,14 +416,14 @@ import { resolveCliModel, resolveModelScopeWithDiagnostics } from '@earendil-wor
 
 const cliModel = resolveCliModel({
   cliModel: 'anthropic/claude-opus-4-5:high',
-  modelRegistry,
+  modelRuntime,
 });
 if (cliModel.error) throw new Error(cliModel.error);
 if (cliModel.warning) console.warn(cliModel.warning);
 
 const { scopedModels, diagnostics } = await resolveModelScopeWithDiagnostics(
   ['anthropic/*:high', 'gpt-5'],
-  modelRegistry,
+  modelRuntime,
 );
 for (const diagnostic of diagnostics) {
   console.warn(diagnostic.message);
@@ -442,7 +436,7 @@ for (const diagnostic of diagnostics) {
 
 ### API Key 和 OAuth
 
-API Key 解析优先级（由 AuthStorage 处理）：
+认证解析优先级（由 `ModelRuntime` 处理）：
 
 1. 运行时覆盖（通过 `setRuntimeApiKey`，不持久化）
 2. `auth.json` 中存储的凭证（API Key 或 OAuth 令牌）
@@ -450,33 +444,34 @@ API Key 解析优先级（由 AuthStorage 处理）：
 4. 回退解析器（用于来自 `models.json` 的自定义 Provider Key）
 
 ```typescript
-import { AuthStorage, ModelRegistry } from '@earendil-works/pi-coding-agent';
+import { InMemoryCredentialStore } from '@earendil-works/pi-ai';
+import { createAgentSession, ModelRuntime } from '@earendil-works/pi-coding-agent';
 
 // 默认：使用 ~/.pi/agent/auth.json 和 ~/.pi/agent/models.json
-const authStorage = AuthStorage.create();
-const modelRegistry = ModelRegistry.create(authStorage);
+const modelRuntime = await ModelRuntime.create();
 
-const { session } = await createAgentSession({
-  sessionManager: SessionManager.inMemory(),
-  authStorage,
-  modelRegistry,
-});
+// Provider 自有的认证方法和当前状态
+for (const provider of modelRuntime.getProviders()) {
+  const status = await modelRuntime.checkAuth(provider.id);
+  console.log(provider.name, provider.auth, status);
+}
 
 // 运行时 API Key 覆盖（不持久化到磁盘）
-authStorage.setRuntimeApiKey('anthropic', 'sk-my-temp-key');
+modelRuntime.setRuntimeApiKey('anthropic', 'sk-my-temp-key');
 
-// 自定义凭证存储位置
-const customAuth = AuthStorage.create('/my/app/auth.json');
-const customRegistry = ModelRegistry.create(customAuth, '/my/app/models.json');
-
-const { session } = await createAgentSession({
-  sessionManager: SessionManager.inMemory(),
-  authStorage: customAuth,
-  modelRegistry: customRegistry,
+// 自定义凭证和模型位置
+const customRuntime = await ModelRuntime.create({
+  authPath: '/my/app/auth.json',
+  modelsPath: '/my/app/models.json',
 });
 
-// 无自定义 models.json（仅内置模型）
-const simpleRegistry = ModelRegistry.inMemory(authStorage);
+// 或者注入任何 pi-ai CredentialStore
+const credentials = new InMemoryCredentialStore();
+const inMemoryRuntime = await ModelRuntime.create({ credentials });
+
+const { session } = await createAgentSession({
+  modelRuntime: customRuntime,
+});
 ```
 
 > 参见 [examples/sdk/09-api-keys-and-oauth.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/sdk/09-api-keys-and-oauth.ts)
@@ -923,25 +918,21 @@ interface LoadExtensionsResult {
 import { getModel } from '@earendil-works/pi-ai';
 import { Type } from 'typebox';
 import {
-  AuthStorage,
   createAgentSession,
   DefaultResourceLoader,
   defineTool,
-  ModelRegistry,
+  ModelRuntime,
   SessionManager,
   SettingsManager,
 } from '@earendil-works/pi-coding-agent';
 
-// 设置凭证存储（自定义位置）
-const authStorage = AuthStorage.create('/custom/agent/auth.json');
-
-// 运行时 API Key 覆盖（不持久化）
+const modelRuntime = await ModelRuntime.create({
+  authPath: '/custom/agent/auth.json',
+  modelsPath: '/custom/agent/models.json',
+});
 if (process.env.MY_KEY) {
-  authStorage.setRuntimeApiKey('anthropic', process.env.MY_KEY);
+  modelRuntime.setRuntimeApiKey('anthropic', process.env.MY_KEY);
 }
-
-// 模型注册表（无自定义 models.json）
-const modelRegistry = ModelRegistry.create(authStorage);
 
 // 内联工具
 const statusTool = defineTool({
@@ -978,8 +969,7 @@ const { session } = await createAgentSession({
 
   model,
   thinkingLevel: 'off',
-  authStorage,
-  modelRegistry,
+  modelRuntime,
 
   tools: ['read', 'bash', 'status'],
   customTools: [statusTool],
@@ -1147,8 +1137,8 @@ createAgentSessionRuntime
 AgentSessionRuntime
 
 // 认证和模型
-AuthStorage
-ModelRegistry
+ModelRuntime // 实现 pi-ai Models 并拥有凭证存储
+ModelRegistry // 同步扩展兼容门面
 resolveCliModel
 resolveModelScopeWithDiagnostics
 

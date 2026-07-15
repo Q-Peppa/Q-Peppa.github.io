@@ -17,3 +17,4 @@ docs/docs/latest/cdn-setup.md
 
 # Wrangler cache
 .wrangler
+.env
