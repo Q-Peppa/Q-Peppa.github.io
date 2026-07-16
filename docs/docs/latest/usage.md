@@ -147,6 +147,7 @@ pi uninstall <source> [-l]   # remove 的别名
 pi update [source|self|pi]   # 仅更新 Pi，或更新单个包源
 pi update --all              # 更新 Pi 和包；协调固定的 git ref
 pi update --extensions       # 仅更新包；协调固定的 git ref
+pi update --models           # 仅刷新模型目录
 pi update --self             # 仅更新 Pi
 pi update --extension <src>  # 更新单个包
 pi list                      # 列出已安装的包

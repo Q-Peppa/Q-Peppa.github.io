@@ -2,6 +2,93 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.80.8（2026-07-16）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+不兼容变更
+
+- 将 SDK 的 `CreateAgentSessionOptions.authStorage` 和 `modelRegistry` 选项替换为异步 `modelRuntime` 选项。`AuthStorage` 及其存储后端不再导出；请使用 `ModelRuntime`（或自定义 pi-ai `CredentialStore`），或 `readStoredCredential()` 进行一次性读取。
+- 移除了冗余的 `ModelRuntime.getAll()`、`find()`、`getSnapshot()` 和 `getAuthOptions()` 投影。请直接使用 pi-ai `Models` 的 `getModels()`、`getModel()`、`getProviders()` 和 `checkAuth()` 方法。
+- 将 SDK 通过 `ModelRegistry.getApiKeyAndHeaders()` 组装的请求认证替换为 `ModelRuntime.getAuth()`。传入 Provider ID 返回 Provider 作用域认证；传入模型还会解析内置、`models.json` 和扩展模型请求头。
+- 面向扩展的 `ModelRegistry.refresh()` 从同步 `void` 改为 `Promise<void>`，因为 `models.json` 加载是异步的。扩展必须在同步读取注册表之前 await 它。
+- 将规范的动态目录刷新迁移到异步 `ModelRuntime.refresh()` / pi-ai `Models.refresh()`。旧版扩展 OAuth `modifyModels` 在凭据初始化后仍作为同步兼容投影保留。
+
+新功能
+
+- **统一的模型运行时与 Provider 认证** — `ModelRuntime` 集中管理模型配置、Provider 自有的 `/login` 和动态 Provider 目录。详见 [Providers](/docs/latest/providers)。
+- **实时模型目录刷新** — `/model` 在后台刷新已配置的 Provider，`pi update --models` 可强制立即刷新。详见[安装和管理](/docs/latest/packages#install-and-manage)。
+- **xAI 设备码 OAuth 与 Grok 4.5 Responses 支持** — 使用设备码登录 xAI，并以低、中、高 thinking 级别使用 Grok 4.5。详见 [xAI](/docs/latest/providers#xai-grokx-subscription)。
+
+新增
+
+- 新增 `ModelRuntime` 作为规范的异步 SDK 和内部模型/认证门面，同时保留面向扩展的同步 `ModelRegistry` API。`ModelRuntime.create()` 可通过 `credentials` 选项接受任何 pi-ai `CredentialStore`。
+- 新增 Provider 自有的 `/login` 发现，直接从注册的 pi-ai Provider 获取，包括 ambient 认证状态和信息链接。
+- 新增基于文件的动态目录 `models-store.json`、按 Provider 的 pi.dev 目录覆盖，以及 Radius 网关支持（包括从旧版凭据缓存目录离线迁移）。
+- 新增扩展 Provider `refreshModels(context)` 支持动态模型发现，并可选地由 Provider 控制持久化。
+- 新增 `pi update --models`，用于在不更新 Pi 或扩展的情况下强制立即刷新模型目录。
+- 新增继承的 xAI 设备码 OAuth 登录，以及 Grok 4.5 OpenAI Responses 支持，提供低、中、高 thinking 级别（[#6651](https://github.com/earendil-works/pi-mono/pull/6651)，感谢 [@Jaaneek](https://github.com/Jaaneek)）。
+
+变更
+
+- `ModelRuntime` 改为通过临时 pi-ai Provider 方法组合内置 Provider、不可变的 `models.json` 配置和扩展覆盖。
+- `ModelRuntime` 改为拥有最终请求组装：`getAuth(model)` 包含已配置模型请求头；流方法只解析一次认证；`before_provider_headers` 作为仅 Models 的请求头转换在 Provider 分发前运行。
+- `/model` 改为立即渲染当前模型快照、在后台刷新已配置 Provider，并用部分结果或超时错误更新打开的选择器。
+
+修复
+
+- 修复已配置 Provider 目录刷新，使其能解析 pi.dev 以模型 ID 为键的响应、将检查频率限制为每 4 小时一次、发送带版本的 Pi user agent、将未实现路由视为不可用覆盖，并在 `/model` 中显示简洁刷新状态。
+- 修复相邻的助手 thinking blocks，使其渲染为一个 thinking 区域。
+- 修复继承的 OpenAI Codex 会话 ID 超过 64 字符的问题，以符合 API 限制（[#6630](https://github.com/earendil-works/pi-mono/issues/6630)）。
+- 修复继承的终端输出，统一规范化 tab 字符（[#6697](https://github.com/earendil-works/pi-mono/pull/6697)，感谢 [@xz-dev](https://github.com/xz-dev)）。
+- 修复检查 npm 包后的 Windows 终端标题（[#6629](https://github.com/earendil-works/pi-mono/issues/6629)）。
+- 修复 Bun 独立二进制文件打包 OAuth 适配器以支持交互式登录。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+不兼容变更
+
+- 将运行时认证改为 Provider 作用域的 `Models.checkAuth()`、`getAuth()`、`login()` 和 `logout()` API。`checkAuth()` 现在返回 `AuthCheck | undefined`，API key 认证解析器不再接收模型。
+- 移除了旧版内置 OAuth Provider 对象、全局 OAuth 注册表 API 和公开的低层内置 login/refresh 函数。请改用规范的 `Provider.auth.oauth` 方法；`oauth` 子路径现在仅保留扩展兼容类型。
+- 将规范登录交互接口从 `AuthLoginCallbacks` 重命名为 `AuthInteraction`；它暴露了 API key 和 OAuth 流程共用的 Provider 中立 `prompt()` / `notify()` 协议。
+- 更改 `Models` 请求契约：`getAuth(model)` 现在包含模型请求头，`getAuth(providerId)` 仍为 Provider 作用域，Models 流选项可包含 `transformHeaders`。自定义 `Models` 实现必须在合并 auth/模型和显式请求头后执行该转换，然后在 Provider 分发前移除它。
+- 将动态模型刷新改为 `Models.refresh(options)`，刷新每个已配置的动态 Provider 并返回按 Provider 的错误/取消状态。`Provider.refreshModels(context)` 现在接收有效凭据、作用域模型存储、网络策略和 abort 信号。
+
+新增
+
+- 为 `Models` 新增 Provider 自有的认证与可用性解析，包括存储的 OAuth 刷新和通过 `CredentialStore` 的交互式登录支持。
+- 新增 `CredentialStore.list()` 异步枚举非机密凭据，以及支持凭据感知的 `Provider.filterModels()` 可用性策略。
+- 新增中立的认证流程信息/链接事件，以及 Provider 自有的 Amazon Bedrock 和 Google Vertex AI 凭据选择流程。
+- 新增 `ModelsStore`，使用内存默认实现来恢复和持久化动态 Provider 目录。
+- 新增动态 Radius `pi-messages` 网关 Provider，支持 OAuth 和凭据特定的目录刷新。
+- 新增 `Models.refresh({ force: true })`，让 Provider 绕过新鲜度检查执行显式刷新。
+- 新增 xAI 设备码 OAuth 登录，并将 Grok 4.5 路由到 OpenAI Responses，支持低、中、高 thinking（[#6651](https://github.com/earendil-works/pi-mono/pull/6651)，感谢 [@Jaaneek](https://github.com/Jaaneek)）。
+
+变更
+
+- `Models.getAuth(model)` 改为包含模型请求头，并新增仅作用于 Models 的 `transformHeaders` 流选项，在 auth 和显式请求头组装之后、Provider 分发之前运行。
+
+修复
+
+- 修复 Cloudflare Workers AI 和 AI Gateway 流，使其在认证解析后对账户和网关端点占位符实例化，包括使用自定义模型对象的兼容流。
+- 修复懒加载 Provider 流，使其在转发内部流时保留最终助手消息。
+- 修复 OpenAI Codex 会话 ID 超过 64 字符的问题，以符合 API 限制（[#6630](https://github.com/earendil-works/pi-mono/issues/6630)）。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+修复
+
+- 修复终端输出，统一规范化 tab 字符（[#6697](https://github.com/earendil-works/pi-mono/pull/6697)，感谢 [@xz-dev](https://github.com/xz-dev)）。
+
+</details>
+
 ## v0.80.7（2026-07-14）
 
 <details>
