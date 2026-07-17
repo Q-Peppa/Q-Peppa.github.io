@@ -2,6 +2,87 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.80.10（2026-07-16）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **Kimi Coding thinking 兼容** — Kimi Coding 模型现在正确使用自适应 thinking；K3 暴露其支持的 `max` 级别，并支持回放空签名 thinking blocks。详见 [Kimi For Coding 设置](/docs/latest/providers#api-keys) 和[模型选项](/docs/latest/usage#模型选项)。
+
+修复
+
+- 修复继承的 Kimi Coding 请求，使用 Anthropic 自适应 thinking effort 而不带 token 预算，并为 K3 和 `kimi-for-coding` 启用空 thinking 签名。
+- 修复继承的 Kimi K3 定价元数据，适用于 Moonshot AI 和 Moonshot AI China。
+- 修复继承的 Kimi Coding K3 thinking 级别元数据，仅暴露支持的 `max` 级别（[#6737](https://github.com/earendil-works/pi/issues/6737)）。
+- 修复继承的目录生成，恢复在 0.80.9 中移除的 xAI 模型（[#6736](https://github.com/earendil-works/pi/issues/6736)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+修复
+
+- 修复 Kimi Coding 请求，使用 Anthropic 自适应 thinking effort 而不带 token 预算，并为 K3 和 `kimi-for-coding` 启用空 thinking 签名。
+- 修复 Kimi K3 定价元数据，适用于 Moonshot AI 和 Moonshot AI China。
+- 修复 Kimi Coding K3 thinking 级别元数据，仅暴露支持的 `max` 级别（[#6737](https://github.com/earendil-works/pi/issues/6737)）。
+- 修复目录生成，恢复在 0.80.9 中移除的 xAI 模型（[#6736](https://github.com/earendil-works/pi/issues/6736)）。
+
+</details>
+
+## v0.80.9（2026-07-16）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **Kimi K3 与延迟工具加载** — 在多个内置 Provider 中使用 Kimi K3，包括通过 Kimi 原生协议进行渐进式扩展工具激活。详见[动态工具加载](/docs/latest/extensions#dynamic-tool-loading)、[OpenAI 兼容性](/docs/latest/models#openai-compatibility) 和 [`kimi-deferred-tools.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/extensions/kimi-deferred-tools.ts) 示例。
+
+新增
+
+- 为 Kimi Coding、Moonshot AI、Moonshot AI China、OpenRouter 和 Vercel AI Gateway 添加继承的 Kimi K3 支持。
+- 添加 Kimi 延迟工具加载，用于扩展驱动的工具激活。详见[动态工具加载](/docs/latest/extensions#dynamic-tool-loading)、[OpenAI 兼容性](/docs/latest/models#openai-compatibility) 和 [`kimi-deferred-tools.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/extensions/kimi-deferred-tools.ts) 示例。
+
+变更
+
+- 将 xAI 登录改为使用预填充的设备授权链接，标签为"使用 SuperGrok 或 X Premium 登录"，并将默认 xAI 模型改为 Grok 4.5（[#6734](https://github.com/earendil-works/pi-mono/pull/6734)，感谢 [@Jaaneek](https://github.com/Jaaneek)）。
+
+修复
+
+- 修复继承的 Kimi K3 输出限制，适用于 Vercel AI Gateway 和 OpenRouter 模型。
+- 修复在首次助手响应之前克隆或 fork 会话时，提示会话必须先保存。
+
+移除
+
+- 从内置 xAI 模型目录中移除 Grok 3、Grok 3 Fast、Grok 4.20 变体和 Grok Code Fast 1（[#6734](https://github.com/earendil-works/pi-mono/pull/6734)，感谢 [@Jaaneek](https://github.com/Jaaneek)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 为 Kimi Coding、Moonshot AI、Moonshot AI China、OpenRouter 和 Vercel AI Gateway 添加 Kimi K3 支持。
+- 通过 `compat.deferredToolsMode` 为 OpenAI 兼容 Chat Completions 添加 Kimi 延迟工具加载。
+
+变更
+
+- 将 xAI 设备 OAuth 改为打开预填充的授权链接，并添加 Provider 特定的 OAuth 登录标签（[#6734](https://github.com/earendil-works/pi-mono/pull/6734)，感谢 [@Jaaneek](https://github.com/Jaaneek)）。
+
+修复
+
+- 修复 Kimi K3 输出限制，适用于 Vercel AI Gateway 和 OpenRouter 模型。
+
+移除
+
+- 从内置 xAI 模型目录中移除 Grok 3、Grok 3 Fast、Grok 4.20 变体和 Grok Code Fast 1（[#6734](https://github.com/earendil-works/pi-mono/pull/6734)，感谢 [@Jaaneek](https://github.com/Jaaneek)）。
+
+</details>
+
 ## v0.80.8（2026-07-16）
 
 <details>
