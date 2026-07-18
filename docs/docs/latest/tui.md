@@ -93,19 +93,33 @@ class SearchDialog extends Container implements Focusable {
 
 ```typescript
 pi.on('session_start', async (_event, ctx) => {
-  const handle = ctx.ui.custom(myComponent);
-  // handle.requestRender() - 触发重新渲染
-  // handle.close() - 恢复正常 UI
+  const result = await ctx.ui.custom<string | null>(
+    (tui, theme, keybindings, done) =>
+      new MyComponent({
+        theme,
+        keybindings,
+        onChange: () => tui.requestRender(),
+        onSelect: (value) => done(value),
+        onCancel: () => done(null),
+      }),
+  );
 });
 ```
 
-**在自定义工具中**通过 `pi.ui.custom()`：
+**在自定义工具中**通过 `ctx.ui.custom()`：
 
 ```typescript
-async execute(toolCallId, params, onUpdate, ctx, signal) {
-  const handle = pi.ui.custom(myComponent);
-  // ...
-  handle.close();
+async execute(toolCallId, params, signal, onUpdate, ctx) {
+  const result = await ctx.ui.custom<string | null>((tui, theme, keybindings, done) =>
+    new MyComponent({
+      theme,
+      keybindings,
+      onChange: () => tui.requestRender(),
+      onSelect: (value) => done(value),
+      onCancel: () => done(null),
+    })
+  );
+  // 使用 result...
 }
 ```
 
@@ -374,24 +388,26 @@ class MySelector {
 ```typescript
 pi.registerCommand('pick', {
   description: 'Pick an item',
-  handler: async (args, ctx) => {
+  handler: async (_args, ctx) => {
     const items = ['Option A', 'Option B', 'Option C'];
-    const selector = new MySelector(items);
+    const selected = await ctx.ui.custom<string | null>((tui, _theme, _keybindings, done) => {
+      const selector = new MySelector(items);
+      selector.onSelect = done;
+      selector.onCancel = () => done(null);
 
-    let handle: { close: () => void; requestRender: () => void };
-
-    await new Promise<void>((resolve) => {
-      selector.onSelect = (item) => {
-        ctx.ui.notify(`Selected: ${item}`, 'info');
-        handle.close();
-        resolve();
+      return {
+        render: (width) => selector.render(width),
+        handleInput: (data) => {
+          selector.handleInput(data);
+          tui.requestRender();
+        },
+        invalidate: () => selector.invalidate(),
       };
-      selector.onCancel = () => {
-        handle.close();
-        resolve();
-      };
-      handle = ctx.ui.custom(selector);
     });
+
+    if (selected !== null) {
+      ctx.ui.notify(`Selected: ${selected}`, 'info');
+    }
   },
 });
 ```
@@ -486,7 +502,7 @@ class CachedComponent {
 }
 ```
 
-状态变化时调用 `invalidate()`，然后调用 `handle.requestRender()` 触发重新渲染。
+状态变化时调用 `invalidate()`，然后使用注入的 `tui.requestRender()` 触发重新渲染。
 
 ## 无效化和主题变更
 
@@ -898,8 +914,8 @@ class VimEditor extends CustomEditor {
 
 export default function (pi: ExtensionAPI) {
   pi.on('session_start', (_event, ctx) => {
-    // 工厂接收来自应用的主题和键绑定
-    ctx.ui.setEditorComponent((tui, theme, keybindings) => new VimEditor(theme, keybindings));
+    // 工厂接收来自应用的 TUI、主题和键绑定
+    ctx.ui.setEditorComponent((tui, theme, keybindings) => new VimEditor(tui, theme, keybindings));
   });
 }
 ```

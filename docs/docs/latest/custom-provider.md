@@ -32,11 +32,38 @@
 
 ## 快速参考
 
+扩展可以注册完整的 pi-ai `Provider`，也可以使用旧版 provider-config 形式。当需要自定义认证、过滤、刷新或流行为时，推荐使用完整的 Provider。Pi 会在已注册的原生 Provider 之上组合 `models.json` 覆盖。
+
 ```typescript
+import { createProvider, openAICompletionsApi } from '@earendil-works/pi-ai';
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 
 export default function (pi: ExtensionAPI) {
-  // 覆盖现有 Provider 的 baseUrl
+  pi.registerProvider(
+    createProvider({
+      id: 'native-local',
+      name: 'Native Local',
+      baseUrl: 'http://localhost:8080/v1',
+      auth: {
+        apiKey: {
+          name: 'Local server API key',
+          async login(interaction) {
+            return {
+              type: 'api_key',
+              key: await interaction.prompt({ type: 'secret', message: 'API key' }),
+            };
+          },
+          async resolve({ credential }) {
+            return credential?.key ? { auth: { apiKey: credential.key }, source: 'stored API key' } : undefined;
+          },
+        },
+      },
+      models: [],
+      api: openAICompletionsApi(),
+    }),
+  );
+
+  // 旧版 provider-config 形式：
   pi.registerProvider('anthropic', {
     baseUrl: 'https://proxy.example.com',
   });

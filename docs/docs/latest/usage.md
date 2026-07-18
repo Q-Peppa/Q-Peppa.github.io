@@ -36,29 +36,30 @@
 
 在编辑器中输入 `/` 会打开命令补全。扩展可以注册自定义命令，Skills 以 `/skill:name` 形式出现，Prompt 模板以 `/templatename` 展开。
 
-| 命令                | 说明                                                   |
-| ------------------- | ------------------------------------------------------ |
-| `/login`、`/logout` | 管理 OAuth 或 API Key 凭证                             |
-| `/model`            | 切换模型                                               |
-| `/scoped-models`    | 启用/禁用 Ctrl+P 循环的模型                            |
-| `/settings`         | thinking level、主题、消息传递、传输                   |
-| `/resume`           | 从历史会话中选择                                       |
-| `/new`              | 开始新会话                                             |
-| `/name <name>`      | 设置会话显示名称                                       |
-| `/session`          | 显示会话文件、ID、消息数、Token 和费用                 |
-| `/tree`             | 跳转到会话中的任意点并继续                             |
-| `/trust`            | 保存项目信任决策以供将来会话使用                       |
-| `/fork`             | 从先前的用户消息创建新会话                             |
-| `/clone`            | 将当前活跃分支复制到新会话                             |
-| `/compact [prompt]` | 手动压缩上下文，可选自定义指令                         |
-| `/copy`             | 复制最后一条助手消息到剪贴板                           |
-| `/export [file]`    | 导出会话为 HTML 或 JSONL                               |
-| `/import <file>`    | 从 JSONL 文件导入并恢复会话                            |
-| `/share`            | 上传为私有 GitHub Gist，附带可分享的 HTML 链接         |
-| `/reload`           | 重新加载快捷键、扩展、Skills、Prompt、主题和上下文文件 |
-| `/hotkeys`          | 显示所有键盘快捷键                                     |
-| `/changelog`        | 显示版本历史                                           |
-| `/quit`             | 退出 Pi                                                |
+| 命令                     | 说明                                                   |
+| ------------------------ | ------------------------------------------------------ |
+| `/login`、`/logout`      | 管理 OAuth 或 API Key 凭证                             |
+| [`/llama`](llama-cpp.md) | 下载、加载和卸载 llama.cpp 路由器模型                  |
+| `/model`                 | 切换模型                                               |
+| `/scoped-models`         | 启用/禁用 Ctrl+P 循环的模型                            |
+| `/settings`              | thinking level、主题、消息传递、传输                   |
+| `/resume`                | 从历史会话中选择                                       |
+| `/new`                   | 开始新会话                                             |
+| `/name <name>`           | 设置会话显示名称                                       |
+| `/session`               | 显示会话文件、ID、消息数、Token 和费用                 |
+| `/tree`                  | 跳转到会话中的任意点并继续                             |
+| `/trust`                 | 保存项目信任决策以供将来会话使用                       |
+| `/fork`                  | 从先前的用户消息创建新会话                             |
+| `/clone`                 | 将当前活跃分支复制到新会话                             |
+| `/compact [prompt]`      | 手动压缩上下文，可选自定义指令                         |
+| `/copy`                  | 复制最后一条助手消息到剪贴板                           |
+| `/export [file]`         | 导出会话为 HTML 或 JSONL                               |
+| `/import <file>`         | 从 JSONL 文件导入并恢复会话                            |
+| `/share`                 | 上传为私有 GitHub Gist，附带可分享的 HTML 链接         |
+| `/reload`                | 重新加载快捷键、扩展、Skills、Prompt、主题和上下文文件 |
+| `/hotkeys`               | 显示所有键盘快捷键                                     |
+| `/changelog`             | 显示版本历史                                           |
+| `/quit`                  | 退出 Pi                                                |
 
 ## 消息队列
 

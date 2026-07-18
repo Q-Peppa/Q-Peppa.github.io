@@ -73,6 +73,7 @@ argument-hint: '<PR-URL>'
 - `$1`、`$2` 等 —— 位置参数
 - `$@` 或 `$ARGUMENTS` —— 所有参数连接
 - `${1:-default}` —— 当参数 1 存在且非空时使用参数 1，否则使用 `default`
+- `${@:-default}` 或 `${ARGUMENTS:-default}` —— 当所有参数存在且非空时使用所有参数，否则使用 `default`
 - `${@:N}` —— 从第 N 个位置开始的参数（1-indexed）
 - `${@:N:L}` —— 从 N 开始取 L 个参数
 
