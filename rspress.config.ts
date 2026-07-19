@@ -160,10 +160,17 @@ export default defineConfig({
             {
               text: '前置知识与学习路径',
               link: '/docs/latest/source/prerequisites',
+              tag: '入门',
+            },
+            {
+              text: '从一个最小 Agent 开始',
+              link: '/docs/latest/source/minimal-agent',
+              tag: 'new',
             },
             {
               text: '环境搭建与调试',
               link: '/docs/latest/source/setup-and-debug',
+              tag: '入门',
             },
             {
               text: '从终端到 TUI',
@@ -183,17 +190,17 @@ export default defineConfig({
             {
               text: 'pi-ai 运行时与 Provider',
               link: '/docs/latest/source/models-runtime',
-              tag: 'new',
+              tag: '深入',
             },
             {
               text: '项目信任与认证',
               link: '/docs/latest/source/trust-and-auth',
-              tag: 'new',
+              tag: '深入',
             },
             {
               text: '上下文压缩与分支',
               link: '/docs/latest/source/compaction-and-branches',
-              tag: 'new',
+              tag: '深入',
             },
           ],
         },

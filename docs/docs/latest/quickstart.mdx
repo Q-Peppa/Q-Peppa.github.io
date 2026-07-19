@@ -8,7 +8,7 @@ import { PackageManagerTabs } from '@rspress/core/theme';
 
 ## 安装
 
-<PackageManagerTabs command="install -g @earendil-works/pi-coding-agent" />
+<PackageManagerTabs command="install -g --ignore-scripts @earendil-works/pi-coding-agent" />
 
 `--ignore-scripts` 在安装期间禁用依赖生命周期脚本。Pi 的正常 npm 安装不需要安装脚本。
 
@@ -30,7 +30,7 @@ yarn global remove @earendil-works/pi-coding-agent
 bun uninstall -g @earendil-works/pi-coding-agent
 ```
 
-卸载 Pi 后，设置、凭证、会话和已安装的 Pi 包仍保留在 `~/.pi/agent/` 目录中。
+卸载 Pi 后，设置、凭证、会话和已安装的 Pi Packages 仍保留在 `~/.pi/agent/` 目录中。
 
 然后在你希望运行的项目目录中启动 Pi：
 
@@ -62,7 +62,7 @@ export ANTHROPIC_API_KEY=sk-ant-...
 pi
 ```
 
-或者运行 `/login` 选择一个 API Key Provider，Key 会被存储在 `~/.pi/agent/auth.json` 中。
+或者运行 `/login` 选择一个 API Key Provider，API Key 会被存储在 `~/.pi/agent/auth.json` 中。
 
 所有支持的 Provider、环境变量和云 Provider 设置请参考 [Providers](providers.md)。
 
@@ -113,7 +113,7 @@ pi @README.md "Summarize this"
 pi @src/app.ts @src/app.test.ts "Review these together"
 ```
 
-在支持的终端中可以使用 Ctrl+V（Windows 为 Alt+V）粘贴图像或文本；图像也可以拖入终端。
+在支持的终端中可以使用 Ctrl+V（Windows 为 Alt+V）粘贴图像；图像也可以拖入终端。
 
 ### 运行 Shell 命令
 
@@ -127,7 +127,7 @@ pi @src/app.ts @src/app.test.ts "Review these together"
 
 ### 切换模型
 
-使用 `/model` 或 Ctrl+L 选择模型。Shift+Tab 循环切换思维级别（thinking level）。Ctrl+P / Shift+Ctrl+P 在限定模型之间循环。
+使用 `/model` 或 Ctrl+L 选择模型。Shift+Tab 循环切换 thinking level（思考级别）。Ctrl+P / Shift+Ctrl+P 在限定模型之间循环。
 
 ### 稍后继续
 

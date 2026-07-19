@@ -26,7 +26,7 @@ features:
     details: 会话以树形结构存储。使用 /tree 导航到任意历史点继续对话。/share 上传到 GitHub Gist 获得可分享链接。
     icon: 🌲
   - title: 上下文工程
-    details: AGENTS.md 启动时加载项目指令。SYSTEM.md 按项目替换系统提示。Compaction 自动摘要早期消息。Skills 按需加载能力包。通过扩展实现 RAG、长期记忆等。
+    details: AGENTS.md 启动时加载项目指令。SYSTEM.md 按项目替换系统 Prompt。Compaction 自动摘要早期消息。Skills 按需加载能力包。通过扩展实现 RAG、长期记忆等。
     icon: 🧠
   - title: 基元，而非功能
     details: 子代理、计划模式、权限门禁、路径保护、SSH 执行、沙箱、MCP 集成——这些其他工具内置的功能，你都可以用扩展自己构建。不想自己写？让 Pi 帮你写，或者安装现成的包。

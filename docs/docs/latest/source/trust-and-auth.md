@@ -1,6 +1,6 @@
 # 项目信任与认证体系
 
-Pi 在 v0.79 引入了**项目信任（project trust）**机制，同时重构了 `pi-ai` 的认证层。本文基于 **Pi v0.79.10**，讲解 Pi 如何决定"是否信任一个项目"，以及 LLM 请求时认证如何被解析。
+Pi 的安全边界有两部分：加载项目资源前的**项目信任（project trust）**，以及发送 LLM 请求时由 `ModelRuntime` 统一协调的认证。本文以 **Pi v0.80.10** 源码为基准。
 
 ## 为什么需要项目信任？
 
@@ -121,34 +121,24 @@ pi.on('project_trust', async (event, ctx) => {
 
 Pi 的认证分为两层：
 
-1. **coding-agent 层**：`AuthStorage` + `ModelRegistry` — 持久化凭证、解析 per-Provider / per-model 配置
-2. **pi-ai 层**：`CredentialStore` + `AuthContext` + `ProviderAuth` — 统一的认证抽象
+1. **coding-agent 层**：`ModelRuntime` — 组合凭证、模型目录、Provider 配置和运行时覆盖
+2. **pi-ai 层**：`CredentialStore` + Provider 的 auth 策略 — 负责通用凭证读写与认证流程
 
 ## AuthStorage
 
 **文件**：`packages/coding-agent/src/core/auth-storage.ts`
 
-`AuthStorage` 是 `~/.pi/agent/auth.json` 的封装，同时支持运行时覆盖（如 `--api-key`）。
+`AuthStorage` 是 `CredentialStore` 的文件实现，默认把凭证保存到 `~/.pi/agent/auth.json`。它只负责安全读写；认证编排属于 `ModelRuntime` 和 pi-ai 的 `Models`。
 
 ```typescript
 export class AuthStorage {
   static create(authPath?: string): AuthStorage;
+  static inMemory(data?: Record<string, Credential>): AuthStorage;
 
-  // 持久化 API key（如 /login 保存）
-  async setApiKey(provider: string, apiKey: string): Promise<void>;
-
-  // 运行时覆盖，不写入磁盘（如 --api-key）
-  setRuntimeApiKey(provider: string, apiKey: string): void;
-
-  // 读取 API key
-  async getApiKey(provider: string, options?: { includeFallback?: boolean }): Promise<string | undefined>;
-
-  // Provider 级别的 env 覆盖
-  async getProviderEnv(provider: string): Promise<Record<string, string> | undefined>;
-
-  // OAuth 相关
-  async setOAuth(provider: string, credential: OAuthCredential): Promise<void>;
-  async getOAuth(provider: string): Promise<OAuthCredential | undefined>;
+  read(provider: string): Promise<Credential | undefined>;
+  modify(provider: string, fn: (current?: Credential) => Credential | undefined): Promise<void>;
+  delete(provider: string): Promise<void>;
+  list(): Promise<CredentialInfo[]>;
 }
 ```
 
@@ -174,37 +164,39 @@ export class AuthStorage {
 }
 ```
 
-## ModelRegistry
+## ModelRuntime
 
-**文件**：`packages/coding-agent/src/core/model-registry.ts`
+**文件**：`packages/coding-agent/src/core/model-runtime.ts`
 
-`ModelRegistry` 把 `AuthStorage`、settings 中的 Provider 配置、CLI 参数结合在一起，为每个模型请求解析出最终的认证信息。
+`ModelRuntime` 是 coding-agent 的应用级模型门面。它创建 `Models`，加载内置 Provider 和 `models.json`，叠加扩展 Provider，连接 `AuthStorage`，并向 Agent Session 提供统一的模型、认证、登录和刷新能力。
 
 ```typescript
-export interface ModelRegistry {
-  getApiKeyAndHeaders(model: Model<Api>): Promise<ResolvedRequestAuth>;
-  hasConfiguredAuth(model: Model<Api>): boolean;
-  isUsingOAuth(model: Model<Api>): boolean;
-  setProviderRequestConfig(provider: string, config: ProviderRequestConfig): void;
-  setModelRequestHeaders(provider: string, modelId: string, headers: Record<string, string>): void;
-}
+const modelRuntime = await ModelRuntime.create({
+  credentials: AuthStorage.create(),
+});
+
+modelRuntime.getModels();
+modelRuntime.getAvailable();
+modelRuntime.checkAuth(providerId);
+modelRuntime.streamSimple(model, context, options);
 ```
 
-### 认证解析优先级
+运行时 API key 可以由 CLI 临时注入，不写入 `auth.json`；持久化登录则通过 `login()` / `logout()` 和 CredentialStore 完成。旧的 `ModelRegistry` 仍作为扩展兼容门面存在，但不再是核心请求路径。
 
-对于一次 LLM 请求，`ModelRegistry.getApiKeyAndHeaders(model)` 按以下顺序解析：
+### 认证解析可以怎样理解
 
-1. **runtime 覆盖**：CLI `--api-key` 通过 `AuthStorage.setRuntimeApiKey()` 设置
-2. **auth.json 中的 API key / OAuth token**
-3. **settings 中的 Provider 配置**：`providerRequestConfigs` 里的 `apiKey`（支持 `env` 覆盖）
-4. **per-model 请求头**：`modelRequestHeaders`
-5. **环境变量**：pi-ai 的 `envApiKeyAuth` 作为 fallback
+一次请求会经过 `ModelRuntime` 的配置合成和 pi-ai Provider 的 auth 策略。可以把它分成四步：
 
-如果最终没有可用凭证，返回 `ok: false`，coding-agent 会抛出友好的错误提示（`auth-guidance.ts`）。
+1. 选择当前模型和 Provider
+2. 合并内置 Provider、`models.json`、扩展 Provider 与请求配置
+3. 从运行时覆盖、CredentialStore、Provider 配置或环境变量得到认证
+4. 将最终请求交给 Provider 的 `stream` / `streamSimple`
+
+如果最终没有可用凭证，coding-agent 会通过 `auth-guidance.ts` 生成下一步提示。
 
 ### Provider 级别的 env 覆盖
 
-v0.79 支持为特定 Provider 配置 `env` 覆盖：
+Provider 仍支持按 Provider 配置 `env` 覆盖：
 
 ```json
 {
@@ -264,12 +256,13 @@ pi-ai 的 `Models` 运行时内部使用 `CredentialStore`：
 ```typescript
 export interface CredentialStore {
   read(providerId: string): Promise<StoredCredential | undefined>;
-  modify(providerId: string, fn: (current?: StoredCredential) => StoredCredential | undefined): Promise<void>;
+  modify(providerId: string, fn: (current?: Credential) => Credential | undefined): Promise<void>;
   delete(providerId: string): Promise<void>;
+  list(): Promise<CredentialInfo[]>;
 }
 ```
 
-coding-agent 传入的是 `AuthStorage` 的适配器，使得 pi-ai 的读写最终落到 `~/.pi/agent/auth.json`。
+coding-agent 直接把 `AuthStorage` 作为 `CredentialStore` 交给 `RuntimeCredentials`，使得 pi-ai 的读写最终落到 `~/.pi/agent/auth.json`。
 
 ### OAuth 刷新机制
 
@@ -296,7 +289,7 @@ SlashCommands 处理 /login
 Anthropic OAuth 或 API key 登录流程
   │
   ▼
-AuthStorage.setApiKey() / setOAuth() 写入 auth.json
+  ModelRuntime.login() / logout() 通过 CredentialStore 更新 auth.json
   │
   ▼
 用户输入 "帮我看看这个 bug"
@@ -308,15 +301,13 @@ AgentSession.prompt()
 _runAgentPrompt() → Agent Loop
   │
   ▼
-streamAssistantResponse() 调用 streamFn
+  streamAssistantResponse() 调用 streamFn
   │
   ▼
-streamFn closure:
-  ModelRegistry.getApiKeyAndHeaders(model)
-    → AuthStorage.getApiKey() / getOAuth()
-    → 若 OAuth，通过 pi-ai AuthContext 刷新
-  models.stream(model, context, { apiKey, headers, env })
-    → Provider 解析 auth
+  streamFn closure:
+  ModelRuntime.streamSimple(model, context, options)
+    → RuntimeCredentials / Provider auth 解析凭证
+    → Provider.streamSimple()
     → API 实现发送请求
 ```
 
@@ -324,7 +315,7 @@ streamFn closure:
 
 **文件**：`packages/coding-agent/src/core/auth-guidance.ts`
 
-如果 `ModelRegistry` 发现没有配置认证，会调用 `formatNoApiKeyFoundMessage()` 生成友好的错误提示，告诉用户：
+如果 `ModelRuntime` 或 Provider 发现没有配置认证，会通过 `formatNoApiKeyFoundMessage()` 生成友好的错误提示，告诉用户：
 
 - 该 Provider 需要什么环境变量
 - 如何运行 `/login <provider>`

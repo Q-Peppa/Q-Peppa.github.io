@@ -1,6 +1,6 @@
 # 从终端到 TUI：输入 `pi` 后发生了什么
 
-这是理解 Pi 运作机制的**第一道门**。当你在终端输入 `pi` 并按下 Enter 时，一段精密的链条开始运转。本文基于 **Pi v0.79.10**。
+这是理解 Pi 运作机制的**第一道门**。当你在终端输入 `pi` 并按下 Enter 时，一段精密的链条开始运转。本文以 **Pi v0.80.10** 源码为基准。
 
 ## 全景图
 
@@ -29,7 +29,7 @@ pi hello world
         └─ run()（进入主循环）
 ```
 
-与旧版相比，v0.79 在主流程中增加了**项目信任（project trust）** 和更清晰的 **Runtime 工厂** 模式：同一个 `createRuntime` 工厂会被复用于 `/new`、`/resume`、`/fork` 等会话切换场景。
+当前主流程的两个关键边界是**项目信任（project trust）**和 **Runtime 工厂**：同一个 `createRuntime` 工厂会被复用于 `/new`、`/resume`、`/fork` 等会话切换场景；模型与认证则由 `ModelRuntime` 统一提供。
 
 ## 详细拆解
 
@@ -110,7 +110,7 @@ function resolveAppMode(parsed: Args, stdinIsTTY: boolean): AppMode {
 | **json**        | `pi --mode json` | 输出结构化 JSON 事件 |
 | **rpc**         | `pi --mode rpc`  | 作为其他程序的子进程 |
 
-#### 2c. 项目信任（v0.79 新增）
+#### 2c. 项目信任
 
 在加载项目本地 `.pi` 目录、扩展、资源之前，`main()` 会调用 `resolveProjectTrusted()`：
 
@@ -133,8 +133,7 @@ const services = await createAgentSessionServices({
   agentDir,
   cwd,
   settingsManager,
-  authStorage,
-  httpDispatcher,
+  modelRuntime,
   // ...
 });
 ```
@@ -146,17 +145,11 @@ const services = await createAgentSessionServices({
 │          AgentSessionServices               │
 │                                             │
 │  ┌────────────────┐  ┌───────────────────┐  │
-│  │ SettingsManager│  │ AuthStorage       │  │
-│  │ (全局/项目设置) │  │ (auth.json 读写)  │  │
+│  │ SettingsManager│  │ ModelRuntime      │  │
+│  │ (全局/项目设置) │  │ (模型/认证/刷新)  │  │
 │  ├────────────────┤  ├───────────────────┤  │
-│  │ ModelRegistry  │  │ ResourceLoader    │  │
-│  │ (模型/认证解析) │  │ (扩展/Skill/提示词)│  │
-│  ├────────────────┤  ├───────────────────┤  │
-│  │ ModelResolver  │  │ ExtensionRunner   │  │
-│  │ (CLI 模型解析)  │  │ (扩展事件分发)    │  │
-│  ├────────────────┤  ├───────────────────┤  │
-│  │ BashExecutor   │  │ TrustManager      │  │
-│  │ (bash 执行封装) │  │ (项目信任存储)    │  │
+│  │ ResourceLoader  │  │ Diagnostics       │  │
+│  │ (扩展/Skill/提示词)│ (诊断信息)       │  │
 │  └────────────────┘  └───────────────────┘  │
 └─────────────────────────────────────────────┘
 ```

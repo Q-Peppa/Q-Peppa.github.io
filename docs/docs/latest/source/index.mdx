@@ -1,19 +1,22 @@
-# 深入理解 Pi 源码
+# 从一个小 Agent 读懂 Pi
 
-> 本系列文档基于 **Pi v0.79.10** 源码，从架构设计、数据流、设计模式三个维度，带你深入理解 Pi Coding Agent 的运作机制。读完本系列后，你将掌握一个**生产级终端编码智能体**的完整实现。
+> 本系列文档基于 **Pi v0.80.10** 源码。我们不从一堆目录和术语开始，而是先做一个很小的 Agent，再一步步看 Pi 为了让它真正可用，增加了哪些能力。
+
+如果你只想先抓住重点，请从 [从一个最小 Agent 开始](minimal-agent.md) 开始。读完它，你应该能用自己的话解释：模型为什么需要工具、Agent 为什么需要循环，以及 Pi 的源码里这些东西分别在哪里。
 
 ## 系列导航
 
-| 文档                                                      | 内容                                                            | 难度 |
-| --------------------------------------------------------- | --------------------------------------------------------------- | ---- |
-| [前置知识与学习路径](prerequisites.md)                    | 需要掌握的技能栈、建议阅读顺序、预期学习时间                    | 入门 |
-| [环境搭建与调试](setup-and-debug.md)                      | 克隆源码、本地调试、断点调试、目录结构                          | 入门 |
-| [从终端到 TUI](cli-to-tui.md)                             | 输入 `pi` 后发生了什么：CLI 解析、服务组装、TUI 启动            | 进阶 |
-| [从输入到 LLM 循环](input-to-llm.md)                      | 用户输入 → 消息预处理 → Agent Loop → LLM 调用 → 工具执行        | 进阶 |
-| [核心架构与设计哲学](architecture.md)                     | 事件驱动、TUI 差分渲染、扩展系统、关注点分离                    | 深入 |
-| [pi-ai：Models 运行时与 Provider 架构](models-runtime.md) | `createModels()` / Provider factory / `api/` / 认证 / 模型目录  | 深入 |
-| [项目信任与认证体系](trust-and-auth.md)                   | project trust、AuthStorage、ModelRegistry、CredentialStore      | 深入 |
-| [上下文压缩与会话分支](compaction-and-branches.md)        | compaction 流程、threshold/overflow、reason/willRetry、分支摘要 | 深入 |
+| 文档                                                      | 内容                                      | 难度 |
+| --------------------------------------------------------- | ----------------------------------------- | ---- |
+| [前置知识与学习路径](prerequisites.md)                    | 需要什么基础，以及应该怎样读源码          | 入门 |
+| [从一个最小 Agent 开始](minimal-agent.md)                 | 用一个小 Demo 理解模型、工具和 Agent Loop | 入门 |
+| [环境搭建与调试](setup-and-debug.md)                      | 把源码跑起来，学会用断点观察它            | 入门 |
+| [从终端到 TUI](cli-to-tui.md)                             | `pi` 如何启动，并把控制权交给 TUI         | 核心 |
+| [从输入到 LLM 循环](input-to-llm.md)                      | 一条消息如何变成模型调用和工具执行        | 核心 |
+| [核心架构与设计哲学](architecture.md)                     | Pi 为什么这样拆分，以及它的长处和取舍     | 核心 |
+| [pi-ai：Models 运行时与 Provider 架构](models-runtime.md) | 模型、Provider 和 coding-agent 如何连接   | 深入 |
+| [项目信任与认证体系](trust-and-auth.md)                   | 项目安全、凭证和登录流程                  | 深入 |
+| [上下文压缩与会话分支](compaction-and-branches.md)        | 长会话为什么需要摘要和分支                | 深入 |
 
 ## 速览：Pi 是什么？
 
@@ -30,7 +33,7 @@ Pi 是一个**终端 AI 编码智能体**（Terminal AI Coding Agent）。它的
 │                                                  │          │
 │   项目信任 / 认证 / 模型解析 / 扩展 / Skill / 工具  │          │
 │                                       ┌──────────▼───────┐  │
-│                                       │  LLM 提供商       │  │
+│                                       │  LLM Provider      │  │
 │                                       │ (OpenAI / Anthropic│  │
 │                                       │  / 30+ 自定义)     │  │
 │                                       └──────────┬───────┘  │
@@ -43,41 +46,37 @@ Pi 是一个**终端 AI 编码智能体**（Terminal AI Coding Agent）。它的
 └────────────────────────────────────────────────────────────┘
 ```
 
-### 四个核心包（v0.79.10）
+### 先记住三个角色
 
-| 包名                  | 职责                                                          | 规模（非测试 `.ts`）                        | 类比           |
-| --------------------- | ------------------------------------------------------------- | ------------------------------------------- | -------------- |
-| **`pi-ai`**           | 统一 LLM API：Models 运行时、Provider factory、API 实现、认证 | ~144 个文件，含大量生成的 Provider 模型目录 | "数据库驱动层" |
-| **`pi-agent-core`**   | 智能体运行时：`AgentLoop`、工具调用、事件流、`AgentHarness`   | ~25 个文件                                  | "ORM / 事务层" |
-| **`pi-coding-agent`** | CLI 入口、项目信任、扩展、会话管理、TUI 集成、工具实现        | ~157 个文件                                 | "应用层"       |
-| **`pi-tui`**          | 独立可复用的终端 UI 库                                        | ~28 个文件                                  | "UI 框架"      |
+| 角色     | 它做什么                                 | 先看哪里                           |
+| -------- | ---------------------------------------- | ---------------------------------- |
+| **模型** | 根据上下文回答，或提出工具调用           | `pi-ai` 的 `Models` / Provider     |
+| **循环** | 执行工具，把结果放回上下文，再请求模型   | `packages/agent/src/agent-loop.ts` |
+| **产品** | 处理终端交互、会话、认证、项目安全和扩展 | `packages/coding-agent`            |
 
 > 注意：`pi-ai` 和 `pi-coding-agent` 的文件数看起来很多，其中相当一部分是**按 Provider 生成的模型目录**（`providers/*.models.ts`）和工具实现，手写核心逻辑仍然集中在几千行内。
 
-### 核心数据流
+### 一句话理解 Agent
 
 ```
-用户输入
-  → AgentSession.prompt(text)            // 消息预处理、扩展拦截、skill 展开
-  → Agent.prompt(messages)               // 启动 prompt
-  → runAgentLoop(messages, context)      // ★ 核心循环
-      → streamAssistantResponse()        // 通过 pi-ai Models 调用 LLM
-      → executeToolCalls()               // 执行工具调用
-      → 将 tool result 写入 context
-      → 循环直到 LLM 不再调用工具
+用户问题
+  → 模型决定“直接回答”还是“调用工具”
+  → 程序执行工具并检查结果
+  → 把结果交回模型
+  → 重复，直到得到最终回答
 ```
 
-与旧版最大的区别：从 v0.79 开始，LLM 调用不再经过旧的全局 `stream()` / `complete()`，而是通过 **Models 运行时** (`createModels()` + Provider factory) 完成，认证也统一走 `CredentialStore` / `AuthContext`。
+Pi 的关键设计是把“决定下一步”和“真正执行”分开：Agent Loop 不直接处理 API key，也不绑定某一家模型，而是通过 `streamFn` 请求模型。coding-agent 再用 `ModelRuntime` 接上模型、认证、配置和 Provider。
 
-## 为什么读这份文档？
+## 读完后你会得到什么？
 
 读完本系列，你将：
 
-1. **理解一个生产级编码智能体如何工作** — 不只是 demo，而是处理了边缘情况、错误恢复、性能优化、项目安全的真实产品
-2. **掌握 LLM Agent 的核心模式** — Provider 抽象、Models 运行时、事件驱动、流式处理、工具调用循环
-3. **学会终端 UI 的构建方法** — 差分渲染、ANSI 转义、Kitty 协议、IME 支持
-4. **理解 v0.79 的新架构** — 项目信任、`createModels()`、`api/` 与 `providers/` 分离、认证体系
-5. **能够独立扩展 Pi** — 写 Extension、Skill、Tool、Theme、自定义 Provider
+1. 能用自己的话解释 Agent，而不是只会背 API 名称。
+2. 能写出一个带工具的简易 Agent，并知道它还缺少哪些生产能力。
+3. 能沿着一条真实请求读懂 Pi 的核心源码。
+4. 理解 Pi 为什么强调可扩展、可替换和把安全边界交给程序控制。
+5. 再按需要学习 Extension、Skill、Tool、自定义 Provider 和 TUI。
 
 ## 快速开始
 
@@ -87,24 +86,24 @@ git clone https://github.com/earendil-works/pi.git
 cd pi
 
 # 2. 安装依赖（不执行生命周期脚本）
-npm install --ignore-scripts
+pnpm install --ignore-scripts
 
 # 3. 检查代码质量（类型 + lint + 依赖检查）
-npm run check
+pnpm run check
 
 # 4. 直接运行源码（无需构建）
 npx tsx packages/coding-agent/src/cli.ts --help
 ```
 
-> Node.js 版本要求：`>= 22.19.0`。Pi 使用 TypeScript 的 `tsgo` 原生编译预览版进行构建，开发时可直接通过 `tsx` 运行源码。
+> Node.js 版本要求以源码仓库的 `package.json` 和 CI 配置为准。开发时可以直接用仓库提供的脚本运行检查；需要追踪单个入口时，再使用 `tsx` 运行 TypeScript 源码。
 
 ## 阅读建议
 
-如果你只有半小时，建议按这个顺序读：
+如果你只有半小时：
 
-1. [从终端到 TUI](cli-to-tui.md) — 建立全局流程
-2. [从输入到 LLM 循环](input-to-llm.md) — 理解核心业务
-3. [pi-ai：Models 运行时与 Provider 架构](models-runtime.md) — 补齐 v0.79 最大的架构变化
+1. 读 [从一个最小 Agent 开始](minimal-agent.md)。
+2. 只看 [从输入到 LLM 循环](input-to-llm.md) 的“Agent Loop”部分。
+3. 回到这里，再选择你感兴趣的方向。
 
 然后按需深入：
 

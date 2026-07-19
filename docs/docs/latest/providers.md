@@ -2,7 +2,7 @@
 
 > 本页面是 [Pi 官方文档](https://pi.dev/docs/latest/providers) 的中文翻译。仅供学习参考。
 
-Pi 支持两类 Provider：基于订阅的（通过 OAuth）和 API Key 型（通过环境变量或 auth 文件）。内置目录随 pi 一起发布；已配置的 Provider 可以刷新更新的目录并缓存在 `~/.pi/agent/models-store.json` 中供离线使用。
+Pi 支持两类 Provider：基于订阅的（通过 OAuth）和 API Key 型（通过环境变量或 Auth 文件）。内置目录随 Pi 一起发布；已配置的 Provider 可以刷新更新的目录并缓存在 `~/.pi/agent/models-store.json` 中供离线使用。
 
 :::tip 推广
 🚀 使用 [OpenCode](https://opencode.ai/go?ref=WGY3CR98Z0) 订阅 AI 服务可额外获得 **5 美元**！

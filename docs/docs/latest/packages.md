@@ -1,10 +1,10 @@
-# Pi Packages（Pi 包）
+# Pi Packages
 
 > 本页面是 [Pi 官方文档](https://pi.dev/docs/latest/packages) 的中文翻译。仅供学习参考。
 
-> Pi 可以帮你创建 Pi 包。告诉它你想打包扩展、Skills、Prompt 模板或主题即可。
+> Pi 可以帮你创建 Pi Package。告诉它你想打包扩展、Skills、Prompt 模板或主题即可。
 
-Pi Packages 将扩展、Skills、Prompt 模板和主题打包，通过 npm 或 git 分享。包可以在 `package.json` 的 `pi` 字段中声明资源，或使用约定目录。
+Pi Packages 将扩展、Skills、Prompt 模板和主题打包，通过 npm 或 git 分享。Package 可以在 `package.json` 的 `pi` 字段中声明资源，或使用约定目录。
 
 ## 目录
 
@@ -19,7 +19,7 @@ Pi Packages 将扩展、Skills、Prompt 模板和主题打包，通过 npm 或 g
 
 ## 安装和管理
 
-> **安全警告：** Pi 包以完全系统权限运行。扩展执行任意代码，Skills 可以指示模型执行任何操作（包括运行可执行文件）。安装第三方包前请审查源代码。
+> **安全警告：** Pi Packages 以完全系统权限运行。扩展执行任意代码，Skills 可以指示模型执行任何操作（包括运行可执行文件）。安装第三方 Package 前请审查源代码。
 
 ```bash
 pi install npm:@foo/bar@1.0.0
@@ -40,7 +40,7 @@ pi update npm:@foo/bar       # 更新一个包
 pi update --extension npm:@foo/bar
 ```
 
-这些命令管理 Pi 包，且 `pi update` 可以更新 Pi CLI 安装本身。要卸载 Pi 本身，请参阅 [Quickstart](quickstart.mdx#卸载)。
+这些命令管理 Pi Packages，且 `pi update` 可以更新 Pi CLI 安装本身。要卸载 Pi 本身，请参阅 [Quickstart](quickstart.mdx#卸载)。
 
 默认情况下 `install` 和 `remove` 写入全局设置（`~/.pi/agent/settings.json`）。使用 `-l` 写入项目设置（`.pi/settings.json`）。项目设置可分享给团队，Pi 启动时会在项目被信任后自动安装任何缺失的包。
 
@@ -169,11 +169,11 @@ pi install git:git@github.com:user/repo@v1.0.0
 
 ## Dependencies
 
-第三方运行时依赖放在 `package.json` 的 `dependencies` 中。不注册扩展、Skills、Prompt 模板或主题的依赖也放在 `dependencies` 中。当 Pi 从 npm 或 git 安装包时，会运行 `npm install`，因此这些依赖会自动安装。
+第三方运行时依赖放在 `package.json` 的 `dependencies` 中。不注册扩展、Skills、Prompt 模板或主题的依赖也放在 `dependencies` 中。当 Pi 从 npm 或 git 安装 Package 时，会运行 `npm install`，因此这些依赖会自动安装。
 
 Pi 为扩展和 Skills 打包了核心包。如果你导入以下任何包，请在 `peerDependencies` 中列出它们并使用 `"*"` 范围，**不要将其打包进你的包**：`@earendil-works/pi-ai`、`@earendil-works/pi-agent-core`、`@earendil-works/pi-coding-agent`、`@earendil-works/pi-tui`、`typebox`。
 
-**其他 Pi 包必须打包进你的 tarball。** 将它们添加到 `dependencies` 和 `bundledDependencies`，然后通过 `node_modules/` 路径引用其资源。Pi 以独立的模块根加载包，因此不同的安装不会冲突或共享模块。
+**其他 Pi Packages 必须打包进你的 tarball。** 将它们添加到 `dependencies` 和 `bundledDependencies`，然后通过 `node_modules/` 路径引用其资源。Pi 以独立的模块根加载 Package，因此不同的安装不会冲突或共享模块。
 
 示例：
 

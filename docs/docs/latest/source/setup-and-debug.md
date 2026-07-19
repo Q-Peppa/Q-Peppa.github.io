@@ -1,6 +1,6 @@
 # 环境搭建与调试
 
-本文档带你从零开始搭建 Pi 的本地开发环境，并学会使用断点调试追踪代码执行。内容基于 **Pi v0.79.10**。
+本文档带你从零开始搭建 Pi 的本地开发环境，并学会使用断点调试追踪代码执行。内容基于 **Pi v0.80.10**。
 
 ## 第一步：克隆与安装
 
@@ -10,13 +10,13 @@ git clone https://github.com/earendil-works/pi.git
 cd pi
 
 # 2. 安装依赖（--ignore-scripts 不执行依赖的生命周期脚本，安全）
-npm install --ignore-scripts
+pnpm install --ignore-scripts
 
 # 3. 验证安装
-npm run check
+pnpm run check
 ```
 
-`npm run check` 执行完整的质量检查：Biome lint + 类型检查（`tsgo --noEmit`）+ 依赖/导入检查。**不会运行 E2E 测试**。这是每次修改代码后的标准验证命令。
+`pnpm run check` 执行完整的质量检查：Biome lint + 类型检查（`tsgo --noEmit`）+ 依赖/导入检查。**不会运行 E2E 测试**。这是每次修改代码后的标准验证命令。
 
 > Node.js 版本要求 `>= 22.19.0`。如果本地版本不够，先用 `nvm install 22` 升级。
 
@@ -25,7 +25,7 @@ npm run check
 ```
 pi/
 ├── packages/
-│   ├── ai/                         # pi-ai：统一 LLM API（v0.79 重构后）
+│   ├── ai/                         # pi-ai：统一 LLM API 与 Models 运行时
 │   │   ├── src/
 │   │   │   ├── api/                # ★ API 协议实现：openai-completions、anthropic-messages...
 │   │   │   │   ├── openai-completions.ts
@@ -101,16 +101,16 @@ pi/
 └── README.md
 ```
 
-### v0.79 目录变化速查
+### v0.80 目录变化速查
 
-| 旧理解（v0.78 及以前）                       | 新位置（v0.79.10）                               | 说明                                                  |
+| 旧理解（v0.78 及以前）                       | 当前实现（v0.80.10）                             | 说明                                                  |
 | -------------------------------------------- | ------------------------------------------------ | ----------------------------------------------------- |
 | `packages/ai/src/providers/*.ts` 是 API 实现 | `packages/ai/src/api/*.ts`                       | API 实现搬家                                          |
 | `packages/ai/src/providers/`                 | `packages/ai/src/providers/*.ts` + `*.models.ts` | 现在放 Provider factory 和模型目录                    |
 | `packages/ai/src/stream.ts` / `complete.ts`  | 已删除                                           | 旧全局入口移到 `compat.ts`，新入口是 `createModels()` |
 | 单一 `models.generated.ts`                   | `providers/*.models.ts`                          | 按 Provider 拆分，便于 tree-shaking                   |
 | 无 `auth/` 目录                              | `packages/ai/src/auth/`                          | 新增认证基础设施                                      |
-| `packages/agent/src/proxy.ts`                | 仍存在                                           | 但 AgentHarness 现在要求传入 `Models` 实例            |
+| `packages/agent/src/proxy.ts`                | 仍存在                                           | Agent Loop 可通过 `streamFn` 注入模型调用             |
 
 ## 第三步：直接运行源码（无需构建）
 
@@ -170,18 +170,18 @@ npm run build
 
 ### 关键断点位置
 
-| 断点位置     | 文件                                                                       | 观察什么                                        |
-| ------------ | -------------------------------------------------------------------------- | ----------------------------------------------- |
-| CLI 入口     | `packages/coding-agent/src/cli.ts`                                         | `process.argv` 参数                             |
-| 主流程开始   | `packages/coding-agent/src/main.ts`                                        | 参数解析、appMode、项目信任                     |
-| 服务组装     | `packages/coding-agent/src/core/agent-session-services.ts`                 | ModelRegistry、AuthStorage、ResourceLoader 组装 |
-| Runtime 创建 | `packages/coding-agent/src/core/agent-session-runtime.ts`                  | `createAgentSessionRuntime`                     |
-| TUI 创建     | `packages/coding-agent/src/modes/interactive/interactive-mode.ts`          | TUI 初始化参数                                  |
-| 主循环       | `packages/coding-agent/src/modes/interactive/interactive-mode.ts` `run()`  | `getUserInput()` 等待输入                       |
-| 消息发送     | `packages/coding-agent/src/core/agent-session.ts` `prompt()`               | 消息预处理、skill 展开、扩展拦截                |
-| Agent 循环   | `packages/agent/src/agent-loop.ts`                                         | ★ 核心循环入口                                  |
-| LLM 调用     | `packages/agent/src/agent-loop.ts` `streamAssistantResponse()`             | LLM 请求参数和流式响应                          |
-| 认证解析     | `packages/coding-agent/src/core/model-registry.ts` `getApiKeyAndHeaders()` | API key / OAuth / env 解析                      |
+| 断点位置     | 文件                                                                      | 观察什么                                     |
+| ------------ | ------------------------------------------------------------------------- | -------------------------------------------- |
+| CLI 入口     | `packages/coding-agent/src/cli.ts`                                        | `process.argv` 参数                          |
+| 主流程开始   | `packages/coding-agent/src/main.ts`                                       | 参数解析、appMode、项目信任                  |
+| 服务组装     | `packages/coding-agent/src/core/agent-session-services.ts`                | ModelRuntime、Settings、ResourceLoader 组装  |
+| Runtime 创建 | `packages/coding-agent/src/core/agent-session-runtime.ts`                 | `createAgentSessionRuntime`                  |
+| TUI 创建     | `packages/coding-agent/src/modes/interactive/interactive-mode.ts`         | TUI 初始化参数                               |
+| 主循环       | `packages/coding-agent/src/modes/interactive/interactive-mode.ts` `run()` | `getUserInput()` 等待输入                    |
+| 消息发送     | `packages/coding-agent/src/core/agent-session.ts` `prompt()`              | 消息预处理、skill 展开、扩展拦截             |
+| Agent 循环   | `packages/agent/src/agent-loop.ts`                                        | ★ 核心循环入口                               |
+| LLM 调用     | `packages/agent/src/agent-loop.ts` `streamAssistantResponse()`            | LLM 请求参数和流式响应                       |
+| 认证解析     | `packages/coding-agent/src/core/model-runtime.ts`                         | CredentialStore、Provider auth、runtime 覆盖 |
 
 ### 调试技巧
 

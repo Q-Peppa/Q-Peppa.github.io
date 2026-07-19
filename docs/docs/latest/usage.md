@@ -139,25 +139,25 @@ Pi 在启动时加载 `AGENTS.md` 或 `CLAUDE.md`：
 pi [options] [@files...] [messages...]
 ```
 
-### 包管理命令
+### Package 管理命令
 
 ```bash
-pi install <source> [-l]     # 安装包，-l 为项目本地安装
-pi remove <source> [-l]      # 移除包
+pi install <source> [-l]     # 安装 Package，-l 为项目本地安装
+pi remove <source> [-l]      # 移除 Package
 pi uninstall <source> [-l]   # remove 的别名
-pi update [source|self|pi]   # 仅更新 Pi，或更新单个包源
-pi update --all              # 更新 Pi 和包；协调固定的 git ref
-pi update --extensions       # 仅更新包；协调固定的 git ref
+pi update [source|self|pi]   # 仅更新 Pi，或更新单个 Package 源
+pi update --all              # 更新 Pi 和 Packages；协调固定的 git ref
+pi update --extensions       # 仅更新 Packages；协调固定的 git ref
 pi update --models           # 仅刷新模型目录
 pi update --self             # 仅更新 Pi
-pi update --extension <src>  # 更新单个包
-pi list                      # 列出已安装的包
-pi config                    # 启用/禁用包资源
+pi update --extension <src>  # 更新单个 Package
+pi list                      # 列出已安装的 Packages
+pi config                    # 启用/禁用 Package 资源
 ```
 
-这些命令管理 Pi 包，且 `pi update` 可以更新 Pi CLI 安装本身。要卸载 Pi 本身，请参阅 [Quickstart](quickstart)。`pi config` 与项目包命令接受 `--approve`/`--no-approve`，以便在单次命令中信任或忽略项目本地设置。`pi update` 从不提示项目信任。
+这些命令管理 Pi Packages，且 `pi update` 可以更新 Pi CLI 安装本身。要卸载 Pi 本身，请参阅 [Quickstart](quickstart)。`pi config` 与项目 Package 命令接受 `--approve`/`--no-approve`，以便在单次命令中信任或忽略项目本地设置。`pi update` 从不提示项目信任。
 
-包来源和安全说明请参阅 [Pi Packages](packages.md)。
+Package 源和安全说明请参阅 [Pi Packages](packages.md)。
 
 ### 模式
 

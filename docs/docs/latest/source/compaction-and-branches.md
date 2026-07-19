@@ -1,6 +1,6 @@
 # 上下文压缩与会话分支
 
-在长会话中，LLM 的上下文窗口有限。Pi 通过 **上下文压缩（compaction）** 将历史消息摘要化，从而释放 token 空间。同时，Pi 支持会话分支（fork），每个分支可以独立演化，分支摘要则帮助用户理解被放弃的路径。本文基于 **Pi v0.79.10**。
+在长会话中，LLM 的上下文窗口有限。Pi 通过 **上下文压缩（compaction）** 将历史消息摘要化，从而释放 token 空间。同时，Pi 支持会话分支（fork），每个分支可以独立演化，分支摘要则帮助用户理解被放弃的路径。本文以 **Pi v0.80.10** 源码为基准。
 
 ## 什么是上下文压缩？
 
@@ -22,7 +22,7 @@
 | **阈值（threshold）** | 上下文 token 数超过设置阈值    | 否                     |
 | **溢出（overflow）**  | LLM 返回 context overflow 错误 | 是（willRetry = true） |
 
-v0.79.10 在 compaction 相关事件中新增了 `reason` 和 `willRetry` 字段，扩展可以通过这两个字段区分不同场景。
+压缩相关事件携带 `reason` 和 `willRetry`，扩展可以据此区分手动压缩、阈值压缩和溢出重试。
 
 ## 核心数据流
 
@@ -61,7 +61,7 @@ compact(preparation, models, model, customInstructions, signal)
 
 ## prepareCompaction：找到切割点
 
-**文件**：`packages/coding-agent/src/core/compaction/compaction.ts`
+**文件**：`packages/coding-agent/src/core/compaction/compaction.ts`（coding-agent 会话整合层）
 
 ```typescript
 export function prepareCompaction(
@@ -132,7 +132,7 @@ export function prepareCompaction(
 
 ## compact：生成摘要
 
-**文件**：`packages/agent/src/harness/compaction/compaction.ts`
+**文件**：`packages/agent/src/harness/compaction/compaction.ts`（通用 Agent Harness）
 
 ```typescript
 export async function compact(
@@ -304,7 +304,7 @@ pi.on('session_compact', async (event, ctx) => {
 });
 ```
 
-v0.79.10 新增 `reason` 和 `willRetry` 后，扩展可以：
+通过 `reason` 和 `willRetry`，扩展可以：
 
 - 对 `overflow` 做更激进的摘要策略
 - 对 `manual` 展示不同的 UI 反馈

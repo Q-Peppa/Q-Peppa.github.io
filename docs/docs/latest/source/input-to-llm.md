@@ -1,6 +1,6 @@
 # 从输入到 LLM 循环：智能体的心脏
 
-本文档带你追踪用户输入文本后的**完整数据流**，从 TUI 编辑器到 LLM 调用，再到工具执行的循环。基于 **Pi v0.79.10**。
+本文档带你追踪用户输入文本后的**完整数据流**，从 TUI 编辑器到 LLM 调用，再到工具执行的循环。以 **Pi v0.80.10** 源码为基准。
 
 ## 全景图
 
@@ -21,7 +21,7 @@
 │   1. 检查是否斜杠命令 → 否                                │
 │   2. 扩展事件触发（扩展可拦截/修改输入）                   │
 │   3. 展开 skill / prompt template                         │
-│   4. 验证模型和认证（通过 ModelRegistry）                 │
+│   4. 通过 ModelRuntime 准备模型和认证                     │
 │   5. 检查是否需要压缩（compaction）                       │
 │   6. 构建 AgentMessage[]                                  │
 │   7. _runAgentPrompt(messages)                            │
@@ -156,14 +156,12 @@ if (this.isStreaming) {
 ### B5. 验证模型与认证
 
 ```typescript
-// 在发送给 LLM 前，AgentSession 会通过 ModelRegistry 解析认证
-const auth = await this._modelRegistry.getApiKeyAndHeaders(model);
-if (!auth.ok) {
-  throw new Error(formatNoApiKeyFoundMessage(model.provider));
-}
+// 当前 coding-agent 由 ModelRuntime 统一提供模型和认证能力。
+const model = this.modelRuntime.getModel(provider, modelId);
+if (!model) throw new Error(`Unknown model: ${provider}/${modelId}`);
 ```
 
-`ModelRegistry` 会按以下优先级解析认证：
+`ModelRuntime` 会把运行时凭证、持久化凭证、Provider 配置和 pi-ai 的认证策略组合起来：
 
 1. runtime 覆盖（`--api-key`）
 2. `auth.json` 中保存的 API key / OAuth token
@@ -190,7 +188,7 @@ if (lastAssistant && (await this._checkCompaction(lastAssistant, false))) {
 - **阈值**：上下文 token 数超过设置阈值
 - **溢出**：LLM 返回 context overflow 错误
 
-v0.79.10 中，compaction 事件新增了 `reason`（`manual` / `threshold` / `overflow`）和 `willRetry` 字段。详见 [上下文压缩与会话分支](compaction-and-branches.md)。
+压缩事件还会携带 `reason`（`manual` / `threshold` / `overflow`）和 `willRetry`，让扩展区分手动压缩、阈值压缩与溢出重试。详见 [上下文压缩与会话分支](compaction-and-branches.md)。
 
 ### B7. 构建消息并发送
 
@@ -240,7 +238,7 @@ private async runPromptMessages(messages: AgentMessage[]): Promise<void> {
 }
 ```
 
-关键：`createLoopConfig()` 中配置的 `streamFn` 是调用 pi-ai 的入口。在 coding-agent 中，它通常通过 `modelRegistry.getApiKeyAndHeaders(model)` 解析认证后，调用 pi-ai Models 运行时。
+关键：`createLoopConfig()` 中配置的 `streamFn` 是调用 pi-ai 的入口。在 coding-agent 中，它通常闭包捕获 `ModelRuntime`，再调用 `modelRuntime.streamSimple()`；Agent Loop 不需要知道凭证存在哪里。
 
 ## 阶段 D：Agent Loop 核心循环
 
@@ -330,7 +328,7 @@ async function streamAssistantResponse(
     tools: context.tools,
   };
 
-  // v0.79：认证由 streamFn  closure 通过 ModelRegistry / Models 运行时解析
+  // v0.80：streamFn 闭包通过 ModelRuntime 解析认证并调用 Provider
   const response = await streamFunction(config.model, llmContext, { signal });
 
   for await (const event of response) {
@@ -353,7 +351,7 @@ async function streamAssistantResponse(
 }
 ```
 
-v0.79 的 `streamFn` 不再接收 per-request 的 `apiKey`，而是接收 `Models` 实例（或 `ModelRegistry`），由 pi-ai 的认证基础设施自行解析凭证。
+`streamFn` 不负责设计认证优先级。它接收模型、上下文和请求选项，应用层闭包再把请求交给 `ModelRuntime`；ModelRuntime 最终调用 pi-ai Provider 的 `streamSimple()`。
 
 ### executeToolCalls 详解
 
@@ -386,17 +384,17 @@ executeToolCalls()
 
 ## 关键概念总结
 
-| 概念                        | 解释                                     | 代码位置            |
-| --------------------------- | ---------------------------------------- | ------------------- |
-| **AgentSession**            | 业务逻辑中枢，处理消息预处理             | `agent-session.ts`  |
-| **Agent**                   | 智能体运行时，管理状态和生命周期         | `agent.ts`          |
-| **runAgentLoop**            | ★ 核心循环，LLM → 工具 → 循环            | `agent-loop.ts`     |
-| **streamAssistantResponse** | LLM 调用入口，处理流式事件               | `agent-loop.ts`     |
-| **executeToolCalls**        | 工具执行，验证 → 执行 → 返回结果         | `agent-loop.ts`     |
-| **Steer**                   | Agent 工作中注入消息，当前工具完成后生效 | `agent-session.ts`  |
-| **Follow-up**               | Agent 完成后排队的新消息                 | `agent-session.ts`  |
-| **ModelRegistry**           | 认证与模型解析                           | `model-registry.ts` |
-| **事件驱动**                | 所有状态变化通过事件通知 TUI             | `emit()` 调用       |
+| 概念                        | 解释                                     | 代码位置           |
+| --------------------------- | ---------------------------------------- | ------------------ |
+| **AgentSession**            | 业务逻辑中枢，处理消息预处理             | `agent-session.ts` |
+| **Agent**                   | 智能体运行时，管理状态和生命周期         | `agent.ts`         |
+| **runAgentLoop**            | ★ 核心循环，LLM → 工具 → 循环            | `agent-loop.ts`    |
+| **streamAssistantResponse** | LLM 调用入口，处理流式事件               | `agent-loop.ts`    |
+| **executeToolCalls**        | 工具执行，验证 → 执行 → 返回结果         | `agent-loop.ts`    |
+| **Steer**                   | Agent 工作中注入消息，当前工具完成后生效 | `agent-session.ts` |
+| **Follow-up**               | Agent 完成后排队的新消息                 | `agent-session.ts` |
+| **ModelRuntime**            | 模型、Provider 与认证协调                | `model-runtime.ts` |
+| **事件驱动**                | 所有状态变化通过事件通知 TUI             | `emit()` 调用      |
 
 ## 下一步
 
