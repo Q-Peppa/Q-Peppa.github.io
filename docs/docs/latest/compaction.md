@@ -134,6 +134,7 @@ interface CompactionEntry<T = unknown> {
   summary: string;
   firstKeptEntryId: string;
   tokensBefore: number;
+  usage?: Usage; // 生成摘要的 LLM 用量
   fromHook?: boolean; // 如果由扩展提供则为 true（旧字段名）
   details?: T; // 实现特定的数据
 }
@@ -145,9 +146,9 @@ interface CompactionDetails {
 }
 ```
 
-扩展可以在 `details` 中存储任何 JSON 可序列化的数据。默认压缩追踪文件操作，但自定义扩展实现可以使用自己的结构。
+扩展可以在 `details` 中存储任何 JSON 可序列化的数据。默认压缩追踪文件操作，但自定义扩展实现可以使用自己的结构。生成的和扩展提供的摘要会在可用时存储其 LLM `usage`，以便会话总计包含摘要工作。
 
-参考 [`prepareCompaction()`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/compaction/compaction.ts) 和 [`compact()`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/compaction/compaction.ts) 查看实现。
+参考 [`prepareCompaction()`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/compaction/compaction.ts) 和 [`compact()`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/compaction/compaction.ts) 查看实现。对于直接编程式摘要，`generateSummary()` 返回摘要文本，`generateSummaryWithUsage()` 返回 `{ text, usage }`。
 
 ## Branch Summarization（分支摘要）
 
@@ -201,6 +202,7 @@ interface BranchSummaryEntry<T = unknown> {
   timestamp: number;
   summary: string;
   fromId: string; // 我们从此条目导航而来
+  usage?: Usage; // 生成摘要的 LLM 用量
   fromHook?: boolean; // 如果由扩展提供则为 true（旧字段名）
   details?: T; // 实现特定的数据
 }
@@ -315,6 +317,7 @@ pi.on('session_before_compact', async (event, ctx) => {
       summary: '你的摘要...',
       firstKeptEntryId: preparation.firstKeptEntryId,
       tokensBefore: preparation.tokensBefore,
+      // usage: summaryResponse.usage, // 可选；计入会话总计
       details: {
         /* 自定义数据 */
       },
@@ -343,13 +346,14 @@ pi.on('session_before_compact', async (event, ctx) => {
   // [Tool result]: 输出文本
 
   // 现在发送给你的模型进行摘要
-  const summary = await myModel.summarize(conversationText);
+  const { summary, usage } = await myModel.summarize(conversationText);
 
   return {
     compaction: {
       summary,
       firstKeptEntryId: preparation.firstKeptEntryId,
       tokensBefore: preparation.tokensBefore,
+      usage,
     },
   };
 });
@@ -379,6 +383,7 @@ pi.on('session_before_tree', async (event, ctx) => {
     return {
       summary: {
         summary: '你的摘要...',
+        // usage: summaryResponse.usage, // 可选；计入会话总计
         details: {
           /* 自定义数据 */
         },

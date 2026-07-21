@@ -465,6 +465,7 @@ pi.on('session_before_compact', async (event, ctx) => {
       summary: '...',
       firstKeptEntryId: preparation.firstKeptEntryId,
       tokensBefore: preparation.tokensBefore,
+      // usage: summaryResponse.usage, // 可选；计入会话总计
     },
   };
 });
@@ -486,7 +487,13 @@ pi.on('session_before_tree', async (event, ctx) => {
   const { preparation, signal } = event;
   return { cancel: true };
   // 或提供自定义摘要：
-  return { summary: { summary: '...', details: {} } };
+  return {
+    summary: {
+      summary: '...',
+      // usage: summaryResponse.usage, // 可选；计入会话总计
+      details: {},
+    },
+  };
 });
 
 pi.on('session_tree', async (event, ctx) => {
@@ -811,7 +818,7 @@ pi.on('tool_call', (event) => {
 
 - 处理程序按扩展加载顺序运行
 - 每个处理程序看到之前处理程序更改后的最新结果
-- 处理程序可以返回部分补丁（`content`、`details` 或 `isError`）；省略的字段保持当前值
+- 处理程序可以返回部分补丁（`content`、`details`、`isError` 或 `usage`）；省略的字段保持当前值
 
 使用 `ctx.signal` 在处理程序内部执行嵌套的异步工作。这让 Esc 可以取消扩展启动的模型调用、`fetch()` 和其他支持中止感知的操作。
 
@@ -820,7 +827,7 @@ import { isBashToolResult } from "@earendil-works/pi-coding-agent";
 
 pi.on("tool_result", async (event, ctx) => {
   // event.toolName, event.toolCallId, event.input
-  // event.content, event.details, event.isError
+  // event.content, event.details, event.isError, event.usage
 
   if (isBashToolResult(event)) {
     // event.details 是 BashToolDetails 类型
@@ -833,7 +840,7 @@ pi.on("tool_result", async (event, ctx) => {
   });
 
   // 修改结果：
-  return { content: [...], details: {...}, isError: false };
+  return { content: [...], details: {...}, isError: false, usage: nestedModelUsage };
 });
 ```
 
@@ -1372,6 +1379,7 @@ pi.registerTool({
     return {
       content: [{ type: "text", text: "完成" }],
       details: { result: "..." },
+      // usage: nestedModelResponse.usage,          // 可选嵌套 LLM 用量
     };
   },
 
@@ -1950,6 +1958,8 @@ pi.registerTool({
   renderResult(result, options, theme, context) { ... },
 });
 ```
+
+**用量统计：** 如果工具进行了嵌套 LLM 调用，将其合并的 `Usage` 作为 `usage` 返回。Pi 将其持久化在工具结果上，并计入 footer、`/session` 和 RPC 会话总计。`tool_result` 处理程序可以检查或替换此值。
 
 **错误信号：** 要将工具执行标记为失败（在结果上设置 `isError: true` 并报告给 LLM），从 `execute` 抛出错误。返回值永远不会设置错误标志，无论返回对象中包含什么属性。
 

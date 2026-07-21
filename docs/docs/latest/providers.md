@@ -91,6 +91,8 @@ pi
 | Kimi For Coding                      | `KIMI_API_KEY`                                                             | `kimi-coding`            |
 | MiniMax                              | `MINIMAX_API_KEY`                                                          | `minimax`                |
 | MiniMax（中国）                      | `MINIMAX_CN_API_KEY`                                                       | `minimax-cn`             |
+| Qwen Token Plan                      | `QWEN_TOKEN_PLAN_API_KEY`                                                  | `qwen-token-plan`        |
+| Qwen Token Plan（中国）              | `QWEN_TOKEN_PLAN_CN_API_KEY`                                               | `qwen-token-plan-cn`     |
 | Xiaomi MiMo                          | `XIAOMI_API_KEY`                                                           | `xiaomi`                 |
 | Xiaomi MiMo Token Plan（中国）       | `XIAOMI_TOKEN_PLAN_CN_API_KEY`                                             | `xiaomi-token-plan-cn`   |
 | Xiaomi MiMo Token Plan（阿姆斯特丹） | `XIAOMI_TOKEN_PLAN_AMS_API_KEY`                                            | `xiaomi-token-plan-ams`  |
@@ -113,6 +115,8 @@ pi
   "opencode": { "type": "api_key", "key": "..." },
   "opencode-go": { "type": "api_key", "key": "..." },
   "together": { "type": "api_key", "key": "..." },
+  "qwen-token-plan": { "type": "api_key", "key": "sk-sp-..." },
+  "qwen-token-plan-cn": { "type": "api_key", "key": "sk-sp-..." },
   "xiaomi": { "type": "api_key", "key": "..." },
   "xiaomi-token-plan-cn": { "type": "api_key", "key": "..." },
   "xiaomi-token-plan-ams": { "type": "api_key", "key": "..." },

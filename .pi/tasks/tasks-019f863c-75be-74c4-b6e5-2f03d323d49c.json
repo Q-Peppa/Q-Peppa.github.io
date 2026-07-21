@@ -1,0 +1,41 @@
+{
+  "nextId": 4,
+  "tasks": [
+    {
+      "id": "1",
+      "subject": "A. 更新新闻页 — v0.81.0 和 v0.81.1",
+      "description": "读取 4 个包的 CHANGELOG，提取 v0.81.0 和 v0.81.1 条目，翻译并写入 news.md",
+      "status": "completed",
+      "activeForm": "更新新闻页",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1784663585226,
+      "updatedAt": 1784663634300
+    },
+    {
+      "id": "2",
+      "subject": "B. 翻译同步 — 8 个变更文档",
+      "description": "对比并同步 compaction.md, extensions.md, json.md, providers.md, rpc.md, sdk.md, session-format.md, usage.md",
+      "status": "completed",
+      "activeForm": "同步翻译文档",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1784663585231,
+      "updatedAt": 1784663792414
+    },
+    {
+      "id": "3",
+      "subject": "构建验证 + 提交推送",
+      "description": "pnpm run build 验证，然后提交并推送，更新 sync-state",
+      "status": "in_progress",
+      "activeForm": "构建验证并提交",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1784663585233,
+      "updatedAt": 1784663792415
+    }
+  ]
+}

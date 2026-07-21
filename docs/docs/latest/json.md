@@ -46,12 +46,30 @@ type AgentSessionEvent =
       success: boolean;
       attempt: number;
       finalError?: string;
-    };
+    }
+  | {
+      type: 'summarization_retry_scheduled';
+      attempt: number;
+      maxAttempts: number;
+      delayMs: number;
+      errorMessage: string;
+    }
+  | {
+      type: 'summarization_retry_attempt_start';
+      source: 'branchSummary';
+    }
+  | {
+      type: 'summarization_retry_attempt_start';
+      source: 'compaction';
+      reason: 'manual' | 'threshold' | 'overflow';
+    }
+  | { type: 'summarization_retry_finished' };
 ```
 
 - `queue_update` —— 每当待处理的 steering 和 follow-up 队列发生变化时发出，包含完整队列。
 - `compaction_start` / `compaction_end` —— 覆盖手动和自动压缩，包含原因、结果、是否中止、是否重试等信息。
 - `auto_retry_start` / `auto_retry_end` —— 自动重试事件，含尝试次数、最大次数、延迟和错误信息。
+- `summarization_retry_scheduled` / `summarization_retry_attempt_start` / `summarization_retry_finished` —— 压缩或分支摘要生成重试事件。
 
 基础事件来自 [`AgentEvent`](https://github.com/earendil-works/pi-mono/blob/main/packages/agent/src/types.ts#L179)：
 

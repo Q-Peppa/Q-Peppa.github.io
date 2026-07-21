@@ -2,6 +2,155 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.81.1（2026-07-21）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **可验证的发布源码归档** — GitHub Releases 现在包含确定性、带校验和的源码归档，并附有独立二进制构建说明。详见 [从发布源码构建独立二进制](https://github.com/earendil-works/pi/blob/main/README.md#building-standalone-binaries-from-release-source)。
+- **弹性压缩与分支摘要** — 临时 Provider 故障现在遵循配置的重试策略，重试生命周期事件可供 interactive、JSON、RPC 和 SDK 消费者使用。详见 [压缩与分支摘要](/docs/latest/compaction) 和 [RPC 重试事件](/docs/latest/rpc#summarization_retry_scheduled--summarization_retry_attempt_start--summarization_retry_finished)。
+
+新增
+
+- 在 GitHub Releases 中添加确定性、带校验和的源码归档，并附有独立二进制重建文档（[#6913](https://github.com/earendil-works/pi/pull/6913) 由 [@christianklotz](https://github.com/christianklotz) 贡献）。
+
+修复
+
+- 修复压缩和分支摘要，使用配置的重试策略重试临时 Provider 故障，重试生命周期事件暴露给 interactive、JSON、RPC 和 SDK 消费者（[#6901](https://github.com/earendil-works/pi/pull/6901) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 修复 interactive 启动时等待后台模型目录刷新导致 footer Provider 计数计算阻塞的问题。
+- 恢复使用 0.81 之前 agent-core API 的扩展的默认流回退（[#6915](https://github.com/earendil-works/pi/issues/6915)）。
+- 修复继承的 Kimi K3 模型（来自 Moonshot AI 和 Moonshot AI China），使用 OpenAI thinking 格式并暴露 reasoning effort 支持。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 新增 `retryAssistantCall()`，支持对临时 assistant 故障进行有界重试，提供生命周期回调和 abort 处理（[#6901](https://github.com/earendil-works/pi/pull/6901) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+
+修复
+
+- 修复 Kimi K3 模型（来自 Moonshot AI 和 Moonshot AI China），使用 OpenAI thinking 格式并暴露 reasoning effort 支持。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+新增
+
+- 在 `AgentHarness` 中为压缩和分支摘要操作添加重试策略支持和生命周期事件（[#6901](https://github.com/earendil-works/pi/pull/6901) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+
+修复
+
+- 恢复 `Agent` 的 `streamFn` 选项和主机可配置的省略 agent-loop stream 函数的回退，同时避免重新引入 `pi-ai/compat` 依赖（[#6915](https://github.com/earendil-works/pi/issues/6915)）。
+
+</details>
+
+## v0.81.0（2026-07-21）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **本地 llama.cpp 模型管理** — 连接 llama.cpp 路由器，搜索和下载 Hugging Face 模型，并显式加载或卸载模型，提供实时进度。详见 [llama.cpp](/docs/latest/llama-cpp)。
+- **完整 Provider 扩展** — 扩展可以注册完整的 pi-ai Provider，包括认证、模型刷新、过滤和自定义流式处理。详见 [注册新 Provider](/docs/latest/custom-provider#register-new-provider)。
+- **Qwen Token Plan Provider** — 使用内置的国际和中国订阅 Provider，支持区域端点和 API-key 认证。详见 [API Keys](/docs/latest/providers#api-keys)。
+- **扩展用量统计** — 工具、压缩和分支摘要的用量被持久化并计入会话总计。详见 [压缩与分支摘要](/docs/latest/compaction)。
+
+新增
+
+- 将 Qwen Token Plan 和 Qwen Token Plan China 添加到内置 Provider 设置、默认模型解析和 Provider 文档中（[#6858](https://github.com/earendil-works/pi/pull/6858) 由 [@QuintinShaw](https://github.com/QuintinShaw) 贡献）。
+- 新增 `get_available_thinking_levels` RPC 命令和 `RpcClient.getAvailableThinkingLevels()` 方法（[#6865](https://github.com/earendil-works/pi/pull/6865) 由 [@cristinaponcela](https://github.com/cristinaponcela) 贡献）。
+- 从包根导出消息和工具执行生命周期事件类型（[#6772](https://github.com/earendil-works/pi/pull/6772) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 新增内置 llama.cpp 路由器支持，包括 `/login` 连接设置和 `/llama` Hugging Face 模型搜索与下载、显式加载、卸载和实时进度。详见 [llama.cpp](/docs/latest/llama-cpp)。
+- 新增扩展注册完整 pi-ai Provider 的能力，包括原生认证、模型刷新、过滤和流式行为。
+- 新增工具、压缩和分支摘要的用量统计，在持久化会话、footer 总计和会话统计中体现（[#6671](https://github.com/earendil-works/pi/pull/6671) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+
+修复
+
+- 更新打包的 `brace-expansion` 依赖至 5.0.7（[#6896](https://github.com/earendil-works/pi/pull/6896) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 修复持久化的远程模型目录在升级后覆盖较新捆绑目录的问题。
+- 修复继承的已存储 API-key 凭据，使其应用 Provider 作用域的 `env` 值，包括 Amazon Bedrock profiles（[#6864](https://github.com/earendil-works/pi/pull/6864) 由 [@cristinaponcela](https://github.com/cristinaponcela) 贡献）。
+- 修复继承的 OpenAI 兼容跨 Provider 重放，当多个 tool call 共享一个 Provider call ID 时保持 tool call ID 唯一（[#6854](https://github.com/earendil-works/pi/pull/6854) 由 [@cristinaponcela](https://github.com/cristinaponcela) 贡献）。
+- 修复继承的 Kimi K3 thinking 级别，暴露 low、high 和 max，并将 `k2p7` 别名规范化为 `kimi-for-coding`。
+- 修复继承的 OpenCode Go 模型通过 OpenAI Responses API 路由的问题。
+- 修复继承的 `pi-ai` 包元数据，避免消费者 lockfile 重复变更（[#6812](https://github.com/earendil-works/pi/pull/6812) 由 [@jmfederico](https://github.com/jmfederico) 贡献）。
+- 修复继承的终端关闭时先清除编辑器反转软件光标再恢复硬件光标的问题（[#6790](https://github.com/earendil-works/pi/pull/6790) 由 [@dam9000](https://github.com/dam9000) 贡献）。
+- 修复继承的 ANSI 感知文本换行，识别 CRLF 和 CR 行尾同时保留样式（[#6764](https://github.com/earendil-works/pi/pull/6764) 由 [@xz-dev](https://github.com/xz-dev) 贡献）。
+- 修复继承的编辑器粘贴注册表在删除和撤销粘贴标记后损坏，防止提交的 prompt 中出现字面或错配的粘贴标记（[#6844](https://github.com/earendil-works/pi/issues/6844)）。
+- 修复无会话 OpenAI Codex WebSocket 请求使用 UUIDv7 请求 ID（[#6834](https://github.com/earendil-works/pi/pull/6834) 由 [@xl0](https://github.com/xl0) 贡献）。
+- 修复继承的 GPT-5.6 Codex 模型默认使用 272K 上下文窗口，避免自动长上下文定价（[#6853](https://github.com/earendil-works/pi/pull/6853) 由 [@aadishv](https://github.com/aadishv) 贡献）。
+- 修复压缩期间排队的消息保留 steering 和 follow-up 投递行为（[#6730](https://github.com/earendil-works/pi/pull/6730) 由 [@dannote](https://github.com/dannote) 贡献）。
+- 修复 read 工具错误被语法高亮为文件内容的问题（[#6731](https://github.com/earendil-works/pi/pull/6731) 由 [@dannote](https://github.com/dannote) 贡献）。
+- 修复 llama.cpp 路由器下载进度更新，并移除模型操作确认中的冗余措辞。
+- 将自动模型目录网络刷新从启动初始化移至运行中的 interactive 和 RPC 模式。
+- 修复持久化会话被读取和解析两次的问题，减少大型会话的启动延迟（[#6793](https://github.com/earendil-works/pi/issues/6793)）。
+- 修复 prompt 模板中所有参数的默认值（`${@:-default}` 和 `${ARGUMENTS:-default}`）（[#6695](https://github.com/earendil-works/pi/issues/6695)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 新增 Qwen Token Plan 和 Qwen Token Plan China 作为内置 Provider，支持区域端点、API-key 认证和生成的模型目录（[#6858](https://github.com/earendil-works/pi/pull/6858) 由 [@QuintinShaw](https://github.com/QuintinShaw) 贡献）。
+- 新增 `contentText`，用于从消息内容中提取拼接文本（[#6840](https://github.com/earendil-works/pi/pull/6840) 由 [@xl0](https://github.com/xl0) 贡献）。
+- 新增共享的 `uuidv7` 工具，用于时间排序标识符（[#6834](https://github.com/earendil-works/pi/pull/6834) 由 [@xl0](https://github.com/xl0) 贡献）。
+- 新增可选的用量元数据到工具结果消息中（[#6671](https://github.com/earendil-works/pi/pull/6671) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+
+变更
+
+- 变更生成的模型目录，将 TypeScript 模型形状与忽略的 JSON 模型值分离，减少生成源码的变动（[#6765](https://github.com/earendil-works/pi/pull/6765) 由 [@mitsuhiko](https://github.com/mitsuhiko) 贡献）。
+- 变更模型生成，在编译前验证忽略的 Provider 数据；`npm run build` 照常刷新模型数据，`npm run build:offline` 复用已有数据无需网络访问。
+
+修复
+
+- 修复已存储 API-key 凭据在认证解析期间应用 Provider 作用域的 `env` 值，包括 Amazon Bedrock profiles（[#6864](https://github.com/earendil-works/pi/pull/6864) 由 [@cristinaponcela](https://github.com/cristinaponcela) 贡献）。
+- 修复 OpenAI 兼容跨 Provider 重放，当多个 tool call 共享一个 Provider call ID 时保持 tool call ID 唯一（[#6854](https://github.com/earendil-works/pi/pull/6854) 由 [@cristinaponcela](https://github.com/cristinaponcela) 贡献）。
+- 修复 Kimi K3 暴露其支持的 low、high 和 max thinking 级别，并将 `k2p7` 别名规范化为 `kimi-for-coding` 模型。
+- 修复 OpenCode Go Provider 支持通过 OpenAI Responses API 路由的模型。
+- 修复 `pi-ai` 可执行路径与 npm registry 元数据匹配，避免消费者 lockfile 重复变更（[#6812](https://github.com/earendil-works/pi/pull/6812) 由 [@jmfederico](https://github.com/jmfederico) 贡献）。
+- 修复无会话 OpenAI Codex WebSocket 请求使用 UUIDv7 请求 ID，使拒绝 UUIDv4 ID 的模型可用（[#6834](https://github.com/earendil-works/pi/pull/6834) 由 [@xl0](https://github.com/xl0) 贡献）。
+- 修复 GitHub Copilot 长上下文定价层级在生成的模型元数据中的问题（[#6668](https://github.com/earendil-works/pi/issues/6668)）。
+- 修复 Kimi Coding 订阅模型在 models.dev 报告零定价时报告 API 等效隐含成本。
+- 修复 OpenAI Responses 提前结束流被归类为可重试的 Provider 错误（[#6727](https://github.com/earendil-works/pi/issues/6727)）。
+- 修复 GPT-5.6 Codex 模型默认使用 272K 上下文窗口，避免自动长上下文定价（[#6853](https://github.com/earendil-works/pi/pull/6853) 由 [@aadishv](https://github.com/aadishv) 贡献）。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+不兼容变更
+
+- 变更 `SessionStorage`，使用 `getPathToRootOrCompaction()`，要求会话名称和统计方法，支持基于游标的条目读取，并将保留的压缩尾部存储为自包含检查点（[#6594](https://github.com/earendil-works/pi/pull/6594) 由 [@cristinaponcela](https://github.com/cristinaponcela) 贡献）。
+- 将 `uuidv7` 导出移至 `@earendil-works/pi-ai`（[#6834](https://github.com/earendil-works/pi/pull/6834) 由 [@xl0](https://github.com/xl0) 贡献）。
+- 将可选的 `Agent` `streamFn` 回退替换为必需的 `streamFunction`，并使低级循环 stream 函数为必需，防止 `@earendil-works/pi-ai/compat` 和所有内置 Provider 进入选择性 Provider 包（[#6851](https://github.com/earendil-works/pi/issues/6851)）。
+
+新增
+
+- 在 agent harness 中为工具结果、压缩条目和分支摘要添加用量元数据（[#6671](https://github.com/earendil-works/pi/pull/6671) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+修复
+
+- 修复终端关闭时先清除编辑器的反转软件光标再恢复硬件光标，避免重复光标残留（[#6790](https://github.com/earendil-works/pi/pull/6790) 由 [@dam9000](https://github.com/dam9000) 贡献）。
+- 修复 ANSI 感知文本换行，识别 CRLF 和 CR 行尾同时跨行保留样式（[#6764](https://github.com/earendil-works/pi/pull/6764) 由 [@xz-dev](https://github.com/xz-dev) 贡献）。
+- 修复编辑器粘贴注册表在删除粘贴标记时损坏：撤销现在将粘贴注册表与文本一起恢复，标记重新编号按升序 ID 移动注册表条目，因此提交的 prompt 不再包含字面 `[paste #N ...]` 标记或错误粘贴内容（[#6844](https://github.com/earendil-works/pi/issues/6844)）。
+
+</details>
+
 ## v0.80.10（2026-07-16）
 
 <details>

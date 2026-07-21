@@ -282,6 +282,7 @@ interface SessionEntryBase {
 
 可选字段：
 
+- `usage`：生成摘要的 LLM 用量；计入会话 Token 和成本总计
 - `details`：文件追踪数据（默认的 `{ readFiles: string[], modifiedFiles: string[] }`，或扩展的自定义数据）
 - `fromHook`：如果由扩展生成则为 `true`，如果由 Pi 生成则为 `false`/`undefined`（旧字段名）
 
