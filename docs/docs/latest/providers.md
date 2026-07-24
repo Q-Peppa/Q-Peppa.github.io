@@ -26,9 +26,10 @@ Pi 支持两类 Provider：基于订阅的（通过 OAuth）和 API Key 型（�
 - **Claude Pro/Max**
 - **GitHub Copilot**
 - **xAI (Grok/X subscription)**
+- **OpenRouter（通过 OAuth 创建的 API Key，从 OpenRouter 余额扣费）**
 - Radius
 
-使用 `/logout` 清除已存储的凭证。Token 存储在 `~/.pi/agent/auth.json` 中，过期时自动刷新。
+使用 `/logout` 清除已存储的凭证。Token 存储在 `~/.pi/agent/auth.json` 中，过期时自动刷新。OpenRouter 则创建一个用户控制的 API Key，不会自动过期。
 
 ### OpenAI Codex
 
@@ -46,6 +47,12 @@ Anthropic 订阅认证适用于 Claude Pro/Max 账户。第三方工具的使用
 
 - 运行 `/login xai`，然后选择 **Use a subscription**
 - `XAI_API_KEY` 仍可通过 **Use an API key** 使用
+
+### OpenRouter
+
+- 运行 `/login openrouter`，然后选择 **Sign in with OpenRouter** 打开 OpenRouter PKCE 授权流程
+- 授权会创建一个用户控制的 OpenRouter API Key，从你的 OpenRouter 余额扣费
+- `OPENROUTER_API_KEY` 仍可通过 **Use an API key** 使用
 
 ### Radius
 

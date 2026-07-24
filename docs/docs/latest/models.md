@@ -377,6 +377,10 @@
 
 某些 Anthropic 模型需要 adaptive thinking（`thinking.type: "adaptive"` 加 `output_config.effort`），而非旧的基于 token 预算的 thinking 负载。内置模型会自动设置此项。对于路由到这些模型的自定义 Provider 或别名，将 `forceAdaptiveThinking` 设为 `true`。
 
+某些 Anthropic 兼容 Provider 会发出签名为空的 thinking 块，并在重放时仍然期望它们。仅在这些 Provider 上将 `allowEmptySignature` 设为 `true`；真正的 Anthropic 会拒绝空的 thinking 签名。
+
+内置 Anthropic 模型在模型元数据中启用 `supportsStrictTools`。自定义 Anthropic 兼容模型在其端点接受严格 JSON Schema 工具定义时必须将其设为 `true`。
+
 ```json
 {
   "providers": {
@@ -410,6 +414,7 @@
 | `supportsCacheControlOnTools`     | Provider 是否接受工具定义上的 Anthropic 风格 `cache_control` 标记。默认：`true`                                                                                                                       |
 | `forceAdaptiveThinking`           | 是否为此模型发送 adaptive thinking（`thinking.type: "adaptive"` 加 `output_config.effort`）。内置 adaptive 模型会自动设置。默认：`false`                                                              |
 | `allowEmptySignature`             | 某些 Anthropic 兼容 Provider 会发出签名为空的 thinking 块，并在重放时仍然期望它们。仅在这些 Provider 上将 `allowEmptySignature` 设为 `true`；真正的 Anthropic 会拒绝空的 thinking 签名。默认：`false` |
+| `supportsStrictTools`             | Provider 是否接受严格 JSON Schema 工具定义。默认：`false`；内置 Anthropic 模型在生成的元数据中启用此项。                                                                                              |
 
 ## OpenAI 兼容性
 
@@ -447,10 +452,11 @@
 | `requiresReasoningContentOnAssistantMessages` | 在启用推理时，在所有重放的助手消息上包含空的 `reasoning_content`                                                                                                                                                                                                                                                   |
 | `thinkingFormat`                              | 使用 `reasoning_effort`、`openrouter`、`deepseek`、`together`、`zai`、`qwen`、`chat-template` 或 `qwen-chat-template` thinking 参数                                                                                                                                                                                |
 | `chatTemplateKwargs`                          | `thinkingFormat: "chat-template"` 使用的 `chat_template_kwargs` 值；使用 `{ "$var": "thinking.enabled" }` 或 `{ "$var": "thinking.effort" }` 表示由 pi 控制的 thinking 值                                                                                                                                          |
-| `cacheControlFormat`                          | 在系统提示、最后一个工具定义和最后一个用户/助手文本内容上使用 Anthropic 风格的 `cache_control` 标记。目前仅支持 `anthropic`                                                                                                                                                                                        |
+| `cacheControlFormat`                          | 在系统提示、最后一个工具定义和最后一个用户、助手或工具结果文本内容上使用 Anthropic 风格的 `cache_control` 标记。目前仅支持 `anthropic`                                                                                                                                                                             |
 | `sendSessionAffinityHeaders`                  | 对于 `openai-completions`，在启用缓存时从会话 ID 发送会话亲和请求头。默认：`false`。                                                                                                                                                                                                                               |
 | `sessionAffinityFormat`                       | 对于 `openai-completions` 和 `openai-responses`，会话亲和请求头格式：`openai` 发送 `session_id`/`x-client-request-id`（completions 还发送 `x-session-affinity`），`openai-nosession` 省略包含下划线的 `session_id` 请求头，`openrouter` 发送 `x-session-id`。不影响 `prompt_cache_key` body 参数。默认：自动检测。 |
-| `supportsStrictMode`                          | 在工具定义中包含 `strict` 字段                                                                                                                                                                                                                                                                                     |
+| `supportsStrictMode`                          | Provider 是否接受严格 JSON Schema 函数工具定义。默认值取决于 API；内置 OpenAI 模型带有明确的能力元数据。                                                                                                                                                                                                           |
+| `supportsOpenAIGrammarTools`                  | OpenAI 兼容 API 是否发出自定义 Lark/regex 语法工具。为 `false` 时，语法约束工具回退到普通 function tools。默认：`false`；内置模型目录为 OpenAI、OpenAI Codex、Azure OpenAI、GitHub Copilot、opencode 和 Cloudflare AI Gateway 上的 GPT-5+ 模型启用此项。                                                           |
 | `deferredToolsMode`                           | 使用 Provider 特定的延迟工具序列化。目前仅支持 `"kimi"`，用于 Kimi 的 OpenAI 兼容 Chat Completions 格式                                                                                                                                                                                                            |
 | `supportsLongCacheRetention`                  | Provider 是否在缓存保留为 `long` 时接受长缓存保留：OpenAI 提示缓存的 `prompt_cache_retention: "24h"`，或当 `cacheControlFormat` 为 `anthropic` 时的 `cache_control.ttl: "1h"`。默认：`true`                                                                                                                        |
 | `openRouterRouting`                           | OpenRouter Provider 路由偏好。此对象按原样作为 [OpenRouter API 请求](https://openrouter.ai/docs/guides/routing/provider-selection) 的 `provider` 字段发送                                                                                                                                                          |

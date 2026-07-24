@@ -981,9 +981,9 @@ ctx.sessionManager.buildContextEntries(); // 应用了压缩的活跃分支条�
 ctx.sessionManager.getLeafId(); // 当前叶子条目 ID
 ```
 
-### ctx.modelRegistry / ctx.model
+### ctx.modelRegistry / ctx.model / ctx.thinkingLevel
 
-访问模型和 API 密钥。
+访问模型、Provider 和已解析的认证信息。`ctx.modelRegistry.getProvider(id)` 返回有效的 pi-ai Provider，`getProviderAuth(id)` 解析其当前的 API Key、请求头、base URL 和 Provider 作用域环境变量，无需加载模型。`ctx.model` 是当前活动模型，`ctx.thinkingLevel` 是其当前有效的 thinking 级别。
 
 ### ctx.signal
 
@@ -2106,6 +2106,16 @@ const bashTool = createBashTool(cwd, {
 ```
 
 完整 SSH 示例请参见 [examples/extensions/ssh.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/ssh.ts)，包含 `--ssh` 标志。
+
+`createBashTool()` 通过 `PI_SESSION_ID`、`PI_SESSION_FILE`、`PI_PROVIDER`、`PI_MODEL` 和 `PI_REASONING_LEVEL` 向命令暴露当前会话。注入发生在 `spawnHook` 之前，因此 hook 在 `env` 中收到这些值，并在如上展开现有环境时保留它们。设置 `exposeSessionEnvironment: false` 可禁用：
+
+```typescript
+const bashTool = createBashTool(cwd, {
+  exposeSessionEnvironment: false,
+});
+```
+
+关于变量语义，参见 [Bash 工具会话环境](/docs/latest/environment-variables#bash-工具会话环境)。
 
 ### 输出截断
 

@@ -2,6 +2,114 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.82.0（2026-07-24）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **约束工具采样** — 工具可以偏好或要求严格的 JSON Schema 采样，或使用 OpenAI Lark/regex 语法，模型能力元数据会阻止不支持的请求。详见 [工具的约束采样](https://github.com/earendil-works/pi/blob/main/packages/ai/README.md#constrained-sampling-for-tools)。
+- **OpenRouter 和 Kimi Code 登录** — 使用 `/login` 授权 OpenRouter 或 Kimi Code 订阅，无需手动配置 API key。详见 [OpenRouter](/docs/latest/providers#openrouter)。
+- **会话感知的流式 bash 集成** — Bash 工具接收当前会话/模型元数据，而直接 RPC bash 命令流式输出关联的输出。详见 [Bash 工具会话环境](/docs/latest/environment-variables#bash-tool-session-environment) 和 [RPC bash 事件](/docs/latest/rpc#bash_execution_update)。
+
+新增
+
+- 添加了继承的 `Tool.constrainedSampling`，支持严格 JSON Schema（`prefer`/`require`）和 OpenAI Lark/regex 语法变体，覆盖 OpenAI、Anthropic、Amazon Bedrock、Google Gemini 和 Mistral。详见 [工具的约束采样](https://github.com/earendil-works/pi/blob/main/packages/ai/README.md#constrained-sampling-for-tools)。
+- 添加了继承的 `supportsGrammarTools` 和 `supportsStrictTools` 兼容性标志，扩展了 `supportsStrictMode` 覆盖范围，并生成模型能力元数据以控制约束采样。
+- 添加了继承的 Kimi Code 订阅 OAuth 登录，支持 Kimi For Coding Provider，包括设备授权和自动 token 刷新（[#6935](https://github.com/earendil-works/pi/pull/6935) 由 [@zaycruz](https://github.com/zaycruz) 贡献）。
+- 添加了继承的 OpenRouter OAuth PKCE 登录，通过 `/login` 创建用户控制的 API key。详见 [OpenRouter](/docs/latest/providers#openrouter)（[#6927](https://github.com/earendil-works/pi/pull/6927) 由 [@rsaryev](https://github.com/rsaryev) 贡献）。
+- 向内置和工厂创建的 bash 工具运行的命令暴露 `PI_SESSION_ID`、`PI_SESSION_FILE`、`PI_PROVIDER`、`PI_MODEL` 和 `PI_REASONING_LEVEL`。详见 [Bash 工具会话环境](/docs/latest/environment-variables#bash-tool-session-environment)。
+- 为直接 RPC bash 命令添加流式 `bash_execution_update` 事件，与请求 ID 关联。详见 [RPC bash 事件](/docs/latest/rpc#bash_execution_update)（[#6971](https://github.com/earendil-works/pi/pull/6971) 由 [@ananthakumaran](https://github.com/ananthakumaran) 贡献）。
+
+变更
+
+- 变更继承的生成模型目录，仅暴露 models.dev 上经过 Provider 验证的 reasoning effort 级别（[#6928](https://github.com/earendil-works/pi/pull/6928) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+
+修复
+
+- 修复继承的 DNS 查找失败（如 `getaddrinfo`、`ENOTFOUND` 和 `EAI_AGAIN`），触发自动 assistant 重试（[#6946](https://github.com/earendil-works/pi/pull/6946) 由 [@christianklotz](https://github.com/christianklotz) 贡献）。
+- 修复继承的 OpenRouter Anthropic 缓存断点，使其在 tool result 之后推进，并为 `~anthropic/*-latest` 别名启用缓存控制（[#6941](https://github.com/earendil-works/pi/pull/6941) 由 [@mteam88](https://github.com/mteam88) 贡献）。
+- 修复继承的 OpenAI Codex WebSocket 会话，在 `previous_response_not_found` 错误后重试一次，不带缺失的 previous-response 续接（[#6955](https://github.com/earendil-works/pi/pull/6955) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 修复 TUI 调试和崩溃日志，使其遵循自定义 agent 目录，而非始终写入 `~/.pi/agent`（[#6958](https://github.com/earendil-works/pi/pull/6958) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 修复系统临时目录条目过多时 Ctrl+G 外部编辑器启动缓慢的问题（[#6903](https://github.com/earendil-works/pi/pull/6903) 由 [@christianklotz](https://github.com/christianklotz) 贡献）。
+- 修复启动资源显示，保留包加载的同级 npm 扩展的相对路径（[#6964](https://github.com/earendil-works/pi/pull/6964) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 修复压缩和分支摘要请求，使用新的路由会话 ID，并在支持的情况下禁用 prompt 缓存（[#6618](https://github.com/earendil-works/pi/pull/6618) 由 [@tmustier](https://github.com/tmustier) 贡献）。
+- 修复设置 `PI_SKIP_VERSION_CHECK` 时的显式自更新（[#6977](https://github.com/earendil-works/pi/issues/6977)）。
+- 修复包含方括号的作用域模型 ID，先作为字面精确匹配再作为 glob 匹配（[#6210](https://github.com/earendil-works/pi/issues/6210)）。
+- 修复继承的 OpenAI 和 Anthropic Provider 重试等待，使其遵循 abort 信号和配置的延迟限制（[#6980](https://github.com/earendil-works/pi/pull/6980) 由 [@petrroll](https://github.com/petrroll) 贡献）。
+- 修复全新安装时因包文件 mtime 较新而优先使用捆绑模型目录而非较新的远程目录的问题（[#7016](https://github.com/earendil-works/pi/pull/7016) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 修复继承的编辑器滚动指示器在窄终端中溢出的问题（[#7015](https://github.com/earendil-works/pi/pull/7015) 由 [@christianklotz](https://github.com/christianklotz) 贡献）。
+- 修复 llama.cpp 模型，使用加载的上下文窗口作为输出 token 限制，而非限制在 16K（[#7034](https://github.com/earendil-works/pi/pull/7034) 由 [@christianklotz](https://github.com/christianklotz) 贡献）。
+- 修复发布源码归档，包含构建独立二进制所需的生成 Provider 模型数据。
+- 更新打包的 `protobufjs` 依赖至 7.6.5，解决 GHSA-j3f2-48v5-ccww（[#7005](https://github.com/earendil-works/pi/issues/7005)）。
+- 修复 Wayland 上 `/copy` 在 `wl-copy` 失败时回退到 X11 或 OSC 52（[#7009](https://github.com/earendil-works/pi/pull/7009) 由 [@rkfshakti](https://github.com/rkfshakti) 贡献）。
+- 修复 `/model` 在打开模型选择器时重新加载更新后的 `models.json` 配置（[#6999](https://github.com/earendil-works/pi/issues/6999)）。
+- 修复压缩和分支摘要，使认证完全解析为请求头的 Provider 正常工作（[#5871](https://github.com/earendil-works/pi/issues/5871)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+不兼容变更
+
+- 将 `getBuiltinModelDataUrl(provider)` 替换为 `getBuiltinModelDataGeneratedAt()`，使内置目录的新鲜度使用其记录的生成时间而非依赖安装的文件元数据（[#7016](https://github.com/earendil-works/pi/pull/7016) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+
+新增
+
+- 添加了 Kimi Code 订阅 OAuth 登录，支持 `kimi-coding` Provider，包括设备授权、token 刷新和 OAuth 主机覆盖（[#6935](https://github.com/earendil-works/pi/pull/6935) 由 [@zaycruz](https://github.com/zaycruz) 贡献）。
+- 添加了 OpenRouter OAuth PKCE 登录，为用户创建 API key，适用于 chat 和 image Provider（[#6927](https://github.com/earendil-works/pi/pull/6927) 由 [@rsaryev](https://github.com/rsaryev) 贡献）。
+- 添加了 `Tool.constrainedSampling`，支持严格 JSON Schema（`prefer`/`require`）和 OpenAI Lark/regex 语法变体，在 OpenAI、Anthropic、Amazon Bedrock、Google Gemini 和 Mistral 上强制执行 Provider 端约束工具采样。详见 [工具的约束采样](https://github.com/earendil-works/pi/blob/main/packages/ai/README.md#constrained-sampling-for-tools)。
+- 添加了 `supportsGrammarTools` 和 `supportsStrictTools` 兼容性标志，扩展了 `supportsStrictMode` 至 Responses 和 Bedrock 模型，并生成模型能力元数据以控制约束采样。
+
+变更
+
+- 变更生成的模型目录，仅暴露 models.dev 上经过 Provider 验证的 reasoning effort 级别（[#6928](https://github.com/earendil-works/pi/pull/6928) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+
+修复
+
+- 修复 OpenAI Codex 缓存的 WebSocket 续接，在 grammar tool call 之后仅发送真实的 tool-result delta。
+- 修复 Google、Amazon Bedrock、Mistral 和 Azure OpenAI Responses 适配器的约束工具采样，包括模型感知的 strict-tool 能力、语法配置验证和畸形 grammar-call 重放错误。
+- 修复 `cacheRetention: "none"`，对支持的 OpenAI 模型禁用隐式 prompt 缓存写入，对 OpenAI Codex 禁用基于会话的缓存（[#6618](https://github.com/earendil-works/pi/pull/6618) 由 [@tmustier](https://github.com/tmustier) 贡献）。
+- 修复 DNS 查找失败（如 `getaddrinfo`、`ENOTFOUND` 和 `EAI_AGAIN`），触发自动 assistant 重试（[#6946](https://github.com/earendil-works/pi/pull/6946) 由 [@christianklotz](https://github.com/christianklotz) 贡献）。
+- 修复 OpenAI Codex WebSocket 会话，在 `previous_response_not_found` 错误后重试一次，不带缺失的 previous-response 续接（[#6955](https://github.com/earendil-works/pi/pull/6955) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 修复 OpenAI 和 Anthropic Provider 重试等待，使其遵循 abort 信号和配置的延迟限制（[#6980](https://github.com/earendil-works/pi/pull/6980) 由 [@petrroll](https://github.com/petrroll) 贡献）。
+- 修复 OpenRouter Anthropic 缓存断点，使其在 tool result 之后推进，并为 `~anthropic/*-latest` 别名启用缓存控制（[#6941](https://github.com/earendil-works/pi/pull/6941) 由 [@mteam88](https://github.com/mteam88) 贡献）。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+不兼容变更
+
+- 将 `AgentHarness` 的 `ExecutionEnv` 依赖和上下文无关的 `AgentTool` 输入替换为应用定义的 `toolContext` 值和上下文感知的 `AgentHarnessTool` 定义。
+
+新增
+
+- 添加了上下文感知的 `read`、`write`、`edit` 和 `bash` harness 工具，由 `ExecutionEnv` 支持，包括异步 bash 执行准备。
+
+变更
+
+- 对齐了 harness 工具路径处理、编辑序列化、shell 输出捕获、显式非继承环境和跨平台进程清理，与 coding-agent 行为一致。
+
+修复
+
+- 修复压缩和分支摘要请求，使用新的路由会话 ID，并在支持的情况下禁用 prompt 缓存（[#6618](https://github.com/earendil-works/pi/pull/6618) 由 [@tmustier](https://github.com/tmustier) 贡献）。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+修复
+
+- 修复调试和崩溃日志，使用配置的 TUI 日志目录（包括 `PI_CODING_AGENT_DIR`），而非始终写入 `~/.pi/agent`（[#6958](https://github.com/earendil-works/pi/pull/6958) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 修复窄终端中编辑器底部滚动指示器超出终端宽度导致崩溃的问题（[#7015](https://github.com/earendil-works/pi/pull/7015) 由 [@christianklotz](https://github.com/christianklotz) 贡献）。
+
+</details>
+
 ## v0.81.1（2026-07-21）
 
 <details>

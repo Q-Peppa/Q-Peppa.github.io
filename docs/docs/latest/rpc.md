@@ -26,7 +26,7 @@ pi --mode rpc [options]
 - **Responses（响应）**：带 `type: "response"` 的 JSON 对象，指示命令成功/失败
 - **Events（事件）**：流式输出到 stdout 的 Agent 事件（JSON 行）
 
-所有命令支持可选的 `id` 字段用于请求/响应关联。如果提供，相应的响应将包含相同的 `id`。
+所有命令支持可选的 `id` 字段用于请求/响应关联。如果提供，相应的响应将包含相同的 `id`。`bash_execution_update` 事件也会包含其发起 `bash` 命令的 `id`。
 
 ### 帧协议
 
@@ -498,16 +498,19 @@ RPC 模式使用严格的 JSONL 语义，仅使用 LF（`\n`）作为记录分�
 
 #### bash
 
-执行 Shell 命令并将输出添加到对话上下文。
+执行 Shell 命令并将输出添加到对话上下文。输出在命令运行时以 `bash_execution_update` 事件流式传输；响应包含最终结果。
 
 ```json
-{ "type": "bash", "command": "ls -la" }
+{ "id": "req-1", "type": "bash", "command": "ls -la" }
 ```
+
+包含 `id` 以将流式 `bash_execution_update` 事件与此命令关联。
 
 响应：
 
 ```json
 {
+  "id": "req-1",
   "type": "response",
   "command": "bash",
   "success": true,
@@ -539,7 +542,7 @@ RPC 模式使用严格的 JSONL 语义，仅使用 LF（`\n`）作为记录分�
 
 **bash 结果如何到达 LLM：**
 
-`bash` 命令立即执行并返回 `BashResult`。内部会创建一个 `BashExecutionMessage` 并存储在 Agent 的消息状态中。此消息**不会**发出事件。
+`bash` 命令立即执行并返回 `BashResult`。内部会创建一个 `BashExecutionMessage` 并存储在 Agent 的消息状态中。
 
 当下一个 `prompt` 命令发送时，所有消息（包括 `BashExecutionMessage`）在发送到 LLM 之前会被转换。`BashExecutionMessage` 会转换为包含以下格式的 `UserMessage`：
 
@@ -555,7 +558,6 @@ drwxr-xr-x ...
 
 1. Bash 输出会在**下一次 prompt** 时包含在 LLM 上下文中，而非立即
 2. 可以在 prompt 之前执行多个 bash 命令；所有输出都会被包含
-3. `BashExecutionMessage` 本身不会发出事件
 
 #### abort_bash
 
@@ -916,7 +918,7 @@ drwxr-xr-x ...
 
 ## 事件
 
-事件作为 JSON 行流式输出到 stdout。事件**不**包含 `id` 字段（只有响应包含）。
+事件作为 JSON 行流式输出到 stdout。事件通常不包含 `id` 字段；`bash_execution_update` 在提供时包含其发起 `bash` 命令的 `id`。
 
 ### 事件类型
 
@@ -930,6 +932,7 @@ drwxr-xr-x ...
 | `message_start`                     | 消息开始                                                             |
 | `message_update`                    | 流式更新（文本/思考/工具调用增量）                                   |
 | `message_end`                       | 消息完成                                                             |
+| `bash_execution_update`             | 直接 RPC bash 命令输出块                                             |
 | `tool_execution_start`              | 工具开始执行                                                         |
 | `tool_execution_update`             | 工具执行进度（流式输出）                                             |
 | `tool_execution_end`                | 工具完成                                                             |
@@ -1037,6 +1040,20 @@ Agent 开始处理 prompt 时发出。
 {"type":"message_update","message":{...},"assistantMessageEvent":{"type":"text_delta","contentIndex":0,"delta":"Hello","partial":{...}}}
 {"type":"message_update","message":{...},"assistantMessageEvent":{"type":"text_delta","contentIndex":0,"delta":" world","partial":{...}}}
 {"type":"message_update","message":{...},"assistantMessageEvent":{"type":"text_end","contentIndex":0,"content":"Hello world","partial":{...}}}
+```
+
+### bash_execution_update
+
+每次从直接 `bash` 命令的输出块发出一次。`id` 匹配命令的 `id`，允许客户端将输出与正确的命令关联。
+
+事件在命令运行时流式传输所有输出，即使最终 `bash` 响应的 `output` 被截断。
+
+```json
+{
+  "type": "bash_execution_update",
+  "id": "req-1",
+  "delta": "total 48\n"
+}
 ```
 
 ### tool_execution_start / tool_execution_update / tool_execution_end
