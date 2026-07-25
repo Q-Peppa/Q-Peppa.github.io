@@ -2,6 +2,54 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.82.1（2026-07-25）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **Claude Opus 5** – 在 Anthropic 和 Amazon Bedrock 上可用，支持 adaptive thinking（包括 `xhigh`）、推理配置文件和 prompt 缓存。详见 [API Keys](/docs/latest/providers#api-keys)。
+- **Anthropic 网关 Bearer 认证** – `ANTHROPIC_AUTH_TOKEN` 可对要求 `Authorization: Bearer` 的 Anthropic 兼容网关进行认证，包括压缩和分支摘要。详见 [Environment Variables or Auth File](/docs/latest/providers#environment-variables-or-auth-file)。
+- **更快、更具弹性的模型目录** – pi.dev 目录通过 `If-None-Match` 重新验证，未变更的 Provider 返回空 `304` 响应，llama.cpp 模型在重启后仍保留列出。详见 [llama.cpp](/docs/latest/llama-cpp)。
+
+新增
+
+- 向自定义消息渲染器公开 `outputPad` 设置。详见 [Extensions](/docs/latest/extensions)（[#7045](https://github.com/earendil-works/pi/pull/7045) 由 [@xl0](https://github.com/xl0) 贡献）。
+- 为 Anthropic 兼容网关添加继承的 `ANTHROPIC_AUTH_TOKEN` Bearer 认证。详见 [Providers](/docs/latest/providers#environment-variables-or-auth-file)（[#5871](https://github.com/earendil-works/pi/issues/5871)）。
+- 为 Anthropic 和 Amazon Bedrock 添加继承的 Claude Opus 5 支持，包括 adaptive thinking、推理配置文件、prompt 缓存并保留 AWS 验证消息（[#7081](https://github.com/earendil-works/pi/pull/7081) 由 [@unexge](https://github.com/unexge) 贡献，[#7083](https://github.com/earendil-works/pi/pull/7083) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+
+变更
+
+- pi.dev 模型目录刷新改为通过 `If-None-Match` 重新验证，未变更 Provider 目录返回空 `304` 而非完整下载。
+- 继承的 Radius OAuth 设备授权、token 交换和刷新请求改为直接使用配置的网关。
+- 继承的模型加载错误改为追加底层原因，因此类似 `OAuth refresh failed for openai-codex` 的认证失败会报告 Provider 响应，而不是空包装消息。
+
+修复
+
+- 修复认证完全解析为请求头的 Provider 的压缩和分支摘要（[#5871](https://github.com/earendil-works/pi/issues/5871)）。
+- 修复 `/models` 中不可用作用域模型被隐藏的问题，使其可在不手动编辑设置的情况下移除（[#6949](https://github.com/earendil-works/pi/issues/6949)，[#7032](https://github.com/earendil-works/pi/pull/7032) 由 [@christianklotz](https://github.com/christianklotz) 贡献）。
+- 修复启动上下文文件发现，跳过与上下文文件同名的目录（如 `AGENTS.md`），避免 `EISDIR` 警告（[#7106](https://github.com/earendil-works/pi/pull/7106) 由 [@mrexodia](https://github.com/mrexodia) 贡献）。
+- 修复 llama.cpp 扩展以持久化其模型目录，使 llama.cpp 模型在首次成功刷新前仍保持列出。详见 [llama.cpp](/docs/latest/llama-cpp)（[#7072](https://github.com/earendil-works/pi/pull/7072) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 添加 `ModelsStoreEntry.etag`，使持久化的 Provider 目录可携带用于条件刷新的远程 ETag 校验器。
+- 为 Anthropic 兼容网关添加 `ANTHROPIC_AUTH_TOKEN` Bearer 认证（[#5871](https://github.com/earendil-works/pi/issues/5871)）。
+- 为 Anthropic 和 Amazon Bedrock 添加 Claude Opus 5 支持，包括 adaptive thinking、推理配置文件、prompt 缓存并保留 AWS 验证消息（[#7081](https://github.com/earendil-works/pi/pull/7081) 由 [@unexge](https://github.com/unexge) 贡献，[#7083](https://github.com/earendil-works/pi/pull/7083) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+
+变更
+
+- Radius OAuth 设备授权、token 交换和刷新请求改为直接使用配置的网关。
+- `ModelsError` 消息改为追加底层原因，因此类似 `OAuth refresh failed for openai-codex` 的认证失败会报告 Provider 响应，而不是空包装消息。
+
+</details>
+
 ## v0.82.0（2026-07-24）
 
 <details>

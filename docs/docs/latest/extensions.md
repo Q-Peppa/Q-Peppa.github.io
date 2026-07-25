@@ -2806,7 +2806,7 @@ ctx.ui.setEditorComponent(
 import { Text } from '@earendil-works/pi-tui';
 
 pi.registerMessageRenderer('my-extension', (message, options, theme) => {
-  const { expanded } = options;
+  const { expanded, outputPad } = options;
   let text = theme.fg('accent', `[${message.customType}] `);
   text += message.content;
 
@@ -2814,7 +2814,7 @@ pi.registerMessageRenderer('my-extension', (message, options, theme) => {
     text += '\n' + theme.fg('dim', JSON.stringify(message.details, null, 2));
   }
 
-  return new Text(text, 0, 0);
+  return new Text(text, outputPad, 0);
 });
 ```
 
