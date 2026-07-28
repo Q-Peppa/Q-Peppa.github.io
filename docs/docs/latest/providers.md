@@ -52,6 +52,7 @@ Anthropic 订阅认证适用于 Claude Pro/Max 账户。第三方工具的使用
 
 - 运行 `/login openrouter`，然后选择 **Sign in with OpenRouter** 打开 OpenRouter PKCE 授权流程
 - 授权会创建一个用户控制的 OpenRouter API Key，从你的 OpenRouter 余额扣费
+- 在远程/无头机器上（例如通过 SSH），浏览器无法访问 loopback 回调地址；请将最终的重定向 URL（或授权码）粘贴到登录提示中
 - `OPENROUTER_API_KEY` 仍可通过 **Use an API key** 使用
 
 ### Radius

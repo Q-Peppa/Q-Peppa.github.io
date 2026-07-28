@@ -444,7 +444,7 @@ function streamMyProvider(
         totalTokens: 0,
         cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
       },
-      stopReason: 'stop',
+      stopReason: 'pending',
       timestamp: Date.now(),
     };
 
@@ -453,12 +453,18 @@ function streamMyProvider(
       stream.push({ type: 'start', partial: output });
 
       // 发起 API 请求并处理响应...
-      // 随着数据到达推送内容事件...
+      // 随着数据到达推送内容事件，并从终止事件设置 stopReason。
+      if (output.stopReason === 'pending') {
+        throw new Error('Provider 流结束但未设置停止原因');
+      }
+      if (output.stopReason === 'error' || output.stopReason === 'aborted') {
+        throw new Error(output.errorMessage || '发生未知错误');
+      }
 
       // 推送 done 事件
       stream.push({
         type: 'done',
-        reason: output.stopReason as 'stop' | 'length' | 'toolUse',
+        reason: output.stopReason,
         message: output,
       });
       stream.end();
@@ -574,9 +580,7 @@ calculateCost(model, output.usage);
 const MY_PROVIDER_OVERFLOW_PATTERN = /your provider's overflow phrase/i;
 
 export default function (pi: ExtensionAPI) {
-  pi.registerProvider('my-provider', {
-    /* ... */
-  });
+  pi.registerProvider('my-provider', {/* ... */});
 
   pi.on('message_end', (event, ctx) => {
     const message = event.message;

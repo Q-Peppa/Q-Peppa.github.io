@@ -117,6 +117,8 @@ interface Usage {
 }
 ```
 
+pi-ai 导出的 `StopReason` 类型还包含 `"pending"`，但该值保留用于流式事件中的部分消息。pi 在持久化 assistant 消息之前，终止性的 `done`/`error` 消息会将其替换为完成原因，因此 `"pending"` 不应出现在会话 JSONL 中。
+
 ### 扩展消息类型（来自 pi-coding-agent）
 
 ```typescript
