@@ -981,9 +981,11 @@ ctx.sessionManager.buildContextEntries(); // 应用了压缩的活跃分支条�
 ctx.sessionManager.getLeafId(); // 当前叶子条目 ID
 ```
 
-### ctx.modelRegistry / ctx.model / ctx.thinkingLevel
+### ctx.modelRegistry / ctx.model / ctx.thinkingLevel / ctx.scopedModels
 
 访问模型、Provider 和已解析的认证信息。`ctx.modelRegistry.getProvider(id)` 返回有效的 pi-ai Provider，`getProviderAuth(id)` 解析其当前的 API Key、请求头、base URL 和 Provider 作用域环境变量，无需加载模型。`ctx.model` 是当前活动模型，`ctx.thinkingLevel` 是其当前有效的 thinking 级别。
+
+`ctx.scopedModels` 是限定到当前会话的只读模型列表——与 `/scoped-models` 命令显示的内容相同。它在会话启动时通过 `--models` CLI 标志和 `enabledModels` 设置解析（与可用目录进行 minimatch 匹配，匹配 `provider/modelId` 或纯 `modelId`）。未配置作用域时为空，表示所有可用模型均可使用。每个条目为 `{ model, thinkingLevel? }`，其中 `thinkingLevel` 仅在某个模式明确指定时才设置（例如 `anthropic/*:high`）。使用它可以构建与内置选择器一致的模型选择器，无需通过 `ctx.modelRegistry.getAvailable()` 枚举整个目录。
 
 ### ctx.signal
 
