@@ -80,6 +80,17 @@
 | `tui.select.confirm`  | `enter`            | 确认选择       |
 | `tui.select.cancel`   | `escape`、`ctrl+c` | 取消选择       |
 
+### TUI 备用屏幕视口
+
+这些操作在以 `--alt` 启动交互模式时生效。双指触控板和鼠标滚轮输入也可滚动视口。点击 OSC 8 超链接会以默认处理器打开。用鼠标主按钮拖拽可选中可见文本并复制到剪贴板。
+
+| ID                       | 默认键           | 说明                   |
+| ------------------------ | ---------------- | ---------------------- |
+| `tui.altScreen.pageUp`   | `shift+pageUp`   | 向上滚动一页           |
+| `tui.altScreen.pageDown` | `shift+pageDown` | 向下滚动一页           |
+| `tui.altScreen.top`      | `ctrl+home`      | 滚动到文档开头         |
+| `tui.altScreen.bottom`   | `ctrl+end`       | 滚动到末尾并跟随新输出 |
+
 ### 应用程序
 
 | ID                         | 默认键                         | 说明                                                                                                |

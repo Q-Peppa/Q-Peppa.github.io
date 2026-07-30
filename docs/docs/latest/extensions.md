@@ -1569,6 +1569,27 @@ const userScoped = commands.filter((command) => command.sourceInfo.scope === 'us
 
 为具有您的 `customType` 的自定义消息注册自定义 TUI 渲染器。自定义消息通过 `pi.sendMessage()` 创建并参与 LLM 上下文。参见 [自定义 UI](#自定义-ui)。
 
+### pi.registerMarkdownTransformer(transformer)
+
+为普通用户文本、助手文本和 thinking 块中的 Markdown 注册转换器。转换器按扩展加载顺序执行，每个转换器接收上一个转换器返回的 Markdown。链执行完毕后，Pi 使用内置渲染器渲染转换后的内容。
+
+转换器接收 Markdown 字符串和一个上下文对象：
+
+- `messageType` — `"user"`、`"assistant"` 或 `"assistant-thinking"`
+- `isStreaming` — 对部分助手更新为 `true`；对用户、已完成的助手和恢复的消息为 `false`
+- `availableWidth` — 转换后 Markdown 内容可用的精确终端列数
+
+返回转换后的 Markdown：
+
+```typescript
+pi.registerMarkdownTransformer((markdown, { messageType, isStreaming }) => {
+  if (isStreaming || messageType === 'assistant-thinking') return markdown;
+  return markdown.replaceAll('-->', '→');
+});
+```
+
+如果转换器抛出异常，Pi 保留目前生成的 Markdown 并继续执行下一个转换器。此 hook 仅用于显示：原始消息在会话和模型上下文中保持不变。它在新用户消息、助手流式更新、恢复的会话消息和终端宽度变化时运行，因此转换器应保持同步且开销低廉。
+
 ### pi.registerEntryRenderer(customType, renderer)
 
 为具有您的 `customType` 的自定义条目注册自定义 TUI 渲染器。自定义条目通过 `pi.appendEntry()` 创建，不参与 LLM 上下文。

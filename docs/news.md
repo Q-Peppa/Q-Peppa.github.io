@@ -2,6 +2,94 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.83.0（2026-07-29）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **外部客户端凭据导出** — `pi auth print-api-key` 和 `pi auth print-bearer-token` 可导出已配置的凭据，支持自动 OAuth 刷新和最低有效性强制检查。
+- **Headless OpenRouter 登录** — 通过粘贴重定向 URL 或授权码，在 SSH 环境下完成 `/login`。详见 [OpenRouter](/docs/latest/providers#openrouter)。
+- **GitHub Copilot 上的 Claude Opus 5** — 通过 GitHub Copilot 使用 Claude Opus 5，支持 adaptive thinking 和 1M 上下文窗口。详见 [GitHub Copilot](/docs/latest/providers#github-copilot)。
+
+不兼容变更
+
+- 升级捆绑的 TypeBox 别名至 1.3.7，移除 `Type.Base`、`Type.Awaited`、`Type.Promise`、`Type.AsyncIterator`、`Type.Iterator`、`Type.Options` 和 `Value.Mutate` 等已弃用 API，同时修复了可空数组工具参数的编译验证。详见 [包依赖](/docs/latest/packages#dependencies)（[#7243](https://github.com/earendil-works/pi/pull/7243) 由 [@petrroll](https://github.com/petrroll) 贡献）。
+
+新增
+
+- 添加 `pi auth print-api-key` 和 `pi auth print-bearer-token` 命令，用于向外部客户端导出已配置凭据，包括自动 OAuth 刷新和可配置的最低 token 有效期（[#7168](https://github.com/earendil-works/pi/pull/7168)）。
+- 向扩展暴露会话的已解析模型作用域 `ctx.scopedModels`。详见 [扩展上下文](/docs/latest/extensions#ctxmodelregistry--ctxmodel--ctxthinkinglevel--ctxscopedmodels)（[#7191](https://github.com/earendil-works/pi/pull/7191) 由 [@pungggi](https://github.com/pungggi) 贡献，[#7215](https://github.com/earendil-works/pi/pull/7215)）。
+- 为受支持的 text 和 image Provider 传输添加继承的 per-request `fetch` 注入。
+- 添加继承的 `"pending"` 停止原因，用于部分流式消息。详见 [自定义 Provider 流模式](/docs/latest/custom-provider#stream-pattern)（[#7151](https://github.com/earendil-works/pi/pull/7151) 由 [@lucasmeijer](https://github.com/lucasmeijer) 贡献）。
+- 添加继承的原始 Provider 停止原因，覆盖 Google、Anthropic、Amazon Bedrock、Mistral 和 OpenAI 流；未映射的终止原因现在表现为 Provider 错误而非成功停止（[#7272](https://github.com/earendil-works/pi/pull/7272)）。
+- 为远程和 headless 环境的 OpenRouter 登录添加手动重定向 URL 和授权码输入。详见 [OpenRouter](/docs/latest/providers#openrouter)（[#7114](https://github.com/earendil-works/pi/pull/7114) 由 [@rgarcia](https://github.com/rgarcia) 贡献）。
+- 为 GitHub Copilot 添加继承的 Claude Opus 5 支持，包括 adaptive thinking 和 1M 上下文窗口。详见 [GitHub Copilot](/docs/latest/providers#github-copilot)（[#7158](https://github.com/earendil-works/pi/pull/7158) 由 [@jay-aye-see-kay](https://github.com/jay-aye-see-kay) 贡献）。
+
+变更
+
+- 继承的 OAuth 凭据解析改为在剩余有效期不足五分钟时刷新 token，而非等到过期（[#7168](https://github.com/earendil-works/pi/pull/7168)）。
+
+修复
+
+- 切换工具输出展开时添加状态行提示（[#7180](https://github.com/earendil-works/pi/issues/7180)）。
+- 修复文件形式的 `SYSTEM.md` 和 `APPEND_SYSTEM.md` prompt 在 interactive 启动上下文列表中缺失的问题。详见 [系统 Prompt 文件](/docs/latest/usage#system-prompt-files)（[#7096](https://github.com/earendil-works/pi/issues/7096)）。
+- 修复链接的 Git worktree 嵌套在主仓库下时上下文文件加载两次的问题。详见 [上下文文件](/docs/latest/usage#context-files)（[#7221](https://github.com/earendil-works/pi/pull/7221) 由 [@arajkumar](https://github.com/arajkumar) 贡献）。
+- 修复 llama.cpp 流式响应报告零 token 用量、导致会话上下文统计为空的问题。详见 [llama.cpp](/docs/latest/llama-cpp)（[#7258](https://github.com/earendil-works/pi/pull/7258) 由 [@SteveImmanuel](https://github.com/SteveImmanuel) 贡献）。
+- 修复响应进行中时替换会话和提交树导航会中止并持久化待发送轮次，而非留下悬空 tool call。详见 [会话](/docs/latest/usage#sessions)（[#7022](https://github.com/earendil-works/pi/pull/7022) 由 [@tmustier](https://github.com/tmustier) 贡献）。
+- 修复 Git 包安装失败留下不完整目录导致干净重试被阻止的问题。详见 [安装和管理](/docs/latest/packages#install-and-manage)（[#7210](https://github.com/earendil-works/pi/pull/7210) 由 [@haoqixu](https://github.com/haoqixu) 贡献）。
+- 修复 `/model` 选择器在过滤时保留过期选择而非高亮首个匹配项的问题（[#7211](https://github.com/earendil-works/pi/pull/7211) 由 [@christianbasch](https://github.com/christianbasch) 贡献）。
+- 修复直接 RPC bash 命令绕过扩展 `user_bash` 处理器的问题。详见 [用户 Bash 事件](/docs/latest/extensions#user-bash-events)（[#7214](https://github.com/earendil-works/pi/pull/7214)）。
+- 修复扩展重载资源后 skills、prompts 和 themes 丢失包源元数据的问题。详见 [资源事件](/docs/latest/extensions#resource-events)（[#6968](https://github.com/earendil-works/pi/issues/6968)）。
+- 修复并发运行的用户 bash 命令取消问题，确保每个活跃命令都被中止（[#7103](https://github.com/earendil-works/pi/pull/7103) 由 [@yzhg1983](https://github.com/yzhg1983) 贡献）。
+- 修复扩展在 interactive 启动期间切换会话导致重复消息的问题（[#7110](https://github.com/earendil-works/pi/pull/7110) 由 [@yzhg1983](https://github.com/yzhg1983) 贡献）。
+- 修复继承的 Qwen Token Plan reasoning 模型，发送其服务特定的 thinking 控制和受支持的 reasoning-effort 级别（[#6951](https://github.com/earendil-works/pi/issues/6951)、[#6998](https://github.com/earendil-works/pi/issues/6998)）。
+- 修复继承的 Z.AI 输出限制通过不支持的参数发送的问题。详见 [Providers](/docs/latest/providers)（[#7174](https://github.com/earendil-works/pi/pull/7174) 由 [@HyeokjaeLee](https://github.com/HyeokjaeLee) 贡献）。
+- 修复显式配置的 Amazon Bedrock profiles 被 ambient AWS 访问密钥覆盖的问题。详见 [Amazon Bedrock](/docs/latest/providers#amazon-bedrock)（[#7176](https://github.com/earendil-works/pi/pull/7176) 由 [@christianbasch](https://github.com/christianbasch) 贡献）。
+- 修复继承的图片回退路径在窄终端中溢出、缩短 home 目录路径、并使绝对路径在终端支持超链接时可点击（[#7262](https://github.com/earendil-works/pi/pull/7262)）。
+- 修复继承的 OpenAI 兼容 tool call 在格式错误的 delta 同时包含空 `custom` 对象时丢失函数参数的问题（[#7288](https://github.com/earendil-works/pi/pull/7288) 由 [@sunnyyoung](https://github.com/sunnyyoung) 贡献）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+不兼容变更
+
+- 升级导出的 TypeBox 依赖至 1.3.7，移除 `Type.Base`、`Type.Awaited`、`Type.Promise`、`Type.AsyncIterator`、`Type.Iterator`、`Type.Options` 和 `Value.Mutate` 等已弃用 API，同时修复了可空数组工具参数的编译验证。使用已移除 API 的消费者需迁移至受支持的 TypeBox API（[#7243](https://github.com/earendil-works/pi/pull/7243) 由 [@petrroll](https://github.com/petrroll) 贡献）。
+
+新增
+
+- 为受支持的 text 和 image Provider 传输添加 per-request `fetch` 注入；Google 适配器拒绝非全局实现而非静默绕过。
+- 为 GitHub Copilot Provider 添加 Claude Opus 5 支持，通过 Anthropic Messages API 路由，支持 adaptive thinking、1M 上下文和 Copilot `minimal` thinking-level 覆盖（[#7158](https://github.com/earendil-works/pi/pull/7158) 由 [@jay-aye-see-kay](https://github.com/jay-aye-see-kay) 贡献）。
+- 为部分流式消息添加 `"pending"` 停止原因。详见 [停止原因](https://github.com/earendil-works/pi/blob/main/packages/ai/README.md#stop-reasons)（[#7151](https://github.com/earendil-works/pi/pull/7151) 由 [@lucasmeijer](https://github.com/lucasmeijer) 贡献）。
+- 添加 `AssistantMessage.rawStopReason`，并填入 Google、Anthropic、Amazon Bedrock、Mistral 和 OpenAI 流；未映射的终止原因现在表现为 Provider 错误而非成功停止（[#7272](https://github.com/earendil-works/pi/pull/7272)）。
+- 为远程和 headless 环境的 OpenRouter OAuth 登录添加手动重定向 URL 和授权码输入（[#7114](https://github.com/earendil-works/pi/pull/7114) 由 [@rgarcia](https://github.com/rgarcia) 贡献）。
+- 添加 `AuthResolutionOverrides.minOAuthValidityMs`，允许调用方要求 OAuth 凭据具有最低剩余有效期并据此刷新（[#7168](https://github.com/earendil-works/pi/pull/7168)）。
+
+变更
+
+- 存储的 OAuth 凭据改为在剩余有效期不足五分钟时刷新，而非等到过期（[#7168](https://github.com/earendil-works/pi/pull/7168)）。
+
+修复
+
+- 修复 Qwen Token Plan reasoning 模型，发送其服务特定的 thinking 控制和受支持的 reasoning-effort 级别（[#6951](https://github.com/earendil-works/pi/issues/6951)、[#6998](https://github.com/earendil-works/pi/issues/6998)）。
+- 修复 Z.AI Provider 和兼容自定义端点，通过 `max_tokens` 发送输出限制（[#7174](https://github.com/earendil-works/pi/pull/7174) 由 [@HyeokjaeLee](https://github.com/HyeokjaeLee) 贡献）。
+- 修复显式配置的 Amazon Bedrock profiles 被 ambient AWS 访问密钥覆盖的问题（[#7176](https://github.com/earendil-works/pi/pull/7176) 由 [@christianbasch](https://github.com/christianbasch) 贡献）。
+- 修复格式错误的 OpenAI 兼容 tool-call 增量同时包含有效 `function` 载荷和空 `custom` 对象时丢弃函数参数的问题（[#7288](https://github.com/earendil-works/pi/pull/7288) 由 [@sunnyyoung](https://github.com/sunnyyoung) 贡献）。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+修复
+
+- 修复长图片回退路径在窄终端中溢出、缩短 home 目录路径、并使绝对路径在终端支持超链接时可点击（[#7262](https://github.com/earendil-works/pi/pull/7262)）。
+
+</details>
+
 ## v0.82.1（2026-07-25）
 
 <details>

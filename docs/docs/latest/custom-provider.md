@@ -736,6 +736,7 @@ interface ProviderModelConfig {
     supportsDeveloperRole?: boolean;
     supportsReasoningEffort?: boolean;
     supportsUsageInStreaming?: boolean;
+    supportsFinishReason?: boolean;
     supportsStrictMode?: boolean;
     supportsOpenAIGrammarTools?: boolean; // openai-completions/openai-responses；false 则回退到普通 function tools
     maxTokensField?: 'max_completion_tokens' | 'max_tokens';
