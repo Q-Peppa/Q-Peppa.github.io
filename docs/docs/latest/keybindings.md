@@ -80,16 +80,18 @@
 | `tui.select.confirm`  | `enter`            | 确认选择       |
 | `tui.select.cancel`   | `escape`、`ctrl+c` | 取消选择       |
 
-### TUI 备用屏幕视口
+### TUI 全屏视口
 
-这些操作在以 `--alt` 启动交互模式时生效。双指触控板和鼠标滚轮输入也可滚动视口。点击 OSC 8 超链接会以默认处理器打开。用鼠标主按钮拖拽可选中可见文本并复制到剪贴板。
+这些操作在交互模式使用 `--ui-mode fullscreen` 时生效，作用于主转录滚动区域。双指触控板和鼠标滚轮输入可滚动指针所在区域，指针位于固定的编辑器/状态栏/底部停靠栏上方时则滚动转录。点击 OSC 8 超链接会以默认处理器打开。用鼠标主按钮拖拽可选中文本并复制到剪贴板；在转录顶部或底部边缘按住会自动滚动查看屏幕外内容。
 
-| ID                       | 默认键           | 说明                   |
-| ------------------------ | ---------------- | ---------------------- |
-| `tui.altScreen.pageUp`   | `shift+pageUp`   | 向上滚动一页           |
-| `tui.altScreen.pageDown` | `shift+pageDown` | 向下滚动一页           |
-| `tui.altScreen.top`      | `ctrl+home`      | 滚动到文档开头         |
-| `tui.altScreen.bottom`   | `ctrl+end`       | 滚动到末尾并跟随新输出 |
+| ID                             | 默认键            | 说明                       |
+| ------------------------------ | ----------------- | -------------------------- |
+| `tui.altScreen.pageUp`         | `pageUp`          | 向上滚动转录一页           |
+| `tui.altScreen.pageDown`       | `pageDown`        | 向下滚动转录一页           |
+| `tui.altScreen.previousPrompt` | `ctrl+shift+up`   | 跳转到上一条标记消息       |
+| `tui.altScreen.nextPrompt`     | `ctrl+shift+down` | 跳转到下一条标记消息       |
+| `tui.altScreen.top`            | `home`            | 滚动到转录开头             |
+| `tui.altScreen.bottom`         | `end`             | 滚动到转录末尾并跟随新输出 |
 
 ### 应用程序
 
