@@ -74,6 +74,7 @@ vim ~/.pi/agent/themes/my-theme.json
     "text": "",
     "thinkingText": "secondary",
     "selectedBg": "#2d2d30",
+    "scrollbarThumb": "#555566",
     "userMessageBg": "#2d2d30",
     "userMessageText": "",
     "customMessageBg": "#2d2d30",
@@ -143,12 +144,12 @@ vim ~/.pi/agent/themes/my-theme.json
 
 - `name`：必需，必须唯一，且不能包含 `/`。
 - `vars`：可选。在此定义可复用的颜色，然后在 `colors` 中引用。
-- `colors`：必须定义全部 51 个必需 token。`thinkingMax` 为可选，缺失时回退到 `thinkingXhigh`。
+- `colors`：必须定义全部 51 个必需 token。`thinkingMax` 为可选，缺失时回退到 `thinkingXhigh`；`scrollbarThumb` 为可选，缺失时回退到 `selectedBg`。
 - `$schema` 字段启用编辑器自动补全和验证。
 
 ## 颜色 Token
 
-每个主题必须定义全部 51 个颜色 token，没有可选颜色。
+每个主题必须定义全部 51 个必需颜色 token。`thinkingMax` 和 `scrollbarThumb` 为可选，以兼容现有主题；省略时分别使用 `thinkingXhigh` 和 `selectedBg`。
 
 ### 核心 UI（11 个）
 
@@ -166,21 +167,22 @@ vim ~/.pi/agent/themes/my-theme.json
 | `text`         | 默认文本（通常为 `""`）        |
 | `thinkingText` | Thinking 块文本                |
 
-### 背景和内容（11 个）
+### 背景和内容（11 个必需，1 个可选）
 
-| Token                | 用途             |
-| -------------------- | ---------------- |
-| `selectedBg`         | 选中行背景       |
-| `userMessageBg`      | 用户消息背景     |
-| `userMessageText`    | 用户消息文本     |
-| `customMessageBg`    | 扩展消息背景     |
-| `customMessageText`  | 扩展消息文本     |
-| `customMessageLabel` | 扩展消息标签     |
-| `toolPendingBg`      | 工具框（等待中） |
-| `toolSuccessBg`      | 工具框（成功）   |
-| `toolErrorBg`        | 工具框（错误）   |
-| `toolTitle`          | 工具标题         |
-| `toolOutput`         | 工具输出文本     |
+| Token                | 用途                                                |
+| -------------------- | --------------------------------------------------- |
+| `selectedBg`         | 选中行背景                                          |
+| `scrollbarThumb`     | 全屏滚动条滑块背景；可选，缺失时回退到 `selectedBg` |
+| `userMessageBg`      | 用户消息背景                                        |
+| `userMessageText`    | 用户消息文本                                        |
+| `customMessageBg`    | 扩展消息背景                                        |
+| `customMessageText`  | 扩展消息文本                                        |
+| `customMessageLabel` | 扩展消息标签                                        |
+| `toolPendingBg`      | 工具框（等待中）                                    |
+| `toolSuccessBg`      | 工具框（成功）                                      |
+| `toolErrorBg`        | 工具框（错误）                                      |
+| `toolTitle`          | 工具标题                                            |
+| `toolOutput`         | 工具输出文本                                        |
 
 ### Markdown（10 个）
 

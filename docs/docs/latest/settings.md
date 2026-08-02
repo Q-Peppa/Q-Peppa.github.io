@@ -68,6 +68,7 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 | `autocompleteMaxVisible` | number  | `5`                                                                  | 自动补全下拉框最大可见项（3-20）                                                                                                       |
 | `showHardwareCursor`     | boolean | `false`                                                              | TUI 为 IME 输入法定位时显示终端硬件光标                                                                                                |
 | `uiMode`                 | string  | `"regular"`                                                          | 交互式 UI 模式：`"regular"` 或实验性 `"fullscreen"`。在 `/settings` 中的更改会在重启后生效；`--ui-mode` 可覆盖该设置，仅对本次运行生效 |
+| `fullscreenScrollbar`    | string  | `"auto"`                                                             | 全屏转录滚动条：`"auto"` 在滚动时临时显示，`"always"` 保留最右侧一列并保持可见，`"hidden"` 隐藏。在常规 UI 模式下无效                  |
 
 对于 VS Code，请包含 `--wait` 以便编辑器退出后 Pi 恢复：
 
