@@ -460,7 +460,7 @@ for (const provider of modelRuntime.getProviders()) {
 }
 
 // 运行时 API Key 覆盖（不持久化到磁盘）
-modelRuntime.setRuntimeApiKey('anthropic', 'sk-my-temp-key');
+await modelRuntime.setRuntimeApiKey('anthropic', 'sk-my-temp-key');
 
 // 自定义凭证和模型位置
 const customRuntime = await ModelRuntime.create({
@@ -476,6 +476,24 @@ const { session } = await createAgentSession({
   modelRuntime: customRuntime,
 });
 ```
+
+`login()`、`logout()`、`setRuntimeApiKey()` 和 `removeRuntimeApiKey()` 会在受影响 Provider 的缓存/内置目录、组合和可用性快照在本地一致后 resolve。它们不会等待远程目录的新鲜度。如果凭证已提交但本地同步失败，它们会以导出的 `CredentialSynchronizationError` 拒绝；请检查其 `providerId`、`operation`、`credential` 和 `cause` 字段，而不是盲目重试凭证变更。
+
+公开的模型/认证操作和 `ModelRuntime.create({ signal })` 接受可选的中止信号，省略时不受时限约束。SDK 应用自行决定远程目录新鲜度的截止策略：
+
+```typescript
+const signal = AbortSignal.timeout(15_000);
+const result = await modelRuntime.refresh({
+  providers: ['anthropic'],
+  signal,
+});
+if (result.aborted) console.warn('Catalog refresh timed out; using cached models');
+for (const [providerId, error] of result.errors) {
+  console.warn(`Could not refresh ${providerId}:`, error);
+}
+```
+
+失败或超时的网络刷新不会撤销成功的凭证操作。`refresh()` 会启动新的 Provider 代际，因此它不会等待旧的停滞刷新，过期的代际也无法在之后发布。
 
 > 参见 [examples/sdk/09-api-keys-and-oauth.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/sdk/09-api-keys-and-oauth.ts)
 
@@ -934,7 +952,7 @@ const modelRuntime = await ModelRuntime.create({
   modelsPath: '/custom/agent/models.json',
 });
 if (process.env.MY_KEY) {
-  modelRuntime.setRuntimeApiKey('anthropic', process.env.MY_KEY);
+  await modelRuntime.setRuntimeApiKey('anthropic', process.env.MY_KEY);
 }
 
 // 内联工具
@@ -1142,6 +1160,7 @@ AgentSessionRuntime
 // 认证和模型
 ModelRuntime // 实现 pi-ai Models 并拥有凭证存储
 ModelRegistry // 同步扩展兼容门面
+CredentialSynchronizationError
 resolveCliModel
 resolveModelScopeWithDiagnostics
 

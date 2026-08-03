@@ -335,8 +335,8 @@ pi.registerProvider("corporate-ai", {
       };
     },
 
-    async refreshToken(credentials: OAuthCredentials): Promise<OAuthCredentials> {
-      const tokens = await refreshAccessToken(credentials.refresh);
+    async refreshToken(credentials: OAuthCredentials, signal: AbortSignal): Promise<OAuthCredentials> {
+      const tokens = await refreshAccessToken(credentials.refresh, signal);
       return {
         refresh: tokens.refreshToken ?? credentials.refresh,
         access: tokens.accessToken,
@@ -681,7 +681,7 @@ interface ProviderConfig {
   oauth?: {
     name: string;
     login(callbacks: OAuthLoginCallbacks): Promise<OAuthCredentials>;
-    refreshToken(credentials: OAuthCredentials): Promise<OAuthCredentials>;
+    refreshToken(credentials: OAuthCredentials, signal: AbortSignal): Promise<OAuthCredentials>;
     getApiKey(credentials: OAuthCredentials): string;
   };
 }
@@ -749,6 +749,7 @@ interface ProviderModelConfig {
       | 'openrouter'
       | 'deepseek'
       | 'together'
+      | 'baseten'
       | 'zai'
       | 'qwen'
       | 'chat-template'
@@ -756,6 +757,10 @@ interface ProviderModelConfig {
       | 'string-thinking'
       | 'ant-ling';
     chatTemplateKwargs?: Record<
+      string,
+      string | number | boolean | null | { $var: 'thinking.enabled' | 'thinking.effort'; omitWhenOff?: boolean }
+    >;
+    chatTemplateArgs?: Record<
       string,
       string | number | boolean | null | { $var: 'thinking.enabled' | 'thinking.effort'; omitWhenOff?: boolean }
     >;
@@ -775,7 +780,7 @@ interface ProviderModelConfig {
 }
 ```
 
-`openrouter` 发送 `reasoning: { effort }`。`deepseek` 发送 `thinking: { type: "enabled" | "disabled" }` 并在启用时发送 `reasoning_effort`。`together` 发送 `reasoning: { enabled }`，并在启用 `supportsReasoningEffort` 时发送 `reasoning_effort`。`qwen` 用于 DashScope 风格的顶层 `enable_thinking`。使用 `qwen-chat-template` 用于读取 `chat_template_kwargs.enable_thinking` 并需要 `preserve_thinking` 的本地 Qwen 兼容服务器。使用 `chat-template` 用于可配置的 `chat_template_kwargs`，例如 vLLM 后端的 DeepSeek V3.x 可使用 `chatTemplateKwargs: { "thinking": { "$var": "thinking.enabled" } }`。
+`openrouter` 发送 `reasoning: { effort }`。`deepseek` 发送 `thinking: { type: "enabled" | "disabled" }` 并在启用时发送 `reasoning_effort`。`together` 发送 `reasoning: { enabled }`，并在启用 `supportsReasoningEffort` 时发送 `reasoning_effort`。`qwen` 用于 DashScope 风格的顶层 `enable_thinking`。使用 `qwen-chat-template` 用于读取 `chat_template_kwargs.enable_thinking` 并需要 `preserve_thinking` 的本地 Qwen 兼容服务器。使用 `chat-template` 用于可配置的 `chat_template_kwargs`，例如 vLLM 后端的 DeepSeek V3.x 可使用 `chatTemplateKwargs: { "thinking": { "$var": "thinking.enabled" } }`。当 Provider 期望在 `chat_template_args` 下提供开关值、并可选支持顶层 `reasoning_effort` 时，使用 `thinkingFormat: "baseten"` 搭配 `chatTemplateArgs`。
 `cacheControlFormat: "anthropic"` 将 Anthropic 风格的 `cache_control` 标记应用于系统提示、最后一个工具定义和最后一个用户、助手或工具结果文本内容。
 
 ---

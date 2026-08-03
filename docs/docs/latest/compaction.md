@@ -176,9 +176,9 @@ interface CompactionDetails {
 
 带摘要导航后：
 
-         ┌─ B ─ C ─ D ─ [B、C、D 的摘要]
+         ┌─ B ─ C ─ D
     A ───┤
-         └─ E ─ F (新叶节点)
+         └─ E ─ F ─ [B、C、D 的摘要] (新叶节点)
 ```
 
 ### 累积文件追踪
@@ -318,9 +318,7 @@ pi.on('session_before_compact', async (event, ctx) => {
       firstKeptEntryId: preparation.firstKeptEntryId,
       tokensBefore: preparation.tokensBefore,
       // usage: summaryResponse.usage, // 可选；计入会话总计
-      details: {
-        /* 自定义数据 */
-      },
+      details: {/* 自定义数据 */},
     },
   };
 });
@@ -384,9 +382,7 @@ pi.on('session_before_tree', async (event, ctx) => {
       summary: {
         summary: '你的摘要...',
         // usage: summaryResponse.usage, // 可选；计入会话总计
-        details: {
-          /* 自定义数据 */
-        },
+        details: {/* 自定义数据 */},
       },
     };
   }

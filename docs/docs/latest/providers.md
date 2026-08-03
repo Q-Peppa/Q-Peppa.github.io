@@ -96,6 +96,7 @@ pi
 | Hugging Face                         | `HF_TOKEN`                                                                 | `huggingface`            |
 | Fireworks                            | `FIREWORKS_API_KEY`                                                        | `fireworks`              |
 | Together AI                          | `TOGETHER_API_KEY`                                                         | `together`               |
+| Baseten                              | `BASETEN_API_KEY`                                                          | `baseten`                |
 | Kimi For Coding                      | `KIMI_API_KEY`                                                             | `kimi-coding`            |
 | MiniMax                              | `MINIMAX_API_KEY`                                                          | `minimax`                |
 | MiniMax（中国）                      | `MINIMAX_CN_API_KEY`                                                       | `minimax-cn`             |

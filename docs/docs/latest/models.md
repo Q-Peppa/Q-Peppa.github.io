@@ -207,6 +207,7 @@
 | `input`            | 否   | `["text"]`           | 输入类型：`["text"]` 或 `["text", "image"]`                                |
 | `contextWindow`    | 否   | `128000`             | 上下文窗口大小（Token）                                                    |
 | `maxTokens`        | 否   | `16384`              | 最大输出 Token                                                             |
+| `samplingParams`   | 否   | 省略                 | 按原样合并到每个请求体中的采样参数（见下文）                               |
 | `cost`             | 否   | 全零                 | 每百万 Token 费率，可选请求级输入定价阶梯                                  |
 | `compat`           | 否   | Provider 的 `compat` | Provider 兼容性覆盖。当两者都设置时，与 Provider 级别的 `compat` 合并      |
 
@@ -236,6 +237,24 @@
 
 - `/model`、`--list-models` 和交互式页脚按模型 `id` 显示条目。
 - 配置的 `name` 用于模型匹配和次要模型详情文本。它不会替换页脚/状态栏中的模型 id。
+
+### 采样参数
+
+`samplingParams` 是一个自由形式对象，按原样合并到该模型的每个请求体中，位置在 pi 自身设置的字段之后，因此其键优先。用它发送 pi 未建模的采样参数——包括服务器特定的参数，如 llama.cpp 的 `min_p` 或 vLLM 的 `top_k`：
+
+```json
+{
+  "id": "deepseek-v4-flash",
+  "samplingParams": {
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 0,
+    "min_p": 0.0
+  }
+}
+```
+
+只有 OpenAI 兼容 API 会应用它（`openai-completions`、`openai-responses`、`azure-openai-responses`）；其他 API 会忽略它。键会覆盖 pi 的命名请求字段（例如这里的 `temperature` 键会胜过请求级 temperature），因此建议将其作为模型的唯一采样真相来源。在 `modelOverrides` 中，`samplingParams` 按 key 与基础模型的值合并。
 
 ### Thinking Level Map
 
@@ -341,7 +360,7 @@
 }
 ```
 
-`modelOverrides` 支持每个模型的以下字段：`name`、`reasoning`、`thinkingLevelMap`、`input`、`cost`（部分）、`contextWindow`、`maxTokens`、`headers`、`compat`。
+`modelOverrides` 支持每个模型的以下字段：`name`、`reasoning`、`thinkingLevelMap`、`input`、`cost`（部分）、`contextWindow`、`maxTokens`、`samplingParams`（按 key 合并）、`headers`、`compat`。
 
 直接 OpenAI 的 GPT-5.6 Sol、Terra 和 Luna 默认使用 `272000` 上下文窗口，使请求保持在 OpenAI 的短上下文定价阶梯内。要选择使用 OpenAI 的 1.05M 上下文窗口，为每个使用的模型增加它：
 
@@ -451,8 +470,9 @@
 | `requiresAssistantAfterToolResult`            | 在工具结果后、用户消息前插入一条助手消息                                                                                                                                                                                                                                                                           |
 | `requiresThinkingAsText`                      | 将 thinking 块转换为纯文本                                                                                                                                                                                                                                                                                         |
 | `requiresReasoningContentOnAssistantMessages` | 在启用推理时，在所有重放的助手消息上包含空的 `reasoning_content`                                                                                                                                                                                                                                                   |
-| `thinkingFormat`                              | 使用 `reasoning_effort`、`openrouter`、`deepseek`、`together`、`zai`、`qwen`、`chat-template` 或 `qwen-chat-template` thinking 参数                                                                                                                                                                                |
+| `thinkingFormat`                              | 使用 `reasoning_effort`、`openrouter`、`deepseek`、`together`、`baseten`、`zai`、`qwen`、`chat-template` 或 `qwen-chat-template` thinking 参数                                                                                                                                                                     |
 | `chatTemplateKwargs`                          | `thinkingFormat: "chat-template"` 使用的 `chat_template_kwargs` 值；使用 `{ "$var": "thinking.enabled" }` 或 `{ "$var": "thinking.effort" }` 表示由 pi 控制的 thinking 值                                                                                                                                          |
+| `chatTemplateArgs`                            | `thinkingFormat: "baseten"` 使用的 `chat_template_args` 值；使用 `{ "$var": "thinking.enabled" }` 或 `{ "$var": "thinking.effort" }` 表示由 pi 控制的 thinking 值                                                                                                                                                  |
 | `cacheControlFormat`                          | 在系统提示、最后一个工具定义和最后一个用户、助手或工具结果文本内容上使用 Anthropic 风格的 `cache_control` 标记。目前仅支持 `anthropic`                                                                                                                                                                             |
 | `sendSessionAffinityHeaders`                  | 对于 `openai-completions`，在启用缓存时从会话 ID 发送会话亲和请求头。默认：`false`。                                                                                                                                                                                                                               |
 | `sessionAffinityFormat`                       | 对于 `openai-completions` 和 `openai-responses`，会话亲和请求头格式：`openai` 发送 `session_id`/`x-client-request-id`（completions 还发送 `x-session-affinity`），`openai-nosession` 省略包含下划线的 `session_id` 请求头，`openrouter` 发送 `x-session-id`。不影响 `prompt_cache_key` body 参数。默认：自动检测。 |
@@ -463,7 +483,7 @@
 | `openRouterRouting`                           | OpenRouter Provider 路由偏好。此对象按原样作为 [OpenRouter API 请求](https://openrouter.ai/docs/guides/routing/provider-selection) 的 `provider` 字段发送                                                                                                                                                          |
 | `vercelGatewayRouting`                        | Vercel AI Gateway 路由配置，用于 Provider 选择（`only`、`order`）                                                                                                                                                                                                                                                  |
 
-`openrouter` 使用 `reasoning: { effort }`。`together` 使用 `reasoning: { enabled }`，并在 `supportsReasoningEffort` 启用时也使用 `reasoning_effort`。`qwen` 使用顶级 `enable_thinking`。对需要 `chat_template_kwargs.enable_thinking` 和 `preserve_thinking` 的本地 Qwen 兼容服务器，使用 `qwen-chat-template`。对需要可配置 `chat_template_kwargs` 的 vLLM/Hugging Face chat-template，使用 `chat-template`，例如 DeepSeek V3.x 模板使用 `chatTemplateKwargs: { "thinking": { "$var": "thinking.enabled" } }`。
+`openrouter` 使用 `reasoning: { effort }`。`together` 使用 `reasoning: { enabled }`，并在 `supportsReasoningEffort` 启用时也使用 `reasoning_effort`。`qwen` 使用顶级 `enable_thinking`。对需要 `chat_template_kwargs.enable_thinking` 和 `preserve_thinking` 的本地 Qwen 兼容服务器，使用 `qwen-chat-template`。对需要可配置 `chat_template_kwargs` 的 vLLM/Hugging Face chat-template，使用 `chat-template`，例如 DeepSeek V3.x 模板使用 `chatTemplateKwargs: { "thinking": { "$var": "thinking.enabled" } }`。使用 `thinkingFormat: "baseten"` 搭配 `chatTemplateArgs`，适用于通过 `chat_template_args` 暴露开关控制并可选支持顶层 `reasoning_effort` 的 Provider。
 
 `cacheControlFormat: "anthropic"` 适用于那些在文本内容和工具定义上通过 `cache_control` 标记暴露 Anthropic 风格提示缓存的 OpenAI 兼容 Provider。
 

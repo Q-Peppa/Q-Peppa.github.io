@@ -1715,7 +1715,9 @@ pi.events.emit("my:event", { ... });
 
 在扩展工厂函数中进行的调用会排队，并在运行器初始化时应用。之后进行的调用——例如来自用户设置流程后的命令处理程序——立即生效，无需 `/reload`。
 
-动态 Provider 可以实现 `refreshModels`。Pi 在模型刷新期间调用它，通过 Provider 同步发布返回的列表，并传入规范的凭证/存储/网络/信号上下文。扩展通过 `context.store` 决定是否持久化目录；如 llama.cpp 等实时服务器可以忽略它。
+动态 Provider 可以实现 `refreshModels`。Pi 在模型刷新期间调用它，通过 Provider 同步发布返回的列表，并传入规范的凭证/已存储目录/网络/信号上下文。扩展通过经过代际检查的 `context.publish({ persist: entry })` 决定是否持久化目录元数据；如 llama.cpp 等实时服务器可以直接返回模型而不持久化它们。
+
+`context.signal` 始终是具体的信号，Provider 回调必须将其传给阻塞 I/O。公开的 `ModelRuntime.refresh()` 和 `ModelRegistry.refresh()` 调用接受可选信号，省略时不受时限约束；扩展和应用自行决定自己的截止时间。取消会停止调用方的等待（即使 Provider 忽略信号），但停止底层工作仍需要配合。
 
 需要原生 Provider 认证、过滤、刷新或流行为的扩展可以从 `@earendil-works/pi-ai` 注册一个完整的 `Provider`。该 Provider 成为组合基础，`models.json` 覆盖仍然在其之上应用。
 
@@ -1805,7 +1807,8 @@ pi.registerProvider("corporate-ai", {
       const code = await callbacks.onPrompt({ message: "输入代码：" });
       return { refresh: code, access: code, expires: Date.now() + 3600000 };
     },
-    async refreshToken(credentials) {
+    async refreshToken(credentials, signal) {
+      signal.throwIfAborted();
       // 刷新逻辑
       return credentials;
     },
@@ -1827,7 +1830,7 @@ pi.registerProvider("corporate-ai", {
 - `headers` - 要包含在请求中的自定义标头。
 - `authHeader` - 如果为 true，自动添加 `Authorization: Bearer` 标头。
 - `models` - 模型定义数组。如果提供，替换此 Provider 的所有现有模型。模型定义可以设置 `baseUrl` 以覆盖该模型的 Provider 端点。
-- `refreshModels` - 异步动态发现回调。其返回的模型替换扩展提供的模型。仅在结果需要持久化时使用带作用域的 `context.store`。
+- `refreshModels` - 异步动态发现回调。其返回的模型替换扩展提供的模型。`context.stored` 包含已持久化的 Provider 快照；仅在需要更新目录数据时使用经过代际检查的 `context.publish({ persist: entry })`。使用 `persist: null` 删除该快照。
 - `oauth` - 支持 `/login` 的 OAuth Provider 配置。提供后，该 Provider 会出现在登录菜单中。
 - `streamSimple` - 用于非标准 API 的自定义流式实现。
 

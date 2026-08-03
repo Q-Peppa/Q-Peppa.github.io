@@ -51,24 +51,24 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 
 ### UI 和显示
 
-| 设置项                   | 类型    | 默认值                                                               | 说明                                                                                                                                   |
-| ------------------------ | ------- | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `theme`                  | string  | `"dark"`                                                             | 主题名称（`"dark"`、`"light"` 或自定义）                                                                                               |
-| `externalEditor`         | string  | `$VISUAL`，然后是 `$EDITOR`，Windows 上为 Notepad，其他平台为 `nano` | Ctrl+G 外部编辑器命令；优先级高于环境变量                                                                                              |
-| `quietStartup`           | boolean | `false`                                                              | 隐藏启动头部                                                                                                                           |
-| `defaultProjectTrust`    | string  | `"ask"`                                                              | 回退项目信任行为：`"ask"`、`"always"` 或 `"never"`。仅作为全局设置                                                                     |
-| `collapseChangelog`      | boolean | `false`                                                              | 更新后显示精简的 changelog                                                                                                             |
-| `enableInstallTelemetry` | boolean | `true`                                                               | 首次安装或 changelog 检测到更新时发送匿名安装/更新版本 ping。这不控制更新检查                                                          |
-| `enableAnalytics`        | boolean | `false`                                                              | 选择加入的数据分析共享。目前仅在实验性首次设置流程中询问（`PI_EXPERIMENTAL=1`）                                                        |
-| `trackingId`             | string  | -                                                                    | 数据分析追踪标识符，在开启 `enableAnalytics` 时自动生成                                                                                |
-| `doubleEscapeAction`     | string  | `"tree"`                                                             | 双击 Esc 的行为：`"tree"`、`"fork"` 或 `"none"`                                                                                        |
-| `treeFilterMode`         | string  | `"default"`                                                          | `/tree` 的默认过滤器：`"default"`、`"no-tools"`、`"user-only"`、`"labeled-only"`、`"all"`                                              |
-| `editorPaddingX`         | number  | `0`                                                                  | 编辑器水平内边距（0-3）                                                                                                                |
-| `outputPad`              | number  | `1`                                                                  | 用户消息、助手消息和 thinking 的水平内边距（0 或 1）                                                                                   |
-| `autocompleteMaxVisible` | number  | `5`                                                                  | 自动补全下拉框最大可见项（3-20）                                                                                                       |
-| `showHardwareCursor`     | boolean | `false`                                                              | TUI 为 IME 输入法定位时显示终端硬件光标                                                                                                |
-| `uiMode`                 | string  | `"regular"`                                                          | 交互式 UI 模式：`"regular"` 或实验性 `"fullscreen"`。在 `/settings` 中的更改会在重启后生效；`--ui-mode` 可覆盖该设置，仅对本次运行生效 |
-| `fullscreenScrollbar`    | string  | `"auto"`                                                             | 全屏转录滚动条：`"auto"` 在滚动时临时显示，`"always"` 保留最右侧一列并保持可见，`"hidden"` 隐藏。在常规 UI 模式下无效                  |
+| 设置项                   | 类型    | 默认值                                                               | 说明                                                                                                                  |
+| ------------------------ | ------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `theme`                  | string  | `"dark"`                                                             | 主题名称（`"dark"`、`"light"` 或自定义）                                                                              |
+| `externalEditor`         | string  | `$VISUAL`，然后是 `$EDITOR`，Windows 上为 Notepad，其他平台为 `nano` | Ctrl+G 外部编辑器命令；优先级高于环境变量                                                                             |
+| `quietStartup`           | boolean | `false`                                                              | 隐藏启动头部                                                                                                          |
+| `defaultProjectTrust`    | string  | `"ask"`                                                              | 回退项目信任行为：`"ask"`、`"always"` 或 `"never"`。仅作为全局设置                                                    |
+| `collapseChangelog`      | boolean | `false`                                                              | 更新后显示精简的 changelog                                                                                            |
+| `enableInstallTelemetry` | boolean | `true`                                                               | 首次安装或 changelog 检测到更新时发送匿名安装/更新版本 ping。这不控制更新检查                                         |
+| `enableAnalytics`        | boolean | `false`                                                              | 选择加入的数据分析共享。目前仅在实验性首次设置流程中询问（`PI_EXPERIMENTAL=1`）                                       |
+| `trackingId`             | string  | -                                                                    | 数据分析追踪标识符，在开启 `enableAnalytics` 时自动生成                                                               |
+| `doubleEscapeAction`     | string  | `"tree"`                                                             | 双击 Esc 的行为：`"tree"`、`"fork"` 或 `"none"`                                                                       |
+| `treeFilterMode`         | string  | `"default"`                                                          | `/tree` 的默认过滤器：`"default"`、`"no-tools"`、`"user-only"`、`"labeled-only"`、`"all"`                             |
+| `editorPaddingX`         | number  | `0`                                                                  | 编辑器水平内边距（0-3）                                                                                               |
+| `outputPad`              | number  | `1`                                                                  | 用户消息、助手消息和 thinking 的水平内边距（0 或 1）                                                                  |
+| `autocompleteMaxVisible` | number  | `5`                                                                  | 自动补全下拉框最大可见项（3-20）                                                                                      |
+| `showHardwareCursor`     | boolean | `false`                                                              | TUI 为 IME 输入法定位时显示终端硬件光标                                                                               |
+| `uiMode`                 | string  | `"regular"`                                                          | 交互式 UI 模式：`"regular"` 或实验性 `"fullscreen"`。在 `/settings` 中的更改立即生效；`--ui-mode` 在启动时覆盖该设置  |
+| `fullscreenScrollbar`    | string  | `"auto"`                                                             | 全屏转录滚动条：`"auto"` 在滚动时临时显示，`"always"` 保留最右侧一列并保持可见，`"hidden"` 隐藏。在常规 UI 模式下无效 |
 
 对于 VS Code，请包含 `--wait` 以便编辑器退出后 Pi 恢复：
 
@@ -177,13 +177,13 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 
 ### 终端和图像
 
-| 设置项                     | 类型    | 默认值  | 说明                               |
-| -------------------------- | ------- | ------- | ---------------------------------- |
-| `terminal.showImages`      | boolean | `true`  | 在终端显示图像（如支持）           |
-| `terminal.imageWidthCells` | number  | `60`    | 图像宽度（终端单元格）             |
-| `terminal.clearOnShrink`   | boolean | `false` | 内容缩小时清除空行（可能导致闪烁） |
-| `images.autoResize`        | boolean | `true`  | 自动调整图像大小至最大 2000x2000   |
-| `images.blockImages`       | boolean | `false` | 阻止所有图像发送给 LLM             |
+| 设置项                     | 类型    | 默认值  | 说明                                                                           |
+| -------------------------- | ------- | ------- | ------------------------------------------------------------------------------ |
+| `terminal.showImages`      | boolean | `true`  | 在终端显示图像（如支持）                                                       |
+| `terminal.imageWidthCells` | number  | `60`    | 图像宽度（终端单元格）                                                         |
+| `terminal.clearOnShrink`   | boolean | `false` | 内容缩小时清除空行（可能导致闪烁）                                             |
+| `images.autoResize`        | boolean | `true`  | 自动调整图像大小至最大 2000x2000。适用于 `@file` 附件、`read` 和工具返回的图像 |
+| `images.blockImages`       | boolean | `false` | 阻止所有图像发送给 LLM                                                         |
 
 ### Shell
 

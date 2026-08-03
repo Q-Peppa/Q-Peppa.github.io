@@ -12,58 +12,19 @@ pi --mode json "Your prompt"
 
 ## 事件类型
 
-事件定义在 [`AgentSessionEvent`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/agent-session.ts#L102) 中：
+线上事件使用 `JsonAgentSessionEvent`。它与
+[`AgentSessionEvent`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/agent-session.ts) 匹配，
+不同之处在于流式消息更新省略了累积快照：
 
 ```typescript
-type AgentSessionEvent =
-  | AgentEvent
+type WithoutPartial<T> = T extends { partial: unknown } ? Omit<T, 'partial'> : T;
+
+type JsonAgentSessionEvent =
+  | Exclude<AgentSessionEvent, { type: 'message_update' }>
   | {
-      type: 'queue_update';
-      steering: readonly string[];
-      followUp: readonly string[];
-    }
-  | {
-      type: 'compaction_start';
-      reason: 'manual' | 'threshold' | 'overflow';
-    }
-  | {
-      type: 'compaction_end';
-      reason: 'manual' | 'threshold' | 'overflow';
-      result: CompactionResult | undefined;
-      aborted: boolean;
-      willRetry: boolean;
-      errorMessage?: string;
-    }
-  | {
-      type: 'auto_retry_start';
-      attempt: number;
-      maxAttempts: number;
-      delayMs: number;
-      errorMessage: string;
-    }
-  | {
-      type: 'auto_retry_end';
-      success: boolean;
-      attempt: number;
-      finalError?: string;
-    }
-  | {
-      type: 'summarization_retry_scheduled';
-      attempt: number;
-      maxAttempts: number;
-      delayMs: number;
-      errorMessage: string;
-    }
-  | {
-      type: 'summarization_retry_attempt_start';
-      source: 'branchSummary';
-    }
-  | {
-      type: 'summarization_retry_attempt_start';
-      source: 'compaction';
-      reason: 'manual' | 'threshold' | 'overflow';
-    }
-  | { type: 'summarization_retry_finished' };
+      type: 'message_update';
+      assistantMessageEvent: WithoutPartial<AssistantMessageEvent>;
+    };
 ```
 
 - `queue_update` —— 每当待处理的 steering 和 follow-up 队列发生变化时发出，包含完整队列。
@@ -71,7 +32,8 @@ type AgentSessionEvent =
 - `auto_retry_start` / `auto_retry_end` —— 自动重试事件，含尝试次数、最大次数、延迟和错误信息。
 - `summarization_retry_scheduled` / `summarization_retry_attempt_start` / `summarization_retry_finished` —— 压缩或分支摘要生成重试事件。
 
-基础事件来自 [`AgentEvent`](https://github.com/earendil-works/pi-mono/blob/main/packages/agent/src/types.ts#L179)：
+其他基础事件来自
+[`AgentEvent`](https://github.com/earendil-works/pi-mono/blob/main/packages/agent/src/types.ts)：
 
 ```typescript
 type AgentEvent =
@@ -160,11 +122,13 @@ type AgentEvent =
 {"type":"agent_start"}
 {"type":"turn_start"}
 {"type":"message_start","message":{"role":"assistant","content":[],...}}
-{"type":"message_update","message":{...},"assistantMessageEvent":{"type":"text_delta","delta":"Hello",...}}
+{"type":"message_update","assistantMessageEvent":{"type":"text_delta","contentIndex":0,"delta":"Hello"}}
 {"type":"message_end","message":{...}}
 {"type":"turn_end","message":{...},"toolResults":[]}
 {"type":"agent_end","messages":[...]}
 ```
+
+`message_update` 记录仅包含增量。它们省略累积的 `message` 字段和 `assistantMessageEvent.partial`，以保持流大小线性。如需组装实时文本、thinking 或工具调用参数，可使用 `contentIndex` 和 `delta`。`message_end` 包含最终的权威消息。
 
 ## 示例
 

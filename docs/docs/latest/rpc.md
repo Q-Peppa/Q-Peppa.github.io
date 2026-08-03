@@ -1001,46 +1001,43 @@ Agent 开始处理 prompt 时发出。
 
 ### message_update（流式）
 
-在助手消息流式传输期间发出。包含部分消息和流式增量事件。
+在助手消息流式传输期间发出。包含一个增量事件，但不含累积消息快照。
 
 ```json
 {
   "type": "message_update",
-  "message": {...},
   "assistantMessageEvent": {
     "type": "text_delta",
     "contentIndex": 0,
-    "delta": "Hello ",
-    "partial": {...}
+    "delta": "Hello "
   }
 }
 ```
 
 `assistantMessageEvent` 字段包含以下增量类型之一：
 
-| 类型             | 描述                                                  |
-| ---------------- | ----------------------------------------------------- |
-| `start`          | 消息生成开始                                          |
-| `text_start`     | 文本内容块开始                                        |
-| `text_delta`     | 文本内容片段                                          |
-| `text_end`       | 文本内容块结束                                        |
-| `thinking_start` | 思考块开始                                            |
-| `thinking_delta` | 思考内容片段                                          |
-| `thinking_end`   | 思考块结束                                            |
-| `toolcall_start` | 工具调用开始                                          |
-| `toolcall_delta` | 工具调用参数片段                                      |
-| `toolcall_end`   | 工具调用结束（包含完整 `toolCall` 对象）              |
-| `done`           | 消息完成（reason：`"stop"`、`"length"`、`"toolUse"`） |
-| `error`          | 发生错误（reason：`"aborted"`、`"error"`）            |
+| 类型             | 描述                                     |
+| ---------------- | ---------------------------------------- |
+| `text_start`     | 文本内容块开始                           |
+| `text_delta`     | 文本内容片段                             |
+| `text_end`       | 文本内容块结束                           |
+| `thinking_start` | 思考块开始                               |
+| `thinking_delta` | 思考内容片段                             |
+| `thinking_end`   | 思考块结束                               |
+| `toolcall_start` | 工具调用开始                             |
+| `toolcall_delta` | 工具调用参数片段                         |
+| `toolcall_end`   | 工具调用结束（包含完整 `toolCall` 对象） |
 
 文本响应流式示例：
 
 ```json
-{"type":"message_update","message":{...},"assistantMessageEvent":{"type":"text_start","contentIndex":0,"partial":{...}}}
-{"type":"message_update","message":{...},"assistantMessageEvent":{"type":"text_delta","contentIndex":0,"delta":"Hello","partial":{...}}}
-{"type":"message_update","message":{...},"assistantMessageEvent":{"type":"text_delta","contentIndex":0,"delta":" world","partial":{...}}}
-{"type":"message_update","message":{...},"assistantMessageEvent":{"type":"text_end","contentIndex":0,"content":"Hello world","partial":{...}}}
+{"type":"message_update","assistantMessageEvent":{"type":"text_start","contentIndex":0}}
+{"type":"message_update","assistantMessageEvent":{"type":"text_delta","contentIndex":0,"delta":"Hello"}}
+{"type":"message_update","assistantMessageEvent":{"type":"text_delta","contentIndex":0,"delta":" world"}}
+{"type":"message_update","assistantMessageEvent":{"type":"text_end","contentIndex":0,"content":"Hello world"}}
 ```
+
+`message_update` 有意省略了原有的累积 `message` 字段和 `assistantMessageEvent.partial`。需要实时部分消息的客户端必须使用 `contentIndex` 从 `message_start` 和后续事件组装，并将 `message_end.message` 视为权威结果。对于工具调用，请缓冲 `toolcall_delta.delta`；`toolcall_end.toolCall` 包含完成的调用。
 
 ### bash_execution_update
 
@@ -1453,6 +1450,7 @@ Agent 开始处理 prompt 时发出。
 - [`packages/ai/src/types.ts`](https://github.com/earendil-works/pi/blob/main/packages/ai/src/types.ts) - `Model`、`UserMessage`、`AssistantMessage`、`ToolResultMessage`
 - [`packages/agent/src/types.ts`](https://github.com/earendil-works/pi/blob/main/packages/agent/src/types.ts) - `AgentMessage`、`AgentEvent`
 - [`src/core/messages.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/messages.ts) - `BashExecutionMessage`
+- [`src/modes/json-event.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/modes/json-event.ts) - `JsonAgentSessionEvent`
 - [`src/modes/rpc/rpc-types.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/modes/rpc/rpc-types.ts) - RPC 命令/响应类型、扩展 UI 请求/响应类型
 
 ### Model

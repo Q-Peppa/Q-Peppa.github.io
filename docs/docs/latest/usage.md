@@ -244,7 +244,7 @@ pi --no-extensions -e ./my-extension.ts
 
 在 `fullscreen` 模式下，转录在终端视口内滚动，而排队消息、工作状态、扩展组件、编辑器和底部栏固定在底部。鼠标/触控板输入会滚动指针所在区域；键盘视口操作始终可用。内联图片在支持 Kitty 图形协议的终端（包括 Kitty 和 Ghostty）中正常工作。在 iTerm2 中它们渲染为文本占位符，因为其内联图片协议无法在应用自控滚动期间删除或裁剪渲染。在 `regular` 模式下，pi 使用主屏幕和终端自有的回滚缓冲，iTerm2 内联图片继续正常渲染。
 
-若要以 fullscreen 模式为默认，可在 `/settings` 中将 **UI 模式** 设置为 `fullscreen`。更改在重启 pi 后生效。
+在 `/settings` 中设置 **UI 模式**，可立即在 `regular` 和 `fullscreen` 之间切换，并为以后的会话选择默认模式。
 
 ### 文件参数
 
