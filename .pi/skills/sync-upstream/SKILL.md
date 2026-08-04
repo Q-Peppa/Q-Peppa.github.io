@@ -391,6 +391,20 @@ sed -nE 's/^## v([0-9]+\.[0-9]+\.[0-9]+).*/\1/p' ./docs/news.md | head -1
 | Deprecated       | 弃用       |
 | Security         | 安全       |
 
+**`inherited` 翻译（高频坑）：**
+
+CHANGELOG 里的 `inherited` / `Added inherited X` / `Fixed inherited X` 表示**该变更来自依赖包**（如 `@earendil-works/pi-ai`、`pi-tui`），**不要**译成「继承的」。
+
+| 英文                      | 中文（推荐）                        |
+| ------------------------- | ----------------------------------- |
+| Added inherited X         | 添加了 X（必要时加「来自 `@pkg`」） |
+| Fixed inherited X         | 修复了 X                            |
+| Changed inherited X       | 变更了 X                            |
+| ... inherited from `@pkg` | …（来自 `@pkg`）                    |
+| non-inherited env         | 非继承环境（此处「继承」保留）      |
+
+错误示例：`添加继承的 Claude Opus 5 支持` → 正确：`添加 Claude Opus 5 支持`。
+
 **链接处理规则：**
 
 | 源站链接                                              | 翻译站链接                                                   | 备注                |
@@ -502,6 +516,8 @@ done < /tmp/sync-image-diff
 - 长定语不切分（结构套叠）
 - 被动语态直译（应转主动）
 - 英文句式直译（如 "This means..." → 不应直接译为 "这意味着..."）
+- CHANGELOG 将 `inherited` 误译为「继承的」（见 A.3；正文里真正的资源继承如「继承的全局资源」可保留）
+- 首页等营销文案残留 `No xxx` 半英半中（应译为「没有 xxx」）
 
 **链接验证：**
 
