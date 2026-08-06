@@ -105,6 +105,8 @@ Pi 在启动时加载 `AGENTS.md` 或 `CLAUDE.md`：
 - 从当前工作目录向上遍历的父目录
 - 当前目录
 
+如果目录包含 `AGENTS.override.md`，Pi 会加载它，而不是该目录中的 `AGENTS.md` 或 `CLAUDE.md`。其他目录的上下文文件仍会正常分层。
+
 使用上下文文件来定义项目规范、命令、安全规则和偏好。使用 `--no-context-files` 或 `-nc` 禁用加载。
 
 ### 系统 Prompt 文件
@@ -231,20 +233,20 @@ pi --no-extensions -e ./my-extension.ts
 
 ### 其他选项
 
-| 选项                            | 说明                                            |
-| ------------------------------- | ----------------------------------------------- |
-| `--system-prompt <text>`        | 替换默认 Prompt；上下文文件和 Skills 仍会被追加 |
-| `--append-system-prompt <text>` | 追加到系统 Prompt                               |
-| `--verbose`                     | 强制详细启动                                    |
-| `-a`、`--approve`               | 在本次运行中信任项目本地文件                    |
-| `-na`、`--no-approve`           | 在本次运行中忽略项目本地文件                    |
-| `-h`、`--help`                  | 显示帮助                                        |
-| `--ui-mode <mode>`              | UI 模式：`regular`（默认）或实验性 `fullscreen` |
-| `-v`、`--version`               | 显示版本                                        |
+| 选项                            | 说明                                             |
+| ------------------------------- | ------------------------------------------------ |
+| `--system-prompt <text>`        | 替换默认 Prompt；上下文文件和 Skills 仍会被追加  |
+| `--append-system-prompt <text>` | 追加到系统 Prompt                                |
+| `--verbose`                     | 强制详细启动                                     |
+| `-a`、`--approve`               | 在本次运行中信任项目本地文件                     |
+| `-na`、`--no-approve`           | 在本次运行中忽略项目本地文件                     |
+| `-h`、`--help`                  | 显示帮助                                         |
+| `--tui-mode <mode>`             | TUI 模式：`regular`（默认）或实验性 `fullscreen` |
+| `-v`、`--version`               | 显示版本                                         |
 
 在 `fullscreen` 模式下，转录在终端视口内滚动，而排队消息、工作状态、扩展组件、编辑器和底部栏固定在底部。鼠标/触控板输入会滚动指针所在区域；键盘视口操作始终可用。内联图片在支持 Kitty 图形协议的终端（包括 Kitty 和 Ghostty）中正常工作。在 iTerm2 中它们渲染为文本占位符，因为其内联图片协议无法在应用自控滚动期间删除或裁剪渲染。在 `regular` 模式下，pi 使用主屏幕和终端自有的回滚缓冲，iTerm2 内联图片继续正常渲染。
 
-在 `/settings` 中设置 **UI 模式**，可立即在 `regular` 和 `fullscreen` 之间切换，并为以后的会话选择默认模式。
+在 `/settings` 中设置 **TUI 模式**，可立即在 `regular` 和 `fullscreen` 之间切换，并为以后的会话选择默认模式。
 
 ### 文件参数
 

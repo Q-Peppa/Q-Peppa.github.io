@@ -2,6 +2,385 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.84.0（2026-08-06）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **全屏 TUI 模式** — 在运行时于常规与全屏模式间切换，带粘性编辑器和 footer、可独立滚动的转录，以及可拖动的滚动条。详见 [UI 与显示](/docs/latest/settings#ui--display)。
+- **Mermaid 与 LaTeX 渲染** — 在交互式转录中渲染 Mermaid 图表和终端友好的 Unicode 数学。详见 [Markdown 设置](/docs/latest/settings#markdown) 和 [TUI Markdown](https://github.com/earendil-works/pi/blob/main/packages/tui/README.md#markdown)。
+- **按目录的上下文覆盖** — 使用 `AGENTS.override.md` 为特定目录替换上下文文件。详见 [上下文文件](/docs/latest/usage#context-files)。
+- **高级自定义模型采样** — 配置任意 OpenAI 兼容的 `samplingParams` 和可选的 vLLM `thinking_token_budget` 值。详见 [采样参数](/docs/latest/models#sampling-parameters)。
+- **Baseten Provider** — 使用内置的 Baseten 认证和模型支持。详见 [API Keys](/docs/latest/providers#api-keys)。
+
+不兼容变更
+
+- 将继承的 pi-ai `ModelsStreamTransforms` 接口重命名为 `ModelsRequestTransforms`，因为其请求头转换现在适用于所有经过认证的 Provider 请求。
+- 变更 JSON 和 RPC 的 `message_update` 事件，仅发送 `assistantMessageEvent` 增量，移除导致输出二次增长的累计 `message` 和 `assistantMessageEvent.partial` 字段。需要部分消息的客户端必须在 `message_start` 与 `message_end` 之间组装增量；后者仍是权威值（[#7290](https://github.com/earendil-works/pi/issues/7290)）。
+- `ModelRegistry.getApiKeyAndHeaders()` 现在返回带 `string | null` 值的 `ProviderHeaders`，并保留 `null` 请求头删除标记。检查返回请求头的扩展必须处理 `null`；将其转发给 pi-ai 流的扩展应原样透传。这可以防止占位 OpenAI 凭据通过 Cloudflare AI Gateway 发送（[#7030](https://github.com/earendil-works/pi/issues/7030)）。
+- 变更 `ModelRegistry.refresh()`，使其接受 `ModelsRefreshOptions` 并返回 `ModelsRefreshResult`，而非丢弃取消和 Provider 错误。
+- 变更 `ModelRuntime.setRuntimeApiKey()`，使其接受认证取消选项而非目录刷新选项。需要远程新鲜度时，请单独调用 `refresh({ providers: [providerId], signal })`。
+- 要求配置形式的扩展 OAuth `refreshToken(credentials, signal)` 回调接受并遵循具体的中止信号。
+- 用只读的 `context.stored` 快照和带代数检查的 `context.publish()` 事务替换动态 Provider 刷新上下文对 store 的直接访问。
+
+  使用 `createProvider({ fetchModels })` 构建的 Provider：无需迁移目录发布。前后都要返回获取的模型并注册得到的 Provider；`createProvider()` 负责恢复、持久化和内存发布。
+
+  ```ts
+  // 之前
+  const beforeProvider = createProvider({
+    // ...
+    fetchModels: async ({ signal }) => {
+      const response = await fetch(catalogUrl, { signal });
+      return parseModels(await response.json());
+    },
+  });
+  pi.registerProvider(beforeProvider);
+
+  // 之后：保持不变
+  const afterProvider = createProvider({
+    // ...
+    fetchModels: async ({ signal }) => {
+      const response = await fetch(catalogUrl, { signal });
+      return parseModels(await response.json());
+    },
+  });
+  pi.registerProvider(afterProvider);
+  ```
+
+  手写的原生 `Provider.refreshModels()`：用带代数保护的发布替换直接访问 store 和发布前变更。
+
+  ```ts
+  // 之前
+  refreshModels: async (context) => {
+    const stored = await context.store.read();
+    if (stored) currentModels = stored.models;
+    if (!context.allowNetwork) return;
+
+    const refreshed = await fetchModels(context.signal);
+    currentModels = refreshed;
+    await context.store.write({ models: refreshed, checkedAt: Date.now() });
+  },
+
+  // 之后
+  refreshModels: async (context) => {
+    if (context.stored) {
+      const restored = context.stored.models;
+      if (!(await context.publish({
+        update: () => { currentModels = restored; },
+      }))) return;
+    }
+    if (!context.allowNetwork) return;
+
+    const refreshed = await fetchModels(context.signal);
+    if (context.signal.aborted) return;
+    await context.publish({
+      persist: { models: refreshed, checkedAt: Date.now() },
+      update: () => { currentModels = refreshed; },
+    });
+  },
+  ```
+
+  对于配置形式的 `pi.registerProvider(name, { refreshModels })`，只返回模型的回调保持不变；pi 会发布返回的列表。如果此类回调之前使用 `context.store` 做自定义持久化，请读取 `context.stored` 并调用 `context.publish({ persist: entry })`。在 `publish()` 中，省略 `persist` 保持存储不变，传入 `ModelsStoreEntry` 写入它，或传 `persist: null` 删除它。
+
+- 用基于 v4 lane 的 `Session`、`SessionStorage` 和 `SessionRepo` API 替换继承的 pi-agent-core harness 会话模型，包括持久化操作记录、全局事实、共享序列号和树作用域的 lane 视图。
+- 将继承的 v2 session 和 `AgentHarness` API 从 pi-agent-core 的实验性入口提升为其默认导出，并移除实验性子路径。
+- 移除继承的旧版 JSONL 和内存仓库 API。请改用 pi-agent-core 的 v4 `JsonlSessionRepo` 或 `InMemorySessionRepo`，两者都实现新的 `SessionRepo` 契约。
+- 新增继承的必需 pi-agent-core `FileSystem.renameFile()` 操作，用于原子 JSONL 发布；自定义 harness 文件系统实现必须提供同文件系统的替换语义（[#7707](https://github.com/earendil-works/pi/pull/7707) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 用持久化的 `SessionMetadata` 替换实验性远程会话列表摘要；`RemoteSession.sessions` 不再暴露运行时阶段、模型、thinking、附件或锁状态，这些可从获取的 `SessionSnapshot` 值中获取（[#7708](https://github.com/earendil-works/pi/pull/7708)）。
+
+新增
+
+- 新增内置 Baseten Provider 支持，使用 `BASETEN_API_KEY` 认证，默认模型为 `zai-org/GLM-5.2`。
+- 新增实验性远程会话客户端 API：传输中立的 `PiClient`、CBOR 协议、Unix-socket 传输，以及带转录 reducer 的 `@earendil-works/pi-coding-agent/client` `RemoteSession` 控制器。详见 [Pi Client](https://github.com/earendil-works/pi/blob/main/packages/client/README.md) 和 [Remote Protocol](https://github.com/earendil-works/pi/blob/main/packages/protocol/README.md)（[#7344](https://github.com/earendil-works/pi/pull/7344)、[#7348](https://github.com/earendil-works/pi/pull/7348)、[#7371](https://github.com/earendil-works/pi/pull/7371)、[#7409](https://github.com/earendil-works/pi/pull/7409)）。
+- 新增 `CredentialSynchronizationError`，用于凭据变更成功提交但同步本地模型状态失败的情况。
+- 新增可链式调用的 `pi.registerMarkdownTransformer()` 钩子，用于对用户和助手的 Markdown 进行仅显示转换。详见 [`pi.registerMarkdownTransformer()`](/docs/latest/extensions#piregistermarkdowntransformertransformer)（[#7231](https://github.com/earendil-works/pi/pull/7231) 由 [@xl0](https://github.com/xl0) 贡献）。
+- 新增实验性全屏 TUI 模式，可通过 `--tui-mode fullscreen` 或 `/settings` 选择（[#7304](https://github.com/earendil-works/pi/issues/7304)）。
+- 新增通过 `/settings` 在运行时切换常规和全屏 TUI 模式。
+- 在全屏模式中新增粘性编辑器、状态、widget 和 footer 停靠，同时保持转录可独立滚动。
+- 新增全屏模式中可拖动的转录滚动条，可通过 `/settings` 配置 `auto`、`always` 和 `hidden` 模式；`always` 会保留最右侧一列。
+- 新增全屏模式中的翻页滚动和标记消息导航快捷键。
+- 新增可选的 `scrollbarThumb` 主题颜色，用于全屏滚动条滑块，回退到 `selectedBg`。
+- 新增支持 Mermaid 图表的可配置主题 Unicode 渲染，用于交互式消息，包括流式渲染时可选渲染。详见 [Markdown 设置](/docs/latest/settings#markdown)（[#7624](https://github.com/earendil-works/pi/pull/7624) 由 [@xl0](https://github.com/xl0) 贡献）。
+- 新增可选的 `Ctrl+P`/`Ctrl+N` prompt 历史导航，编辑器聚焦时显式历史绑定优先于应用快捷键。
+- 新增按目录的 `AGENTS.override.md` 上下文文件，替换同目录中的 `AGENTS.md` 或 `CLAUDE.md`，同时保留其他目录的上下文。详见 [上下文文件](/docs/latest/usage#context-files)（[#7681](https://github.com/earendil-works/pi/pull/7681) 由 [@Marvae](https://github.com/Marvae) 贡献）。
+- 新增在 CLI 和 RPC 子进程环境中设置 `AI_AGENT=pi`，用于通用 agent 归属。详见 [环境变量](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/README.md#environment-variables)（[#7493](https://github.com/earendil-works/pi/pull/7493) 由 [@renaudhartert-db](https://github.com/renaudhartert-db) 贡献）。
+- 新增 Markdown 中 LaTeX 表达式的继承终端友好 Unicode 渲染。详见 [TUI Markdown](https://github.com/earendil-works/pi/blob/main/packages/tui/README.md#markdown)。
+- 新增全屏模式中的堆叠式瞬时通知。
+- 新增通过 `models.json`、模型覆盖、扩展 Provider 和流选项中的 `samplingParams` 配置任意 OpenAI 兼容模型采样参数。详见 [采样参数](/docs/latest/models#sampling-parameters)（[#7568](https://github.com/earendil-works/pi/pull/7568) 由 [@mrexodia](https://github.com/mrexodia) 贡献）。
+- 新增继承的可选 vLLM `thinking_token_budget` 支持，用于 OpenAI 兼容模型，为最终答案预留输出 token（[#7638](https://github.com/earendil-works/pi/pull/7638) 由 [@bnsd55](https://github.com/bnsd55) 贡献）。
+- 新增对省略 `finish_reason` 的 OpenAI 兼容流支持，使用 `compat.supportsFinishReason` 在流结束时推断正常和工具使用停止。详见 [OpenAI 兼容性](/docs/latest/models#openai-compatibility)。
+- 新增继承的延迟 Provider 请求契约、持久化响应句柄、认证 fetch/cancel 分发，以及 pending、ready、failed 和 cancelled 响应的 faux-provider 支持（[#7339](https://github.com/earendil-works/pi/pull/7339) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 新增继承的厂商中立 telemetry 契约，以及 agent 拥有的类型化 AI-request 和 harness 模式、组合 span 启动器和回调辅助函数。详见 [agent telemetry 模式参考](https://github.com/earendil-works/pi/blob/main/packages/agent/docs/telemetry-schema.md)。
+- 新增继承的结构化 Amazon Bedrock 失败诊断，包含 HTTP 状态、建模错误码，以及可用时的 AWS request id（[#7286](https://github.com/earendil-works/pi/pull/7286) 由 [@brianstanley](https://github.com/brianstanley) 贡献）。
+- 新增继承的 `AgentOptions.shouldStopAfterTurn`，用于在完成一轮、处理排队消息或另一次模型调用之前优雅停止。详见 [Agent Options](https://github.com/earendil-works/pi/blob/main/packages/agent/README.md#agent-options)（[#7367](https://github.com/earendil-works/pi/pull/7367) 由 [@acmerfight](https://github.com/acmerfight) 贡献）。
+- 新增继承的 v4 `JsonlSessionRepo` 对追加式 JSONL harness 会话的支持（[#7611](https://github.com/earendil-works/pi/pull/7611) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 新增继承的有界分支条目和索引开放操作恢复查询到 v4 会话 API（[#7448](https://github.com/earendil-works/pi/pull/7448)、[#7646](https://github.com/earendil-works/pi/pull/7646)）。
+- 新增继承的编译完整的 `AgentHarness` v2 脚手架；未完成的操作路径在实现持久化执行前以 `HarnessNotImplemented` 拒绝。
+
+变更
+
+- 新增继承的可选取消到 pi-ai `ModelsStore` 的读取、写入和删除；目录编排将这些等待绑定到 Provider 刷新信号。
+- 将继承的默认全屏鼠标滚轮步长从三行减少到一行，实现更精细的滚动。
+
+修复
+
+- 修复 footer 在没有已知订阅的通用 OAuth/OpenID 登录时显示 `(sub)`；扩展 OAuth Provider 可以用 `isSubscription` 选择加入。
+- 修复继承的 OAuth token 刷新，使停滞的请求释放凭据存储锁（[#7508](https://github.com/earendil-works/pi/issues/7508)）。
+- 修复继承的工具参数验证，在强制转换前保留已匹配 `anyOf`/`oneOf` union 分支的值，避免可空 union 将 `null` 转换为另一个原始值（[#7328](https://github.com/earendil-works/pi/issues/7328)）。
+- 修复继承的 Fireworks GLM 5.2 请求在启用长缓存保留时发送不支持的 `prompt_cache_retention` 字段，并为自动 prompt 缓存启用会话亲和（[#7676](https://github.com/earendil-works/pi/issues/7676)）。
+- 修复继承的 `JsonlSessionRepo` 在全局范围内强制会话 ID 的问题；ID 现在在每个工作目录内唯一。
+- 修复继承的 JSONL 会话 fork 和 torn-tail 修复的原子发布，避免中断写入后产生部分写入或损坏的会话（[#7707](https://github.com/earendil-works/pi/pull/7707) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 修复包含路径的 `find` glob 在 Windows 上返回空结果的问题（[#6817](https://github.com/earendil-works/pi/issues/6817)）。
+- 修复手动 `/compact` 期间排队的消息失败而非在压缩完成后发送的问题。
+- 修复传给内置文件工具的 Git Bash、MSYS、Cygwin 和 WSL 驱动器路径解析到当前 Windows 驱动器而非其原生驱动器的问题（[#7064](https://github.com/earendil-works/pi/issues/7064)、[#7547](https://github.com/earendil-works/pi/issues/7547)）。
+- 修复项目级嵌套 Provider 重试设置替换未修改的全局 Provider 重试设置的问题（[#7572](https://github.com/earendil-works/pi/issues/7572)）。
+- 修复继承的 GitHub Copilot Grok 4.5 请求使用受支持的 Responses API（[#7560](https://github.com/earendil-works/pi/issues/7560)）。
+- 修复全屏关闭将终端能力查询回复泄漏到父 shell prompt 的问题。
+- 修复多个 Provider 共享的裸精确 `--model` ID 选择第一个目录条目而非唯一认证 Provider 或明确歧义错误的问题（[#7327](https://github.com/earendil-works/pi/issues/7327)）。
+- 修复独立 x64 二进制需要 Haswell 时代 AVX2/BMI2 指令的问题，改为针对 Bun 基线运行时编译发布可执行文件（[#7390](https://github.com/earendil-works/pi/pull/7390) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 修复全屏模式中 `Ctrl+X` 复制确认添加转录状态行，而非显示瞬时的 `Copied!` 标记。
+- 修复全屏模式中 Kitty 图片预览在滚动时与粘性编辑器和 footer 停靠重叠的问题。
+- 修复图片密集的全屏会话在布局变更重传可见 Kitty 图片载荷并每帧渲染两次转录时延迟的问题。
+- 修复 `/settings` 搜索中的空格在输入多词查询（如 **TUI mode** 或 **Quiet startup**）时切换高亮设置的问题。
+- 修复自定义编辑器不继承默认编辑器自动补全下拉项限制的问题（[#7333](https://github.com/earendil-works/pi/issues/7333)）。
+- 修复包清单中的畸形资源数组导致会话启动崩溃的问题（[#7187](https://github.com/earendil-works/pi/issues/7187)）。
+- 修复 DOOM overlay 示例从失效 URL 下载其 shareware WAD 的问题。
+- 修复 `setToolsExpanded(false)` 在工具输出已折叠时为 no-op，避免扩展产生冗余的 `Tool output: collapsed` 启动通知（[#7292](https://github.com/earendil-works/pi/issues/7292)）。
+- 修复自定义压缩、handoff 和 Q&A 示例中的扩展驱动模型调用，改为通过 coding-agent 模型运行时分发，以保留自定义 Provider 和已解析的认证选项（[#7325](https://github.com/earendil-works/pi/pull/7325)）。
+- 修复长时间运行的会话在另一个进程更新 `auth.json` 时使用过期凭据的问题，通过序列化并发凭据读取并延迟启动（[#7319](https://github.com/earendil-works/pi/issues/7319)）。
+- 修复并发的 `models-store.json` 读取形成文件锁 convoy 并延迟启动的问题。
+- 将打包的 `brace-expansion` 依赖更新到 5.0.8，以解决 GHSA-mh99-v99m-4gvg（[#7316](https://github.com/earendil-works/pi/issues/7316)）。
+- 修复强制模型可用性刷新仍被停滞的早期刷新阻塞的问题（[#7301](https://github.com/earendil-works/pi/issues/7301)、[#7421](https://github.com/earendil-works/pi/pull/7421) 由 [@a-yeyang](https://github.com/a-yeyang) 贡献）。
+- 修复 `/model` 目录刷新失败无法识别每个失败的目录的问题。
+- 修复模型目录刷新停滞时保存凭据后 Provider 登录仍卡住的问题，通过将本地凭据一致性从有界后台新鲜度分离（[#7027](https://github.com/earendil-works/pi/issues/7027)、[#7113](https://github.com/earendil-works/pi/issues/7113)、[#7418](https://github.com/earendil-works/pi/issues/7418)）。
+- 修复 `/scoped-models` 在渲染前等待远程目录，而非显示缓存模型并在关闭时取消刷新（[#7153](https://github.com/earendil-works/pi/issues/7153)）。
+- 修复 `/model <name>` 在检查缓存模型匹配前等待目录刷新（[#7443](https://github.com/earendil-works/pi/issues/7443)）。
+- 修复较新可用性通过后仍发布过期可用性快照和错误的问题。
+- 修复较新 Provider 刷新后仍发布过期的 pi.dev、Radius、llama.cpp 和扩展目录刷新的问题。
+- 修复等待文件支持的凭据或模型目录锁时的取消，防止已取消的变更稍后运行或提交。
+- 修复并发内存凭据变更丢失无关 Provider 更新的问题，通过序列化其读-改-写段。
+- 将 `undici` 更新到 8.9.0，打包的 `brace-expansion` 更新到 5.0.9，以解决 GHSA-8xcm-r25x-g524、GHSA-4cwx-7wf7-3272、GHSA-m8rv-5g2x-5cg5、GHSA-jr45-8vmc-qm54、GHSA-v3r7-h72x-cjcm 和 GHSA-rgw5-rvv9-x895。
+- 修复 GitHub Copilot 压缩和分支摘要使用 Individual 端点，而非凭据解析的 Business 或 Enterprise 端点（[#6768](https://github.com/earendil-works/pi/issues/6768)）。
+- 修复扩展模型调用在转发请求认证时丢弃凭据解析端点的问题，包括自定义压缩与 GitHub Copilot Business 和 Enterprise 账户（[#7579](https://github.com/earendil-works/pi/issues/7579)）。
+- 修复全屏转录导航无编辑器可访问的 `Home`、`End`、`PageUp` 或 `PageDown` 变体的问题，通过添加 Ctrl 修改的编辑器绑定（[#7574](https://github.com/earendil-works/pi/issues/7574)）。
+- 修复扩展事件总线监听器在会话重载和销毁后仍存活的问题（[#7656](https://github.com/earendil-works/pi/pull/7656) 由 [@tudoroancea](https://github.com/tudoroancea) 贡献）。
+- 修复 Wayland 上没有 X11 剪贴板时 `/copy` 无法读取剪贴板文本的问题（[#7387](https://github.com/earendil-works/pi/pull/7387)）。
+- 修复慢连接在初始连接尝试期间失败的问题，通过增加连接超时（[#7435](https://github.com/earendil-works/pi/pull/7435) 由 [@muyiyr](https://github.com/muyiyr) 贡献）。
+- 修复扩展和内置工具返回的超大图片绕过自动图片缩放的问题。详见 [图片设置](/docs/latest/settings#terminal--images)（[#7330](https://github.com/earendil-works/pi/pull/7330) 由 [@tizmagik](https://github.com/tizmagik) 贡献）。
+- 修复会话发现遗漏通过符号链接目录存储的会话的问题（[#7552](https://github.com/earendil-works/pi/pull/7552) 由 [@muyiyr](https://github.com/muyiyr) 贡献）。
+- 修复手动压缩与阈值自动压缩竞争的问题（[#7370](https://github.com/earendil-works/pi/pull/7370) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 修复响应被截断低于其预期输出限制时结束运行而非压缩并重试一次的问题（[#7540](https://github.com/earendil-works/pi/pull/7540) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 修复 Git 包更新在 `git clean` 无法移除忽略的依赖目录时留下缺失依赖的问题（[#7570](https://github.com/earendil-works/pi/pull/7570) 由 [@mrexodia](https://github.com/mrexodia) 贡献）。
+- 修复 POSIX 和 Windows 文件系统根部的 `find` 结果丢失第一路径段或产生重复尾部分隔符的问题（[#7569](https://github.com/earendil-works/pi/pull/7569) 由 [@petrroll](https://github.com/petrroll) 贡献）。
+- 修复瞬时版本检查、目录、托管工具和包管理 HTTP 失败未被重试的问题（[#7632](https://github.com/earendil-works/pi/pull/7632) 由 [@petrroll](https://github.com/petrroll) 贡献）。
+- 修复交互式错误忽略配置的输出内边距的问题。
+- 修复继承的 OpenCode Go Provider 显示名。
+- 修复继承的 Provider 错误规范化将数组和类实例视为结构化响应体，而非保留其原始错误的问题（[#7205](https://github.com/earendil-works/pi/pull/7205) 由 [@erikogenvik](https://github.com/erikogenvik) 贡献）。
+- 修复继承的 Anthropic 流丢弃初始 content-block 事件中包含的文本或 thinking 的问题（[#7358](https://github.com/earendil-works/pi/pull/7358) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 修复继承的 Google 历史转换丢弃重放所需的签名空文本和 thinking 块的问题（[#7362](https://github.com/earendil-works/pi/pull/7362) 由 [@jingtao-wisdomgraph](https://github.com/jingtao-wisdomgraph) 贡献）。
+- 修复继承的 OpenAI Codex 缓存 WebSocket 会话在不同账户凭据间共享的问题（[#7364](https://github.com/earendil-works/pi/pull/7364)）。
+- 修复继承的瞬时 Google Generative AI 和 Vertex AI Provider 错误绕过自动重试的问题（[#7471](https://github.com/earendil-works/pi/pull/7471) 由 [@vish-pr](https://github.com/vish-pr) 贡献）。
+- 修复继承的 Gemini 3 tool call id 在历史转换期间被丢弃，破坏签名多轮重放的问题（[#7494](https://github.com/earendil-works/pi/pull/7494) 由 [@muyiyr](https://github.com/muyiyr) 贡献）。
+- 恢复继承的 GitHub Copilot 模型通过账户特定策略响应返回（[#7672](https://github.com/earendil-works/pi/pull/7672) 由 [@muyiyr](https://github.com/muyiyr) 贡献）。
+- 用 `qwen3.8-max` 替换继承的退役 Qwen Token Plan `qwen3.8-max-preview` 模型（[#7670](https://github.com/earendil-works/pi/pull/7670) 由 [@QuintinShaw](https://github.com/QuintinShaw) 贡献）。
+- 修复继承的终端宽度对 Indic 辅音连接字素簇的计数（[#6987](https://github.com/earendil-works/pi/pull/6987) 由 [@petrroll](https://github.com/petrroll) 贡献）。
+- 修复继承的嵌套全屏堆叠布局忽略子元素最小尺寸的问题。
+- 修复继承的批量终端配色方案报告被解析为一个畸形响应的问题（[#7550](https://github.com/earendil-works/pi/pull/7550)）。
+- 修复继承的终端进度清除未发出完整 OSC 9;4 序列的问题（[#7581](https://github.com/earendil-works/pi/pull/7581)）。
+- 修复继承的 iTerm2 图片载荷省略 xterm.js 图片 addon 所需的大小元数据的问题（[#7612](https://github.com/earendil-works/pi/pull/7612)）。
+- 修复继承的宽度截断使 OSC 8 超链接未终止的问题（[#7657](https://github.com/earendil-works/pi/pull/7657) 由 [@xXJSONDeruloXx](https://github.com/xXJSONDeruloXx) 贡献）。
+- 更新继承的 GPT-5.6 Terra 和 Luna 定价，覆盖 OpenAI 和 passthrough 模型目录。
+- 修复继承的 Fireworks Kimi K3 模型使用 OpenAI 兼容 API、原生 reasoning-effort 级别和延迟工具（[#7199](https://github.com/earendil-works/pi/issues/7199)、[#7230](https://github.com/earendil-works/pi/pull/7230) 由 [@XBeg9](https://github.com/XBeg9) 贡献）。
+- 更新继承的 Groq Qwen reasoning 覆盖，用于替换的 `qwen/qwen3.6-27b` 模型。
+- 修复继承的 Windows Shift+Enter 检测，通过从原生 Win32 辅助函数读取修饰键状态。
+- 修复继承的 pi-tui npm 包省略重建其 Windows 和 Darwin 原生 addon 所需的源码和构建脚本的问题。
+- 修复继承的 Windows 控制台 truecolor 检测，当 Windows Terminal 未向子 shell 提供 `WT_SESSION` 时的问题。
+- 修复继承的幻影全屏文本选择，在更改终端窗格焦点时未匹配的鼠标事件导致的问题。
+- 修复继承的 Windows 键盘输入渲染延迟，通过让输入抢占限速渲染定时器。
+- 修复继承的 agent harness 在 Windows 上处理路径的问题，涉及文件 basename、递归 skill 加载和 prompt 模板名称。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+不兼容变更
+
+- 将导出的 `ModelsStreamTransforms` 接口重命名为 `ModelsRequestTransforms`，因为其请求头转换现在适用于所有经过认证的 Provider 请求。
+- 要求动态模型 Provider 接受具体的 `RefreshModelsContext.signal`；调用方省略其可选 signal 时，`Models.refresh()` 保持无界。
+- 要求 Provider 登录、API-key 检查/解析和 OAuth 刷新实现接受具体的中止信号；调用方省略其可选 signal 时，公开的 auth 和凭据操作保持无界。
+- 用只读的 `context.stored` 快照和带代数检查的 `context.publish()` 事务替换对原始 `RefreshModelsContext.store` 的访问。
+
+  **`createProvider({ fetchModels })`：** 无需迁移目录发布。前后都要返回获取的列表；`createProvider()` 自己恢复存储的模型并发布、持久化刷新后的模型。现在保证 `signal` 存在。
+
+  ```ts
+  // 之前
+  const beforeProvider = createProvider({
+    // ...
+    fetchModels: async ({ signal }) => {
+      const response = await fetch(catalogUrl, { signal });
+      return parseModels(await response.json());
+    },
+  });
+
+  // 之后：保持不变
+  const afterProvider = createProvider({
+    // ...
+    fetchModels: async ({ signal }) => {
+      const response = await fetch(catalogUrl, { signal });
+      return parseModels(await response.json());
+    },
+  });
+  ```
+
+  **手写 `Provider.refreshModels()`：** 用带代数保护的发布替换直接访问 store 和发布前变更。
+
+  ```ts
+  // 之前
+  refreshModels: async (context) => {
+    const stored = await context.store.read();
+    if (stored) currentModels = stored.models;
+    if (!context.allowNetwork) return;
+
+    const refreshed = await fetchModels(context.signal);
+    currentModels = refreshed;
+    await context.store.write({ models: refreshed, checkedAt: Date.now() });
+  },
+
+  // 之后
+  refreshModels: async (context) => {
+    if (context.stored) {
+      const restored = context.stored.models;
+      if (!(await context.publish({
+        update: () => { currentModels = restored; },
+      }))) return;
+    }
+    if (!context.allowNetwork) return;
+
+    const refreshed = await fetchModels(context.signal);
+    if (context.signal.aborted) return;
+    await context.publish({
+      persist: { models: refreshed, checkedAt: Date.now() },
+      update: () => { currentModels = refreshed; },
+    });
+  },
+  ```
+
+  在 `publish()` 中，省略 `persist` 保持存储不变，传入 `ModelsStoreEntry` 写入它，或传 `persist: null` 删除它。省略 `update` 做仅元数据的持久化；省略 `persist` 做临时内存发布。
+
+新增
+
+- 新增可选的 `OAuthAuth.isSubscription` 元数据，用于区分基于订阅的认证和通用 OAuth 登录。
+- 使用厂商中立的 `@earendil-works/pi-telemetry` 契约，在流、延迟和图片请求选项中新增显式的 `TelemetryContext` 传播。
+- 新增延迟 Provider 请求契约、持久化响应句柄、认证 fetch/cancel 分发，以及 pending、ready、failed 和 cancelled 响应的 faux-provider 支持（[#7339](https://github.com/earendil-works/pi/pull/7339) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 新增 Baseten 作为内置 OpenAI 兼容 Provider，带 models.dev 目录生成和原生 `chat_template_args` reasoning 控制。
+- 新增通过 `Model.samplingParams` 和 `StreamOptions.samplingParams` 配置任意 OpenAI 兼容采样参数，包括 per-request 覆盖（[#7568](https://github.com/earendil-works/pi/pull/7568) 由 [@mrexodia](https://github.com/mrexodia) 贡献）。
+- 新增 OpenAI 兼容模型的可选 vLLM `thinking_token_budget` 支持，为最终答案预留输出 token（[#7638](https://github.com/earendil-works/pi/pull/7638) 由 [@bnsd55](https://github.com/bnsd55) 贡献）。
+- 新增 `OpenAICompletionsCompat.supportsFinishReason`，用于省略流式 `finish_reason` 值的 Provider，在流结束时推断正常和工具使用停止。
+- 新增结构化的 Amazon Bedrock 失败诊断，包含 HTTP 状态、建模错误码，以及可用时的 AWS request id（[#7286](https://github.com/earendil-works/pi/pull/7286) 由 [@brianstanley](https://github.com/brianstanley) 贡献）。
+
+变更
+
+- 新增 `ModelsStore` 读取、写入和删除的可选取消；目录编排将这些等待绑定到 Provider 刷新信号。
+
+修复
+
+- 修复 GitHub Copilot Grok 4.5 请求使用受支持的 Responses API（[#7560](https://github.com/earendil-works/pi/issues/7560)）。
+- 限制 OAuth token 刷新，使停滞的请求释放凭据存储锁（[#7508](https://github.com/earendil-works/pi/issues/7508)）。
+- 修复工具参数验证，在尝试强制转换前保留已匹配 `anyOf`/`oneOf` union 分支的值，避免可空 union 将 `null` 转换为另一个原始值（[#7328](https://github.com/earendil-works/pi/issues/7328)）。
+- 修复模型目录刷新的取消，即使自定义 Provider 忽略其 abort signal，调用方也停止等待（[#7027](https://github.com/earendil-works/pi/issues/7027)）。
+- 修复 auth 解析、可用性检查、OAuth 刷新、Provider 登录和内存凭据队列等待遵循调用方取消的问题。
+- 修复较新 Provider 刷新被较旧停滞代数阻塞或覆盖的问题，包括持久化目录发布。
+- 更新 GPT-5.6 Terra 和 Luna 定价，覆盖 OpenAI 和 passthrough 模型目录。
+- 修复 Fireworks Kimi K3 模型使用 OpenAI 兼容 API、原生 reasoning-effort 级别和延迟工具（[#7199](https://github.com/earendil-works/pi/issues/7199)、[#7230](https://github.com/earendil-works/pi/pull/7230) 由 [@XBeg9](https://github.com/XBeg9) 贡献）。
+- 修复 Fireworks GLM 5.2 模型在启用长缓存保留时发送不支持的 `prompt_cache_retention` 字段，并为自动 prompt 缓存启用会话亲和（[#7676](https://github.com/earendil-works/pi/issues/7676)）。
+- 更新 Groq 的 Qwen reasoning 覆盖，用于替换的 `qwen/qwen3.6-27b` 模型。
+- 修复 OpenCode Go Provider 显示名。
+- 修复 Provider 错误规范化将数组和类实例视为结构化响应体，而非保留其原始错误的问题（[#7205](https://github.com/earendil-works/pi/pull/7205) 由 [@erikogenvik](https://github.com/erikogenvik) 贡献）。
+- 修复 Anthropic 流丢弃初始 content-block 事件中包含的文本或 thinking 的问题（[#7358](https://github.com/earendil-works/pi/pull/7358) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 修复 Google 历史转换丢弃重放所需的签名空文本和 thinking 块的问题（[#7362](https://github.com/earendil-works/pi/pull/7362) 由 [@jingtao-wisdomgraph](https://github.com/jingtao-wisdomgraph) 贡献）。
+- 修复 OpenAI Codex 缓存 WebSocket 会话在不同账户凭据间共享的问题（[#7364](https://github.com/earendil-works/pi/pull/7364)）。
+- 修复瞬时 Google Generative AI 和 Vertex AI Provider 错误绕过自动重试的问题（[#7471](https://github.com/earendil-works/pi/pull/7471) 由 [@vish-pr](https://github.com/vish-pr) 贡献）。
+- 修复 Gemini 3 tool call id 在历史转换期间被丢弃，破坏签名多轮重放的问题（[#7494](https://github.com/earendil-works/pi/pull/7494) 由 [@muyiyr](https://github.com/muyiyr) 贡献）。
+- 修复 OpenAI Responses 不完整原因，仅将 `max_output_tokens` 视为长度停止，并暴露被截断低于预期输出限制的响应的有界恢复检测（[#7540](https://github.com/earendil-works/pi/pull/7540) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 恢复 GitHub Copilot 模型通过账户特定策略响应返回（[#7672](https://github.com/earendil-works/pi/pull/7672) 由 [@muyiyr](https://github.com/muyiyr) 贡献）。
+- 用 `qwen3.8-max` 替换退役的 Qwen Token Plan `qwen3.8-max-preview` 模型（[#7670](https://github.com/earendil-works/pi/pull/7670) 由 [@QuintinShaw](https://github.com/QuintinShaw) 贡献）。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+不兼容变更
+
+- 用基于 v4 lane 的 `Session`、`SessionStorage` 和 `SessionRepo` API 替换旧版 harness 会话模型，包括持久化操作记录、全局事实、共享序列号和树作用域的 lane 视图。
+- 将 v2 session 和 `AgentHarness` API 从实验性入口提升为默认包导出，并移除实验性子路径。
+- 移除旧版 JSONL 和内存仓库 API。请使用 v4 `JsonlSessionRepo` 或 `InMemorySessionRepo`，两者都实现新的 `SessionRepo` 契约。
+- 为 harness 执行环境新增必需的 `FileSystem.renameFile()` 操作，用于原子 JSONL 发布；自定义文件系统实现必须提供同文件系统的替换语义（[#7707](https://github.com/earendil-works/pi/pull/7707) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+
+新增
+
+- 新增类型化 AI-request 和 harness telemetry 模式、组合模式元组、回调辅助函数和生成的模式参考。
+- 新增有界 `Session.findEntriesOnBranch()` 和 `findEntryOnBranch()` 查询，带显式遍历、过滤、排序和限制选项。
+- 新增编译完整的 `AgentHarness` v2 脚手架；未完成的操作路径在实现持久化执行前以 `HarnessNotImplemented` 拒绝。
+- 新增 `JsonlSessionRepo`，一个带元数据验证和共享存储语义的 v4 追加式 JSONL 会话仓库（[#7611](https://github.com/earendil-works/pi/pull/7611) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 新增索引的 `Session.findOpenOperations()` 恢复查询和 `RecordQuery.operationKind` 过滤（[#7646](https://github.com/earendil-works/pi/pull/7646)）。
+- 新增 `AgentOptions.shouldStopAfterTurn`，用于在完成一轮、处理排队消息或另一次模型调用之前优雅停止。详见 [Agent Options](https://github.com/earendil-works/pi/blob/main/packages/agent/README.md#agent-options)（[#7367](https://github.com/earendil-works/pi/pull/7367) 由 [@acmerfight](https://github.com/acmerfight) 贡献）。
+- 新增任意 OpenAI 兼容 `samplingParams` 的代理转发（[#7568](https://github.com/earendil-works/pi/pull/7568) 由 [@mrexodia](https://github.com/mrexodia) 贡献）。
+
+修复
+
+- 修复 `NodeExecutionEnv` 文件 basename、递归 skill 加载和 prompt 模板名称的 Windows 路径处理。
+- 修复 `JsonlSessionRepo` 在全局范围内强制会话 ID 的问题；ID 现在在每个工作目录内唯一。
+- 修复 JSONL 会话 fork 和 torn-tail 修复的原子发布，避免中断写入后产生部分写入或损坏的会话（[#7707](https://github.com/earendil-works/pi/pull/7707) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+新增
+
+- 新增 Markdown 中 LaTeX 表达式的终端友好 Unicode 渲染，包括行内和显示数学、分数、脚本、常见符号、对齐方程、cases 和矩阵。
+- 新增共享的 `TuiMode` 类型和主屏、备屏 TUI 渲染器上的 `mode` 判别符。
+- 新增 TUI 生命周期和渲染状态交接 API，用于替换渲染器而不重放主屏内容。
+- 导出捆绑的 `Marked` 解析器和 token 类型。
+- 新增 `Markdown` 组件的宽度感知源转换。
+- 新增接口兼容的主屏和备屏 TUI 渲染器，带应用拥有的滚动（[#7304](https://github.com/earendil-works/pi/issues/7304)）。
+- 新增备屏 `VStack`、`HStack` 和嵌套 `ScrollView` 布局，带受限尺寸、粘性区域和指针目标滚动。
+- 新增备屏拖拽选择跨屏外滚动视图内容的边缘自动滚动。
+- 新增带鼠标拖动的比例滚动条、Home/End 文档导航、瞬时 `auto` 模式和保留最右侧一列的 `always` 模式；滚动条模式可在运行时更改。
+- 新增备屏视口的翻页滚动和 OSC 133 语义 prompt 导航。
+- 新增与垂直光标移动无关的可配置上一/下一 prompt 历史操作。
+- 新增备屏渲染器的堆叠式瞬时通知（[#7361](https://github.com/earendil-works/pi/pull/7361)）。
+
+变更
+
+- 将默认备屏鼠标滚轮步长从三行减少到一行，实现更精细的滚动。
+
+修复
+
+- 通过扩展原生 Win32 辅助函数报告修饰键状态，修复 Windows Shift+Enter 检测。
+- 修复 npm 包省略重建 Windows 原生 addon 所需的源码和构建脚本的问题。
+- 修复 npm 包省略重建 Darwin 原生 addon 所需的源码和构建脚本的问题。
+- 修复 Windows Terminal 未向子 shell 提供 `WT_SESSION` 时 Windows 控制台 truecolor 检测的问题。
+- 修复终端宽度对 Indic 辅音连接字素簇的计数（[#6987](https://github.com/earendil-works/pi/pull/6987) 由 [@petrroll](https://github.com/petrroll) 贡献）。
+- 修复未匹配鼠标事件在更改终端窗格焦点时产生幻影备屏文本选择的问题。
+- 修复可搜索设置查询中的空格更改所选值，而非过滤多词标签的问题。
+- 修复备屏 Kitty 图片在滚动时跨垂直布局裁剪边界并与粘性区域重叠的问题。
+- 修复备屏重绘在放置移动或近期离屏图片返回时重传 Kitty 图片数据、复用放置时丢弃相邻行内容、每帧渲染两次固定基准滚动内容，以及在绘制时扫描裁剪的转录行的问题。
+- 修复全屏转录导航无编辑器可访问的 `Home`、`End`、`PageUp` 或 `PageDown` 变体的问题，通过添加 Ctrl 修改的编辑器绑定（[#7574](https://github.com/earendil-works/pi/issues/7574)）。
+- 修复 Windows 键盘输入渲染延迟，通过让输入抢占限速渲染定时器。
+- 修复嵌套堆叠布局忽略子元素最小尺寸的问题。
+- 修复批量终端配色方案报告被解析为一个畸形响应的问题（[#7550](https://github.com/earendil-works/pi/pull/7550)）。
+- 修复终端进度清除未发出完整 OSC 9;4 序列的问题（[#7581](https://github.com/earendil-works/pi/pull/7581)）。
+- 修复 iTerm2 图片载荷省略 xterm.js 图片 addon 所需的大小元数据的问题（[#7612](https://github.com/earendil-works/pi/pull/7612)）。
+- 修复宽度截断使 OSC 8 超链接未终止的问题（[#7657](https://github.com/earendil-works/pi/pull/7657) 由 [@xXJSONDeruloXx](https://github.com/xXJSONDeruloXx) 贡献）。
+
+</details>
+
 ## v0.83.0（2026-07-29）
 
 <details>

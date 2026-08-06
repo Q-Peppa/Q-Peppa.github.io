@@ -26,20 +26,24 @@
 
 ### TUI 编辑器光标移动
 
-| ID                           | 默认键                             | 说明             |
-| ---------------------------- | ---------------------------------- | ---------------- |
-| `tui.editor.cursorUp`        | `up`                               | 光标上移         |
-| `tui.editor.cursorDown`      | `down`                             | 光标下移         |
-| `tui.editor.cursorLeft`      | `left`、`ctrl+b`                   | 光标左移         |
-| `tui.editor.cursorRight`     | `right`、`ctrl+f`                  | 光标右移         |
-| `tui.editor.cursorWordLeft`  | `alt+left`、`ctrl+left`、`alt+b`   | 光标左移一个单词 |
-| `tui.editor.cursorWordRight` | `alt+right`、`ctrl+right`、`alt+f` | 光标右移一个单词 |
-| `tui.editor.cursorLineStart` | `home`、`ctrl+a`                   | 移至行首         |
-| `tui.editor.cursorLineEnd`   | `end`、`ctrl+e`                    | 移至行尾         |
-| `tui.editor.jumpForward`     | `ctrl+]`                           | 向前跳转至字符   |
-| `tui.editor.jumpBackward`    | `ctrl+alt+]`                       | 向后跳转至字符   |
-| `tui.editor.pageUp`          | `pageUp`                           | 上翻页           |
-| `tui.editor.pageDown`        | `pageDown`                         | 下翻页           |
+| ID                           | 默认键                             | 说明                           |
+| ---------------------------- | ---------------------------------- | ------------------------------ |
+| `tui.editor.cursorUp`        | `up`                               | 光标上移，在顶部浏览更早的历史 |
+| `tui.editor.cursorDown`      | `down`                             | 光标下移，在底部浏览更新的历史 |
+| `tui.editor.historyPrevious` | 无                                 | 选择上一条 prompt 历史记录     |
+| `tui.editor.historyNext`     | 无                                 | 选择下一条 prompt 历史记录     |
+| `tui.editor.cursorLeft`      | `left`、`ctrl+b`                   | 光标左移                       |
+| `tui.editor.cursorRight`     | `right`、`ctrl+f`                  | 光标右移                       |
+| `tui.editor.cursorWordLeft`  | `alt+left`、`ctrl+left`、`alt+b`   | 光标左移一个单词               |
+| `tui.editor.cursorWordRight` | `alt+right`、`ctrl+right`、`alt+f` | 光标右移一个单词               |
+| `tui.editor.cursorLineStart` | `home`、`ctrl+home`、`ctrl+a`      | 移至行首                       |
+| `tui.editor.cursorLineEnd`   | `end`、`ctrl+end`、`ctrl+e`        | 移至行尾                       |
+| `tui.editor.jumpForward`     | `ctrl+]`                           | 向前跳转至字符                 |
+| `tui.editor.jumpBackward`    | `ctrl+alt+]`                       | 向后跳转至字符                 |
+| `tui.editor.pageUp`          | `pageUp`、`ctrl+pageUp`            | 上翻页                         |
+| `tui.editor.pageDown`        | `pageDown`、`ctrl+pageDown`        | 下翻页                         |
+
+专用历史操作始终改变历史条目，无论光标在多行 Prompt 中的位置。主编辑器聚焦时，显式历史绑定优先于应用程序操作，因此将 `tui.editor.historyPrevious` 绑定到 `ctrl+p` 会覆盖该上下文中的模型循环，而不改变选择器中的 `Ctrl+P`。
 
 ### TUI 编辑器删除
 
@@ -82,7 +86,18 @@
 
 ### TUI 全屏视口
 
-这些操作在交互模式使用 `--ui-mode fullscreen` 时生效，作用于主转录滚动区域。双指触控板和鼠标滚轮输入可滚动指针所在区域，指针位于固定的编辑器/状态栏/底部停靠栏上方时则滚动转录。点击 OSC 8 超链接会以默认处理器打开。用鼠标主按钮拖拽可选中文本并复制到剪贴板；在转录顶部或底部边缘按住会自动滚动查看屏幕外内容。
+这些操作在交互模式使用 `--tui-mode fullscreen` 时生效，作用于主转录滚动区域。双指触控板和鼠标滚轮输入可滚动指针所在区域，指针位于固定的编辑器/状态栏/底部停靠栏上方时则滚动转录。点击 OSC 8 超链接会以默认处理器打开。用鼠标主按钮拖拽可选中文本并复制到剪贴板；在转录顶部或底部边缘按住会自动滚动查看屏幕外内容。
+
+全屏转录绑定优先于编辑器绑定。因此默认未修改的导航键在全屏模式下控制转录，而其 `ctrl` 变体继续控制编辑器。在全屏模式之外，两种变体都控制编辑器。
+
+| 按键                           | 默认模式 | 全屏模式 |
+| ------------------------------ | -------- | -------- |
+| `home`、`end`                  | 编辑器   | 转录     |
+| `ctrl+home`、`ctrl+end`        | 编辑器   | 编辑器   |
+| `pageUp`、`pageDown`           | 编辑器   | 转录     |
+| `ctrl+pageUp`、`ctrl+pageDown` | 编辑器   | 编辑器   |
+
+此路由仍可通过常规操作绑定配置。例如，`"tui.altScreen.pageUp": "ctrl+pageUp"` 让 `pageUp` 控制编辑器，`ctrl+pageUp` 在全屏模式下控制转录。设置 `"tui.altScreen.pageUp": []` 会完全禁用该转录快捷键。用户绑定会替换该操作的默认值。
 
 | ID                             | 默认键            | 说明                       |
 | ------------------------------ | ----------------- | -------------------------- |
@@ -173,8 +188,8 @@
 
 ```json
 {
-  "tui.editor.cursorUp": ["up", "ctrl+p"],
-  "tui.editor.cursorDown": ["down", "ctrl+n"],
+  "tui.editor.historyPrevious": "ctrl+p",
+  "tui.editor.historyNext": "ctrl+n",
   "tui.editor.deleteWordBackward": ["ctrl+w", "alt+backspace"]
 }
 ```
@@ -187,8 +202,8 @@
 
 ```json
 {
-  "tui.editor.cursorUp": ["up", "ctrl+p"],
-  "tui.editor.cursorDown": ["down", "ctrl+n"],
+  "tui.editor.historyPrevious": "ctrl+p",
+  "tui.editor.historyNext": "ctrl+n",
   "tui.editor.cursorLeft": ["left", "ctrl+b"],
   "tui.editor.cursorRight": ["right", "ctrl+f"],
   "tui.editor.cursorWordLeft": ["alt+left", "alt+b"],

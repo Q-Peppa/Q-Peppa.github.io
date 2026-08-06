@@ -24,7 +24,7 @@ Pi 是一个本地 coding agent。它以启动它的用户账户权限运行，�
 - 通过项目设置配置的缺失项目包
 - 项目本地扩展和项目包管理的扩展
 
-拒绝信任将跳过受保护的资源。`AGENTS.md` 和 `CLAUDE.md` 上下文文件无论项目是否被信任都会加载，除非禁用了上下文加载。在信任解决之前，Pi 只加载上下文文件、用户/全局扩展和 CLI `-e` 扩展。用户/全局和 CLI 扩展可以处理 `project_trust` 事件；第一个返回 yes/no 决策的扩展拥有该决策。
+拒绝信任将跳过受保护的资源。`AGENTS.override.md`、`AGENTS.md` 和 `CLAUDE.md` 等上下文文件无论项目是否被信任都会加载，除非禁用了上下文加载。在信任解决之前，Pi 只加载上下文文件、用户/全局扩展和 CLI `-e` 扩展。用户/全局和 CLI 扩展可以处理 `project_trust` 事件；第一个返回 yes/no 决策的扩展拥有该决策。
 
 非交互模式（`-p`、`--mode json` 和 `--mode rpc`）不显示信任提示。在没有适用的保存信任决策时，`defaultProjectTrust: "ask"` 和 `"never"` 会忽略此类资源，而 `"always"` 会信任它们。使用 `--approve`/`-a` 或 `--no-approve`/`-na` 可在单次运行中覆盖项目信任。
 
