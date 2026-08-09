@@ -221,17 +221,17 @@ pi.unregisterProvider('my-llm');
 
 `api` 字段决定使用哪个流式实现：
 
-| API                       | 用途                                |
-| ------------------------- | ----------------------------------- |
-| `anthropic-messages`      | Anthropic Claude API 及兼容         |
-| `openai-completions`      | OpenAI Chat Completions API 及兼容  |
-| `openai-responses`        | OpenAI Responses API                |
-| `azure-openai-responses`  | Azure OpenAI Responses API          |
-| `openai-codex-responses`  | OpenAI Codex Responses API          |
-| `mistral-conversations`   | Mistral SDK Conversations/Chat 流式 |
-| `google-generative-ai`    | Google Generative AI API            |
-| `google-vertex`           | Google Vertex AI API                |
-| `bedrock-converse-stream` | Amazon Bedrock Converse API         |
+| API                       | 用途                               |
+| ------------------------- | ---------------------------------- |
+| `anthropic-messages`      | Anthropic Claude API 及兼容        |
+| `openai-completions`      | OpenAI Chat Completions API 及兼容 |
+| `openai-responses`        | OpenAI Responses API               |
+| `azure-openai-responses`  | Azure OpenAI Responses API         |
+| `openai-codex-responses`  | OpenAI Codex Responses API         |
+| `mistral-conversations`   | 原生 Mistral Chat Completions 流式 |
+| `google-generative-ai`    | Google Generative AI API           |
+| `google-vertex`           | Google Vertex AI API               |
+| `bedrock-converse-stream` | Amazon Bedrock Converse API        |
 
 大多数兼容 OpenAI 的 Provider 使用 `openai-completions`。使用模型级别的 `thinkingLevelMap` 指定模型特定的思考级别，使用 `compat` 处理 Provider 的特殊行为。`xhigh` 和 `max` 级别是可选加入的，需要非 null 的映射条目，且可以被不支持的空洞分隔：
 

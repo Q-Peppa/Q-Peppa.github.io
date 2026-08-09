@@ -759,7 +759,8 @@ pi.on('thinking_level_select', async (event, ctx) => {
 - 对 `event.input` 的修改会影响实际的工具执行
 - 后面的 `tool_call` 处理程序可以看到之前处理程序所做的修改
 - 修改后不会重新进行验证
-- `tool_call` 的返回值仅通过 `{ block: true, reason?: string }` 控制阻止
+- `tool_call` 的返回值通过 `{ block: true, reason?: string, terminate?: boolean }` 控制阻止
+- `terminate` 仅适用于被阻止的调用；只有当批次中所有最终化的结果都是终止性时，agent 才会提前停止
 
 ```typescript
 import { isToolCallEventType } from '@earendil-works/pi-coding-agent';
@@ -775,7 +776,7 @@ pi.on('tool_call', async (event, ctx) => {
     event.input.command = `source ~/.profile\n${event.input.command}`;
 
     if (event.input.command.includes('rm -rf')) {
-      return { block: true, reason: '危险命令' };
+      return { block: true, reason: '危险命令', terminate: true };
     }
   }
 

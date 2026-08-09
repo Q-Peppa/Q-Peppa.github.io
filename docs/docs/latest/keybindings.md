@@ -12,7 +12,7 @@
 
 ## 按键格式
 
-格式：`modifier+key`，修饰键包括 `ctrl`、`shift`、`alt`（可组合），按键包括：
+格式：`modifier+key`，修饰键包括 `ctrl`、`shift`、`alt`、`super`（可组合），按键包括：
 
 - **字母键**：`a-z`
 - **数字键**：`0-9`
@@ -20,7 +20,9 @@
 - **功能键**：`f1`–`f12`
 - **符号**：`` ` ``、`-`、`=`、`[`、`]`、`\`、`;`、`'`、`,`、`.`、`/`、`!`、`@`、`#`、`$`、`%`、`^`、`&`、`*`、`(`、`)`、`_`、`+`、`|`、`~`、`{`、`}`、`:`、`<`、`>`、`?`
 
-修饰键组合示例：`ctrl+shift+x`、`alt+ctrl+x`、`ctrl+shift+alt+x`、`ctrl+1` 等。
+修饰键组合示例：`ctrl+shift+x`、`alt+ctrl+x`、`ctrl+shift+alt+x`、`super+k`、`ctrl+super+k`、`ctrl+1` 等。
+
+`super` 绑定需要终端单独报告修饰键，通常通过 Kitty 键盘协议实现。在不支持该协议的终端上可能无法工作。
 
 ## 所有操作
 
@@ -97,12 +99,14 @@
 | `pageUp`、`pageDown`           | 编辑器   | 转录     |
 | `ctrl+pageUp`、`ctrl+pageDown` | 编辑器   | 编辑器   |
 
-此路由仍可通过常规操作绑定配置。例如，`"tui.altScreen.pageUp": "ctrl+pageUp"` 让 `pageUp` 控制编辑器，`ctrl+pageUp` 在全屏模式下控制转录。设置 `"tui.altScreen.pageUp": []` 会完全禁用该转录快捷键。用户绑定会替换该操作的默认值。
+此路由仍可通过常规操作绑定配置。例如，`"tui.altScreen.pageUp": "ctrl+pageUp"` 让 `pageUp` 控制编辑器，`ctrl+pageUp` 在全屏模式下控制转录。在保留整页绑定的同时，绑定 `tui.altScreen.halfPageUp` 和 `tui.altScreen.halfPageDown` 可实现更小的转录滚动步长。设置 `"tui.altScreen.pageUp": []` 会完全禁用该转录快捷键。用户绑定会替换该操作的默认值。
 
 | ID                             | 默认键            | 说明                       |
 | ------------------------------ | ----------------- | -------------------------- |
 | `tui.altScreen.pageUp`         | `pageUp`          | 向上滚动转录一页           |
 | `tui.altScreen.pageDown`       | `pageDown`        | 向下滚动转录一页           |
+| `tui.altScreen.halfPageUp`     | 无                | 向上滚动转录半页           |
+| `tui.altScreen.halfPageDown`   | 无                | 向下滚动转录半页           |
 | `tui.altScreen.previousPrompt` | `ctrl+shift+up`   | 跳转到上一条标记消息       |
 | `tui.altScreen.nextPrompt`     | `ctrl+shift+down` | 跳转到下一条标记消息       |
 | `tui.altScreen.top`            | `home`            | 滚动到转录开头             |
@@ -113,11 +117,11 @@
 | ID                         | 默认键                         | 说明                                                                                                |
 | -------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------- |
 | `app.interrupt`            | `escape`                       | 取消/中断                                                                                           |
-| `app.clear`                | `ctrl+c`                       | 清空编辑器                                                                                          |
+| `app.clear`                | `ctrl+c`                       | 清空编辑器（第一次）/ 退出（第二次）                                                                |
 | `app.exit`                 | `ctrl+d`                       | 退出（编辑器为空时）                                                                                |
 | `app.suspend`              | `ctrl+z`（Windows 上无）       | 挂起到后台                                                                                          |
 | `app.editor.external`      | `ctrl+g`                       | 在外部编辑器打开（`externalEditor`、`$VISUAL`、`$EDITOR`，Windows 上为 Notepad，其他平台为 `nano`） |
-| `app.clipboard.pasteImage` | `ctrl+v`（Windows 为 `alt+v`） | 从剪贴板粘贴图像                                                                                    |
+| `app.clipboard.pasteImage` | `ctrl+v`（Windows 为 `alt+v`） | 从剪贴板粘贴图像或文本                                                                              |
 
 ### 会话
 

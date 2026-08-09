@@ -2,6 +2,80 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.84.1（2026-08-07）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **Qwen Token Plan Individual** — 为文档中标注 Individual 订阅的模型使用内置 Provider。详见 [API Keys](/docs/latest/providers#api-keys)。
+- **认证就绪检查** — 使用 `pi auth check` 验证 Provider 或模型凭据，可选地输出解析后的凭据。
+- **改进的全屏交互** — 多次点击选择单词和段落，配置半页转录滚动。详见 [TUI 全屏视口](/docs/latest/keybindings#tui-fullscreen-viewport)。
+- **终止被阻塞的 tool call** — 扩展 `tool_call` 处理器可以在不再次调用模型的情况下停止全部终止批次。详见 [Tool Events](/docs/latest/extensions#tool-events)。
+
+新增
+
+- 将 Qwen Token Plan Individual 添加为内置 Provider，带其文档化的订阅模型目录和共享的国际 `QWEN_TOKEN_PLAN_API_KEY`。详见 [API Keys](/docs/latest/providers#api-keys)（[#7659](https://github.com/earendil-works/pi/pull/7659) 由 [@arasovic](https://github.com/arasovic) 贡献）。
+- 添加 `pi auth check` Provider/模型认证预检，支持可选的凭据输出（[#7152](https://github.com/earendil-works/pi/issues/7152)）。
+- 为被阻塞的扩展 `tool_call` 事件添加 `terminate` 支持，使全部终止批次可以跳过自动的 follow-up 模型调用。详见 [Tool Events](/docs/latest/extensions#tool-events)（[#7715](https://github.com/earendil-works/pi/pull/7715) 由 [@muyiyr](https://github.com/muyiyr) 贡献）。
+- 添加全屏模式中的双击单词和空白选择、粒度感知的拖拽选择，以及三击段落选择（来自 `pi-tui`）（[#7725](https://github.com/earendil-works/pi/issues/7725)、[#7733](https://github.com/earendil-works/pi/pull/7733) 由 [@volsa](https://github.com/volsa) 贡献）。
+- 添加全屏模式中未绑定的半页转录滚动操作。详见 [TUI 全屏视口](/docs/latest/keybindings#tui-fullscreen-viewport)（[#7735](https://github.com/earendil-works/pi/issues/7735)）。
+
+变更
+
+- 软化了 bash 工具的 `PI_*` 环境变量指南，以减少不必要的检查命令（[#7128](https://github.com/earendil-works/pi/issues/7128)）。
+- 通过并发探测配色方案和背景支持，将最坏情况下的自动终端主题检测延迟从 200 ms 减少到 100 ms。
+
+修复
+
+- 通过使用 `--no-compile-autoload-bunfig` 编译，修复 cwd 包含带 `preload` 的 `bunfig.toml` 时 Bun 独立二进制在启动时崩溃的问题（[#7685](https://github.com/earendil-works/pi/pull/7685) 由 [@geril07](https://github.com/geril07) 贡献）。
+- 修复扩展 TUI 方法包装器在委托给原始方法时无限递归的问题（[#7731](https://github.com/earendil-works/pi/issues/7731)）。
+- 修复 Windows 上全屏模式右键不粘贴剪贴板文本的问题。
+- 修复 `Agent.reset()` 在活动运行期间清除转录和运行时状态的问题；现在它会在 agent 空闲前拒绝（[#7717](https://github.com/earendil-works/pi/pull/7717) 由 [@wesleyzhangwq](https://github.com/wesleyzhangwq) 贡献）。
+- 修复 LaTeX 关系、乘法和命名运算符间距，以及带堆叠分数、运算符限制和相邻矩阵的矩阵组合（来自 `pi-tui`）。
+- 通过使用按钮移动跟踪而非全量移动跟踪，减少 tmux、Zellij 和 GNU Screen 下的全屏鼠标事件量（来自 `pi-tui`）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 将 Qwen Token Plan Individual 添加为内置 Provider，带其文档化的订阅模型目录和共享的国际 `QWEN_TOKEN_PLAN_API_KEY`（[#7659](https://github.com/earendil-works/pi/pull/7659) 由 [@arasovic](https://github.com/arasovic) 贡献）。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+新增
+
+- 添加 `BeforeToolCallResult.terminate`，使被阻塞的 tool call 可以参与现有的批次提前终止规则（[#7715](https://github.com/earendil-works/pi/pull/7715) 由 [@muyiyr](https://github.com/muyiyr) 贡献）。
+
+修复
+
+- 修复 `Agent.reset()` 在活动运行期间清除转录和运行时状态的问题；现在它会在 agent 空闲前拒绝（[#7717](https://github.com/earendil-works/pi/pull/7717) 由 [@wesleyzhangwq](https://github.com/wesleyzhangwq) 贡献）。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+新增
+
+- 添加未绑定的半页转录滚动操作 `tui.altScreen.halfPageUp` 和 `tui.altScreen.halfPageDown`，用于全屏 TUI 快捷键（[#7735](https://github.com/earendil-works/pi/issues/7735)）。
+- 添加全屏 TUI 中的双击单词和空白选择、粒度感知的拖拽选择，以及三击段落选择（[#7725](https://github.com/earendil-works/pi/issues/7725)、[#7733](https://github.com/earendil-works/pi/pull/7733) 由 [@volsa](https://github.com/volsa) 贡献）。
+- 为备屏 TUI 添加可选的右键粘贴处理器，目前仅在 Windows 上启用。
+
+修复
+
+- 修复 LaTeX 关系、乘法和命名运算符间距，以及带堆叠分数、运算符限制和相邻矩阵的矩阵组合。
+- 通过使用按钮移动跟踪而非全量移动跟踪，减少 tmux、Zellij 和 GNU Screen 下的全屏鼠标事件量。
+
+</details>
+
 ## v0.84.0（2026-08-06）
 
 <details>

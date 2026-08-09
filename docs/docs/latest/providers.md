@@ -70,42 +70,43 @@ export ANTHROPIC_API_KEY=sk-ant-...
 pi
 ```
 
-| Provider                             | 环境变量                                                                   | `auth.json` key          |
-| ------------------------------------ | -------------------------------------------------------------------------- | ------------------------ |
-| Anthropic                            | `ANTHROPIC_API_KEY`                                                        | `anthropic`              |
-| Ant Ling                             | `ANT_LING_API_KEY`                                                         | `ant-ling`               |
-| Azure OpenAI Responses               | `AZURE_OPENAI_API_KEY`                                                     | `azure-openai-responses` |
-| OpenAI                               | `OPENAI_API_KEY`                                                           | `openai`                 |
-| DeepSeek                             | `DEEPSEEK_API_KEY`                                                         | `deepseek`               |
-| NVIDIA NIM                           | `NVIDIA_API_KEY`                                                           | `nvidia`                 |
-| Google Gemini                        | `GEMINI_API_KEY`                                                           | `google`                 |
-| Amazon Bedrock                       | `AWS_BEARER_TOKEN_BEDROCK`                                                 | `amazon-bedrock`         |
-| Mistral                              | `MISTRAL_API_KEY`                                                          | `mistral`                |
-| Groq                                 | `GROQ_API_KEY`                                                             | `groq`                   |
-| Cerebras                             | `CEREBRAS_API_KEY`                                                         | `cerebras`               |
-| Cloudflare AI Gateway                | `CLOUDFLARE_API_KEY`（+ `CLOUDFLARE_ACCOUNT_ID`、`CLOUDFLARE_GATEWAY_ID`） | `cloudflare-ai-gateway`  |
-| Cloudflare Workers AI                | `CLOUDFLARE_API_KEY`（+ `CLOUDFLARE_ACCOUNT_ID`）                          | `cloudflare-workers-ai`  |
-| xAI                                  | `XAI_API_KEY`                                                              | `xai`                    |
-| OpenRouter                           | `OPENROUTER_API_KEY`                                                       | `openrouter`             |
-| Vercel AI Gateway                    | `AI_GATEWAY_API_KEY`                                                       | `vercel-ai-gateway`      |
-| ZAI Coding Plan（全球）              | `ZAI_API_KEY`                                                              | `zai`                    |
-| ZAI Coding Plan（中国）              | `ZAI_CODING_CN_API_KEY`                                                    | `zai-coding-cn`          |
-| OpenCode Zen                         | `OPENCODE_API_KEY`                                                         | `opencode`               |
-| OpenCode Go                          | `OPENCODE_API_KEY`                                                         | `opencode-go`            |
-| Radius                               | `RADIUS_API_KEY`                                                           | `radius`                 |
-| Hugging Face                         | `HF_TOKEN`                                                                 | `huggingface`            |
-| Fireworks                            | `FIREWORKS_API_KEY`                                                        | `fireworks`              |
-| Together AI                          | `TOGETHER_API_KEY`                                                         | `together`               |
-| Baseten                              | `BASETEN_API_KEY`                                                          | `baseten`                |
-| Kimi For Coding                      | `KIMI_API_KEY`                                                             | `kimi-coding`            |
-| MiniMax                              | `MINIMAX_API_KEY`                                                          | `minimax`                |
-| MiniMax（中国）                      | `MINIMAX_CN_API_KEY`                                                       | `minimax-cn`             |
-| Qwen Token Plan                      | `QWEN_TOKEN_PLAN_API_KEY`                                                  | `qwen-token-plan`        |
-| Qwen Token Plan（中国）              | `QWEN_TOKEN_PLAN_CN_API_KEY`                                               | `qwen-token-plan-cn`     |
-| Xiaomi MiMo                          | `XIAOMI_API_KEY`                                                           | `xiaomi`                 |
-| Xiaomi MiMo Token Plan（中国）       | `XIAOMI_TOKEN_PLAN_CN_API_KEY`                                             | `xiaomi-token-plan-cn`   |
-| Xiaomi MiMo Token Plan（阿姆斯特丹） | `XIAOMI_TOKEN_PLAN_AMS_API_KEY`                                            | `xiaomi-token-plan-ams`  |
-| Xiaomi MiMo Token Plan（新加坡）     | `XIAOMI_TOKEN_PLAN_SGP_API_KEY`                                            | `xiaomi-token-plan-sgp`  |
+| Provider                             | 环境变量                                                                   | `auth.json` key              |
+| ------------------------------------ | -------------------------------------------------------------------------- | ---------------------------- |
+| Anthropic                            | `ANTHROPIC_API_KEY`                                                        | `anthropic`                  |
+| Ant Ling                             | `ANT_LING_API_KEY`                                                         | `ant-ling`                   |
+| Azure OpenAI Responses               | `AZURE_OPENAI_API_KEY`                                                     | `azure-openai-responses`     |
+| OpenAI                               | `OPENAI_API_KEY`                                                           | `openai`                     |
+| DeepSeek                             | `DEEPSEEK_API_KEY`                                                         | `deepseek`                   |
+| NVIDIA NIM                           | `NVIDIA_API_KEY`                                                           | `nvidia`                     |
+| Google Gemini                        | `GEMINI_API_KEY`                                                           | `google`                     |
+| Amazon Bedrock                       | `AWS_BEARER_TOKEN_BEDROCK`                                                 | `amazon-bedrock`             |
+| Mistral                              | `MISTRAL_API_KEY`                                                          | `mistral`                    |
+| Groq                                 | `GROQ_API_KEY`                                                             | `groq`                       |
+| Cerebras                             | `CEREBRAS_API_KEY`                                                         | `cerebras`                   |
+| Cloudflare AI Gateway                | `CLOUDFLARE_API_KEY`（+ `CLOUDFLARE_ACCOUNT_ID`、`CLOUDFLARE_GATEWAY_ID`） | `cloudflare-ai-gateway`      |
+| Cloudflare Workers AI                | `CLOUDFLARE_API_KEY`（+ `CLOUDFLARE_ACCOUNT_ID`）                          | `cloudflare-workers-ai`      |
+| xAI                                  | `XAI_API_KEY`                                                              | `xai`                        |
+| OpenRouter                           | `OPENROUTER_API_KEY`                                                       | `openrouter`                 |
+| Vercel AI Gateway                    | `AI_GATEWAY_API_KEY`                                                       | `vercel-ai-gateway`          |
+| ZAI Coding Plan（全球）              | `ZAI_API_KEY`                                                              | `zai`                        |
+| ZAI Coding Plan（中国）              | `ZAI_CODING_CN_API_KEY`                                                    | `zai-coding-cn`              |
+| OpenCode Zen                         | `OPENCODE_API_KEY`                                                         | `opencode`                   |
+| OpenCode Go                          | `OPENCODE_API_KEY`                                                         | `opencode-go`                |
+| Radius                               | `RADIUS_API_KEY`                                                           | `radius`                     |
+| Hugging Face                         | `HF_TOKEN`                                                                 | `huggingface`                |
+| Fireworks                            | `FIREWORKS_API_KEY`                                                        | `fireworks`                  |
+| Together AI                          | `TOGETHER_API_KEY`                                                         | `together`                   |
+| Baseten                              | `BASETEN_API_KEY`                                                          | `baseten`                    |
+| Kimi For Coding                      | `KIMI_API_KEY`                                                             | `kimi-coding`                |
+| MiniMax                              | `MINIMAX_API_KEY`                                                          | `minimax`                    |
+| MiniMax（中国）                      | `MINIMAX_CN_API_KEY`                                                       | `minimax-cn`                 |
+| Qwen Token Plan（现有目录）          | `QWEN_TOKEN_PLAN_API_KEY`                                                  | `qwen-token-plan`            |
+| Qwen Token Plan（Individual）        | `QWEN_TOKEN_PLAN_API_KEY`                                                  | `qwen-token-plan-individual` |
+| Qwen Token Plan（中国）              | `QWEN_TOKEN_PLAN_CN_API_KEY`                                               | `qwen-token-plan-cn`         |
+| Xiaomi MiMo                          | `XIAOMI_API_KEY`                                                           | `xiaomi`                     |
+| Xiaomi MiMo Token Plan（中国）       | `XIAOMI_TOKEN_PLAN_CN_API_KEY`                                             | `xiaomi-token-plan-cn`       |
+| Xiaomi MiMo Token Plan（阿姆斯特丹） | `XIAOMI_TOKEN_PLAN_AMS_API_KEY`                                            | `xiaomi-token-plan-ams`      |
+| Xiaomi MiMo Token Plan（新加坡）     | `XIAOMI_TOKEN_PLAN_SGP_API_KEY`                                            | `xiaomi-token-plan-sgp`      |
 
 环境变量和 `auth.json` 键的参考：[`const envMap`](https://github.com/earendil-works/pi-mono/blob/main/packages/ai/src/env-api-keys.ts) 位于 [`packages/ai/src/env-api-keys.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/ai/src/env-api-keys.ts)。
 
@@ -125,6 +126,7 @@ pi
   "opencode-go": { "type": "api_key", "key": "..." },
   "together": { "type": "api_key", "key": "..." },
   "qwen-token-plan": { "type": "api_key", "key": "sk-sp-..." },
+  "qwen-token-plan-individual": { "type": "api_key", "key": "sk-sp-..." },
   "qwen-token-plan-cn": { "type": "api_key", "key": "sk-sp-..." },
   "xiaomi": { "type": "api_key", "key": "..." },
   "xiaomi-token-plan-cn": { "type": "api_key", "key": "..." },
@@ -132,6 +134,8 @@ pi
   "xiaomi-token-plan-sgp": { "type": "api_key", "key": "..." }
 }
 ```
+
+`qwen-token-plan-individual` 使用与 `qwen-token-plan` 相同的国际端点（endpoint）和 `QWEN_TOKEN_PLAN_API_KEY`，但将选择器限制为文档中标注 Individual 订阅的模型。现有 Provider 保留更广泛的目录以保持向后兼容。使用 `auth.json` 时，请在你选择的 Provider 下存储凭证；环境变量由两个国际 Provider 共享。
 
 文件以 `0600` 权限创建（仅用户可读写）。Auth 文件凭证优先于环境变量。
 
