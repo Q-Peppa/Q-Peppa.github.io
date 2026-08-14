@@ -4,9 +4,26 @@
 
 Pi 使用 [Kitty 键盘协议](https://sw.kovidgoyal.net/kitty/keyboard-protocol/) 进行可靠的修饰键检测。大多数现代终端支持此协议，但某些需要配置更改。
 
-## Kitty、iTerm2
+## Kitty
 
-**开箱即用。**
+开箱即用。
+
+## iTerm2
+
+### 常规 TUI 模式
+
+开箱即用。
+
+### 全屏 TUI 模式
+
+Pi 接管视口后，iTerm2 会发送鼠标滚轮报告，而不是滚动原生回滚缓冲区。iTerm2 默认的快速触控板行为可能丢失大部分加速滚动增量，导致全屏模式下的滚动速度远慢于常规模式。
+
+如果快速滚动手势在全屏模式下一次只能移动约一行：
+
+1. 打开 **iTerm2 → Settings → Advanced**。
+2. 搜索 **Trackpad scrolls fast?**，并将其设为 **No**。
+
+这是影响整个 iTerm2 的临时解决方案，也可能改变原生触控板滚动行为。底层问题记录在 [iTerm2 issue 9619](https://gitlab.com/gnachman/iterm2/-/work_items/9619) 中。
 
 ## Apple Terminal
 
@@ -31,6 +48,10 @@ keybind = shift+enter=text:\n
 该映射发送原始的换行符字节。在 Pi 内部，这与 `Ctrl+J` 无法区分，因此 tmux 和 Pi 不再看到真正的 `shift+enter` 按键事件。
 
 如果仅为 Claude Code 2.x+ 添加的该映射，可以删除，除非你想在 tmux 中使用 Claude Code，它仍然需要该 Ghostty 映射。Pi 默认将 `Ctrl+J` 绑定为换行别名，因此 `Shift+Enter` 无需额外 Pi 配置即可在 tmux 中通过该重映射继续工作。
+
+### 全屏 TUI 模式
+
+在全屏模式下，链接仍可点击，但 Pi 捕获鼠标输入时，Ghostty 不会显示悬停下划线或左下角 URL 预览。在 macOS 上按住 `Shift+Command`，或在 Linux 上按住 `Shift+Ctrl`，即可使用 Ghostty 的原生链接处理。
 
 ## WezTerm
 

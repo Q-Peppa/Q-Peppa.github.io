@@ -23,6 +23,7 @@ type JsonAgentSessionEvent =
   | Exclude<AgentSessionEvent, { type: 'message_update' }>
   | {
       type: 'message_update';
+      usage: Usage;
       assistantMessageEvent: WithoutPartial<AssistantMessageEvent>;
     };
 ```
@@ -122,13 +123,13 @@ type AgentEvent =
 {"type":"agent_start"}
 {"type":"turn_start"}
 {"type":"message_start","message":{"role":"assistant","content":[],...}}
-{"type":"message_update","assistantMessageEvent":{"type":"text_delta","contentIndex":0,"delta":"Hello"}}
+{"type":"message_update","usage":{...},"assistantMessageEvent":{"type":"text_delta","contentIndex":0,"delta":"Hello"}}
 {"type":"message_end","message":{...}}
 {"type":"turn_end","message":{...},"toolResults":[]}
 {"type":"agent_end","messages":[...]}
 ```
 
-`message_update` 记录仅包含增量。它们省略累积的 `message` 字段和 `assistantMessageEvent.partial`，以保持流大小线性。如需组装实时文本、thinking 或工具调用参数，可使用 `contentIndex` 和 `delta`。`message_end` 包含最终的权威消息。
+`message_update` 记录仅包含增量。它们省略累积的 `message` 字段和 `assistantMessageEvent.partial`，以保持流大小线性。顶层 `usage` 字段包含 Provider 最新报告的累计用量；如果 Provider 仅在完成时报告用量，该字段可能一直为零。如需组装实时文本、thinking 或工具调用参数，可使用 `contentIndex` 和 `delta`。`message_end` 包含最终的权威消息。
 
 ## 示例
 

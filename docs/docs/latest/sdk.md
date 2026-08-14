@@ -381,6 +381,13 @@ import { ModelRuntime } from '@earendil-works/pi-coding-agent';
 
 const modelRuntime = await ModelRuntime.create();
 
+// create() restores cached catalogs but does not refresh them from pi.dev by default.
+// Opt in to a create-time network refresh and bound how long it may take:
+const refreshedRuntime = await ModelRuntime.create({
+  allowModelNetwork: true,
+  modelRefreshTimeoutMs: 15_000,
+});
+
 // 查找特定的内置模型（不检查 API Key 是否存在）
 const opus = getModel('anthropic', 'claude-opus-4-5');
 if (!opus) throw new Error('Model not found');
@@ -411,6 +418,8 @@ const { session } = await createAgentSession({
 1. 尝试从会话恢复（如果正在继续）
 2. 使用设置中的默认值
 3. 回退到第一个可用模型
+
+远程目录会持久化到本地，后续 runtime 无需网络请求即可恢复。默认文件为 `~/.pi/agent/models-store.json`；可通过 `modelsStorePath` 选择其他位置，也可注入 `modelsStore` 来控制持久化。除非强制刷新，否则每个 Provider 的网络刷新限制为每四小时一次。若要立即强制刷新，调用 `await modelRuntime.refresh({ allowNetwork: true, force: true, signal })`。设置 `PI_OFFLINE` 会禁用模型网络访问。
 
 为匹配 CLI 的模型解析行为，可使用导出的解析器帮助函数：
 

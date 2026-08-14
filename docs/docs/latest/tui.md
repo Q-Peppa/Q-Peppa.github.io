@@ -432,7 +432,7 @@ renderResult(result, options, theme, context) {
 
 | 分类     | 颜色                                                                                                                                                      |
 | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| General  | `text`、`accent`、`muted`、`dim`                                                                                                                          |
+| General  | `text`、`accent`、`muted`、`dim`、`searchMatchText`                                                                                                       |
 | Status   | `success`、`error`、`warning`                                                                                                                             |
 | Borders  | `border`、`borderAccent`、`borderMuted`                                                                                                                   |
 | Messages | `userMessageText`、`customMessageText`、`customMessageLabel`                                                                                              |
@@ -445,7 +445,7 @@ renderResult(result, options, theme, context) {
 
 **背景色**（`theme.bg(color, text)`）：
 
-`selectedBg`、`userMessageBg`、`customMessageBg`、`toolPendingBg`、`toolSuccessBg`、`toolErrorBg`
+`selectedBg`、`searchMatchBg`、`userMessageBg`、`customMessageBg`、`toolPendingBg`、`toolSuccessBg`、`toolErrorBg`
 
 **对于 Markdown**，使用 `getMarkdownTheme()`：
 

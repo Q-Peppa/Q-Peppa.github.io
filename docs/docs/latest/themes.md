@@ -42,6 +42,22 @@ Pi 从以下位置加载主题：
 
 首次运行时，Pi 检测终端背景色，默认选择 `dark` 或 `light`。
 
+### 初始主题
+
+启动交互式运行时指定主题，但不更改已保存的设置：
+
+```bash
+pi --use-theme light
+```
+
+若要跟随终端外观，请使用 `lightTheme/darkTheme` 语法：
+
+```bash
+pi --use-theme light/dark
+```
+
+CLI 值是本次运行的初始主题。之后在 `/settings` 中选择其他主题会立即应用并正常保存。
+
 ## 创建自定义主题
 
 1. 创建主题文件：
@@ -75,6 +91,8 @@ vim ~/.pi/agent/themes/my-theme.json
     "thinkingText": "secondary",
     "selectedBg": "#2d2d30",
     "scrollbarThumb": "#555566",
+    "searchMatchBg": "#2d2d30",
+    "searchMatchText": "",
     "userMessageBg": "#2d2d30",
     "userMessageText": "",
     "customMessageBg": "#2d2d30",
@@ -144,12 +162,12 @@ vim ~/.pi/agent/themes/my-theme.json
 
 - `name`：必需，必须唯一，且不能包含 `/`。
 - `vars`：可选。在此定义可复用的颜色，然后在 `colors` 中引用。
-- `colors`：必须定义全部 51 个必需 token。`thinkingMax` 为可选，缺失时回退到 `thinkingXhigh`；`scrollbarThumb` 为可选，缺失时回退到 `selectedBg`。
+- `colors`：必须定义全部 51 个必需 token。`thinkingMax`、`scrollbarThumb` 和两个搜索高亮 token 为可选，并使用下文列出的回退值。
 - `$schema` 字段启用编辑器自动补全和验证。
 
 ## 颜色 Token
 
-每个主题必须定义全部 51 个必需颜色 token。`thinkingMax` 和 `scrollbarThumb` 为可选，以兼容现有主题；省略时分别使用 `thinkingXhigh` 和 `selectedBg`。
+每个主题必须定义全部 51 个必需颜色 token。可选 token 用于兼容现有主题：`thinkingMax` 回退到 `thinkingXhigh`，`scrollbarThumb` 和 `searchMatchBg` 回退到 `selectedBg`，`searchMatchText` 回退到 `text`。其他搜索匹配项使用 `searchMatchText` 作为前景色、`searchMatchBg` 作为背景色并添加下划线；当前匹配项会交换这组前景色和背景色，并使用粗体文本。
 
 ### 核心 UI（11 个）
 
@@ -167,22 +185,24 @@ vim ~/.pi/agent/themes/my-theme.json
 | `text`         | 默认文本（通常为 `""`）        |
 | `thinkingText` | Thinking 块文本                |
 
-### 背景和内容（11 个必需，1 个可选）
+### 背景和内容（11 个必需，3 个可选）
 
-| Token                | 用途                                                |
-| -------------------- | --------------------------------------------------- |
-| `selectedBg`         | 选中行背景                                          |
-| `scrollbarThumb`     | 全屏滚动条滑块背景；可选，缺失时回退到 `selectedBg` |
-| `userMessageBg`      | 用户消息背景                                        |
-| `userMessageText`    | 用户消息文本                                        |
-| `customMessageBg`    | 扩展消息背景                                        |
-| `customMessageText`  | 扩展消息文本                                        |
-| `customMessageLabel` | 扩展消息标签                                        |
-| `toolPendingBg`      | 工具框（等待中）                                    |
-| `toolSuccessBg`      | 工具框（成功）                                      |
-| `toolErrorBg`        | 工具框（错误）                                      |
-| `toolTitle`          | 工具标题                                            |
-| `toolOutput`         | 工具输出文本                                        |
+| Token                | 用途                                                                |
+| -------------------- | ------------------------------------------------------------------- |
+| `selectedBg`         | 选中行背景                                                          |
+| `scrollbarThumb`     | 全屏滚动条滑块背景；可选，缺失时回退到 `selectedBg`                 |
+| `searchMatchBg`      | 转录搜索匹配项背景和当前匹配项文本；可选，缺失时回退到 `selectedBg` |
+| `searchMatchText`    | 转录搜索匹配项文本和当前匹配项背景；可选，缺失时回退到 `text`       |
+| `userMessageBg`      | 用户消息背景                                                        |
+| `userMessageText`    | 用户消息文本                                                        |
+| `customMessageBg`    | 扩展消息背景                                                        |
+| `customMessageText`  | 扩展消息文本                                                        |
+| `customMessageLabel` | 扩展消息标签                                                        |
+| `toolPendingBg`      | 工具框（等待中）                                                    |
+| `toolSuccessBg`      | 工具框（成功）                                                      |
+| `toolErrorBg`        | 工具框（错误）                                                      |
+| `toolTitle`          | 工具标题                                                            |
+| `toolOutput`         | 工具输出文本                                                        |
 
 ### Markdown（10 个）
 

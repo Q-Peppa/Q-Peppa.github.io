@@ -88,7 +88,7 @@
 
 ### TUI 全屏视口
 
-这些操作在交互模式使用 `--tui-mode fullscreen` 时生效，作用于主转录滚动区域。双指触控板和鼠标滚轮输入可滚动指针所在区域，指针位于固定的编辑器/状态栏/底部停靠栏上方时则滚动转录。点击 OSC 8 超链接会以默认处理器打开。用鼠标主按钮拖拽可选中文本并复制到剪贴板；在转录顶部或底部边缘按住会自动滚动查看屏幕外内容。
+这些操作在交互模式使用 `--tui-mode fullscreen` 时生效，作用于主转录滚动区域。双指触控板和鼠标滚轮输入可滚动指针所在区域，指针位于固定的编辑器/状态栏/底部停靠栏上方时则滚动转录。点击 OSC 8 超链接会以默认处理器打开。用鼠标主按钮拖拽可选中文本并复制到剪贴板；在转录顶部或底部边缘按住会自动滚动查看屏幕外内容。终端特定的鼠标和触控板行为参见 [终端设置](/docs/latest/terminal-setup)。
 
 全屏转录绑定优先于编辑器绑定。因此默认未修改的导航键在全屏模式下控制转录，而其 `ctrl` 变体继续控制编辑器。在全屏模式之外，两种变体都控制编辑器。
 
@@ -99,18 +99,24 @@
 | `pageUp`、`pageDown`           | 编辑器   | 转录     |
 | `ctrl+pageUp`、`ctrl+pageDown` | 编辑器   | 编辑器   |
 
-此路由仍可通过常规操作绑定配置。例如，`"tui.altScreen.pageUp": "ctrl+pageUp"` 让 `pageUp` 控制编辑器，`ctrl+pageUp` 在全屏模式下控制转录。在保留整页绑定的同时，绑定 `tui.altScreen.halfPageUp` 和 `tui.altScreen.halfPageDown` 可实现更小的转录滚动步长。设置 `"tui.altScreen.pageUp": []` 会完全禁用该转录快捷键。用户绑定会替换该操作的默认值。
+此路由仍可通过常规操作绑定配置。例如，`"tui.altScreen.pageUp": "ctrl+pageUp"` 让 `pageUp` 控制编辑器，`ctrl+pageUp` 在全屏模式下控制转录。绑定 `tui.altScreen.halfPageUp` 和 `tui.altScreen.halfPageDown` 可按半页滚动，绑定 `tui.altScreen.lineUp` 和 `tui.altScreen.lineDown` 可按单行滚动。设置 `"tui.altScreen.pageUp": []` 会完全禁用该转录快捷键。用户绑定会替换该操作的默认值。
 
-| ID                             | 默认键            | 说明                       |
-| ------------------------------ | ----------------- | -------------------------- |
-| `tui.altScreen.pageUp`         | `pageUp`          | 向上滚动转录一页           |
-| `tui.altScreen.pageDown`       | `pageDown`        | 向下滚动转录一页           |
-| `tui.altScreen.halfPageUp`     | 无                | 向上滚动转录半页           |
-| `tui.altScreen.halfPageDown`   | 无                | 向下滚动转录半页           |
-| `tui.altScreen.previousPrompt` | `ctrl+shift+up`   | 跳转到上一条标记消息       |
-| `tui.altScreen.nextPrompt`     | `ctrl+shift+down` | 跳转到下一条标记消息       |
-| `tui.altScreen.top`            | `home`            | 滚动到转录开头             |
-| `tui.altScreen.bottom`         | `end`             | 滚动到转录末尾并跟随新输出 |
+| ID                             | 默认键                        | 说明                       |
+| ------------------------------ | ----------------------------- | -------------------------- |
+| `tui.altScreen.pageUp`         | `pageUp`                      | 向上滚动转录一页           |
+| `tui.altScreen.pageDown`       | `pageDown`                    | 向下滚动转录一页           |
+| `tui.altScreen.halfPageUp`     | 无                            | 向上滚动转录半页           |
+| `tui.altScreen.halfPageDown`   | 无                            | 向下滚动转录半页           |
+| `tui.altScreen.lineUp`         | 无                            | 向上滚动转录一行           |
+| `tui.altScreen.lineDown`       | 无                            | 向下滚动转录一行           |
+| `tui.altScreen.previousPrompt` | `ctrl+shift+up`               | 跳转到上一条标记消息       |
+| `tui.altScreen.nextPrompt`     | `ctrl+shift+down`             | 跳转到下一条标记消息       |
+| `tui.altScreen.search`         | `ctrl+shift+f`                | 搜索已渲染的转录           |
+| `tui.altScreen.searchNext`     | `enter`、`ctrl+g`             | 搜索时选择下一个匹配项     |
+| `tui.altScreen.searchPrevious` | `shift+enter`、`ctrl+shift+g` | 搜索时选择上一个匹配项     |
+| `tui.altScreen.searchClose`    | `escape`                      | 关闭转录搜索               |
+| `tui.altScreen.top`            | `home`                        | 滚动到转录开头             |
+| `tui.altScreen.bottom`         | `end`                         | 滚动到转录末尾并跟随新输出 |
 
 ### 应用程序
 

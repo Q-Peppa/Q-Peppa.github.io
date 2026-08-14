@@ -1433,6 +1433,9 @@ pi.sendUserMessage([
 // 流式传输期间 - 必须指定传递模式
 pi.sendUserMessage('关注错误处理', { deliverAs: 'steer' });
 pi.sendUserMessage('然后进行汇总', { deliverAs: 'followUp' });
+
+// Opt in to extension command dispatch and skill/prompt template expansion
+pi.sendUserMessage('/review src/index.ts', { expandPromptTemplates: true });
 ```
 
 **选项：**
@@ -1440,6 +1443,7 @@ pi.sendUserMessage('然后进行汇总', { deliverAs: 'followUp' });
 - `deliverAs` - Agent 正在流式传输时需要：
   - `"steer"` - 将消息排队，在当前助手回合完成工具调用后传递
   - `"followUp"` - 等待 Agent 完成所有工具
+- `expandPromptTemplates` - 分派扩展命令，并展开 Skill 命令和 Prompt 模板。默认为 `false`。
 
 不在流式传输时，消息会立即发送并触发新回合。在流式传输时如果未提供 `deliverAs`，会抛出错误。
 

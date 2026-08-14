@@ -5,14 +5,19 @@
 Pi 以三种方式使用环境变量：
 
 - 诸如 `PI_OFFLINE` 等变量用于配置 Pi 进程。
-- Pi 设置 `PI_CODING_AGENT`，使子进程能够检测到它们在 Pi 内部运行。
+- Pi 设置进程标记，让子进程能够识别启动它们的 Agent 是 Pi。
 - 由 LLM 可调用的 bash 工具运行的命令会收到描述当前会话的 `PI_*` 变量。
 
 Provider API Key 变量在 [Providers](/docs/latest/providers#environment-variables-or-auth-file) 中单独说明。
 
 ## 进程标记
 
-CLI 和 RPC 入口点设置 `PI_CODING_AGENT=true`。子进程继承该变量，可用于检测自身在 Pi 内部运行。该变量不区分会话，且通过 SDK 嵌入 Pi 时不会自动设置。
+CLI 和 RPC 入口点设置两个进程标记：
+
+- `AI_AGENT=pi` 是通用标记，让工具能够识别启动该进程的 Agent 是 Pi。
+- `PI_CODING_AGENT=true` 是 Pi 专用标记，让子进程能够检测自身在 Pi 内部运行。
+
+子进程会继承这两个标记。它们不区分会话，且通过 SDK 嵌入 Pi 时不会自动设置。
 
 ## Bash 工具会话环境
 
@@ -73,19 +78,20 @@ const bashTool = createBashTool(cwd, {
 
 以下变量由 Pi 自身读取：
 
-| 变量                          | 说明                                                                          |
-| ----------------------------- | ----------------------------------------------------------------------------- |
-| `PI_CODING_AGENT_DIR`         | 覆盖配置目录；默认为 `~/.pi/agent`                                            |
-| `PI_CODING_AGENT_SESSION_DIR` | 覆盖会话存储；可被 `--session-dir` 覆盖                                       |
-| `PI_PACKAGE_DIR`              | 覆盖包目录，适用于 Nix/Guix 存储路径                                          |
-| `PI_OFFLINE`                  | 禁用启动网络操作，包括更新检查、包更新和安装/更新遥测                         |
-| `PI_SKIP_VERSION_CHECK`       | 禁用 `pi.dev` 最新版本请求                                                    |
-| `PI_TELEMETRY`                | 覆盖安装/更新遥测和 Provider 归因请求头：`1`/`true`/`yes` 或 `0`/`false`/`no` |
-| `PI_CACHE_RETENTION`          | 设置为 `long` 以在支持的 Provider 上启用扩展 prompt 缓存                      |
-| `PI_SHARE_VIEWER_URL`         | 覆盖 `/share` 使用的基础 URL                                                  |
-| `PI_HARDWARE_CURSOR`          | 设置为 `1` 以显示硬件光标；参见 [Terminal setup](/docs/latest/terminal-setup) |
-| `VISUAL`、`EDITOR`            | 当 `externalEditor` 未设置时的外部编辑器回退                                  |
-| `HTTP_PROXY`、`HTTPS_PROXY`   | 代理出站 HTTP 请求                                                            |
+| 变量                          | 说明                                                                                                                               |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `PI_CODING_AGENT_DIR`         | 覆盖配置目录；默认为 `~/.pi/agent`                                                                                                 |
+| `PI_CODING_AGENT_SESSION_DIR` | 覆盖会话存储；可被 `--session-dir` 覆盖                                                                                            |
+| `PI_PACKAGE_DIR`              | 覆盖包目录，适用于 Nix/Guix 存储路径                                                                                               |
+| `PI_OFFLINE`                  | 禁用启动网络操作，包括更新检查、包更新和安装/更新遥测                                                                              |
+| `PI_SKIP_VERSION_CHECK`       | 禁用 `pi.dev` 最新版本请求                                                                                                         |
+| `PI_TELEMETRY`                | 覆盖安装/更新遥测和 Provider 归因请求头：`1`/`true`/`yes` 或 `0`/`false`/`no`                                                      |
+| `PI_CACHE_RETENTION`          | 设置为 `long` 以在支持的 Provider 上启用扩展 prompt 缓存                                                                           |
+| `PI_SHARE_VIEWER_URL`         | 覆盖 `/share` 使用的基础 URL                                                                                                       |
+| `PI_HARDWARE_CURSOR`          | 设置为 `1` 以显示硬件光标；参见 [Terminal setup](/docs/latest/terminal-setup)                                                      |
+| `PI_TUI_ESC_TIMEOUT`          | 将单独的 ESC 视为 Escape 前的等待时长（毫秒）；SSH 下默认为 `100`，其他情况默认为 `10`。如果 Alt 组合键被误读为 Escape，请增大该值 |
+| `VISUAL`、`EDITOR`            | 当 `externalEditor` 未设置时的外部编辑器回退                                                                                       |
+| `HTTP_PROXY`、`HTTPS_PROXY`   | 代理出站 HTTP 请求                                                                                                                 |
 
 Provider 凭据（如 `ANTHROPIC_API_KEY`、`OPENAI_API_KEY` 以及云 Provider 配置）在 [Providers](/docs/latest/providers#environment-variables-or-auth-file) 中列出。
 

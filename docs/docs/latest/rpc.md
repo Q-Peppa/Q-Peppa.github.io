@@ -1006,6 +1006,14 @@ Agent 开始处理 prompt 时发出。
 ```json
 {
   "type": "message_update",
+  "usage": {
+    "input": 100,
+    "output": 1,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "totalTokens": 101,
+    "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0, "total": 0 }
+  },
   "assistantMessageEvent": {
     "type": "text_delta",
     "contentIndex": 0,
@@ -1031,11 +1039,13 @@ Agent 开始处理 prompt 时发出。
 文本响应流式示例：
 
 ```json
-{"type":"message_update","assistantMessageEvent":{"type":"text_start","contentIndex":0}}
-{"type":"message_update","assistantMessageEvent":{"type":"text_delta","contentIndex":0,"delta":"Hello"}}
-{"type":"message_update","assistantMessageEvent":{"type":"text_delta","contentIndex":0,"delta":" world"}}
-{"type":"message_update","assistantMessageEvent":{"type":"text_end","contentIndex":0,"content":"Hello world"}}
+{"type":"message_update","usage":{...},"assistantMessageEvent":{"type":"text_start","contentIndex":0}}
+{"type":"message_update","usage":{...},"assistantMessageEvent":{"type":"text_delta","contentIndex":0,"delta":"Hello"}}
+{"type":"message_update","usage":{...},"assistantMessageEvent":{"type":"text_delta","contentIndex":0,"delta":" world"}}
+{"type":"message_update","usage":{...},"assistantMessageEvent":{"type":"text_end","contentIndex":0,"content":"Hello world"}}
 ```
+
+顶层 `usage` 字段包含 Provider 最新报告的累计用量。如果 Provider 在流式传输期间不报告用量，该字段可能在完成前一直为零。
 
 `message_update` 有意省略了原有的累积 `message` 字段和 `assistantMessageEvent.partial`。需要实时部分消息的客户端必须使用 `contentIndex` 从 `message_start` 和后续事件组装，并将 `message_end.message` 视为权威结果。对于工具调用，请缓冲 `toolcall_delta.delta`；`toolcall_end.toolCall` 包含完成的调用。
 

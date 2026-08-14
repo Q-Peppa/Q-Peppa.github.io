@@ -194,6 +194,20 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 | `shellCommandPrefix` | string   | -      | 每个 bash 命令前添加的前缀（例如 `"shopt -s expand_aliases"`）                    |
 | `npmCommand`         | string[] | -      | npm 包查找/安装操作的命令 argv（例如 `["mise", "exec", "node@20", "--", "npm"]`） |
 
+JSON 中的 Windows 路径必须使用正斜杠或转义后的反斜杠：
+
+```json
+{
+  "shellPath": "C:/Program Files/Git/bin/bash.exe"
+}
+```
+
+```json
+{
+  "shellPath": "C:\\Program Files\\Git\\bin\\bash.exe"
+}
+```
+
 ```json
 {
   "npmCommand": ["mise", "exec", "node@20", "--", "npm"]
@@ -201,6 +215,22 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 ```
 
 `npmCommand` 用于所有 npm 包管理器操作，包括安装、卸载和 git 包内的依赖安装。用户范围的 npm 包安装在 `~/.pi/agent/npm/` 下；项目范围的 npm 包安装在 `.pi/npm/` 下。使用与进程实际启动一致的 argv 格式条目。配置 `npmCommand` 后，git 包依赖安装使用普通的 `install`，以避免包装器或替代包管理器中的 npm 特定标志。
+
+### 工具
+
+| 设置项         | 类型     | 默认值 | 说明                                            |
+| -------------- | -------- | ------ | ----------------------------------------------- |
+| `defaultTools` | string[] | -      | 初始启用的内置工具。省略时，Pi 使用标准默认工具 |
+
+`defaultTools` 选择启动时启用的内置工具。扩展和 SDK 自定义工具仍保持启用：
+
+```json
+{
+  "defaultTools": ["bash", "edit", "write"]
+}
+```
+
+空数组表示不启用任何内置工具，但保留扩展和 SDK 自定义工具。`--tools` 会将此行为替换为所有工具的严格允许列表，`--no-tools` 禁用所有工具，`--no-builtin-tools` 禁用默认内置工具。`--exclude-tools` 会过滤最终列表。项目级 `defaultTools` 数组会替换全局数组。
 
 ### 会话
 
