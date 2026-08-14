@@ -2,6 +2,128 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.84.2（2026-08-14）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **全屏转录搜索** – 在全屏模式中搜索并跳转到匹配项。详见 [TUI 全屏视口](/docs/latest/keybindings#tui-全屏视口)。
+- **可配置的默认工具** – 在全局或项目级选择启动时启用的内置工具。详见 [工具](/docs/latest/settings#工具)。
+- **可配置的全屏退出输出** – 退出时打印转录，或仅打印恢复提示。详见 [交互模式](/docs/latest/usage#交互模式)。
+
+新增
+
+- 添加全屏转录搜索，支持 `Ctrl+Shift+F`、增量匹配高亮、可配置的搜索匹配主题颜色，以及使用 `Enter`/`Ctrl+G` 和 `Shift+Enter`/`Ctrl+Shift+G` 跳转到下一个或上一个匹配项。
+- 在 `PI_EXPERIMENTAL=1` 下为默认的 `read`、`bash`、`edit` 和 `write` 工具添加实验性严格 JSON Schema 约束采样。
+- 添加全屏退出输出设置，可选择打印最终转录或仅打印会话恢复提示。
+- 添加 `defaultTools` 设置，用于在全局或项目级配置初始内置工具。
+- 添加 `--use-theme <name[/name]>`，可为单次交互运行选择初始主题，且不修改已保存的设置（[#7722](https://github.com/earendil-works/pi/pull/7722) 由 [@rwachtler](https://github.com/rwachtler) 贡献）。
+- 为扩展的 `pi.sendUserMessage()` 选项添加 `expandPromptTemplates`，用于显式分派命令并展开 Skill 和 Prompt 模板。详见 [`pi.sendUserMessage()`](/docs/latest/extensions#pisendusermessagecontent-options)（[#7857](https://github.com/earendil-works/pi/pull/7857) 由 [@mrexodia](https://github.com/mrexodia) 贡献）。
+- 添加 `createGatewayBindingFetch()`，无需 API Token 即可通过 Workers AI binding 路由 Cloudflare AI Gateway 请求（来自 `@earendil-works/pi-ai`）（[#7901](https://github.com/earendil-works/pi/pull/7901) 由 [@Maximo-Guk](https://github.com/Maximo-Guk) 贡献）。
+- 添加 `AssistantMessage.endTurn`，保留 OpenAI Codex 最终的 `end_turn` 信号以供诊断（来自 `@earendil-works/pi-ai`）（[#7766](https://github.com/earendil-works/pi/pull/7766)）。
+- 添加全屏模式中未绑定的单行转录滚动操作。详见 [TUI 全屏视口](/docs/latest/keybindings#tui-全屏视口)（来自 `pi-tui`）（[#7903](https://github.com/earendil-works/pi/pull/7903) 由 [@midastruth](https://github.com/midastruth) 贡献）。
+
+变更
+
+- Kimi Coding 请求改用 Pi 运行时的 `User-Agent` 请求头（来自 `@earendil-works/pi-ai`）。
+- 将 Mistral SDK 传输替换为原生 Chat Completions HTTP 流，移除其生成式客户端和 Schema 运行时开销（来自 `@earendil-works/pi-ai`）。
+- 记录通用的 `AI_AGENT=pi` 进程标记，并说明它与 `PI_CODING_AGENT=true` 的区别（[#7747](https://github.com/earendil-works/pi/issues/7747)）。
+- OpenAI Responses 的延迟工具加载现在优先使用支持的、以消息为锚点的 `additional_tools`，同时保留工具搜索和顶层回退（来自 `@earendil-works/pi-ai`）（[#7709](https://github.com/earendil-works/pi/issues/7709)）。
+- 通过直接绘制全宽布局行而非每帧重新组合，减少全屏渲染的内存分配（来自 `pi-tui`）。
+
+修复
+
+- 修复受管理工具下载延迟 TUI 启动且隐藏全屏模式诊断的问题。现在会先挂载 TUI，并在其中显示下载进度和警告。
+- 修复启动后立即打开模型选择器时，会取消并重新启动正在进行的模型目录刷新。
+- 修复 GitHub Copilot 登录在启用模型策略时因并发更新策略而触发 API 速率限制的问题（来自 `@earendil-works/pi-ai`）（[#6187](https://github.com/earendil-works/pi/issues/6187)）。
+- 修复手动滚动时全屏转录搜索跳回当前匹配项，以及分段鼠标输入泄漏到搜索查询的问题。
+- 修复必需的 LaTeX 参数从新行开始时被解析为空的问题（来自 `pi-tui`）（[#7760](https://github.com/earendil-works/pi/issues/7760)）。
+- 更新间接开发依赖 `nanoid`，修复拒绝服务漏洞。
+- 修复扩展工具结果的回退渲染，使其折叠过长输出并遵循工具展开状态（[#7979](https://github.com/earendil-works/pi/issues/7979)）。
+- 修复 JSON 和 RPC 的 `message_update` 事件在流式传输期间丢失累计用量的问题。详见 [JSON 事件模式](/docs/latest/json) 和 [RPC `message_update`](/docs/latest/rpc#message_update流式)（[#7982](https://github.com/earendil-works/pi/pull/7982) 由 [@christianklotz](https://github.com/christianklotz) 贡献）。
+- 修复 `pi.sendMessage(..., { triggerTurn: false })` 在活动运行中进行 steering，而非仅记录自定义消息的问题（[#8022](https://github.com/earendil-works/pi/pull/8022) 由 [@cristinaponcela](https://github.com/cristinaponcela) 贡献）。
+- 修复通过 `defaultTools` 选择内置默认工具时丢弃扩展和 SDK 自定义工具的问题。
+- 修复 subagent 示例拒绝 `tools` frontmatter 字段的 YAML 数组语法（[#7598](https://github.com/earendil-works/pi/pull/7598) 由 [@alexsavio](https://github.com/alexsavio) 贡献）。
+- 修复 subagent 示例丢弃父会话的模型、thinking 和工具配置（[#7897](https://github.com/earendil-works/pi/pull/7897) 由 [@virtuald](https://github.com/virtuald) 贡献）。
+- 修复自定义系统 Prompt 将当前工作目录与后续追加的 Prompt 内容拼接在一起的问题（[#7887](https://github.com/earendil-works/pi/pull/7887) 由 [@distributedlock](https://github.com/distributedlock) 贡献）。
+- 修复 OpenAI Responses 函数和自定义 tool call 在流式传输、代理转发和重放期间丢失命名空间的问题（来自 `@earendil-works/pi-ai`）（[#7709](https://github.com/earendil-works/pi/issues/7709)）。
+- 修复上游请求缓冲区错误不会触发自动助手重试的问题（来自 `@earendil-works/pi-ai`）。
+- 修复内置和自定义 DeepSeek API 模型通过不受支持的字段发送输出限制的问题（来自 `@earendil-works/pi-ai`）。
+- 修复 Amazon Bedrock 重放拒绝包含空对象键的工具参数的问题，同时保留所有有效的嵌套值（来自 `@earendil-works/pi-ai`）（[#7882](https://github.com/earendil-works/pi/pull/7882) 由 [@muyiyr](https://github.com/muyiyr) 贡献）。
+- 修复 DeepSeek 兼容性检测无法识别主机名含大写字母的 base URL（来自 `@earendil-works/pi-ai`）（[#7933](https://github.com/earendil-works/pi/pull/7933) 由 [@yearth](https://github.com/yearth) 贡献）。
+- 修复 Google Generative AI 和 Vertex AI 响应包含 tool call 时，将输出限制或 Provider 错误导致的停止误判为正常工具使用的问题（来自 `@earendil-works/pi-ai`）（[#8059](https://github.com/earendil-works/pi/issues/8059)）。
+- 修复终端报告通用 SGR 鼠标释放按钮代码时，全屏鼠标拖选和 OSC 8 链接激活的问题（来自 `pi-tui`）（[#7963](https://github.com/earendil-works/pi/issues/7963)）。
+- 修复获得焦点的全屏浮层无法接收鼠标滚轮或 PageUp、PageDown 等视口滚动键的问题（来自 `pi-tui`）（[#7894](https://github.com/earendil-works/pi/issues/7894)）。
+- 修复 LaTeX 控制空格被换行拆分时，整个表达式回退为原始源码的问题（来自 `pi-tui`）。
+- 修复通过 SSH 传入的分段 `Alt+Enter` 被误判为 Escape 的问题；添加用于高延迟终端的 `PI_TUI_ESC_TIMEOUT`，且该超时仅适用于单独的 Escape 输入（[#7899](https://github.com/earendil-works/pi/pull/7899) 由 [@powerfooI](https://github.com/powerfooI) 贡献）。
+- 修复终端失去焦点时，空闲的全屏会话重绘并清除文本选择的问题（来自 `pi-tui`）（[#7892](https://github.com/earendil-works/pi/pull/7892) 由 [@terrorobe](https://github.com/terrorobe) 贡献）。
+- 修复 OSC 52 不受支持时，全屏选择复制改用主机剪贴板并报告失败，而非错误提示复制成功（[#8110](https://github.com/earendil-works/pi/pull/8110) 由 [@Panoplos](https://github.com/Panoplos) 贡献）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 添加 `createGatewayBindingFetch()`，无需 API Token 即可通过 Workers AI binding 路由 Cloudflare AI Gateway 请求（[#7901](https://github.com/earendil-works/pi/pull/7901) 由 [@Maximo-Guk](https://github.com/Maximo-Guk) 贡献）。
+- 添加 `AssistantMessage.endTurn`，保留 OpenAI Codex 最终的 `end_turn` 信号以供诊断（[#7766](https://github.com/earendil-works/pi/pull/7766)）。
+
+变更
+
+- Kimi Coding 请求改用 Pi 运行时的 `User-Agent` 请求头。
+- 自动将受支持的严格工具 Schema 转换为 Provider 兼容的封闭对象，要求可空的可选字段为必填，同时保留原始工具定义；将可选但不可空的工具参数中的 `null` 视为省略。
+- OpenAI Responses 的延迟工具加载现在优先使用支持的、以消息为锚点的 `additional_tools`，同时保留工具搜索和顶层回退（[#7709](https://github.com/earendil-works/pi/issues/7709)）。
+- 将 Mistral SDK 传输替换为原生 Chat Completions HTTP 流，移除其生成式客户端和 Schema 运行时开销。
+
+修复
+
+- 修复 GitHub Copilot 登录在启用模型策略时因并发更新策略而触发 API 速率限制的问题（[#6187](https://github.com/earendil-works/pi/issues/6187)）。
+- 修复上游请求缓冲区限制错误不会触发自动助手重试的问题。
+- 修复 OpenAI Responses 函数和自定义 tool call 在流式传输、代理转发和重放期间丢失命名空间的问题（[#7709](https://github.com/earendil-works/pi/issues/7709)）。
+- 修复内置和自定义 DeepSeek API 模型未通过受支持的 `max_tokens` 字段发送输出限制的问题。
+- 修复 Google Generative AI 和 Vertex AI 响应包含 tool call 时，将输出限制或 Provider 错误导致的停止误判为正常工具使用的问题（[#8059](https://github.com/earendil-works/pi/issues/8059)）。
+- 修复 Amazon Bedrock 重放拒绝包含空对象键的工具参数的问题，同时保留所有有效的嵌套值（[#7882](https://github.com/earendil-works/pi/pull/7882) 由 [@muyiyr](https://github.com/muyiyr) 贡献）。
+- 修复 DeepSeek 兼容性检测无法识别主机名含大写字母的 base URL（[#7933](https://github.com/earendil-works/pi/pull/7933) 由 [@yearth](https://github.com/yearth) 贡献）。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+修复
+
+- 修复 `streamProxy()` 丢失最终 tool call 元数据的问题，例如 OpenAI Responses 命名空间（[#7709](https://github.com/earendil-works/pi/issues/7709)）。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+新增
+
+- 添加未绑定的单行转录滚动操作 `tui.altScreen.lineUp` 和 `tui.altScreen.lineDown`，用于全屏 TUI 快捷键（[#7903](https://github.com/earendil-works/pi/pull/7903) 由 [@midastruth](https://github.com/midastruth) 贡献）。
+- 为全屏 TUI 添加主滚动视图增量搜索，支持可配置的匹配样式、`Ctrl+Shift+F`，以及使用 `Enter`/`Ctrl+G` 和 `Shift+Enter`/`Ctrl+Shift+G` 跳转到下一个或上一个匹配项。
+
+变更
+
+- 直接绘制全宽布局行，避免每帧通过 ANSI/字素分段重新组合所有可见行，将备屏每帧内存分配减少约 9–18 倍。
+
+修复
+
+- 修复终端报告通用 SGR 鼠标释放按钮代码时，全屏鼠标拖选和 OSC 8 链接激活的问题（[#7963](https://github.com/earendil-works/pi/issues/7963)）。
+- 修复手动滚动时全屏转录搜索跳回当前匹配项，以及分段 SGR 鼠标输入泄漏到搜索查询的问题。
+- 修复必需的 LaTeX 参数从新行开始时被解析为空的问题（[#7760](https://github.com/earendil-works/pi/issues/7760)）。
+- 修复 LaTeX 控制空格被换行拆分时，整个表达式回退为原始源码的问题。
+- 修复获得焦点的全屏浮层无法接收鼠标滚轮或 PageUp、PageDown 等视口滚动键的问题（[#7894](https://github.com/earendil-works/pi/issues/7894)）。
+- 修复通过 SSH 传入的分段 `Alt+Enter` 被误判为 Escape 的问题；添加用于高延迟终端的 `PI_TUI_ESC_TIMEOUT`，且该超时仅适用于单独的 Escape 输入（[#7899](https://github.com/earendil-works/pi/pull/7899) 由 [@powerfooI](https://github.com/powerfooI) 贡献）。
+- 修复终端失去焦点时，空闲的全屏会话重绘并清除文本选择的问题（[#7892](https://github.com/earendil-works/pi/pull/7892) 由 [@terrorobe](https://github.com/terrorobe) 贡献）。
+- 修复 OSC 52 不受支持时，全屏选择复制错误提示成功的问题；现在可使用主机剪贴板集成，并报告已确认的失败（[#8110](https://github.com/earendil-works/pi/pull/8110) 由 [@Panoplos](https://github.com/Panoplos) 贡献）。
+
+</details>
+
 ## v0.84.1（2026-08-07）
 
 <details>
