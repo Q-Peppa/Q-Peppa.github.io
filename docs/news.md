@@ -213,13 +213,13 @@
 
 不兼容变更
 
-- 将继承的 pi-ai `ModelsStreamTransforms` 接口重命名为 `ModelsRequestTransforms`，因为其请求头转换现在适用于所有经过认证的 Provider 请求。
+- 将 pi-ai `ModelsStreamTransforms` 接口重命名为 `ModelsRequestTransforms`，因为其请求头转换现在适用于所有经过认证的 Provider 请求。
 - 变更 JSON 和 RPC 的 `message_update` 事件，仅发送 `assistantMessageEvent` 增量，移除导致输出二次增长的累计 `message` 和 `assistantMessageEvent.partial` 字段。需要部分消息的客户端必须在 `message_start` 与 `message_end` 之间组装增量；后者仍是权威值（[#7290](https://github.com/earendil-works/pi/issues/7290)）。
 - `ModelRegistry.getApiKeyAndHeaders()` 现在返回带 `string | null` 值的 `ProviderHeaders`，并保留 `null` 请求头删除标记。检查返回请求头的扩展必须处理 `null`；将其转发给 pi-ai 流的扩展应原样透传。这可以防止占位 OpenAI 凭据通过 Cloudflare AI Gateway 发送（[#7030](https://github.com/earendil-works/pi/issues/7030)）。
 - 变更 `ModelRegistry.refresh()`，使其接受 `ModelsRefreshOptions` 并返回 `ModelsRefreshResult`，而非丢弃取消和 Provider 错误。
 - 变更 `ModelRuntime.setRuntimeApiKey()`，使其接受认证取消选项而非目录刷新选项。需要远程新鲜度时，请单独调用 `refresh({ providers: [providerId], signal })`。
 - 要求配置形式的扩展 OAuth `refreshToken(credentials, signal)` 回调接受并遵循具体的中止信号。
-- 用只读的 `context.stored` 快照和带代数检查的 `context.publish()` 事务替换动态 Provider 刷新上下文对 store 的直接访问。
+- 用只读的 `context.stored` 快照和带世代检查的 `context.publish()` 事务替换动态 Provider 刷新上下文对 store 的直接访问。
 
   使用 `createProvider({ fetchModels })` 构建的 Provider：无需迁移目录发布。前后都要返回获取的模型并注册得到的 Provider；`createProvider()` 负责恢复、持久化和内存发布。
 
@@ -245,7 +245,7 @@
   pi.registerProvider(afterProvider);
   ```
 
-  手写的原生 `Provider.refreshModels()`：用带代数保护的发布替换直接访问 store 和发布前变更。
+  手写的原生 `Provider.refreshModels()`：用带世代保护的发布替换直接访问 store 和发布前变更。
 
   ```ts
   // 之前
@@ -280,10 +280,10 @@
 
   对于配置形式的 `pi.registerProvider(name, { refreshModels })`，只返回模型的回调保持不变；pi 会发布返回的列表。如果此类回调之前使用 `context.store` 做自定义持久化，请读取 `context.stored` 并调用 `context.publish({ persist: entry })`。在 `publish()` 中，省略 `persist` 保持存储不变，传入 `ModelsStoreEntry` 写入它，或传 `persist: null` 删除它。
 
-- 用基于 v4 lane 的 `Session`、`SessionStorage` 和 `SessionRepo` API 替换继承的 pi-agent-core harness 会话模型，包括持久化操作记录、全局事实、共享序列号和树作用域的 lane 视图。
-- 将继承的 v2 session 和 `AgentHarness` API 从 pi-agent-core 的实验性入口提升为其默认导出，并移除实验性子路径。
-- 移除继承的旧版 JSONL 和内存仓库 API。请改用 pi-agent-core 的 v4 `JsonlSessionRepo` 或 `InMemorySessionRepo`，两者都实现新的 `SessionRepo` 契约。
-- 新增继承的必需 pi-agent-core `FileSystem.renameFile()` 操作，用于原子 JSONL 发布；自定义 harness 文件系统实现必须提供同文件系统的替换语义（[#7707](https://github.com/earendil-works/pi/pull/7707) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 用基于 v4 lane 的 `Session`、`SessionStorage` 和 `SessionRepo` API 替换 pi-agent-core harness 会话模型，包括持久化操作记录、全局事实、共享序列号和树作用域的 lane 视图。
+- 将 v2 session 和 `AgentHarness` API 从 pi-agent-core 的实验性入口提升为其默认导出，并移除实验性子路径。
+- 移除旧版 JSONL 和内存仓库 API。请改用 pi-agent-core 的 v4 `JsonlSessionRepo` 或 `InMemorySessionRepo`，两者都实现新的 `SessionRepo` 契约。
+- 新增 pi-agent-core 必需的 `FileSystem.renameFile()` 操作，用于原子 JSONL 发布；自定义 harness 文件系统实现必须提供同文件系统的替换语义（[#7707](https://github.com/earendil-works/pi/pull/7707) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
 - 用持久化的 `SessionMetadata` 替换实验性远程会话列表摘要；`RemoteSession.sessions` 不再暴露运行时阶段、模型、thinking、附件或锁状态，这些可从获取的 `SessionSnapshot` 值中获取（[#7708](https://github.com/earendil-works/pi/pull/7708)）。
 
 新增
@@ -302,37 +302,37 @@
 - 新增可选的 `Ctrl+P`/`Ctrl+N` prompt 历史导航，编辑器聚焦时显式历史绑定优先于应用快捷键。
 - 新增按目录的 `AGENTS.override.md` 上下文文件，替换同目录中的 `AGENTS.md` 或 `CLAUDE.md`，同时保留其他目录的上下文。详见 [上下文文件](/docs/latest/usage#context-files)（[#7681](https://github.com/earendil-works/pi/pull/7681) 由 [@Marvae](https://github.com/Marvae) 贡献）。
 - 新增在 CLI 和 RPC 子进程环境中设置 `AI_AGENT=pi`，用于通用 agent 归属。详见 [环境变量](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/README.md#environment-variables)（[#7493](https://github.com/earendil-works/pi/pull/7493) 由 [@renaudhartert-db](https://github.com/renaudhartert-db) 贡献）。
-- 新增 Markdown 中 LaTeX 表达式的继承终端友好 Unicode 渲染。详见 [TUI Markdown](https://github.com/earendil-works/pi/blob/main/packages/tui/README.md#markdown)。
+- 新增 Markdown 中 LaTeX 表达式的终端友好 Unicode 渲染。详见 [TUI Markdown](https://github.com/earendil-works/pi/blob/main/packages/tui/README.md#markdown)。
 - 新增全屏模式中的堆叠式瞬时通知。
 - 新增通过 `models.json`、模型覆盖、扩展 Provider 和流选项中的 `samplingParams` 配置任意 OpenAI 兼容模型采样参数。详见 [采样参数](/docs/latest/models#sampling-parameters)（[#7568](https://github.com/earendil-works/pi/pull/7568) 由 [@mrexodia](https://github.com/mrexodia) 贡献）。
-- 新增继承的可选 vLLM `thinking_token_budget` 支持，用于 OpenAI 兼容模型，为最终答案预留输出 token（[#7638](https://github.com/earendil-works/pi/pull/7638) 由 [@bnsd55](https://github.com/bnsd55) 贡献）。
+- 新增可选 vLLM `thinking_token_budget` 支持，用于 OpenAI 兼容模型，为最终答案预留输出 token（[#7638](https://github.com/earendil-works/pi/pull/7638) 由 [@bnsd55](https://github.com/bnsd55) 贡献）。
 - 新增对省略 `finish_reason` 的 OpenAI 兼容流支持，使用 `compat.supportsFinishReason` 在流结束时推断正常和工具使用停止。详见 [OpenAI 兼容性](/docs/latest/models#openai-compatibility)。
-- 新增继承的延迟 Provider 请求契约、持久化响应句柄、认证 fetch/cancel 分发，以及 pending、ready、failed 和 cancelled 响应的 faux-provider 支持（[#7339](https://github.com/earendil-works/pi/pull/7339) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
-- 新增继承的厂商中立 telemetry 契约，以及 agent 拥有的类型化 AI-request 和 harness 模式、组合 span 启动器和回调辅助函数。详见 [agent telemetry 模式参考](https://github.com/earendil-works/pi/blob/main/packages/agent/docs/telemetry-schema.md)。
-- 新增继承的结构化 Amazon Bedrock 失败诊断，包含 HTTP 状态、建模错误码，以及可用时的 AWS request id（[#7286](https://github.com/earendil-works/pi/pull/7286) 由 [@brianstanley](https://github.com/brianstanley) 贡献）。
-- 新增继承的 `AgentOptions.shouldStopAfterTurn`，用于在完成一轮、处理排队消息或另一次模型调用之前优雅停止。详见 [Agent Options](https://github.com/earendil-works/pi/blob/main/packages/agent/README.md#agent-options)（[#7367](https://github.com/earendil-works/pi/pull/7367) 由 [@acmerfight](https://github.com/acmerfight) 贡献）。
-- 新增继承的 v4 `JsonlSessionRepo` 对追加式 JSONL harness 会话的支持（[#7611](https://github.com/earendil-works/pi/pull/7611) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
-- 新增继承的有界分支条目和索引开放操作恢复查询到 v4 会话 API（[#7448](https://github.com/earendil-works/pi/pull/7448)、[#7646](https://github.com/earendil-works/pi/pull/7646)）。
-- 新增继承的编译完整的 `AgentHarness` v2 脚手架；未完成的操作路径在实现持久化执行前以 `HarnessNotImplemented` 拒绝。
+- 新增延迟 Provider 请求契约、持久化响应句柄、认证 fetch/cancel 分发，以及 pending、ready、failed 和 cancelled 响应的 faux-provider 支持（[#7339](https://github.com/earendil-works/pi/pull/7339) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 新增厂商中立 telemetry 契约，以及 agent 拥有的类型化 AI-request 和 harness 模式、组合 span 启动器和回调辅助函数。详见 [agent telemetry 模式参考](https://github.com/earendil-works/pi/blob/main/packages/agent/docs/telemetry-schema.md)。
+- 新增结构化 Amazon Bedrock 失败诊断，包含 HTTP 状态、建模错误码，以及可用时的 AWS request id（[#7286](https://github.com/earendil-works/pi/pull/7286) 由 [@brianstanley](https://github.com/brianstanley) 贡献）。
+- 新增 `AgentOptions.shouldStopAfterTurn`，用于在完成一轮、处理排队消息或另一次模型调用之前优雅停止。详见 [Agent Options](https://github.com/earendil-works/pi/blob/main/packages/agent/README.md#agent-options)（[#7367](https://github.com/earendil-works/pi/pull/7367) 由 [@acmerfight](https://github.com/acmerfight) 贡献）。
+- 新增 v4 `JsonlSessionRepo` 对追加式 JSONL harness 会话的支持（[#7611](https://github.com/earendil-works/pi/pull/7611) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 新增有界分支条目和索引开放操作恢复查询到 v4 会话 API（[#7448](https://github.com/earendil-works/pi/pull/7448)、[#7646](https://github.com/earendil-works/pi/pull/7646)）。
+- 新增编译完整的 `AgentHarness` v2 脚手架；未完成的操作路径在实现持久化执行前以 `HarnessNotImplemented` 拒绝。
 
 变更
 
-- 新增继承的可选取消到 pi-ai `ModelsStore` 的读取、写入和删除；目录编排将这些等待绑定到 Provider 刷新信号。
-- 将继承的默认全屏鼠标滚轮步长从三行减少到一行，实现更精细的滚动。
+- 新增可选取消到 pi-ai `ModelsStore` 的读取、写入和删除；目录编排将这些等待绑定到 Provider 刷新信号。
+- 将默认全屏鼠标滚轮步长从三行减少到一行，实现更精细的滚动。
 
 修复
 
 - 修复 footer 在没有已知订阅的通用 OAuth/OpenID 登录时显示 `(sub)`；扩展 OAuth Provider 可以用 `isSubscription` 选择加入。
-- 修复继承的 OAuth token 刷新，使停滞的请求释放凭据存储锁（[#7508](https://github.com/earendil-works/pi/issues/7508)）。
-- 修复继承的工具参数验证，在强制转换前保留已匹配 `anyOf`/`oneOf` union 分支的值，避免可空 union 将 `null` 转换为另一个原始值（[#7328](https://github.com/earendil-works/pi/issues/7328)）。
-- 修复继承的 Fireworks GLM 5.2 请求在启用长缓存保留时发送不支持的 `prompt_cache_retention` 字段，并为自动 prompt 缓存启用会话亲和（[#7676](https://github.com/earendil-works/pi/issues/7676)）。
-- 修复继承的 `JsonlSessionRepo` 在全局范围内强制会话 ID 的问题；ID 现在在每个工作目录内唯一。
-- 修复继承的 JSONL 会话 fork 和 torn-tail 修复的原子发布，避免中断写入后产生部分写入或损坏的会话（[#7707](https://github.com/earendil-works/pi/pull/7707) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 修复 OAuth token 刷新，使停滞的请求释放凭据存储锁（[#7508](https://github.com/earendil-works/pi/issues/7508)）。
+- 修复工具参数验证，在强制转换前保留已匹配 `anyOf`/`oneOf` union 分支的值，避免可空 union 将 `null` 转换为另一个原始值（[#7328](https://github.com/earendil-works/pi/issues/7328)）。
+- 修复 Fireworks GLM 5.2 请求在启用长缓存保留时发送不支持的 `prompt_cache_retention` 字段，并为自动 prompt 缓存启用会话亲和（[#7676](https://github.com/earendil-works/pi/issues/7676)）。
+- 修复 `JsonlSessionRepo` 在全局范围内强制会话 ID 的问题；ID 现在在每个工作目录内唯一。
+- 修复 JSONL 会话 fork 和 torn-tail 修复的原子发布，避免中断写入后产生部分写入或损坏的会话（[#7707](https://github.com/earendil-works/pi/pull/7707) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
 - 修复包含路径的 `find` glob 在 Windows 上返回空结果的问题（[#6817](https://github.com/earendil-works/pi/issues/6817)）。
 - 修复手动 `/compact` 期间排队的消息失败而非在压缩完成后发送的问题。
 - 修复传给内置文件工具的 Git Bash、MSYS、Cygwin 和 WSL 驱动器路径解析到当前 Windows 驱动器而非其原生驱动器的问题（[#7064](https://github.com/earendil-works/pi/issues/7064)、[#7547](https://github.com/earendil-works/pi/issues/7547)）。
 - 修复项目级嵌套 Provider 重试设置替换未修改的全局 Provider 重试设置的问题（[#7572](https://github.com/earendil-works/pi/issues/7572)）。
-- 修复继承的 GitHub Copilot Grok 4.5 请求使用受支持的 Responses API（[#7560](https://github.com/earendil-works/pi/issues/7560)）。
+- 修复 GitHub Copilot Grok 4.5 请求使用受支持的 Responses API（[#7560](https://github.com/earendil-works/pi/issues/7560)）。
 - 修复全屏关闭将终端能力查询回复泄漏到父 shell prompt 的问题。
 - 修复多个 Provider 共享的裸精确 `--model` ID 选择第一个目录条目而非唯一认证 Provider 或明确歧义错误的问题（[#7327](https://github.com/earendil-works/pi/issues/7327)）。
 - 修复独立 x64 二进制需要 Haswell 时代 AVX2/BMI2 指令的问题，改为针对 Bun 基线运行时编译发布可执行文件（[#7390](https://github.com/earendil-works/pi/pull/7390) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
@@ -372,30 +372,30 @@
 - 修复 POSIX 和 Windows 文件系统根部的 `find` 结果丢失第一路径段或产生重复尾部分隔符的问题（[#7569](https://github.com/earendil-works/pi/pull/7569) 由 [@petrroll](https://github.com/petrroll) 贡献）。
 - 修复瞬时版本检查、目录、托管工具和包管理 HTTP 失败未被重试的问题（[#7632](https://github.com/earendil-works/pi/pull/7632) 由 [@petrroll](https://github.com/petrroll) 贡献）。
 - 修复交互式错误忽略配置的输出内边距的问题。
-- 修复继承的 OpenCode Go Provider 显示名。
-- 修复继承的 Provider 错误规范化将数组和类实例视为结构化响应体，而非保留其原始错误的问题（[#7205](https://github.com/earendil-works/pi/pull/7205) 由 [@erikogenvik](https://github.com/erikogenvik) 贡献）。
-- 修复继承的 Anthropic 流丢弃初始 content-block 事件中包含的文本或 thinking 的问题（[#7358](https://github.com/earendil-works/pi/pull/7358) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
-- 修复继承的 Google 历史转换丢弃重放所需的签名空文本和 thinking 块的问题（[#7362](https://github.com/earendil-works/pi/pull/7362) 由 [@jingtao-wisdomgraph](https://github.com/jingtao-wisdomgraph) 贡献）。
-- 修复继承的 OpenAI Codex 缓存 WebSocket 会话在不同账户凭据间共享的问题（[#7364](https://github.com/earendil-works/pi/pull/7364)）。
-- 修复继承的瞬时 Google Generative AI 和 Vertex AI Provider 错误绕过自动重试的问题（[#7471](https://github.com/earendil-works/pi/pull/7471) 由 [@vish-pr](https://github.com/vish-pr) 贡献）。
-- 修复继承的 Gemini 3 tool call id 在历史转换期间被丢弃，破坏签名多轮重放的问题（[#7494](https://github.com/earendil-works/pi/pull/7494) 由 [@muyiyr](https://github.com/muyiyr) 贡献）。
-- 恢复继承的 GitHub Copilot 模型通过账户特定策略响应返回（[#7672](https://github.com/earendil-works/pi/pull/7672) 由 [@muyiyr](https://github.com/muyiyr) 贡献）。
-- 用 `qwen3.8-max` 替换继承的退役 Qwen Token Plan `qwen3.8-max-preview` 模型（[#7670](https://github.com/earendil-works/pi/pull/7670) 由 [@QuintinShaw](https://github.com/QuintinShaw) 贡献）。
-- 修复继承的终端宽度对 Indic 辅音连接字素簇的计数（[#6987](https://github.com/earendil-works/pi/pull/6987) 由 [@petrroll](https://github.com/petrroll) 贡献）。
-- 修复继承的嵌套全屏堆叠布局忽略子元素最小尺寸的问题。
-- 修复继承的批量终端配色方案报告被解析为一个畸形响应的问题（[#7550](https://github.com/earendil-works/pi/pull/7550)）。
-- 修复继承的终端进度清除未发出完整 OSC 9;4 序列的问题（[#7581](https://github.com/earendil-works/pi/pull/7581)）。
-- 修复继承的 iTerm2 图片载荷省略 xterm.js 图片 addon 所需的大小元数据的问题（[#7612](https://github.com/earendil-works/pi/pull/7612)）。
-- 修复继承的宽度截断使 OSC 8 超链接未终止的问题（[#7657](https://github.com/earendil-works/pi/pull/7657) 由 [@xXJSONDeruloXx](https://github.com/xXJSONDeruloXx) 贡献）。
-- 更新继承的 GPT-5.6 Terra 和 Luna 定价，覆盖 OpenAI 和 passthrough 模型目录。
-- 修复继承的 Fireworks Kimi K3 模型使用 OpenAI 兼容 API、原生 reasoning-effort 级别和延迟工具（[#7199](https://github.com/earendil-works/pi/issues/7199)、[#7230](https://github.com/earendil-works/pi/pull/7230) 由 [@XBeg9](https://github.com/XBeg9) 贡献）。
-- 更新继承的 Groq Qwen reasoning 覆盖，用于替换的 `qwen/qwen3.6-27b` 模型。
-- 修复继承的 Windows Shift+Enter 检测，通过从原生 Win32 辅助函数读取修饰键状态。
-- 修复继承的 pi-tui npm 包省略重建其 Windows 和 Darwin 原生 addon 所需的源码和构建脚本的问题。
-- 修复继承的 Windows 控制台 truecolor 检测，当 Windows Terminal 未向子 shell 提供 `WT_SESSION` 时的问题。
-- 修复继承的幻影全屏文本选择，在更改终端窗格焦点时未匹配的鼠标事件导致的问题。
-- 修复继承的 Windows 键盘输入渲染延迟，通过让输入抢占限速渲染定时器。
-- 修复继承的 agent harness 在 Windows 上处理路径的问题，涉及文件 basename、递归 skill 加载和 prompt 模板名称。
+- 修复 OpenCode Go Provider 显示名。
+- 修复 Provider 错误规范化将数组和类实例视为结构化响应体，而非保留其原始错误的问题（[#7205](https://github.com/earendil-works/pi/pull/7205) 由 [@erikogenvik](https://github.com/erikogenvik) 贡献）。
+- 修复 Anthropic 流丢弃初始 content-block 事件中包含的文本或 thinking 的问题（[#7358](https://github.com/earendil-works/pi/pull/7358) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 修复 Google 历史转换丢弃重放所需的签名空文本和 thinking 块的问题（[#7362](https://github.com/earendil-works/pi/pull/7362) 由 [@jingtao-wisdomgraph](https://github.com/jingtao-wisdomgraph) 贡献）。
+- 修复 OpenAI Codex 缓存 WebSocket 会话在不同账户凭据间共享的问题（[#7364](https://github.com/earendil-works/pi/pull/7364)）。
+- 修复瞬时 Google Generative AI 和 Vertex AI Provider 错误绕过自动重试的问题（[#7471](https://github.com/earendil-works/pi/pull/7471) 由 [@vish-pr](https://github.com/vish-pr) 贡献）。
+- 修复 Gemini 3 tool call id 在历史转换期间被丢弃，破坏签名多轮重放的问题（[#7494](https://github.com/earendil-works/pi/pull/7494) 由 [@muyiyr](https://github.com/muyiyr) 贡献）。
+- 恢复 GitHub Copilot 模型通过账户特定策略响应返回（[#7672](https://github.com/earendil-works/pi/pull/7672) 由 [@muyiyr](https://github.com/muyiyr) 贡献）。
+- 用 `qwen3.8-max` 替换退役 Qwen Token Plan `qwen3.8-max-preview` 模型（[#7670](https://github.com/earendil-works/pi/pull/7670) 由 [@QuintinShaw](https://github.com/QuintinShaw) 贡献）。
+- 修复终端宽度对 Indic 辅音连接字素簇的计数（[#6987](https://github.com/earendil-works/pi/pull/6987) 由 [@petrroll](https://github.com/petrroll) 贡献）。
+- 修复嵌套全屏堆叠布局忽略子元素最小尺寸的问题。
+- 修复批量终端配色方案报告被解析为一个畸形响应的问题（[#7550](https://github.com/earendil-works/pi/pull/7550)）。
+- 修复终端进度清除未发出完整 OSC 9;4 序列的问题（[#7581](https://github.com/earendil-works/pi/pull/7581)）。
+- 修复 iTerm2 图片载荷省略 xterm.js 图片 addon 所需的大小元数据的问题（[#7612](https://github.com/earendil-works/pi/pull/7612)）。
+- 修复宽度截断使 OSC 8 超链接未终止的问题（[#7657](https://github.com/earendil-works/pi/pull/7657) 由 [@xXJSONDeruloXx](https://github.com/xXJSONDeruloXx) 贡献）。
+- 更新 GPT-5.6 Terra 和 Luna 定价，覆盖 OpenAI 和 passthrough 模型目录。
+- 修复 Fireworks Kimi K3 模型使用 OpenAI 兼容 API、原生 reasoning-effort 级别和延迟工具（[#7199](https://github.com/earendil-works/pi/issues/7199)、[#7230](https://github.com/earendil-works/pi/pull/7230) 由 [@XBeg9](https://github.com/XBeg9) 贡献）。
+- 更新 Groq Qwen reasoning 覆盖，用于替换的 `qwen/qwen3.6-27b` 模型。
+- 修复 Windows Shift+Enter 检测，通过从原生 Win32 辅助函数读取修饰键状态。
+- 修复 pi-tui npm 包省略重建其 Windows 和 Darwin 原生 addon 所需的源码和构建脚本的问题。
+- 修复 Windows 控制台 truecolor 检测，当 Windows Terminal 未向子 shell 提供 `WT_SESSION` 时的问题。
+- 修复幻影全屏文本选择，在更改终端窗格焦点时未匹配的鼠标事件导致的问题。
+- 修复 Windows 键盘输入渲染延迟，通过让输入抢占限速渲染定时器。
+- 修复 agent harness 在 Windows 上处理路径的问题，涉及文件 basename、递归 skill 加载和 prompt 模板名称。
 
 </details>
 
@@ -407,7 +407,7 @@
 - 将导出的 `ModelsStreamTransforms` 接口重命名为 `ModelsRequestTransforms`，因为其请求头转换现在适用于所有经过认证的 Provider 请求。
 - 要求动态模型 Provider 接受具体的 `RefreshModelsContext.signal`；调用方省略其可选 signal 时，`Models.refresh()` 保持无界。
 - 要求 Provider 登录、API-key 检查/解析和 OAuth 刷新实现接受具体的中止信号；调用方省略其可选 signal 时，公开的 auth 和凭据操作保持无界。
-- 用只读的 `context.stored` 快照和带代数检查的 `context.publish()` 事务替换对原始 `RefreshModelsContext.store` 的访问。
+- 用只读的 `context.stored` 快照和带世代检查的 `context.publish()` 事务替换对原始 `RefreshModelsContext.store` 的访问。
 
   **`createProvider({ fetchModels })`：** 无需迁移目录发布。前后都要返回获取的列表；`createProvider()` 自己恢复存储的模型并发布、持久化刷新后的模型。现在保证 `signal` 存在。
 
@@ -431,7 +431,7 @@
   });
   ```
 
-  **手写 `Provider.refreshModels()`：** 用带代数保护的发布替换直接访问 store 和发布前变更。
+  **手写 `Provider.refreshModels()`：** 用带世代保护的发布替换直接访问 store 和发布前变更。
 
   ```ts
   // 之前
@@ -488,7 +488,7 @@
 - 修复工具参数验证，在尝试强制转换前保留已匹配 `anyOf`/`oneOf` union 分支的值，避免可空 union 将 `null` 转换为另一个原始值（[#7328](https://github.com/earendil-works/pi/issues/7328)）。
 - 修复模型目录刷新的取消，即使自定义 Provider 忽略其 abort signal，调用方也停止等待（[#7027](https://github.com/earendil-works/pi/issues/7027)）。
 - 修复 auth 解析、可用性检查、OAuth 刷新、Provider 登录和内存凭据队列等待遵循调用方取消的问题。
-- 修复较新 Provider 刷新被较旧停滞代数阻塞或覆盖的问题，包括持久化目录发布。
+- 修复较新 Provider 刷新被较旧停滞世代阻塞或覆盖的问题，包括持久化目录发布。
 - 更新 GPT-5.6 Terra 和 Luna 定价，覆盖 OpenAI 和 passthrough 模型目录。
 - 修复 Fireworks Kimi K3 模型使用 OpenAI 兼容 API、原生 reasoning-effort 级别和延迟工具（[#7199](https://github.com/earendil-works/pi/issues/7199)、[#7230](https://github.com/earendil-works/pi/pull/7230) 由 [@XBeg9](https://github.com/XBeg9) 贡献）。
 - 修复 Fireworks GLM 5.2 模型在启用长缓存保留时发送不支持的 `prompt_cache_retention` 字段，并为自动 prompt 缓存启用会话亲和（[#7676](https://github.com/earendil-works/pi/issues/7676)）。

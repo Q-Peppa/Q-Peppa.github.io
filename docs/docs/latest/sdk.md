@@ -502,7 +502,7 @@ for (const [providerId, error] of result.errors) {
 }
 ```
 
-失败或超时的网络刷新不会撤销成功的凭证操作。`refresh()` 会启动新的 Provider 代际，因此它不会等待旧的停滞刷新，过期的代际也无法在之后发布。
+失败或超时的网络刷新不会撤销成功的凭证操作。`refresh()` 会启动新的 Provider 世代，因此它不会等待旧的停滞刷新，过期的世代也无法在之后发布。
 
 > 参见 [examples/sdk/09-api-keys-and-oauth.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/sdk/09-api-keys-and-oauth.ts)
 
