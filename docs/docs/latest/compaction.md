@@ -359,6 +359,21 @@ pi.on('session_before_compact', async (event, ctx) => {
 
 参考 [custom-compaction.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/custom-compaction.ts) 查看使用不同模型的完整示例。
 
+### session_compact_failed
+
+在手动或自动压缩失败或中止时触发。对于需要将 `session_before_compact` 尝试与最终结果配对的遥测扩展很有用。
+
+```typescript
+pi.on('session_compact_failed', async (event, ctx) => {
+  const { reason, errorMessage, aborted, willRetry, fromExtension } = event;
+  // reason - "manual"（/compact）、"threshold" 或 "overflow"
+  // errorMessage - 非中止失败时存在
+  // aborted - 取消/中止的压缩为 true
+  // willRetry - 压缩后是否重试被中止的轮次（溢出恢复）
+  // fromExtension - 是否正在使用扩展提供的压缩内容
+});
+```
+
 ### session_before_tree
 
 在 `/tree` 导航之前触发。无论用户是否选择摘要，都会触发。可以取消导航或提供自定义摘要。

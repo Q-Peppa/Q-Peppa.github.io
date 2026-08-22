@@ -55,6 +55,8 @@ llama-server \
 
 输入路由器 URL 和可选的 API Key。默认 URL 为 `http://127.0.0.1:8080`。
 
+如果你用 `--no-models-autoload` 启动路由器，`/login llama.cpp` 只存储连接。运行 `/llama` 加载模型，然后运行 `/model` 为当前会话选择已加载的模型。
+
 环境变量可以在不经过 `/login` 的情况下配置相同的值：
 
 ```bash

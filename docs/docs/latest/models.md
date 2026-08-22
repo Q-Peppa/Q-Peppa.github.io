@@ -256,6 +256,8 @@
 
 只有 OpenAI 兼容 API 会应用它（`openai-completions`、`openai-responses`、`azure-openai-responses`）；其他 API 会忽略它。键会覆盖 pi 的命名请求字段（例如这里的 `temperature` 键会胜过请求级 temperature），因此建议将其作为模型的唯一采样真相来源。在 `modelOverrides` 中，`samplingParams` 按 key 与基础模型的值合并。
 
+常量 thinking-token 上限也可以放在这里，但它不会跟随 `thinkingBudgets`，也不会为答案留出空间。为此，优先使用 `compat.thinkingTokenBudgetField`（或 `supportsThinkingTokenBudget` 别名）。
+
 ### Thinking Level Map
 
 在模型上使用 `thinkingLevelMap` 来描述模型特定的 thinking 控制。键是 Pi 的 thinking level：`off`、`minimal`、`low`、`medium`、`high`、`xhigh`、`max`。映射可以包含空洞；例如，一个模型可以暴露 `high` 和 `max` 而不暴露 `xhigh`。
@@ -471,8 +473,10 @@
 | `requiresThinkingAsText`                      | 将 thinking 块转换为纯文本                                                                                                                                                                                                                                                                                         |
 | `requiresReasoningContentOnAssistantMessages` | 在启用推理时，在所有重放的助手消息上包含空的 `reasoning_content`                                                                                                                                                                                                                                                   |
 | `thinkingFormat`                              | 使用 `reasoning_effort`、`openrouter`、`deepseek`、`together`、`baseten`、`zai`、`qwen`、`chat-template` 或 `qwen-chat-template` thinking 参数                                                                                                                                                                     |
-| `chatTemplateKwargs`                          | `thinkingFormat: "chat-template"` 使用的 `chat_template_kwargs` 值；使用 `{ "$var": "thinking.enabled" }` 或 `{ "$var": "thinking.effort" }` 表示由 pi 控制的 thinking 值                                                                                                                                          |
-| `chatTemplateArgs`                            | `thinkingFormat: "baseten"` 使用的 `chat_template_args` 值；使用 `{ "$var": "thinking.enabled" }` 或 `{ "$var": "thinking.effort" }` 表示由 pi 控制的 thinking 值                                                                                                                                                  |
+| `chatTemplateKwargs`                          | `thinkingFormat: "chat-template"` 使用的 `chat_template_kwargs` 值；使用 `{ "$var": "thinking.enabled" }`、`{ "$var": "thinking.effort" }` 或 `{ "$var": "thinking.budget" }` 表示由 pi 控制的 thinking 值                                                                                                         |
+| `chatTemplateArgs`                            | `thinkingFormat: "baseten"` 使用的 `chat_template_args` 值；使用 `{ "$var": "thinking.enabled" }`、`{ "$var": "thinking.effort" }` 或 `{ "$var": "thinking.budget" }` 表示由 pi 控制的 thinking 值                                                                                                                 |
+| `thinkingTokenBudgetField`                    | 用于从 `thinkingBudgets` 限制推理 Token 的顶层请求字段，被钳制以至少为答案保留 1024 个 Token：`"thinking_token_budget"`（vLLM）、`"thinking_budget"`（Qwen/DashScope/SGLang）、`"thinking_budget_tokens"`（llama.cpp）。默认关闭；生成的模型目录中不设置此项。                                                     |
+| `supportsThinkingTokenBudget`                 | `thinkingTokenBudgetField: "thinking_token_budget"`（vLLM）的别名。优先使用 `thinkingTokenBudgetField`。默认：`false`。                                                                                                                                                                                            |
 | `cacheControlFormat`                          | 在系统提示、最后一个工具定义和最后一个用户、助手或工具结果文本内容上使用 Anthropic 风格的 `cache_control` 标记。目前仅支持 `anthropic`                                                                                                                                                                             |
 | `sendSessionAffinityHeaders`                  | 对于 `openai-completions`，在启用缓存时从会话 ID 发送会话亲和请求头。默认：`false`。                                                                                                                                                                                                                               |
 | `sessionAffinityFormat`                       | 对于 `openai-completions` 和 `openai-responses`，会话亲和请求头格式：`openai` 发送 `session_id`/`x-client-request-id`（completions 还发送 `x-session-affinity`），`openai-nosession` 省略包含下划线的 `session_id` 请求头，`openrouter` 发送 `x-session-id`。不影响 `prompt_cache_key` body 参数。默认：自动检测。 |
@@ -484,6 +488,8 @@
 | `vercelGatewayRouting`                        | Vercel AI Gateway 路由配置，用于 Provider 选择（`only`、`order`）                                                                                                                                                                                                                                                  |
 
 `openrouter` 使用 `reasoning: { effort }`。`together` 使用 `reasoning: { enabled }`，并在 `supportsReasoningEffort` 启用时也使用 `reasoning_effort`。`qwen` 使用顶级 `enable_thinking`。对需要 `chat_template_kwargs.enable_thinking` 和 `preserve_thinking` 的本地 Qwen 兼容服务器，使用 `qwen-chat-template`。对需要可配置 `chat_template_kwargs` 的 vLLM/Hugging Face chat-template，使用 `chat-template`，例如 DeepSeek V3.x 模板使用 `chatTemplateKwargs: { "thinking": { "$var": "thinking.enabled" } }`。使用 `thinkingFormat: "baseten"` 搭配 `chatTemplateArgs`，适用于通过 `chat_template_args` 暴露开关控制并可选支持顶层 `reasoning_effort` 的 Provider。
+
+`thinkingTokenBudgetField` 独立于 `thinkingFormat`。不要在生成的 Qwen 目录上启用它：这些模型已发送 `reasoning_effort`，而 DashScope 会拒绝 `thinking_budget` 与 `reasoning_effort` 同时出现。
 
 `cacheControlFormat: "anthropic"` 适用于那些在文本内容和工具定义上通过 `cache_control` 标记暴露 Anthropic 风格提示缓存的 OpenAI 兼容 Provider。
 

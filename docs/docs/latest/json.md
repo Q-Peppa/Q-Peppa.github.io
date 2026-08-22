@@ -19,12 +19,16 @@ pi --mode json "Your prompt"
 ```typescript
 type WithoutPartial<T> = T extends { partial: unknown } ? Omit<T, 'partial'> : T;
 
+type JsonAssistantMessageEvent<T> = T extends { type: 'toolcall_start'; partial: unknown }
+  ? WithoutPartial<T> & { id: string; toolName: string }
+  : WithoutPartial<T>;
+
 type JsonAgentSessionEvent =
   | Exclude<AgentSessionEvent, { type: 'message_update' }>
   | {
       type: 'message_update';
       usage: Usage;
-      assistantMessageEvent: WithoutPartial<AssistantMessageEvent>;
+      assistantMessageEvent: JsonAssistantMessageEvent<AssistantMessageEvent>;
     };
 ```
 
@@ -129,7 +133,7 @@ type AgentEvent =
 {"type":"agent_end","messages":[...]}
 ```
 
-`message_update` 记录仅包含增量。它们省略累积的 `message` 字段和 `assistantMessageEvent.partial`，以保持流大小线性。顶层 `usage` 字段包含 Provider 最新报告的累计用量；如果 Provider 仅在完成时报告用量，该字段可能一直为零。如需组装实时文本、thinking 或工具调用参数，可使用 `contentIndex` 和 `delta`。`message_end` 包含最终的权威消息。
+`message_update` 记录仅包含增量。它们省略累积的 `message` 字段和 `assistantMessageEvent.partial`，以保持流大小线性。顶层 `usage` 字段包含 Provider 最新报告的累计用量；如果 Provider 仅在完成时报告用量，该字段可能一直为零。如需组装实时文本、thinking 或工具调用参数，可使用 `contentIndex` 和 `delta`。`toolcall_start` 事件还包含固定大小的 `id` 和 `toolName` 字段。`message_end` 包含最终的权威消息。
 
 ## 示例
 

@@ -27,14 +27,14 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 
 ### 模型和思维（Model & Thinking）
 
-| 设置项                 | 类型    | 默认值  | 说明                                                                    |
-| ---------------------- | ------- | ------- | ----------------------------------------------------------------------- |
-| `defaultProvider`      | string  | -       | 默认 Provider，如 `"anthropic"`、`"openai"`                             |
-| `defaultModel`         | string  | -       | 默认模型 ID                                                             |
-| `defaultThinkingLevel` | string  | -       | `"off"`、`"minimal"`、`"low"`、`"medium"`、`"high"`、`"xhigh"`、`"max"` |
-| `hideThinkingBlock`    | boolean | `false` | 是否隐藏 thinking block                                                 |
-| `showCacheMissNotices` | boolean | `false` | 显示显著的 Prompt 缓存未命中的转录通知                                  |
-| `thinkingBudgets`      | object  | -       | 每个 thinking level 的自定义 Token 预算                                 |
+| 设置项                 | 类型    | 默认值  | 说明                                                                                                                                                                                      |
+| ---------------------- | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `defaultProvider`      | string  | -       | 默认 Provider，如 `"anthropic"`、`"openai"`                                                                                                                                               |
+| `defaultModel`         | string  | -       | 默认模型 ID                                                                                                                                                                               |
+| `defaultThinkingLevel` | string  | -       | `"off"`、`"minimal"`、`"low"`、`"medium"`、`"high"`、`"xhigh"`、`"max"`                                                                                                                   |
+| `hideThinkingBlock`    | boolean | `false` | 是否隐藏 thinking block                                                                                                                                                                   |
+| `showCacheMissNotices` | boolean | `false` | 显示显著的 Prompt 缓存未命中的转录通知，以及压缩或分支摘要使用情况                                                                                                                        |
+| `thinkingBudgets`      | object  | -       | 每个 thinking level 的自定义 Token 预算。Anthropic、Google 和 Bedrock 原生使用这些预算。OpenAI 兼容模型在设置 `compat.thinkingTokenBudgetField`（或 `supportsThinkingTokenBudget`）时使用 |
 
 #### thinkingBudgets
 

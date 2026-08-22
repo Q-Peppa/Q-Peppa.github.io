@@ -37,9 +37,10 @@ Pi 从多个来源加载 Skills：
 
 发现规则：
 
-- 在 `~/.pi/agent/skills/` 和 `.pi/skills/` 中，直接根目录的 `.md` 文件被发现为独立 Skills
+- 在 `~/.pi/agent/skills/` 和 `.pi/skills/` 中，直接根目录的 `.md` 文件在具有有效的 skill frontmatter 和非空 `description` 时被发现为独立 Skills
 - 在所有 Skill 位置中，包含 `SKILL.md` 的目录被递归发现
-- 在 `~/.agents/skills/` 和项目 `.agents/skills/` 中，根目录的 `.md` 文件被忽略
+- 在 `~/.agents/skills/` 和项目 `.agents/skills/` 中，根目录的 `.md` 文件被忽略，但分组文件夹中嵌套的 `.md` 文件在声明 skill frontmatter 时被发现
+- 根目录中除 `SKILL.md` 之外、看起来不像 Skill 的 Markdown 文件会被静默忽略
 
 使用 `--no-skills` 禁用发现（显式的 `--skill` 路径仍会加载）。
 
@@ -186,7 +187,7 @@ Pi 根据 Agent Skills 标准验证 Skills。大多数问题只产生警告但�
 
 未知的 frontmatter 字段被忽略。
 
-**例外：** 缺少 description 的 Skills 不会加载。
+**例外：** 声明了 frontmatter 但缺少 description 的 Skills 不会加载。格式错误的 `SKILL.md` 文件和没有 description 的 `SKILL.md` 文件会产生警告且不会被加载。其他没有有效 skill frontmatter 的 Markdown 文件会被忽略。
 
 名称冲突（不同位置的相同名称）会发出警告并保留第一个找到的 Skill。
 

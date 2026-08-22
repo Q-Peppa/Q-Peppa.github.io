@@ -327,7 +327,8 @@ pi 启动
 
 /compact 或自动压缩
   ├─► session_before_compact（可取消或自定义）
-  └─► session_compact
+  ├─► session_compact（成功）
+  └─► session_compact_failed（失败或中止）
 
 /tree 导航
   ├─► session_before_tree（可取消或自定义）
@@ -445,7 +446,7 @@ pi.on('session_before_fork', async (event, ctx) => {
 成功分叉或克隆后，pi 会为旧的扩展实例触发 `session_shutdown`，为新会话重新加载并绑定扩展，然后以 `reason: "fork"` 和 `previousSessionFile` 触发 `session_start`。
 在 `session_shutdown` 中执行清理工作，然后在 `session_start` 中重新建立内存状态。
 
-#### session_before_compact / session_compact
+#### session_before_compact / session_compact / session_compact_failed
 
 在压缩时触发。详情请参见 [compaction.md](compaction.md)。
 
@@ -475,6 +476,14 @@ pi.on('session_compact', async (event, ctx) => {
   // event.fromExtension - 是否由扩展提供
   // event.reason - "manual"（/compact）、"threshold" 或 "overflow"
   // event.willRetry - 压缩后是否重试被中止的轮次（溢出恢复）
+});
+
+pi.on('session_compact_failed', async (event, ctx) => {
+  // event.reason - "manual"（/compact）、"threshold" 或 "overflow"
+  // event.errorMessage - 非中止失败时存在
+  // event.aborted - 取消/中止的压缩为 true
+  // event.willRetry - 压缩后是否重试被中止的轮次（溢出恢复）
+  // event.fromExtension - 是否正在使用扩展提供的压缩内容
 });
 ```
 

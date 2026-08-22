@@ -1032,7 +1032,7 @@ Agent 开始处理 prompt 时发出。
 | `thinking_start` | 思考块开始                               |
 | `thinking_delta` | 思考内容片段                             |
 | `thinking_end`   | 思考块结束                               |
-| `toolcall_start` | 工具调用开始                             |
+| `toolcall_start` | 工具调用开始（包含 `id` 和 `toolName`）  |
 | `toolcall_delta` | 工具调用参数片段                         |
 | `toolcall_end`   | 工具调用结束（包含完整 `toolCall` 对象） |
 
@@ -1047,7 +1047,13 @@ Agent 开始处理 prompt 时发出。
 
 顶层 `usage` 字段包含 Provider 最新报告的累计用量。如果 Provider 在流式传输期间不报告用量，该字段可能在完成前一直为零。
 
-`message_update` 有意省略了原有的累积 `message` 字段和 `assistantMessageEvent.partial`。需要实时部分消息的客户端必须使用 `contentIndex` 从 `message_start` 和后续事件组装，并将 `message_end.message` 视为权威结果。对于工具调用，请缓冲 `toolcall_delta.delta`；`toolcall_end.toolCall` 包含完成的调用。
+工具调用开始示例：
+
+```json
+{"type":"message_update","usage":{...},"assistantMessageEvent":{"type":"toolcall_start","contentIndex":1,"id":"call_abc123","toolName":"write"}}
+```
+
+`message_update` 有意省略了原有的累积 `message` 字段和 `assistantMessageEvent.partial`。需要实时部分消息的客户端必须使用 `contentIndex` 从 `message_start` 和后续事件组装，并将 `message_end.message` 视为权威结果。对于工具调用，`toolcall_start` 提供调用 `id` 和 `toolName`；缓冲 `toolcall_delta.delta` 以获取参数。`toolcall_end.toolCall` 包含完成的调用。
 
 ### bash_execution_update
 
