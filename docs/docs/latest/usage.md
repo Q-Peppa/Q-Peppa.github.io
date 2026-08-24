@@ -138,7 +138,7 @@ Pi 在启动时加载 `AGENTS.md` 或 `CLAUDE.md`：
 ## CLI 参考
 
 ```bash
-pi [options] [@files...] [messages...]
+pi [options] [--] [@files...] [messages...]
 ```
 
 ### Package 管理命令
@@ -209,7 +209,7 @@ cat README.md | pi -p "Summarize this text"
 | `--no-builtin-tools`、`-nbt`           | 禁用内置工具但保留扩展/自定义工具                  |
 | `--no-tools`、`-nt`                    | 禁用所有工具                                       |
 
-内置工具：`read`、`bash`、`edit`、`write`、`grep`、`find`、`ls`。
+内置工具：`read`、`bash`、`powershell`（Windows）、`edit`、`write`、`grep`、`find`、`ls`。
 
 ### 资源选项
 
@@ -240,6 +240,7 @@ pi --no-extensions -e ./my-extension.ts
 | `--verbose`                     | 强制详细启动                                     |
 | `-a`、`--approve`               | 在本次运行中信任项目本地文件                     |
 | `-na`、`--no-approve`           | 在本次运行中忽略项目本地文件                     |
+| `--`                            | 停止选项解析；剩余参数是 Prompt 或 `@file` 输入  |
 | `-h`、`--help`                  | 显示帮助                                         |
 | `--tui-mode <mode>`             | TUI 模式：`regular`（默认）或实验性 `fullscreen` |
 | `--use-theme <name[/name]>`     | 设置本次运行的初始交互主题，但不更改设置         |
@@ -267,6 +268,9 @@ pi "List all .ts files in src/"
 
 # 非交互式
 pi -p "Summarize this codebase"
+
+# 以连字符开头的 Prompt
+pi -p -- "- Summarize these points"
 
 # 非交互式带管道传入
 cat README.md | pi -p "Summarize this text"

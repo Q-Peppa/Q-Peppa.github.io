@@ -68,11 +68,11 @@
 
 ### TUI Kill Ring
 
-| ID                   | 默认键   | 说明                     |
-| -------------------- | -------- | ------------------------ |
-| `tui.editor.yank`    | `ctrl+y` | 粘贴最近删除的文本       |
-| `tui.editor.yankPop` | `alt+y`  | 在 yank 后循环已删除文本 |
-| `tui.editor.undo`    | `ctrl+-` | 撤销上次编辑             |
+| ID                   | 默认键                                              | 说明                     |
+| -------------------- | --------------------------------------------------- | ------------------------ |
+| `tui.editor.yank`    | `ctrl+y`                                            | 粘贴最近删除的文本       |
+| `tui.editor.yankPop` | `alt+y`                                             | 在 yank 后循环已删除文本 |
+| `tui.editor.undo`    | `ctrl+-`（Windows 上为 `ctrl+z`；WSL 上为 `alt+z`） | 撤销上次编辑             |
 
 ### TUI 剪贴板和选择
 
@@ -101,33 +101,33 @@
 
 此路由仍可通过常规操作绑定配置。例如，`"tui.altScreen.pageUp": "ctrl+pageUp"` 让 `pageUp` 控制编辑器，`ctrl+pageUp` 在全屏模式下控制转录。绑定 `tui.altScreen.halfPageUp` 和 `tui.altScreen.halfPageDown` 可按半页滚动，绑定 `tui.altScreen.lineUp` 和 `tui.altScreen.lineDown` 可按单行滚动。设置 `"tui.altScreen.pageUp": []` 会完全禁用该转录快捷键。用户绑定会替换该操作的默认值。
 
-| ID                             | 默认键                        | 说明                       |
-| ------------------------------ | ----------------------------- | -------------------------- |
-| `tui.altScreen.pageUp`         | `pageUp`                      | 向上滚动转录一页           |
-| `tui.altScreen.pageDown`       | `pageDown`                    | 向下滚动转录一页           |
-| `tui.altScreen.halfPageUp`     | 无                            | 向上滚动转录半页           |
-| `tui.altScreen.halfPageDown`   | 无                            | 向下滚动转录半页           |
-| `tui.altScreen.lineUp`         | 无                            | 向上滚动转录一行           |
-| `tui.altScreen.lineDown`       | 无                            | 向下滚动转录一行           |
-| `tui.altScreen.previousPrompt` | `ctrl+shift+up`               | 跳转到上一条标记消息       |
-| `tui.altScreen.nextPrompt`     | `ctrl+shift+down`             | 跳转到下一条标记消息       |
-| `tui.altScreen.search`         | `ctrl+shift+f`                | 搜索已渲染的转录           |
-| `tui.altScreen.searchNext`     | `enter`、`ctrl+g`             | 搜索时选择下一个匹配项     |
-| `tui.altScreen.searchPrevious` | `shift+enter`、`ctrl+shift+g` | 搜索时选择上一个匹配项     |
-| `tui.altScreen.searchClose`    | `escape`                      | 关闭转录搜索               |
-| `tui.altScreen.top`            | `home`                        | 滚动到转录开头             |
-| `tui.altScreen.bottom`         | `end`                         | 滚动到转录末尾并跟随新输出 |
+| ID                             | 默认键                                                            | 说明                       |
+| ------------------------------ | ----------------------------------------------------------------- | -------------------------- |
+| `tui.altScreen.pageUp`         | `pageUp`                                                          | 向上滚动转录一页           |
+| `tui.altScreen.pageDown`       | `pageDown`                                                        | 向下滚动转录一页           |
+| `tui.altScreen.halfPageUp`     | 无                                                                | 向上滚动转录半页           |
+| `tui.altScreen.halfPageDown`   | 无                                                                | 向下滚动转录半页           |
+| `tui.altScreen.lineUp`         | 无                                                                | 向上滚动转录一行           |
+| `tui.altScreen.lineDown`       | 无                                                                | 向下滚动转录一行           |
+| `tui.altScreen.previousPrompt` | `ctrl+shift+up`、`ctrl+up`（`ctrl+up` 仅限 Windows 和 WSL）       | 跳转到上一条标记消息       |
+| `tui.altScreen.nextPrompt`     | `ctrl+shift+down`、`ctrl+down`（`ctrl+down` 仅限 Windows 和 WSL） | 跳转到下一条标记消息       |
+| `tui.altScreen.search`         | `ctrl+shift+f`（Windows 和 WSL 上为 `ctrl+f`）                    | 搜索已渲染的转录           |
+| `tui.altScreen.searchNext`     | `enter`、`ctrl+g`                                                 | 搜索时选择下一个匹配项     |
+| `tui.altScreen.searchPrevious` | `shift+enter`、`ctrl+shift+g`                                     | 搜索时选择上一个匹配项     |
+| `tui.altScreen.searchClose`    | `escape`                                                          | 关闭转录搜索               |
+| `tui.altScreen.top`            | `home`                                                            | 滚动到转录开头             |
+| `tui.altScreen.bottom`         | `end`                                                             | 滚动到转录末尾并跟随新输出 |
 
 ### 应用程序
 
-| ID                         | 默认键                         | 说明                                                                                                |
-| -------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------- |
-| `app.interrupt`            | `escape`                       | 取消/中断                                                                                           |
-| `app.clear`                | `ctrl+c`                       | 清空编辑器（第一次）/ 退出（第二次）                                                                |
-| `app.exit`                 | `ctrl+d`                       | 退出（编辑器为空时）                                                                                |
-| `app.suspend`              | `ctrl+z`（Windows 上无）       | 挂起到后台                                                                                          |
-| `app.editor.external`      | `ctrl+g`                       | 在外部编辑器打开（`externalEditor`、`$VISUAL`、`$EDITOR`，Windows 上为 Notepad，其他平台为 `nano`） |
-| `app.clipboard.pasteImage` | `ctrl+v`（Windows 为 `alt+v`） | 从剪贴板粘贴图像或文本                                                                              |
+| ID                         | 默认键                                | 说明                                                                                                |
+| -------------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `app.interrupt`            | `escape`                              | 取消/中断                                                                                           |
+| `app.clear`                | `ctrl+c`                              | 清空编辑器（第一次）/ 退出（第二次）                                                                |
+| `app.exit`                 | `ctrl+d`                              | 退出（编辑器为空时）                                                                                |
+| `app.suspend`              | `ctrl+z`（Windows 上无）              | 挂起到后台                                                                                          |
+| `app.editor.external`      | `ctrl+g`                              | 在外部编辑器打开（`externalEditor`、`$VISUAL`、`$EDITOR`，Windows 上为 Notepad，其他平台为 `nano`） |
+| `app.clipboard.pasteImage` | `ctrl+v`（Windows 和 WSL 为 `alt+v`） | 从剪贴板粘贴图像或文本                                                                              |
 
 ### 会话
 
@@ -146,22 +146,22 @@
 
 ### 模型和思维
 
-| ID                        | 默认键         | 说明                     |
-| ------------------------- | -------------- | ------------------------ |
-| `app.model.select`        | `ctrl+l`       | 打开模型选择器           |
-| `app.model.cycleForward`  | `ctrl+p`       | 切换到下一个模型         |
-| `app.model.cycleBackward` | `shift+ctrl+p` | 切换到上一个模型         |
-| `app.thinking.cycle`      | `shift+tab`    | 循环切换 thinking level  |
-| `app.thinking.toggle`     | `ctrl+t`       | 折叠/展开 thinking block |
+| ID                        | 默认键                                        | 说明                     |
+| ------------------------- | --------------------------------------------- | ------------------------ |
+| `app.model.select`        | `ctrl+l`                                      | 打开模型选择器           |
+| `app.model.cycleForward`  | `ctrl+p`                                      | 切换到下一个模型         |
+| `app.model.cycleBackward` | `shift+ctrl+p`（Windows 和 WSL 上为 `alt+p`） | 切换到上一个模型         |
+| `app.thinking.cycle`      | `shift+tab`                                   | 循环切换 thinking level  |
+| `app.thinking.toggle`     | `ctrl+t`                                      | 折叠/展开 thinking block |
 
 ### 显示和消息队列
 
-| ID                     | 默认键      | 说明                                              |
-| ---------------------- | ----------- | ------------------------------------------------- |
-| `app.tools.expand`     | `ctrl+o`    | 折叠/展开工具输出                                 |
-| `app.message.copy`     | `ctrl+x`    | 复制最后一条助手消息，或在 `/tree` 中复制所选消息 |
-| `app.message.followUp` | `alt+enter` | 队列 follow-up 消息                               |
-| `app.message.dequeue`  | `alt+up`    | 恢复队列消息到编辑器                              |
+| ID                     | 默认键                                      | 说明                                              |
+| ---------------------- | ------------------------------------------- | ------------------------------------------------- |
+| `app.tools.expand`     | `ctrl+o`                                    | 折叠/展开工具输出                                 |
+| `app.message.copy`     | `ctrl+x`                                    | 复制最后一条助手消息，或在 `/tree` 中复制所选消息 |
+| `app.message.followUp` | `alt+enter`（Windows 和 WSL 上为 `ctrl+q`） | 队列 follow-up 消息                               |
+| `app.message.dequeue`  | `alt+up`（Windows 和 WSL 上为 `alt+q`）     | 恢复队列消息到编辑器                              |
 
 ### 树导航
 

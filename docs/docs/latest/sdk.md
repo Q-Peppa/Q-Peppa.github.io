@@ -527,7 +527,7 @@ const { session } = await createAgentSession({ resourceLoader: loader });
 
 指定启用的内置工具：
 
-- 内置工具名：`read`、`bash`、`edit`、`write`、`grep`、`find`、`ls`
+- 内置工具名：`read`、`bash`、`powershell`、`edit`、`write`、`grep`、`find`、`ls`
 - 默认内置工具：`read`、`bash`、`edit`、`write`
 - `noTools: "all"` 禁用所有工具
 - `noTools: "builtin"` 禁用默认内置工具，同时保持扩展和自定义工具启用
@@ -546,6 +546,11 @@ const { session } = await createAgentSession({
 // 选择特定工具
 const { session } = await createAgentSession({
   tools: ['read', 'bash', 'grep'],
+});
+
+// 在 Windows 上用 PowerShell 替代 Bash
+const { session } = await createAgentSession({
+  tools: ['read', 'powershell', 'edit', 'write'],
 });
 
 // 禁用某个工具，同时保留其他工具可用
@@ -1194,7 +1199,7 @@ SettingsManager
 // 工具工厂
 createCodingTools
 createReadOnlyTools
-createReadTool, createBashTool, createEditTool, createWriteTool
+createReadTool, createBashTool, createPowerShellTool, createEditTool, createWriteTool
 createGrepTool, createFindTool, createLsTool
 
 // 类型

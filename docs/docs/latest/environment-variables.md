@@ -6,7 +6,7 @@ Pi 以三种方式使用环境变量：
 
 - 诸如 `PI_OFFLINE` 等变量用于配置 Pi 进程。
 - Pi 设置进程标记，让子进程能够识别启动它们的 Agent 是 Pi。
-- 由 LLM 可调用的 bash 工具运行的命令会收到描述当前会话的 `PI_*` 变量。
+- 由 LLM 可调用的 shell 工具运行的命令会收到描述当前会话的 `PI_*` 变量。
 
 Provider API Key 变量在 [Providers](/docs/latest/providers#environment-variables-or-auth-file) 中单独说明。
 
@@ -19,9 +19,9 @@ CLI 和 RPC 入口点设置两个进程标记：
 
 子进程会继承这两个标记。它们不区分会话，且通过 SDK 嵌入 Pi 时不会自动设置。
 
-## Bash 工具会话环境
+## Shell 工具会话环境
 
-由 bash 工具运行的命令会收到当前 Pi 会话状态：
+由 `bash` 和 `powershell` 工具运行的命令会收到当前 Pi 会话状态：
 
 | 变量                 | 说明                                                                                   |
 | -------------------- | -------------------------------------------------------------------------------------- |
@@ -31,7 +31,7 @@ CLI 和 RPC 入口点设置两个进程标记：
 | `PI_MODEL`           | 当前选择的模型 ID                                                                      |
 | `PI_REASONING_LEVEL` | 当前有效的 reasoning 级别：`off`、`minimal`、`low`、`medium`、`high`、`xhigh` 或 `max` |
 
-这些值在每条命令启动时解析。因此切换模型或更改 reasoning 级别会影响下一条 bash 命令，无需重启 Pi。`PI_PROVIDER` 和 `PI_MODEL` 标识的是 Pi 选择的模型，而非路由器内部可能选择的其他上游模型。
+这些值在每条命令启动时解析。因此切换模型或更改 reasoning 级别会影响下一条 shell 命令，无需重启 Pi。`PI_PROVIDER` 和 `PI_MODEL` 标识的是 Pi 选择的模型，而非路由器内部可能选择的其他上游模型。
 
 当被问及正在运行哪个模型或 Provider 时，应检查这些变量，而非从系统提示中推断：
 
@@ -48,11 +48,11 @@ if [ -n "$PI_SESSION_FILE" ]; then
 fi
 ```
 
-这些变量被注入到 LLM 可调用的 bash 工具中。它们不会被注入到用户输入的 `!` 或 `!!` 命令中。
+这些变量被注入到 LLM 可调用的 `bash` 和 `powershell` 工具中。它们不会被注入到用户输入的 `!` 或 `!!` 命令中。
 
-### 自定义 Bash 工具
+### 自定义 Shell 工具
 
-使用 `createBashTool()` 创建的 bash 工具在注册到 Pi 时默认暴露会话环境。注入发生在 `spawnHook` 之前，因此 hook 可以在 `ctx.env` 中收到这些变量：
+使用 `createBashTool()` 或 `createPowerShellTool()` 创建的工具在注册到 Pi 时默认暴露会话环境。注入发生在 `spawnHook` 之前，因此 hook 可以在 `ctx.env` 中收到这些变量：
 
 ```typescript
 const bashTool = createBashTool(cwd, {
@@ -66,7 +66,7 @@ const bashTool = createBashTool(cwd, {
 独立于 spawn hook 禁用会话元数据：
 
 ```typescript
-const bashTool = createBashTool(cwd, {
+const powershellTool = createPowerShellTool(cwd, {
   exposeSessionEnvironment: false,
   spawnHook: (ctx) => ctx,
 });

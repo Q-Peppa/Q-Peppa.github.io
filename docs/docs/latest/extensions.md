@@ -2066,7 +2066,7 @@ pi.registerTool({
 
 ### 覆盖内置工具
 
-扩展可以通过注册同名工具来覆盖内置工具（`read`、`bash`、`edit`、`write`、`grep`、`find`、`ls`）。交互模式会在发生这种情况时显示警告。
+扩展可以通过注册同名工具来覆盖内置工具（`read`、`bash`、`powershell`、`edit`、`write`、`grep`、`find`、`ls`）。交互模式会在发生这种情况时显示警告。
 
 ```bash
 # 扩展的 read 工具替换内置的 read
@@ -2092,6 +2092,7 @@ pi --no-builtin-tools -e ./my-extension.ts
 
 - [read.ts](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/tools/read.ts) - `ReadToolDetails`
 - [bash.ts](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/tools/bash.ts) - `BashToolDetails`
+- [powershell.ts](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/tools/powershell.ts) - `PowerShellToolDetails`
 - [edit.ts](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/tools/edit.ts)
 - [write.ts](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/tools/write.ts)
 - [grep.ts](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/tools/grep.ts) - `GrepToolDetails`
@@ -2127,11 +2128,11 @@ pi.registerTool({
 });
 ```
 
-**操作接口：** `ReadOperations`、`WriteOperations`、`EditOperations`、`BashOperations`、`LsOperations`、`GrepOperations`、`FindOperations`
+**操作接口：** `ReadOperations`、`WriteOperations`、`EditOperations`、`BashOperations`、`PowerShellOperations`、`LsOperations`、`GrepOperations`、`FindOperations`
 
 对于 `user_bash`，扩展可以通过 `createLocalBashOperations()` 重用 pi 的本地 Shell 后端，而无需重新实现本地进程启动、Shell 解析和进程树终止。
 
-bash 工具还支持 spawn 钩子，用于在执行前调整命令、cwd 或环境：
+`bash` 和 `powershell` 工具还支持 spawn 钩子，用于在执行前调整命令、cwd 或环境：
 
 ```typescript
 import { createBashTool } from '@earendil-works/pi-coding-agent';
@@ -2147,7 +2148,7 @@ const bashTool = createBashTool(cwd, {
 
 完整 SSH 示例请参见 [examples/extensions/ssh.ts](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/ssh.ts)，包含 `--ssh` 标志。
 
-`createBashTool()` 通过 `PI_SESSION_ID`、`PI_SESSION_FILE`、`PI_PROVIDER`、`PI_MODEL` 和 `PI_REASONING_LEVEL` 向命令暴露当前会话。注入发生在 `spawnHook` 之前，因此 hook 在 `env` 中收到这些值，并在如上展开现有环境时保留它们。设置 `exposeSessionEnvironment: false` 可禁用：
+`createBashTool()` 和 `createPowerShellTool()` 通过 `PI_SESSION_ID`、`PI_SESSION_FILE`、`PI_PROVIDER`、`PI_MODEL` 和 `PI_REASONING_LEVEL` 向命令暴露当前会话。注入发生在 `spawnHook` 之前，因此 hook 在 `env` 中收到这些值，并在如上展开现有环境时保留它们。设置 `exposeSessionEnvironment: false` 可禁用：
 
 ```typescript
 const bashTool = createBashTool(cwd, {
@@ -2155,7 +2156,7 @@ const bashTool = createBashTool(cwd, {
 });
 ```
 
-关于变量语义，参见 [Bash 工具会话环境](/docs/latest/environment-variables#bash-工具会话环境)。
+关于变量语义，参见 [Shell 工具会话环境](/docs/latest/environment-variables#shell-工具会话环境)。
 
 ### 输出截断
 

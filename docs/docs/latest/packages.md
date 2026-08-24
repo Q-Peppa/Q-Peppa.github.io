@@ -40,7 +40,7 @@ pi update npm:@foo/bar       # 更新一个包
 pi update --extension npm:@foo/bar
 ```
 
-这些命令管理 Pi Packages，且 `pi update` 可以更新 Pi CLI 安装本身。要卸载 Pi 本身，请参阅 [Quickstart](quickstart.mdx#卸载)。
+这些命令管理 Pi Packages，且 `pi update` 可以更新 Pi CLI 安装本身。对于实验性的安装程序管理的安装，`pi update` 会将精确的已检查版本安装到暂存的、基于锁文件的版本中，并仅在验证后激活，更新失败时保留当前版本不变。托管安装不支持 `--force`；要修复一个，请重新运行安装程序。要卸载 Pi 本身，请参阅 [Quickstart](quickstart.mdx#卸载)。
 
 默认情况下 `install` 和 `remove` 写入全局设置（`~/.pi/agent/settings.json`）。使用 `-l` 写入项目设置（`.pi/settings.json`）。项目设置可分享给团队，Pi 启动时会在项目被信任后自动安装任何缺失的包。
 
@@ -133,7 +133,7 @@ pi install git:git@github.com:user/repo@v1.0.0
 }
 ```
 
-路径相对于包根目录。数组支持 glob 模式和 `!exclusions` 排除。
+路径相对于包根目录。数组支持 glob 模式和 `!exclusions` 排除。正向清单 glob 会按词法顺序发现可见路径。直接列出以点开头的路径。如果 glob 需要穿过符号链接继续，请直接列出符号链接的资源根目录。
 
 ### Gallery 元数据
 

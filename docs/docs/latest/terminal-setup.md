@@ -121,7 +121,15 @@ VS Code 版本低于 1.109.5 需要显式添加终端快捷键以支持 `Shift+E
 
 ## Windows Terminal
 
-在 `settings.json` 中添加（通过 Ctrl+Shift+, 或设置 → 打开 JSON 文件），以转发 Pi 使用的修饰 Enter 键：
+Pi 在 Windows 或 WSL 原生运行时使用 Windows 风格的快捷键：
+
+- `Alt+V` 粘贴图像或剪贴板文本。
+- `Ctrl+F` 在全屏模式下搜索转录，`Ctrl+Up`/`Ctrl+Down` 在标记消息之间跳转。
+- `Alt+P` 切换到上一个模型。
+- `Ctrl+Z` 在原生 Windows 上撤销编辑；WSL 使用 `Alt+Z`，以便 `Ctrl+Z` 可以挂起 Pi。
+- `Ctrl+Q` 队列 follow-up 消息，`Alt+Q` 恢复队列消息。
+
+在 `settings.json` 中添加（通过 Ctrl+Shift+, 或设置 → 打开 JSON 文件），以转发用于插入新行的 `Shift+Enter`：
 
 ```json
 {
@@ -129,20 +137,14 @@ VS Code 版本低于 1.109.5 需要显式添加终端快捷键以支持 `Shift+E
     {
       "command": { "action": "sendInput", "input": "\u001b[13;2u" },
       "keys": "shift+enter"
-    },
-    {
-      "command": { "action": "sendInput", "input": "\u001b[13;3u" },
-      "keys": "alt+enter"
     }
   ]
 }
 ```
 
-- `Shift+Enter` 插入新行
-- Windows Terminal 默认将 `Alt+Enter` 绑定为全屏，这会阻止 Pi 接收 `Alt+Enter` 用于 follow-up 队列
-- 将 `Alt+Enter` 重新映射为 `sendInput` 可将真实的按键组合转发给 Pi
+Windows Terminal 默认将 `Alt+Enter` 绑定为全屏。若要替代 Pi 默认的 `Ctrl+Q`（用于 follow-up 队列），请将 Windows Terminal 配置为发送该按键，并在 Pi 中将 `app.message.followUp` 绑定为 `alt+enter`。
 
-如果你已有 `actions` 数组，将上述对象添加到其中。如果旧的全屏行为仍然存在，请完全关闭并重新打开 Windows Terminal。
+如果你已有 `actions` 数组，将上述对象添加到其中。更改设置后请完全关闭并重新打开 Windows Terminal。
 
 ## xfce4-terminal、terminator
 

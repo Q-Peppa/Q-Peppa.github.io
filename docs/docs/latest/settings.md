@@ -222,11 +222,19 @@ JSON 中的 Windows 路径必须使用正斜杠或转义后的反斜杠：
 | -------------- | -------- | ------ | ----------------------------------------------- |
 | `defaultTools` | string[] | -      | 初始启用的内置工具。省略时，Pi 使用标准默认工具 |
 
-`defaultTools` 选择启动时启用的内置工具。扩展和 SDK 自定义工具仍保持启用：
+`defaultTools` 选择启动时启用的内置工具。扩展和 SDK 自定义工具仍保持启用。可用的内置工具是 `read`、`bash`、`powershell`、`edit`、`write`、`grep`、`find` 和 `ls`：
 
 ```json
 {
   "defaultTools": ["bash", "edit", "write"]
+}
+```
+
+在 Windows 上，选择 `powershell` 代替 `bash`，或两者都包含：
+
+```json
+{
+  "defaultTools": ["read", "powershell", "edit", "write"]
 }
 ```
 

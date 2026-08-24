@@ -2,6 +2,148 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.84.3（2026-08-24）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **PowerShell 工具** – 在 Windows 上使用可选的原生 PowerShell 命令执行。详见 [PowerShell 工具](/docs/latest/windows#powershell-tool)。
+- **更安全的管理更新** – 为安装程序管理的安装暂存、验证并原子激活更新。详见 [安装与管理](/docs/latest/packages#install-and-manage)。
+- **模型与 thinking 控制** – 使用 `/thinking` 选择 thinking 等级、搜索默认值、保持会话级选择，并通过 Ctrl+S 显式持久化。详见 [模型与 thinking](/docs/latest/keybindings#models-and-thinking)。
+
+不兼容变更
+
+- 将来自 `@earendil-works/pi-ai` 的 `GoogleThinkingLevel` 类型重命名为 `GoogleApiThinkingLevel`，并添加 `ResolvedGoogleThinkingLevel` 用于规范化的适配器等级。
+
+新增
+
+- 添加可选的 `powershell` 工具，用于 Windows，可通过 `defaultTools` 和 SDK 配置。详见 [PowerShell 工具](/docs/latest/windows#powershell-tool)。
+- 为模型和 thinking 选择器添加 `/thinking` 选择器和可搜索的默认选项；Ctrl+S 将所选模型保存为全局默认。详见 [模型与 thinking](/docs/latest/keybindings#models-and-thinking)。
+- 为导出的压缩摘要辅助函数添加可选的路由会话 ID，使调用方无需启用 Prompt 缓存写入即可保留 Provider 路由。
+- 在启用缓存未命中通知时，为压缩和分支摘要添加转录用量通知。
+- 添加 `session_compact_failed` 扩展事件，使压缩失败和中止向处理器暴露其原因、重试状态、来源和错误消息（[#8175](https://github.com/earendil-works/pi/issues/8175)）。
+- 为简单流式请求添加 Provider 无关的 `toolChoice` 支持（来自 `@earendil-works/pi-ai`）。
+- 为受支持的第一方模型添加 Anthropic 服务端拒绝自动回退，包括返回模型的用量计价（来自 `@earendil-works/pi-ai`）（[#8017](https://github.com/earendil-works/pi/issues/8017)）。
+- 为 vLLM、Qwen/SGLang 和 llama.cpp 服务器添加可配置的 OpenAI 兼容 thinking-token 预算字段。详见 [OpenAI 兼容性](/docs/latest/models#openai-compatibility)（来自 `@earendil-works/pi-ai`）（[#8275](https://github.com/earendil-works/pi/pull/8275) 由 [@bnsd55](https://github.com/bnsd55) 贡献）。
+- 添加中国区专属的 ZAI Coding Plan 模型，包括 GLM-4.6V 视觉支持和 API 等效用量成本估算（来自 `@earendil-works/pi-ai`）（[#8220](https://github.com/earendil-works/pi/issues/8220)）。
+- 为 Qwen Token Plan Individual 目录添加 `deepseek-v4-pro-0813` 支持（来自 `@earendil-works/pi-ai`）（[#8194](https://github.com/earendil-works/pi/issues/8194)）。
+
+变更
+
+- 变更实验性安装程序管理的安装，使 `pi update` 就地暂存、验证并原子激活所选版本。详见 [安装与管理](/docs/latest/packages#install-and-manage)。
+- 将内置 xAI 模型改用 Responses API 并使用加密 reasoning 重放，并使 Grok 4.6 成为默认 xAI 模型（来自 `@earendil-works/pi-ai`）（[#8124](https://github.com/earendil-works/pi/pull/8124) 由 [@Jaaneek](https://github.com/Jaaneek) 贡献）。
+- 变更 Anthropic、Azure OpenAI、Google、Mistral 和 OpenAI 适配器，使其发送 Pi 的默认 `User-Agent`，除非被覆盖（来自 `@earendil-works/pi-ai`）（[#8305](https://github.com/earendil-works/pi/issues/8305)）。
+- 变更 Windows 和 WSL 快捷键默认值，避免终端预留的快捷键冲突：图片粘贴、模型切换、编辑器撤销、全屏转录导航和搜索、消息队列（[#8372](https://github.com/earendil-works/pi/issues/8372)）。
+- 变更 Bun 发布归档，仅在内层 wrapper 包中包含原生剪贴板二进制，从每个归档中移除重复的平台包。
+- 变更包资源 glob 展开，使用 Node.js 内置实现和确定性的可见路径匹配，减少已安装的运行时依赖树。
+- 变更打包的 Node.js 运行时，仅在导入扩展时加载 jiti，仅当未缓存源码需要转换时加载 Babel，减少 CLI 启动时间和打包体积。
+- 变更语法高亮，仅急切初始化二十种常见语言，并将其余语法推迟到初始 TUI 渲染之后，减少 CLI 启动时间。
+- 变更 Node.js CLI 和 RPC 入口，加载打包的运行时，减少启动时文件系统读取，同时为正常的依赖身份将公共库和遗留模块路径保留在模块化运行时上。
+- 变更会话分享，渲染可点击的终端链接，仅显示规范的 Radius artifact URL，并在 Radius 会话分享中包含当前系统 Prompt 和活动工具定义。
+
+修复
+
+- 修复失败的扩展工厂仍留下事件订阅、Provider 注册和默认标志状态的问题（[#8424](https://github.com/earendil-works/pi/pull/8424) 由 [@acmerfight](https://github.com/acmerfight) 贡献）。
+- 修复 `models.json` 类型省略已记录的 OpenAI 兼容 `compat.supportsFinishReason` Provider 和模型覆盖的问题（[#8487](https://github.com/earendil-works/pi/pull/8487) 由 [@petrroll](https://github.com/petrroll) 贡献）。
+- 修复 `/model` 和 `/thinking` 选择被持久化为全局，除非用 Ctrl+S 显式保存的问题（[#5263](https://github.com/earendil-works/pi/issues/5263)）。
+- 修复 JSON 和 RPC `toolcall_start` 事件省略 tool call id 和名称的问题（[#7953](https://github.com/earendil-works/pi/pull/7953) 由 [@christianklotz](https://github.com/christianklotz) 贡献）。
+- 修复 Node.js CLI 作为单一可执行应用运行时扩展加载失败的问题（[#8237](https://github.com/earendil-works/pi/issues/8237)）。
+- 修复 `.agents/skills/` 分组目录内的嵌套 Markdown Skill 未被发现的问题。
+- 修复压缩和分支摘要请求向 Provider 暴露工具的问题。
+- 修复单对象 `edit` 工具输入无法通过校验的问题，在 coding-agent 和 harness 编辑工具中将其接受为单编辑数组（[#7835](https://github.com/earendil-works/pi/issues/7835)）。
+- 修复 Skill 目录中的 `README.md`、`AGENTS.md` 等根 Markdown 文件被报告为损坏的 Skill，除非声明了有效的 Skill frontmatter（[#7805](https://github.com/earendil-works/pi/issues/7805)）。
+- 修复默认 Cerebras 模型引用不可用的 Z.AI 模型。
+- 修复 OpenAI 兼容 Chat Completions reasoning 重放，保留并原样、按顺序重发助手级 `reasoning_details`（来自 `@earendil-works/pi-ai`）（[#7994](https://github.com/earendil-works/pi/issues/7994)）。
+- 修复 Anthropic 服务端回退响应按请求模型而非返回的回退模型计价的问题（来自 `@earendil-works/pi-ai`）（[#8285](https://github.com/earendil-works/pi/issues/8285)）。
+- 修复 GitHub Copilot 登录触发模型策略速率限制，通过限制策略更新、重试一次模型发现并遵循服务端重试延迟（来自 `@earendil-works/pi-ai`）（[#7850](https://github.com/earendil-works/pi/issues/7850)）。
+- 修复 Amazon Bedrock 丢弃并无法重放非 Anthropic 模型的不透明脱敏 reasoning（来自 `@earendil-works/pi-ai`）（[#8314](https://github.com/earendil-works/pi/pull/8314) 由 [@seiji](https://github.com/seiji) 贡献）。
+- 修复 Z.AI Coding Plan 模型推导出不完整的 reasoning-effort 元数据，包括缺失 GLM-5.3 的 low、high 和 max 等级（来自 `@earendil-works/pi-ai`）（[#8336](https://github.com/earendil-works/pi/issues/8336)）。
+- 修复 OpenCode 和 OpenCode Go 上的 DeepSeek V4 Flash 省略其支持的 low thinking 等级（来自 `@earendil-works/pi-ai`）（[#8181](https://github.com/earendil-works/pi/pull/8181) 由 [@tianshuang](https://github.com/tianshuang) 贡献）。
+- 修复 Azure OpenAI Responses 在 Provider 特定流式请求中忽略 `toolChoice`（来自 `@earendil-works/pi-ai`）。
+- 修复 Amazon Bedrock 响应钩子仅接收合成的请求 id 而非原始响应头（来自 `@earendil-works/pi-ai`）（[#8234](https://github.com/earendil-works/pi/issues/8234)）。
+- 修复 Kimi 用量报告，使顶层 `cached_tokens` 计为缓存读取而非普通输入 Token（来自 `@earendil-works/pi-ai`）（[#8075](https://github.com/earendil-works/pi/issues/8075)）。
+- 修复 Google 自定义模型忽略 `thinkingLevelMap`，丢弃扩展 thinking 控制（来自 `@earendil-works/pi-ai`）（[#8135](https://github.com/earendil-works/pi/issues/8135)）。
+- 修复对 `auth.json` 和 `models-store.json` 的写入覆盖管理员管理的文件权限和 ACL（[#7779](https://github.com/earendil-works/pi/issues/7779)）。
+- 修复 UTF-8 BOM 标记阻止 frontmatter 和用户配置文件加载（[#8337](https://github.com/earendil-works/pi/issues/8337)）。
+- 修复交互式启动时通过 TUI 内渲染带文件路径的警告，使无效设置文件容易被忽略（[#7829](https://github.com/earendil-works/pi/issues/7829)）。
+- 修复 subagent 示例在受信任仓库中反复提示运行项目本地代理的问题（[#8261](https://github.com/earendil-works/pi/issues/8261)）。
+- 修复生成达到输出 Token 上限时持久化截断的压缩和分支摘要（[#7048](https://github.com/earendil-works/pi/issues/7048)）。
+- 修复 npm 包更新检查将较旧的注册表版本视为可用更新，阻止 `pi update` 降级已更新的已安装包（[#8226](https://github.com/earendil-works/pi/issues/8226)）。
+- 修复 `PI_OFFLINE` 下 `/llama` 刷新已配置服务器后内置 llama.cpp 模型从 `/model` 消失，并将空闲休眠的 `sleeping` 路由模型和可自动加载的未加载预设纳入可选择的目录（[#8167](https://github.com/earendil-works/pi/issues/8167)）。
+- 修复 `pi.registerFlag()` 接受与声明标志类型不匹配的默认值（[#8064](https://github.com/earendil-works/pi/issues/8064)）。
+- 修复 Z.AI Coding Plan 默认值引用已移除的 GLM-5.1 模型（[#8096](https://github.com/earendil-works/pi/issues/8096)）。
+- 修复重复的模糊截断响应恢复被误标为上下文溢出（[#8130](https://github.com/earendil-works/pi/issues/8130)）。
+- 修复 Windows 上基于 VS Code 的终端中重复的全屏右键粘贴（来自 `pi-tui`）（[#8186](https://github.com/earendil-works/pi/issues/8186)）。
+- 修复填充文本超出窄终端宽度的问题（来自 `pi-tui`）（[#8252](https://github.com/earendil-works/pi/issues/8252)）。
+- 修复包裹的 Markdown 表格链接将颜色泄漏到边框和相邻单元格，包括块引用内的表格（来自 `pi-tui`）（[#8335](https://github.com/earendil-works/pi/issues/8335)）。
+- 修复 llama.cpp 登录指引在未加载本地模型时引导用户使用 `/llama` 而非 `/model`（[#8203](https://github.com/earendil-works/pi/issues/8203)）。
+- 修复挂起的 pi.dev 模型目录请求在重试前消耗整个刷新期限（[#8198](https://github.com/earendil-works/pi/issues/8198)）。
+- 修复 Xiaomi 模型目录在 `/model` 和 `--list-models` 中列出已停用的 MiMo V2 模型（来自 `@earendil-works/pi-ai`）（[#8187](https://github.com/earendil-works/pi/issues/8187)）。
+- 修复分支摘要条目在 `fromId` 中记录导航目标而不是导航前的源叶节点。
+- 修复当 Provider 省略流式用量数据时跳过阈值自动压缩的问题（[#8328](https://github.com/earendil-works/pi/issues/8328)）。
+- 修复以连字符开头（dash-prefixed）的 Prompt 被解析为选项，通过支持 `--` 作为选项结束分隔符（[#7269](https://github.com/earendil-works/pi/issues/7269)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+不兼容变更
+
+- 将 `GoogleThinkingLevel` 重命名为 `GoogleApiThinkingLevel`，并添加 `ResolvedGoogleThinkingLevel` 用于规范化的适配器等级。
+
+新增
+
+- 为简单流式请求添加 Provider 无关的 `toolChoice` 支持。
+- 为受支持的第一方模型添加 Anthropic 服务端拒绝自动回退，包括返回模型的用量计价（[#8017](https://github.com/earendil-works/pi/issues/8017)）。
+- 为 vLLM、Qwen/SGLang 和 llama.cpp 服务器添加可配置的 OpenAI 兼容 thinking-token 预算字段（[#8275](https://github.com/earendil-works/pi/pull/8275) 由 [@bnsd55](https://github.com/bnsd55) 贡献）。
+- 添加中国区专属的 ZAI Coding Plan 模型，包括 GLM-4.6V 视觉支持和已公布 PAYG 价格的 API 等效用量成本估算（[#8220](https://github.com/earendil-works/pi/issues/8220)）。
+- 为 Qwen Token Plan Individual 目录添加 `deepseek-v4-pro-0813`（[#8194](https://github.com/earendil-works/pi/issues/8194)）。
+
+变更
+
+- 将内置 xAI 模型改用 Responses API 并使用加密 reasoning 重放，并使 Grok 4.6 成为默认 xAI 模型（[#8124](https://github.com/earendil-works/pi/pull/8124) 由 [@Jaaneek](https://github.com/Jaaneek) 贡献）。
+- 变更 Anthropic、Azure OpenAI、Google Generative AI、Google Vertex、Mistral、OpenAI Chat Completions 和 OpenAI Responses 适配器，使其发送 Pi 的默认 `User-Agent`，除非被覆盖（[#8305](https://github.com/earendil-works/pi/issues/8305)）。
+
+修复
+
+- 修复 OpenAI 兼容 Chat Completions reasoning 重放，保留并原样、按顺序重发助手级 `reasoning_details`（`reasoning.text`、`reasoning.summary` 和 `reasoning.encrypted`）（[#7994](https://github.com/earendil-works/pi/issues/7994)）。
+- 修复 Anthropic 服务端回退响应按请求模型而非返回的回退模型计价的问题（[#8285](https://github.com/earendil-works/pi/issues/8285)）。
+- 修复 GitHub Copilot 登录触发模型策略速率限制，通过限制策略更新、重试一次模型发现并遵循服务端重试延迟（[#7850](https://github.com/earendil-works/pi/issues/7850)）。
+- 修复 Amazon Bedrock 丢弃并无法重放非 Anthropic 模型的不透明脱敏 reasoning（[#8314](https://github.com/earendil-works/pi/pull/8314) 由 [@seiji](https://github.com/seiji) 贡献）。
+- 修复 Z.AI Coding Plan 模型推导出不完整的 reasoning-effort 元数据，包括缺失 GLM-5.3 的 low、high 和 max 等级（[#8336](https://github.com/earendil-works/pi/issues/8336)）。
+- 修复 OpenCode 和 OpenCode Go 上的 DeepSeek V4 Flash 省略其支持的 low thinking 等级（[#8181](https://github.com/earendil-works/pi/pull/8181) 由 [@tianshuang](https://github.com/tianshuang) 贡献）。
+- 修复 Azure OpenAI Responses 在 Provider 特定流式请求中忽略 `toolChoice`。
+- 修复 Amazon Bedrock `after_provider_response`/`onResponse` 转发原始响应头而非仅合成的请求 id 头（[#8234](https://github.com/earendil-works/pi/issues/8234)）。
+- 修复 Kimi OpenAI 兼容用量报告，使顶层 `cached_tokens` 计为缓存读取而非普通输入 Token（[#8075](https://github.com/earendil-works/pi/issues/8075)）。
+- 修复 Google Generative AI 和 Vertex AI 自定义模型忽略 `thinkingLevelMap`，丢弃扩展 thinking 控制（[#8135](https://github.com/earendil-works/pi/issues/8135)）。
+- 修复 Xiaomi 模型目录生成在 models.dev 将 MiMo V2 标记为弃用后仍保留已停用的 MiMo V2 模型名（[#8187](https://github.com/earendil-works/pi/issues/8187)）。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+修复
+
+- 修复单对象 `edit` 工具输入无法通过校验的问题，将其接受为单编辑数组（[#7835](https://github.com/earendil-works/pi/issues/7835)）。
+- 修复 Skill 目录中的 `README.md`、`AGENTS.md` 等根 Markdown 文件被报告为损坏的 Skill，除非声明了有效的 Skill frontmatter（[#7805](https://github.com/earendil-works/pi/issues/7805)）。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+修复
+
+- 修复 Windows 上基于 VS Code 的终端中重复的全屏右键粘贴（[#8186](https://github.com/earendil-works/pi/issues/8186)）。
+- 修复填充文本超出窄终端宽度的问题（[#8252](https://github.com/earendil-works/pi/issues/8252)）。
+- 修复包裹的 Markdown 表格链接将颜色泄漏到边框和相邻单元格，包括块引用内的表格（[#8335](https://github.com/earendil-works/pi/issues/8335)）。
+
+</details>
+
 ## v0.84.2（2026-08-14）
 
 <details>
