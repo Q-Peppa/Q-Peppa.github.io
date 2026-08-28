@@ -157,6 +157,30 @@ RPC 模式使用严格的 JSONL 语义，仅使用 LF（`\n`）作为记录分�
 { "type": "response", "command": "abort", "success": true }
 ```
 
+#### clear_queue
+
+移除排队的 steering 和 follow-up 消息并返回它们的文本。
+
+```json
+{ "type": "clear_queue" }
+```
+
+响应：
+
+```json
+{
+  "type": "response",
+  "command": "clear_queue",
+  "success": true,
+  "data": {
+    "steering": ["Change direction"],
+    "followUp": ["Summarize when finished"]
+  }
+}
+```
+
+要实现交互式 Esc 行为，请在 `abort` 之前发送 `clear_queue`，然后将返回的文本恢复到客户端编辑器中。当排队的消息仍保留在会话中时，`abort` 会继续处理它们。
+
 #### new_session
 
 开始新会话。可以被 `session_before_switch` 扩展事件处理器取消。

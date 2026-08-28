@@ -577,6 +577,24 @@ pi.on('agent_settled', async (_event, ctx) => {
 });
 ```
 
+#### ui_prompt_start / ui_prompt_end
+
+仅通知的生命周期事件，用于阻塞用户界面的扩展 UI Prompt。它们在 `ctx.ui.select()`、`ctx.ui.confirm()`、`ctx.ui.input()`、`ctx.ui.editor()` 和 `ctx.ui.custom()` 周围触发，因此宿主/状态集成可以报告「等待用户」而不是仅报告「运行中」。
+
+嵌套或重叠的 Prompt 会合并为一个外部等待跨度。处理器尽力调用，不会在显示或关闭 Prompt 之前等待。
+
+```typescript
+pi.on('ui_prompt_start', async (event, ctx) => {
+  // event.reason === "ui_prompt"
+  // event.kind: "select" | "confirm" | "input" | "editor" | "custom"
+  // event.title: prompt title when available
+});
+
+pi.on('ui_prompt_end', async (event, ctx) => {
+  // Pi is no longer waiting on that UI prompt span.
+});
+```
+
 #### turn_start / turn_end
 
 每个回合（一次 LLM 响应 + 工具调用）触发一次。

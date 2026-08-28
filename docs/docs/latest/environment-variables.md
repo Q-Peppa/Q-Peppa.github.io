@@ -89,6 +89,9 @@ const powershellTool = createPowerShellTool(cwd, {
 | `PI_CACHE_RETENTION`          | 设置为 `long` 以在支持的 Provider 上启用扩展 prompt 缓存                                                                           |
 | `PI_SHARE_VIEWER_URL`         | 覆盖 `/share` 使用的基础 URL                                                                                                       |
 | `PI_HARDWARE_CURSOR`          | 设置为 `1` 以显示硬件光标；参见 [Terminal setup](/docs/latest/terminal-setup)                                                      |
+| `PI_HYPERLINKS`               | 用 `1`、`0` 或 `auto` 覆盖 OSC 8 超链接检测                                                                                        |
+| `PI_IMAGE_PROTOCOL`           | 用 `kitty`、`iterm2`、`none` 或 `auto` 覆盖内联图片检测                                                                            |
+| `PI_TRUE_COLOR`               | 用 `1`、`0` 或 `auto` 覆盖真彩色检测                                                                                               |
 | `PI_TUI_ESC_TIMEOUT`          | 将单独的 ESC 视为 Escape 前的等待时长（毫秒）；SSH 下默认为 `100`，其他情况默认为 `10`。如果 Alt 组合键被误读为 Escape，请增大该值 |
 | `VISUAL`、`EDITOR`            | 当 `externalEditor` 未设置时的外部编辑器回退                                                                                       |
 | `HTTP_PROXY`、`HTTPS_PROXY`   | 代理出站 HTTP 请求                                                                                                                 |

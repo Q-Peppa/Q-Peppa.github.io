@@ -37,6 +37,8 @@ contextTokens > contextWindow - reserveTokens
 
 默认情况下，`reserveTokens` 为 16384 Token（可在 `~/.pi/agent/settings.json` 或 `<project-dir>/.pi/settings.json` 中配置）。这为 LLM 的响应预留了空间。
 
+在多轮 agent 运行中，Pi 会在工具执行完毕、结果追加到上下文后、开始下一条助手响应之前检查该阈值。如果超过阈值，Pi 会在同一次 agent 运行内进行压缩，并以摘要和保留的消息恢复运行。当已完成的工具批次终止了运行且没有排队消息需要另一次响应时，它会跳过这种轮次之间的检查。Pi 还会在新用户 Prompt 之前以及低层 agent 运行结束时检查阈值。
+
 你也可以使用 `/compact [instructions]` 手动触发，其中可选的 instructions 用于聚焦摘要内容。
 
 ### 工作原理

@@ -19,16 +19,16 @@
 
 ### 编辑器功能
 
-| 功能            | 操作                                                                                        |
-| --------------- | ------------------------------------------------------------------------------------------- |
-| 文件引用        | 输入 `@` 来模糊搜索项目文件                                                                 |
-| 路径补全        | 按 Tab 补全路径                                                                             |
-| 多行输入        | Shift+Enter（Windows Terminal 上为 Ctrl+Enter）                                             |
-| 复制回复        | Ctrl+X 复制最后一条助手消息；在 `/tree` 中复制所选消息                                      |
-| 图像            | Ctrl+V 粘贴（Windows 为 Alt+V），或拖入终端                                                 |
-| Shell 命令      | `!command` 执行命令，输出发送给模型                                                         |
-| 隐藏 Shell 命令 | `!!command` 执行命令但不发送输出给模型                                                      |
-| 外部编辑器      | Ctrl+G 打开 `externalEditor`、`$VISUAL`、`$EDITOR`，Windows 上为 Notepad，其他平台为 `nano` |
+| 功能            | 操作                                                                                                                     |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| 文件引用        | 输入 `@` 来模糊搜索项目文件                                                                                              |
+| 路径补全        | 按 Tab 补全路径                                                                                                          |
+| 多行输入        | Shift+Enter（Windows Terminal 上为 Ctrl+Enter）                                                                          |
+| 复制回复        | Ctrl+X 复制 `/tree` 中选中的消息；否则复制最后一条助手消息，或在 `fullscreenCopyOnSelect` 禁用时复制当前全屏文本选中内容 |
+| 图像            | Ctrl+V 粘贴（Windows 为 Alt+V），或拖入终端                                                                              |
+| Shell 命令      | `!command` 执行命令，输出发送给模型                                                                                      |
+| 隐藏 Shell 命令 | `!!command` 执行命令但不发送输出给模型                                                                                   |
+| 外部编辑器      | Ctrl+G 打开 `externalEditor`、`$VISUAL`、`$EDITOR`，Windows 上为 Notepad，其他平台为 `nano`                              |
 
 有关所有快捷键和自定义设置，请参阅 [Keybindings](keybindings.md)。
 
@@ -40,9 +40,10 @@
 | ------------------------ | ------------------------------------------------------ |
 | `/login`、`/logout`      | 管理 OAuth 或 API Key 凭证                             |
 | [`/llama`](llama-cpp.md) | 下载、加载和卸载 llama.cpp 路由器模型                  |
-| `/model`                 | 切换模型                                               |
+| `/model`                 | 切换模型；在选择器中按 Ctrl+S 保存启动默认             |
+| `/thinking`              | 切换 thinking level；在选择器中按 Ctrl+S 保存启动默认  |
 | `/scoped-models`         | 启用/禁用 Ctrl+P 循环的模型                            |
-| `/settings`              | thinking level、主题、消息传递、传输                   |
+| `/settings`              | 主题、消息传递、传输及其他偏好                         |
 | `/resume`                | 从历史会话中选择                                       |
 | `/new`                   | 开始新会话                                             |
 | `/name <name>`           | 设置会话显示名称                                       |

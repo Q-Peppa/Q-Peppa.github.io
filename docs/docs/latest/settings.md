@@ -9,7 +9,7 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 | `~/.pi/agent/settings.json` | 全局（所有项目） |
 | `.pi/settings.json`         | 项目（当前目录） |
 
-可以直接编辑文件，或使用 `/settings` 进行常用选项配置。
+可以直接编辑文件，或使用 `/settings` 进行常用选项配置。要以交互方式保存启动默认模型，使用 `/model` 并在所需模型上按 Ctrl+S。要保存启动 thinking level，使用 `/thinking` 并按 Ctrl+S。
 
 ## 项目信任
 
@@ -29,9 +29,10 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 
 | 设置项                 | 类型    | 默认值  | 说明                                                                                                                                                                                      |
 | ---------------------- | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `defaultProvider`      | string  | -       | 默认 Provider，如 `"anthropic"`、`"openai"`                                                                                                                                               |
-| `defaultModel`         | string  | -       | 默认模型 ID                                                                                                                                                                               |
-| `defaultThinkingLevel` | string  | -       | `"off"`、`"minimal"`、`"low"`、`"medium"`、`"high"`、`"xhigh"`、`"max"`                                                                                                                   |
+| `defaultProvider`      | string  | -       | 启动 Provider，如 `"anthropic"`、`"openai"`（在 `/model` 中按 Ctrl+S 保存，或手动编辑）                                                                                                   |
+| `defaultModel`         | string  | -       | 启动模型 ID（在 `/model` 中按 Ctrl+S 保存，或手动编辑）                                                                                                                                   |
+| `defaultThinkingLevel` | string  | -       | 启动 thinking level（在 `/thinking` 中按 Ctrl+S 保存，或手动编辑）：`"off"`、`"minimal"`、`"low"`、`"medium"`、`"high"`、`"xhigh"`、`"max"`                                               |
+| `modelThinkingLevels`  | object  | -       | 按模型的启动 thinking level，以 `"provider/modelId"` 为键；可在 `/settings` → 每个模型的默认 thinking level 中配置，或手动编辑                                                            |
 | `hideThinkingBlock`    | boolean | `false` | 是否隐藏 thinking block                                                                                                                                                                   |
 | `showCacheMissNotices` | boolean | `false` | 显示显著的 Prompt 缓存未命中的转录通知，以及压缩或分支摘要使用情况                                                                                                                        |
 | `thinkingBudgets`      | object  | -       | 每个 thinking level 的自定义 Token 预算。Anthropic、Google 和 Bedrock 原生使用这些预算。OpenAI 兼容模型在设置 `compat.thinkingTokenBudgetField`（或 `supportsThinkingTokenBudget`）时使用 |
@@ -70,6 +71,7 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 | `tuiMode`                | string  | `"regular"`                                                          | 交互式 TUI 模式：`"regular"` 或实验性 `"fullscreen"`。在 `/settings` 中的更改立即生效；`--tui-mode` 在启动时覆盖该设置     |
 | `fullscreenExitOutput`   | string  | `"transcript"`                                                       | 全屏退出输出：`"transcript"` 打印最终转录和恢复提示，`"resume-hint"` 恢复之前的屏幕并只打印恢复提示。在常规 TUI 模式下无效 |
 | `fullscreenScrollbar`    | string  | `"auto"`                                                             | 全屏转录滚动条：`"auto"` 在滚动时临时显示，`"always"` 保留最右侧一列并保持可见，`"hidden"` 隐藏。在常规 TUI 模式下无效     |
+| `fullscreenCopyOnSelect` | boolean | `true`                                                               | 在全屏模式下自动复制选中的文本。禁用后，选中内容保持高亮，`Ctrl+X` 复制当前选中内容                                        |
 
 对于 VS Code，请包含 `--wait` 以便编辑器退出后 Pi 恢复：
 
@@ -178,13 +180,16 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 
 ### 终端和图像
 
-| 设置项                     | 类型    | 默认值  | 说明                                                                           |
-| -------------------------- | ------- | ------- | ------------------------------------------------------------------------------ |
-| `terminal.showImages`      | boolean | `true`  | 在终端显示图像（如支持）                                                       |
-| `terminal.imageWidthCells` | number  | `60`    | 图像宽度（终端单元格）                                                         |
-| `terminal.clearOnShrink`   | boolean | `false` | 内容缩小时清除空行（可能导致闪烁）                                             |
-| `images.autoResize`        | boolean | `true`  | 自动调整图像大小至最大 2000x2000。适用于 `@file` 附件、`read` 和工具返回的图像 |
-| `images.blockImages`       | boolean | `false` | 阻止所有图像发送给 LLM                                                         |
+| 设置项                     | 类型                | 默认值   | 说明                                                                            |
+| -------------------------- | ------------------- | -------- | ------------------------------------------------------------------------------- |
+| `terminal.showImages`      | boolean             | `true`   | 在终端显示图像（如支持）                                                        |
+| `terminal.imageWidthCells` | number              | `60`     | 图像宽度（终端单元格）                                                          |
+| `terminal.clearOnShrink`   | boolean             | `false`  | 内容缩小时清除空行（可能导致闪烁）                                              |
+| `terminal.hyperlinks`      | boolean 或 `"auto"` | `"auto"` | 覆盖 OSC 8 超链接支持（高级，仅 JSON）                                          |
+| `terminal.images`          | string 或 boolean   | `"auto"` | 用 `"kitty"`、`"iterm2"`、`false` 或 `"auto"` 覆盖图片协议支持（高级，仅 JSON） |
+| `terminal.trueColor`       | boolean 或 `"auto"` | `"auto"` | 覆盖真彩色支持（高级，仅 JSON）                                                 |
+| `images.autoResize`        | boolean             | `true`   | 自动调整图像大小至最大 2000x2000。适用于 `@file` 附件、`read` 和工具返回的图像  |
+| `images.blockImages`       | boolean             | `false`  | 阻止所有图像发送给 LLM                                                          |
 
 ### Shell
 
@@ -321,6 +326,9 @@ JSON 中的 Windows 路径必须使用正斜杠或转义后的反斜杠：
   "defaultProvider": "anthropic",
   "defaultModel": "claude-sonnet-4-20250514",
   "defaultThinkingLevel": "medium",
+  "modelThinkingLevels": {
+    "anthropic/claude-sonnet-4-20250514": "high"
+  },
   "theme": "dark",
   "compaction": {
     "enabled": true,

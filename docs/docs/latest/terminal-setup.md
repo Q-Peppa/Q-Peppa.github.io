@@ -4,6 +4,18 @@
 
 Pi 使用 [Kitty 键盘协议](https://sw.kovidgoyal.net/kitty/keyboard-protocol/) 进行可靠的修饰键检测。大多数现代终端支持此协议，但某些需要配置更改。
 
+## 能力覆盖
+
+Pi 会自动检测 OSC 8 超链接、内联图片协议和真彩色。如果检测在终端代理或多路复用器后面失败，可以使用以下高级覆盖：
+
+| 能力         | 环境变量                                      | JSON 设置                                           |
+| ------------ | --------------------------------------------- | --------------------------------------------------- |
+| OSC 8 超链接 | `PI_HYPERLINKS=1\|0\|auto`                    | `terminal.hyperlinks: true\|false\|"auto"`          |
+| 内联图片     | `PI_IMAGE_PROTOCOL=kitty\|iterm2\|none\|auto` | `terminal.images: "kitty"\|"iterm2"\|false\|"auto"` |
+| 真彩色       | `PI_TRUE_COLOR=1\|0\|auto`                    | `terminal.trueColor: true\|false\|"auto"`           |
+
+设置优先于环境变量；未设置或 `auto` 时保持自动检测。只强制完整终端路径支持的能力，因为不支持的转义序列会破坏渲染。
+
 ## Kitty
 
 开箱即用。

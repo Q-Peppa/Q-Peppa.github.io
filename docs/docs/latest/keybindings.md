@@ -156,12 +156,12 @@
 
 ### 显示和消息队列
 
-| ID                     | 默认键                                      | 说明                                              |
-| ---------------------- | ------------------------------------------- | ------------------------------------------------- |
-| `app.tools.expand`     | `ctrl+o`                                    | 折叠/展开工具输出                                 |
-| `app.message.copy`     | `ctrl+x`                                    | 复制最后一条助手消息，或在 `/tree` 中复制所选消息 |
-| `app.message.followUp` | `alt+enter`（Windows 和 WSL 上为 `ctrl+q`） | 队列 follow-up 消息                               |
-| `app.message.dequeue`  | `alt+up`（Windows 和 WSL 上为 `alt+q`）     | 恢复队列消息到编辑器                              |
+| ID                     | 默认键                                      | 说明                                                                                                              |
+| ---------------------- | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `app.tools.expand`     | `ctrl+o`                                    | 折叠/展开工具输出                                                                                                 |
+| `app.message.copy`     | `ctrl+x`                                    | 复制 `/tree` 中选中的消息；否则复制最后一条助手消息，或在 `fullscreenCopyOnSelect` 禁用时复制当前全屏文本选中内容 |
+| `app.message.followUp` | `alt+enter`（Windows 和 WSL 上为 `ctrl+q`） | 队列 follow-up 消息                                                                                               |
+| `app.message.dequeue`  | `alt+up`（Windows 和 WSL 上为 `alt+q`）     | 恢复队列消息到编辑器                                                                                              |
 
 ### 树导航
 
