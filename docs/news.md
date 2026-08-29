@@ -2,6 +2,98 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.84.4（2026-08-28）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **终端能力覆盖** – 覆盖自动检测的终端超链接、图片和 truecolor 支持。详见 [能力覆盖](/docs/latest/terminal-setup#capability-overrides)。
+- **扩展 UI prompt 事件** – 集成可以区分活动 agent 工作与等待 `ctx.ui` prompts 的时间。详见 [扩展 UI prompt 事件](/docs/latest/extensions#ui_prompt_start--ui_prompt_end)。
+- **RPC 队列清空** – 使用 `clear_queue` 检索并清空排队的 steering 和 follow-up 消息。详见 [RPC `clear_queue`](/docs/latest/rpc#clear_queue)。
+- **全屏选择复制控制** – 在全屏模式下禁用自动选择复制，并使用 Ctrl+X 复制活动选择。详见 [UI 与显示](/docs/latest/settings#ui--display)。
+- **DeepSeek V4 Flash Vision（实验性）** – 通过内置的 DeepSeek provider 使用视觉能力模型。详见 [API Keys](/docs/latest/providers#api-keys)。
+
+新增
+
+- 添加了 `ui_prompt_start` 和 `ui_prompt_end` 扩展事件，使宿主集成能够区分活动 agent 工作与等待用户端 `ctx.ui` prompts（[#8355](https://github.com/earendil-works/pi/pull/8355) 由 [@cristinaponcela](https://github.com/cristinaponcela) 贡献）。
+- 添加 `detectSupportedImageMimeTypeFromFile()` 到公共库导出（[#8600](https://github.com/earendil-works/pi/pull/8600) 由 [@xl0](https://github.com/xl0) 贡献）。
+- 添加实验性视觉能力 `deepseek-v4-flash-vision-exp` 模型支持（来自 `@earendil-works/pi-ai`）。
+- 在启用缓存未命中通知时，为压缩和分支摘要添加转录用量通知。
+- 添加 RPC `clear_queue` 来检索并移除排队的 steering 和 follow-up 消息（[#8432](https://github.com/earendil-works/pi/issues/8432)）。
+- 添加环境变量和高级设置，用于覆盖自动检测的终端超链接、图片和 truecolor 能力（[#8665](https://github.com/earendil-works/pi/issues/8665)）。
+- 添加 `fullscreenCopyOnSelect` 来禁用自动全屏选择复制；禁用时，`Ctrl+X` 复制活动文本选择（先于回退到最后一条助手消息），而 `/tree` 仍复制所选消息（[#7720](https://github.com/earendil-works/pi/issues/7720)）。
+
+修复
+
+- 修复切换 thinking 可见性清除正在运行的 Bash 工具的 partial 输出（[#8611](https://github.com/earendil-works/pi/issues/8611)）。
+- 修复 Windows shell 在 `PATH` 上不可用 `taskkill.exe` 时中止导致 Pi 崩溃（[#6596](https://github.com/earendil-works/pi/issues/6596)）。
+- 修复恢复的会话在其 JSONL 文件缺少末尾换行时损坏下一个追加条目（[#8345](https://github.com/earendil-works/pi/issues/8345)）。
+- 修复 agent 运行时发送的 `triggerTurn: false` 扩展消息被插入到 tool call 与其结果之间，导致验证消息顺序的 provider 拒绝重放历史；现在会在本轮 tool 结果就绪后追加（[#8537](https://github.com/earendil-works/pi/issues/8537)）。
+- 修复压缩和分支摘要强制设置 `toolChoice: "none"`（[#8649](https://github.com/earendil-works/pi/issues/8649)、[#8638](https://github.com/earendil-works/pi/issues/8638)）。
+- 修复超过自动压缩阈值的大 tool 结果在压缩前就发给 provider 的问题；Pi 现在会在同一轮中于 tool 执行和下一次助手响应之间压缩，并在运行恢复时恢复交互进度（[#6879](https://github.com/earendil-works/pi/issues/6879)）。
+- 修复 Google Vertex 请求在打包的 Node.js 运行时使用 HTTP(S) 代理时失败 `HttpsProxyAgent is not a constructor`（[#8610](https://github.com/earendil-works/pi/issues/8610)）。
+- 修复从非空模型范围保存默认模型，使其在该范围内保持可用。
+- 修复 `@` 文件自动补全排名偏好直接和更浅的匹配，而非等级相近的嵌套路径（来自 `pi-tui`）（[#8669](https://github.com/earendil-works/pi/pull/8669)）。
+- 修复 OpenAI 兼容流在流式传输期间重复序列化 thinking 签名（来自 `@earendil-works/pi-ai`）（[#8671](https://github.com/earendil-works/pi/pull/8671)）。
+- 修复主屏渲染在图片密集输出超过 V8 字符串长度限制时崩溃（来自 `pi-tui`）（[#8028](https://github.com/earendil-works/pi/issues/8028)）。
+- 修复全屏双击单词选择在 `/` 和 `-` 上拆分路径和 kebab-case token（来自 `pi-tui`）。
+- 修复 Cloudflare AI Gateway 目录省略支持的 `workers-ai/*` 透传模型（来自 `@earendil-works/pi-ai`）。
+- 修复 OpenAI 兼容 reasoning 重放合并连续流式文本和摘要 `reasoning_details` 增量（来自 `@earendil-works/pi-ai`）。
+- 修复 OpenRouter reasoning 控制，使 reasoning-mandatory 模型不接收 `effort: "none"`（来自 `@earendil-works/pi-ai`）（[#8614](https://github.com/earendil-works/pi/pull/8614) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 修复 OpenAI 兼容 Chat Completions 在没有定义工具时忽略显式请求的 `toolChoice`（来自 `@earendil-works/pi-ai`）。
+- 修复分段 Mistral tool call 在 continuation 块省略 tool-call ID 时拆分（来自 `@earendil-works/pi-ai`）（[#8387](https://github.com/earendil-works/pi/issues/8387)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 添加实验性视觉能力 `deepseek-v4-flash-vision-exp` 模型到 DeepSeek 目录。
+
+修复
+
+- 修复 OpenAI 兼容 Chat Completions 在没有定义工具时忽略显式请求的 `toolChoice`。
+- 修复 thinking 签名序列化在签名完成后只运行一次（[#8671](https://github.com/earendil-works/pi/pull/8671)）。
+- 修复分段 Mistral tool call 在 continuation 块省略 tool-call ID 时拆分（[#8387](https://github.com/earendil-works/pi/issues/8387)）。
+- 修复 OpenAI 兼容 reasoning 重放合并连续流式文本和摘要 `reasoning_details` 增量。
+- 修复 Cloudflare AI Gateway 目录包含 models.dev 省略的受支持 `workers-ai/*` 透传模型。
+- 修复 OpenRouter reasoning 控制，通过从 OpenRouter 的模型元数据推导 `off` 支持和可用 effort 等级，防止 reasoning-mandatory 模型接收 `effort: "none"`（[#8614](https://github.com/earendil-works/pi/pull/8614) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+不兼容变更
+
+- 变更 `prepareNextTurn` 和 `prepareNextTurnWithContext` 仅在 `shouldStopAfterTurn` 和排队消息检查确定 agent loop 将启动另一轮助手 turn 后运行；它们不再在 final 或 terminating turn 后运行；请将 end-of-run 工作移到 `agent_end` 处理（[#6879](https://github.com/earendil-works/pi/issues/6879)）。
+
+修复
+
+- 修复 Windows `NodeExecutionEnv` 在 `PATH` 上不可用 `taskkill.exe` 时中止导致崩溃（[#6596](https://github.com/earendil-works/pi/issues/6596)）。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+新增
+
+- 添加 OSC 8 超链接、inline 图片协议和 truecolor 终端能力的环境和程序化覆盖（[#8665](https://github.com/earendil-works/pi/issues/8665)）。
+- 添加 `TuiAltScreen` `copyOnSelect` 选项，以及用于检测和程序化复制活动全屏文本选择的辅助函数（[#7720](https://github.com/earendil-works/pi/issues/7720)）。
+
+修复
+
+- 修复主屏渲染在图片密集输出超过 V8 字符串长度限制时崩溃（[#8028](https://github.com/earendil-works/pi/issues/8028)）。
+- 修复嵌套结果的自动补全排序（[#8669](https://github.com/earendil-works/pi/pull/8669)）。
+- 修复全屏双击单词选择在 `/` 和 `-` 上拆分路径和 kebab-case token（[#7746](https://github.com/earendil-works/pi/issues/7746)）。
+
+</details>
+
 ## v0.84.3（2026-08-24）
 
 <details>
