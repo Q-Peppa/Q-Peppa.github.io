@@ -398,6 +398,8 @@
 
 某些 Anthropic 模型需要 adaptive thinking（`thinking.type: "adaptive"` 加 `output_config.effort`），而非旧的基于 token 预算的 thinking 负载。内置模型会自动设置此项。对于路由到这些模型的自定义 Provider 或别名，将 `forceAdaptiveThinking` 设为 `true`。
 
+支持每轮 effort 的 Claude 模型使用 `supportsMidConvoEffort`。Pi 会持久化每次响应的 Provider effort，在后续请求中重建仅含 effort 的系统消息，并发送带 `prefix_mismatch_behavior: "drop_block"` 的 thinking 绑定控制，以避免过期的已签名 thinking 前缀导致持续的 400 响应。仅在确定使用受支持的 Claude 模型、且传输层是忠实的 Anthropic Messages 时才设置此项；对于只是模仿 Messages 格式的 API，不要启用。
+
 某些 Anthropic 兼容 Provider 会发出签名为空的 thinking 块，并在重放时仍然期望它们。仅在这些 Provider 上将 `allowEmptySignature` 设为 `true`；真正的 Anthropic 会拒绝空的 thinking 签名。
 
 内置 Anthropic 模型在模型元数据中启用 `supportsStrictTools`。自定义 Anthropic 兼容模型在其端点接受严格 JSON Schema 工具定义时必须将其设为 `true`。
@@ -427,15 +429,16 @@
 }
 ```
 
-| 字段                              | 说明                                                                                                                                                                                                  |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `supportsEagerToolInputStreaming` | Provider 是否接受每个工具的 `eager_input_streaming`。默认：`true`。设为 `false` 可省略该字段，并在启用工具的请求中使用旧的细粒度工具流 beta 头                                                        |
-| `supportsLongCacheRetention`      | Provider 是否在缓存保留为 `long` 时接受 Anthropic 长缓存保留（`cache_control.ttl: "1h"`）。默认：`true`                                                                                               |
-| `sendSessionAffinityHeaders`      | 启用缓存后是否从会话 ID 发送 `x-session-affinity`。默认：对已知 Provider 自动检测                                                                                                                     |
-| `supportsCacheControlOnTools`     | Provider 是否接受工具定义上的 Anthropic 风格 `cache_control` 标记。默认：`true`                                                                                                                       |
-| `forceAdaptiveThinking`           | 是否为此模型发送 adaptive thinking（`thinking.type: "adaptive"` 加 `output_config.effort`）。内置 adaptive 模型会自动设置。默认：`false`                                                              |
-| `allowEmptySignature`             | 某些 Anthropic 兼容 Provider 会发出签名为空的 thinking 块，并在重放时仍然期望它们。仅在这些 Provider 上将 `allowEmptySignature` 设为 `true`；真正的 Anthropic 会拒绝空的 thinking 签名。默认：`false` |
-| `supportsStrictTools`             | Provider 是否接受严格 JSON Schema 工具定义。默认：`false`；内置 Anthropic 模型在生成的元数据中启用此项。                                                                                              |
+| 字段                              | 说明                                                                                                                                            |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supportsEagerToolInputStreaming` | Provider 是否接受每个工具的 `eager_input_streaming`。默认：`true`。设为 `false` 可省略该字段，并在启用工具的请求中使用旧的细粒度工具流 beta 头  |
+| `supportsLongCacheRetention`      | Provider 是否在缓存保留为 `long` 时接受 Anthropic 长缓存保留（`cache_control.ttl: "1h"`）。默认：`true`                                         |
+| `sendSessionAffinityHeaders`      | 启用缓存后是否从会话 ID 发送 `x-session-affinity`。默认：对已知 Provider 自动检测                                                               |
+| `supportsCacheControlOnTools`     | Provider 是否接受工具定义上的 Anthropic 风格 `cache_control` 标记。默认：`true`                                                                 |
+| `forceAdaptiveThinking`           | 是否为此模型发送 adaptive thinking（`thinking.type: "adaptive"` 加 `output_config.effort`）。内置 adaptive 模型会自动设置。默认：`false`        |
+| `supportsMidConvoEffort`          | 该 Claude 模型的传输层是否支持每轮 effort 系统消息和 thinking 绑定控制。Pi 会持久化原生 effort 级别，启用后始终发送 `drop_block`。默认：`false` |
+| `allowEmptySignature`             | 是否将空的 thinking 签名作为 `signature: ""` 重放，而不是把 thinking 转换为文本。默认：`false`                                                  |
+| `supportsStrictTools`             | Provider 是否接受严格 JSON Schema 工具定义。默认：`false`；内置 Anthropic 模型在生成的元数据中启用此项。                                        |
 
 ## OpenAI 兼容性
 

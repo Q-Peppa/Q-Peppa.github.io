@@ -131,6 +131,21 @@ VS Code 版本低于 1.109.5 需要显式添加终端快捷键以支持 `Shift+E
 }
 ```
 
+## Zed（集成终端）
+
+将以下按键绑定添加到 Zed 的 `keymap.json`：
+
+```json
+{
+  "context": "Terminal",
+  "bindings": {
+    "shift-enter": ["terminal::SendText", "\u001b[13;2u"],
+    "ctrl--": ["terminal::SendText", "\u001b[45;5u"],
+    "ctrl-alt-]": ["terminal::SendText", "\u001b[93;7u"]
+  }
+}
+```
+
 ## Windows Terminal
 
 Pi 在 Windows 或 WSL 原生运行时使用 Windows 风格的快捷键：

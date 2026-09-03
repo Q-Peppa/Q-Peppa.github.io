@@ -1711,7 +1711,7 @@ pi.setActiveTools(['read', 'bash']); // 切换到只读
 
 ### pi.setModel(model)
 
-设置当前模型。如果模型没有可用 API 密钥，返回 `false`。自定义模型配置请参见 [models.md](models.md)。
+设置当前会话的模型。此变更会记录在会话历史中，并在恢复该会话时还原，但不会改变新会话使用的已配置 `defaultProvider` 或 `defaultModel`。如果模型的 Provider 未配置认证，返回 `false`。自定义模型配置请参见 [models.md](models.md)。
 
 ```typescript
 const model = ctx.modelRegistry.find('anthropic', 'claude-sonnet-4-5');
@@ -1725,7 +1725,9 @@ if (model) {
 
 ### pi.getThinkingLevel() / pi.setThinkingLevel(level)
 
-获取或设置思考级别。级别会被限制到模型能力范围内（非推理模型始终使用 "off"）。更改会触发 `thinking_level_select`。
+获取当前思考级别。级别会被限制到模型能力范围内（非推理模型始终使用 "off"）。更改会触发 `thinking_level_select`。
+
+`pi.setThinkingLevel()` 会更改当前会话的思考级别。此变更会记录在会话历史中，并在恢复该会话时还原，但不会改变新会话使用的已配置默认值。
 
 ```typescript
 const current = pi.getThinkingLevel(); // "off" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max"

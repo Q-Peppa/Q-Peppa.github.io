@@ -34,7 +34,7 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 | `defaultThinkingLevel` | string  | -       | 启动 thinking level（在 `/thinking` 中按 Ctrl+S 保存，或手动编辑）：`"off"`、`"minimal"`、`"low"`、`"medium"`、`"high"`、`"xhigh"`、`"max"`                                               |
 | `modelThinkingLevels`  | object  | -       | 按模型的启动 thinking level，以 `"provider/modelId"` 为键；可在 `/settings` → 每个模型的默认 thinking level 中配置，或手动编辑                                                            |
 | `hideThinkingBlock`    | boolean | `false` | 是否隐藏 thinking block                                                                                                                                                                   |
-| `showCacheMissNotices` | boolean | `false` | 显示显著的 Prompt 缓存未命中的转录通知，以及压缩或分支摘要使用情况                                                                                                                        |
+| `showCacheMissNotices` | boolean | `false` | 显示显著的 Prompt 缓存未命中、压缩或分支摘要使用，以及 Provider 恢复诊断（如被丢弃的 Anthropic thinking 块）的转录通知                                                                    |
 | `thinkingBudgets`      | object  | -       | 每个 thinking level 的自定义 Token 预算。Anthropic、Google 和 Bedrock 原生使用这些预算。OpenAI 兼容模型在设置 `compat.thinkingTokenBudgetField`（或 `supportsThinkingTokenBudget`）时使用 |
 
 #### thinkingBudgets
