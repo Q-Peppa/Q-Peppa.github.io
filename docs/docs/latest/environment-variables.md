@@ -83,6 +83,8 @@ const powershellTool = createPowerShellTool(cwd, {
 | `PI_CODING_AGENT_DIR`         | 覆盖配置目录；默认为 `~/.pi/agent`                                                                                                 |
 | `PI_CODING_AGENT_SESSION_DIR` | 覆盖会话存储；可被 `--session-dir` 覆盖                                                                                            |
 | `PI_PACKAGE_DIR`              | 覆盖包目录，适用于 Nix/Guix 存储路径                                                                                               |
+| `PI_SERVER_DIR`               | 覆盖实验性服务端 profile 和 socket 目录；默认为 `~/.pi/server`                                                                     |
+| `PI_SERVER_ID`                | 当省略 `--server-id` 时选择逻辑实验性服务端 ID                                                                                     |
 | `PI_OFFLINE`                  | 禁用启动网络操作，包括更新检查、包更新和安装/更新遥测                                                                              |
 | `PI_SKIP_VERSION_CHECK`       | 禁用 `pi.dev` 最新版本请求                                                                                                         |
 | `PI_TELEMETRY`                | 覆盖安装/更新遥测和 Provider 归因请求头：`1`/`true`/`yes` 或 `0`/`false`/`no`                                                      |

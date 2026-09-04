@@ -66,7 +66,7 @@ Pi 从多个来源加载 Skills：
 
 1. 启动时，Pi 扫描 Skill 位置并提取名称和描述
 2. 系统 Prompt 按[规范](https://agentskills.io/integrate-skills)以 XML 格式包含可用 Skills
-3. 当任务匹配时，Agent 使用 `read` 加载完整的 SKILL.md（模型不总是这样做；可使用提示或 `/skill:name` 强制加载）
+3. 当任务匹配时，Agent 使用 `read`（当 `read` 不可用时使用 `bash`）加载完整的 SKILL.md（模型不总是这样做；可使用提示或 `/skill:name` 强制加载）
 4. Agent 按照指令执行，使用相对路径引用脚本和资源
 
 这是一种渐进式披露：只有描述始终在上下文中，完整指令按需加载。

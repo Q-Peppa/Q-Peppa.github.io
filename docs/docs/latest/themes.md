@@ -90,7 +90,8 @@ vim ~/.pi/agent/themes/my-theme.json
     "text": "",
     "thinkingText": "secondary",
     "selectedBg": "#2d2d30",
-    "scrollbarThumb": "#555566",
+    "scrollbarTrack": "secondary",
+    "scrollbarThumb": "",
     "searchMatchBg": "#2d2d30",
     "searchMatchText": "",
     "userMessageBg": "#2d2d30",
@@ -162,35 +163,36 @@ vim ~/.pi/agent/themes/my-theme.json
 
 - `name`：必需，必须唯一，且不能包含 `/`。
 - `vars`：可选。在此定义可复用的颜色，然后在 `colors` 中引用。
-- `colors`：必须定义全部 51 个必需 token。`thinkingMax`、`scrollbarThumb` 和两个搜索高亮 token 为可选，并使用下文列出的回退值。
+- `colors`：必须定义全部 53 个必需 token。`thinkingMax` 和两个搜索高亮 token 为可选，并使用下文列出的回退值。
 - `$schema` 字段启用编辑器自动补全和验证。
 
 ## 颜色 Token
 
-每个主题必须定义全部 51 个必需颜色 token。可选 token 用于兼容现有主题：`thinkingMax` 回退到 `thinkingXhigh`，`scrollbarThumb` 和 `searchMatchBg` 回退到 `selectedBg`，`searchMatchText` 回退到 `text`。其他搜索匹配项使用 `searchMatchText` 作为前景色、`searchMatchBg` 作为背景色并添加下划线；当前匹配项会交换这组前景色和背景色，并使用粗体文本。
+每个主题必须定义全部 53 个必需颜色 token。可选 token 用于兼容现有主题：`thinkingMax` 回退到 `thinkingXhigh`，`searchMatchBg` 回退到 `selectedBg`，`searchMatchText` 回退到 `text`。其他搜索匹配项使用 `searchMatchText` 作为前景色、`searchMatchBg` 作为背景色并添加下划线；当前匹配项会交换这组前景色和背景色，并使用粗体文本。
 
-### 核心 UI（11 个）
+### 核心 UI（13 个）
 
-| Token          | 用途                           |
-| -------------- | ------------------------------ |
-| `accent`       | 主强调色（Logo、选中项、光标） |
-| `border`       | 普通边框                       |
-| `borderAccent` | 高亮边框                       |
-| `borderMuted`  | 微妙边框（编辑器）             |
-| `success`      | 成功状态                       |
-| `error`        | 错误状态                       |
-| `warning`      | 警告状态                       |
-| `muted`        | 次要文本                       |
-| `dim`          | 三级文本                       |
-| `text`         | 默认文本（通常为 `""`）        |
-| `thinkingText` | Thinking 块文本                |
+| Token            | 用途                                         |
+| ---------------- | -------------------------------------------- |
+| `accent`         | 主强调色（Logo、选中项、光标）               |
+| `border`         | 普通边框                                     |
+| `borderAccent`   | 高亮边框                                     |
+| `borderMuted`    | 微妙边框（编辑器）                           |
+| `success`        | 成功状态                                     |
+| `error`          | 错误状态                                     |
+| `warning`        | 警告状态                                     |
+| `muted`          | 次要文本                                     |
+| `dim`            | 三级文本                                     |
+| `text`           | 默认文本（通常为 `""`）                      |
+| `thinkingText`   | Thinking 块文本                              |
+| `scrollbarTrack` | 全屏滚动条轨道前景色                         |
+| `scrollbarThumb` | 全屏滚动条滑块前景色，在普通和展开状态下共用 |
 
-### 背景和内容（11 个必需，3 个可选）
+### 背景和内容（11 个必需，2 个可选）
 
 | Token                | 用途                                                                |
 | -------------------- | ------------------------------------------------------------------- |
 | `selectedBg`         | 选中行背景                                                          |
-| `scrollbarThumb`     | 全屏滚动条滑块背景；可选，缺失时回退到 `selectedBg`                 |
 | `searchMatchBg`      | 转录搜索匹配项背景和当前匹配项文本；可选，缺失时回退到 `selectedBg` |
 | `searchMatchText`    | 转录搜索匹配项文本和当前匹配项背景；可选，缺失时回退到 `text`       |
 | `userMessageBg`      | 用户消息背景                                                        |

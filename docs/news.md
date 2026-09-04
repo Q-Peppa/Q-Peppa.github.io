@@ -2,6 +2,125 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.85.0（2026-09-04）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **持久化 Claude thinking 强度** – 受支持的 Anthropic 传输会保留每轮 effort，并能从签名 thinking 不匹配中安全恢复。详见 [模型配置](/docs/latest/models#model-configuration)。
+- **全屏转录控制** – 从已滚动的转录直接跳转到最新消息，并使用内置的工作指示器。详见 [TUI 全屏视口](/docs/latest/keybindings#tui-fullscreen-viewport)。
+- **可恢复的内存会话** – 通过 SDK 恢复保存在外部存储的会话条目。详见 [会话管理](/docs/latest/sdk#session-management)。
+
+新增
+
+- 添加 `SessionManager.inMemory()` 支持恢复外部管理的会话条目（[#8980](https://github.com/earendil-works/pi/pull/8980) 由 [@y-nk](https://github.com/y-nk) 贡献）。
+- 添加 OpenAI 兼容的 `vllmPriority` 和 `supportsMaxOutputTokens` 模型设置，用于 vLLM 调度器优先级和 OpenAI Responses 输出 Token 限制（[#9004](https://github.com/earendil-works/pi/pull/9004) 由 [@AppleDannyClegg](https://github.com/AppleDannyClegg) 贡献，[#8941](https://github.com/earendil-works/pi/pull/8941) 由 [@scturtle](https://github.com/scturtle) 贡献）。
+- 添加用于关系代数连接符号的 LaTeX 渲染（来自 `pi-tui`）（[#9050](https://github.com/earendil-works/pi/pull/9050) 由 [@haoqixu](https://github.com/haoqixu) 贡献）。
+- 在全屏转录向上滚动时，添加带有 `tui.altScreen.bottom` 快捷键提示的可点击「Jump to latest message」标签（[#9080](https://github.com/earendil-works/pi/pull/9080) 由 [@rwachtler](https://github.com/rwachtler) 贡献）。
+
+变更
+
+- 将流式工作指示器移入默认编辑器边框，并使其默认 spinner 和标签匹配 thinking 级别的边框颜色。自定义编辑器默认保留独立指示器行，除非选择嵌入（[#8799](https://github.com/earendil-works/pi/pull/8799) 由 [@cristinaponcela](https://github.com/cristinaponcela) 贡献）。
+- 通过缓存未变更的搜索结果、索引 ASCII 连续片段并将高亮计算限制在可见匹配项，降低大转录上全屏转录搜索的延迟（来自 `pi-tui`）（[#8800](https://github.com/earendil-works/pi/pull/8800) 由 [@cristinaponcela](https://github.com/cristinaponcela) 贡献）。
+
+修复
+
+- 修复 Linux musl 系统上托管的 `fd` 和 ripgrep 下载（[#9070](https://github.com/earendil-works/pi/pull/9070) 由 [@Charlie0113-T](https://github.com/Charlie0113-T) 贡献）。
+- 从 `/model` 中移除不可用的 Grok Build 0.1 模型（来自 `@earendil-works/pi-ai`）（[#9093](https://github.com/earendil-works/pi/pull/9093) 由 [@Jaaneek](https://github.com/Jaaneek) 贡献）。
+- 修复 Provider 流发出不兼容事件序列和自定义 tool-call 增量的问题（来自 `@earendil-works/pi-ai`）。
+- 恢复 `@earendil-works/pi-coding-agent/client` 兼容性入口点。
+- 修复千问 Token Plan 个人目录以包含 Qwen3.8 Flash（来自 `@earendil-works/pi-ai`）（[#9021](https://github.com/earendil-works/pi/issues/9021)）。
+- 修复 OpenAI Codex SSE 解析以处理未跟随空行的终端事件（来自 `@earendil-works/pi-ai`）（[#9047](https://github.com/earendil-works/pi/issues/9047)）。
+- 修复 GitHub Copilot Claude Fable 5 请求以发送所选 reasoning 级别（来自 `@earendil-works/pi-ai`）（[#8961](https://github.com/earendil-works/pi/issues/8961)）。
+- 修复 Baseten GLM-5.2 模型错误声明图片输入支持的问题（来自 `@earendil-works/pi-ai`）（[#8293](https://github.com/earendil-works/pi/pull/8293) 由 [@Panoplos](https://github.com/Panoplos) 贡献）。
+- 修复当 Bash 是唯一启用的工具时 Skill 不可用的问题（[#8552](https://github.com/earendil-works/pi/pull/8552) 由 [@xl0](https://github.com/xl0) 贡献）。
+- 修复并发会话共享互相覆盖的问题（[#8613](https://github.com/earendil-works/pi/pull/8613) 由 [@wutongyuonce](https://github.com/wutongyuonce) 贡献）。
+- 修复图片方向检测在非 EXIF APP1 段后跳过 EXIF 数据的问题（[#8616](https://github.com/earendil-works/pi/pull/8616) 由 [@wutongyuonce](https://github.com/wutongyuonce) 贡献）。
+- 修复导入会话覆盖同文件名现有会话的问题（[#8985](https://github.com/earendil-works/pi/pull/8985) 由 [@wutongyuonce](https://github.com/wutongyuonce) 贡献）。
+- 修复会话分支丢失压缩边界的问题（[#8990](https://github.com/earendil-works/pi/pull/8990) 由 [@acmerfight](https://github.com/acmerfight) 贡献）。
+- 修复活跃轮次结算前内存会话分支的问题（[#8937](https://github.com/earendil-works/pi/pull/8937) 由 [@acmerfight](https://github.com/acmerfight) 贡献）。
+- 修复 Fireworks GLM 模型使用错误 API 适配器的问题（来自 `@earendil-works/pi-ai`）。
+- 修复根域名和子域名的 `NO_PROXY` 匹配（来自 `@earendil-works/pi-ai`）（[#8737](https://github.com/earendil-works/pi/pull/8737) 由 [@MeiSiristhebest](https://github.com/MeiSiristhebest) 贡献）。
+- 修复 `bash`、`edit`、`find`、`grep`、`ls`、`read` 和 `write` 工具忽略 `ctx.cwd` 的问题（[#8627](https://github.com/earendil-works/pi/pull/8627) 由 [@vmizg](https://github.com/vmizg) 贡献）。
+- 修复在拒绝 `SIGWINCH` 自身信号的受限 seccomp 策略下的终端启动问题（来自 `pi-tui`）（[#8898](https://github.com/earendil-works/pi/pull/8898) 由 [@bartlomiejkida](https://github.com/bartlomiejkida) 贡献）。
+- 修复 Zed 终端图片能力检测（来自 `pi-tui`）（[#8828](https://github.com/earendil-works/pi/pull/8828) 由 [@Perlence](https://github.com/Perlence) 贡献）。
+- 修复拖拽选择跨越全屏编辑器继续选中的问题。
+- 修复托管的 `fd` 和 ripgrep 下载依赖 GitHub Releases API 的问题（[#8708](https://github.com/earendil-works/pi/pull/8708) 由 [@Terminator666666](https://github.com/Terminator666666) 贡献）。
+- 修复当 reasoning 耗尽此前 2048 Token 输出上限时分支摘要失败的问题（[#8845](https://github.com/earendil-works/pi/issues/8845)）。
+- 修复 write 工具将 UTF-16 code unit 计数报告为字节计数的问题，移除了该误导性计数（[#8979](https://github.com/earendil-works/pi/issues/8979)）。
+- 修复代理明文 HTTP Provider 请求在 tool call 后挂起的问题，改为使用 CONNECT 隧道代理（[#8134](https://github.com/earendil-works/pi/issues/8134)）。
+- 修复 RPC `abort` 在未取消正在进行的手动压缩时就报告成功的问题（[#8920](https://github.com/earendil-works/pi/issues/8920)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+不兼容变更
+
+- 针对 Cloudflare Workers AI 绑定，将 `createGatewayBindingFetch()` 替换为 `createAiBindingFetch()`。直接配置模型的 Workers AI Gateway 透传 `baseUrl`；请求现在不经修改直接穿过绑定（[#8287](https://github.com/earendil-works/pi/pull/8287) 由 [@Maximo-Guk](https://github.com/Maximo-Guk) 贡献）。
+
+新增
+
+- 通过 `AssistantMessageFrameEncoder` 和 `reduceAssistantMessageFrames()` 添加了紧凑、可持久化的助手消息帧。
+- 添加 OpenAI 兼容模型设置 `vllmPriority`，用于将调度优先级转发给 vLLM（[#9004](https://github.com/earendil-works/pi/pull/9004) 由 [@AppleDannyClegg](https://github.com/AppleDannyClegg) 贡献）。
+- 添加 `supportsMaxOutputTokens` OpenAI Responses 兼容性设置（[#8941](https://github.com/earendil-works/pi/pull/8941) 由 [@scturtle](https://github.com/scturtle) 贡献）。
+- 为 `uuidv7()` 添加可选的时间戳参数以用于 follower ID。
+- 添加 `api`、`providers` 和 `utils` 窄化子路径导出，支持直接导入而无需加载顶层 package barrel。
+- 为 Anthropic Messages 传输（包括 OpenRouter）下受支持的 Claude 模型添加 Anthropic 每轮 effort 持久化、确定性历史 effort 标记和签名 thinking 不匹配恢复。
+
+修复
+
+- 从内置 xAI 目录中移除不可用的 Grok Build 0.1 模型（[#9093](https://github.com/earendil-works/pi/pull/9093) 由 [@Jaaneek](https://github.com/Jaaneek) 贡献）。
+- 修复助手消息帧保留 Provider 原生 thinking 级别的问题。
+- 修复简单 Provider 流以一致发出标准流事件和自定义 tool-call 增量。
+- 修复千问 Token Plan 个人目录以包含 Qwen3.8 Flash（[#9021](https://github.com/earendil-works/pi/issues/9021)）。
+- 修复 Baseten GLM-5.2 模型错误声明图片输入支持的问题（[#8293](https://github.com/earendil-works/pi/pull/8293) 由 [@Panoplos](https://github.com/Panoplos) 贡献）。
+- 修复 Fireworks GLM 模型使用错误 API 适配器的问题。
+- 通过直接定义导出的 `JsonValue` 类型，移除了 pi-ai 对 Chord 的不必要依赖。
+- 修复 GitHub Copilot Claude Fable 5 请求使用 Anthropic Messages 适配器以发送所选 reasoning 级别（[#8961](https://github.com/earendil-works/pi/issues/8961)）。
+- 修复 OpenAI Codex SSE 解析以处理未跟随空行的终端事件（[#9047](https://github.com/earendil-works/pi/issues/9047)）。
+- 修复根域名和子域名的 `NO_PROXY` 匹配（[#8737](https://github.com/earendil-works/pi/pull/8737) 由 [@MeiSiristhebest](https://github.com/MeiSiristhebest) 贡献）。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+修复
+
+- 修复代理助手响应丢失持久化 Provider 原生 thinking 级别的问题。
+- 修复 write 工具将 UTF-16 code unit 计数报告为字节计数的问题，移除了该误导性计数（[#8979](https://github.com/earendil-works/pi/issues/8979)）。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+不兼容变更
+
+- 从 pi-tui 中移除了 coding-agent 环境变量默认值。应用程序必须通过渲染器构造函数和 `setClearOnShrink()` 配置硬件光标和缩小时清屏行为。`PI_DEBUG_REDRAW` 现更名为 `PI_TUI_DEBUG_REDRAW`；调试和崩溃日志文件名现在使用 `pi-tui-` 前缀。未提供日志目录时，重绘日志记录被禁用，崩溃转储写入操作系统临时目录（[#8699](https://github.com/earendil-works/pi/pull/8699) 由 [@geraschenko](https://github.com/geraschenko) 贡献）。
+
+新增
+
+- 添加 `TuiAltScreen` `scrollToEndIndicator` 选项，当 follow-end 主滚动视图离开末尾滚动时在其上渲染可点击的跳转到末尾标签（[#9080](https://github.com/earendil-works/pi/pull/9080) 由 [@rwachtler](https://github.com/rwachtler) 贡献）。
+- 添加用于关系代数连接符号的 LaTeX 渲染（[#9050](https://github.com/earendil-works/pi/pull/9050) 由 [@haoqixu](https://github.com/haoqixu) 贡献）。
+
+变更
+
+- 变更 `Loader` 动画和编辑器集成以支持嵌入式工作指示器（[#8799](https://github.com/earendil-works/pi/pull/8799) 由 [@cristinaponcela](https://github.com/cristinaponcela) 贡献）。
+- 通过缓存未变更的搜索结果、索引 ASCII 连续片段并将高亮计算限制在可见匹配项，降低大转录上全屏转录搜索的延迟（[#8800](https://github.com/earendil-works/pi/pull/8800) 由 [@cristinaponcela](https://github.com/cristinaponcela) 贡献）。
+
+修复
+
+- 修复拖拽选择跨越编辑器继续选中的问题。
+- 修复在拒绝 `SIGWINCH` 自身信号的受限 seccomp 策略下的终端启动问题（[#8898](https://github.com/earendil-works/pi/pull/8898) 由 [@bartlomiejkida](https://github.com/bartlomiejkida) 贡献）。
+- 修复 Zed 终端图片能力检测（[#8828](https://github.com/earendil-works/pi/pull/8828) 由 [@Perlence](https://github.com/Perlence) 贡献）。
+
+</details>
+
 ## v0.84.4（2026-08-28）
 
 <details>

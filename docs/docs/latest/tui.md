@@ -16,17 +16,19 @@
 interface Component {
   render(width: number): string[];
   handleInput?(data: string): void;
+  handleMouse?(event: TuiMouseEvent): TuiMouseEventResult | undefined;
   wantsKeyRelease?: boolean;
   invalidate(): void;
 }
 ```
 
-| 方法                 | 描述                                                           |
-| -------------------- | -------------------------------------------------------------- |
-| `render(width)`      | 返回字符串数组（每行一个）。**每行不能超过 `width`**。         |
-| `handleInput?(data)` | 组件获得焦点时接收键盘输入。                                   |
-| `wantsKeyRelease?`   | 如果为 true，组件接收按键释放事件（Kitty 协议）。默认：false。 |
-| `invalidate()`       | 清除缓存的渲染状态。主题变更时调用。                           |
+| 方法                  | 描述                                                           |
+| --------------------- | -------------------------------------------------------------- |
+| `render(width)`       | 返回字符串数组（每行一个）。**每行不能超过 `width`**。         |
+| `handleInput?(data)`  | 组件获得焦点时接收键盘输入。                                   |
+| `handleMouse?(event)` | 在全屏模式下接收规范化的指针输入。                             |
+| `wantsKeyRelease?`    | 如果为 true，组件接收按键释放事件（Kitty 协议）。默认：false。 |
+| `invalidate()`        | 清除缓存的渲染状态。主题变更时调用。                           |
 
 TUI 会在每行渲染内容的末尾附加完整的 SGR 重置和 OSC 8 重置。样式不会跨行延续。如果你输出带样式的多行文本，需要每行重新应用样式，或使用 `wrapTextWithAnsi()` 来确保每个换行行的样式得以保留。
 
@@ -55,7 +57,7 @@ class MyInput implements Component, Focusable {
 3. 将硬件终端光标定位到该位置
 4. 仅在 `showHardwareCursor` 启用时显示硬件光标
 
-光标默认隐藏。这保留了假光标渲染，同时仍然为通过隐藏光标追踪 IME 候选窗口的终端定位硬件光标。某些终端需要可见的硬件光标来进行 IME 定位；可以通过 `showHardwareCursor`、`setShowHardwareCursor(true)` 或 `PI_HARDWARE_CURSOR=1` 启用。
+光标默认隐藏。这保留了假光标渲染，同时仍然为通过隐藏光标追踪 IME 候选窗口的终端定位硬件光标。某些终端需要可见的硬件光标来进行 IME 定位；可以通过渲染器的 `showHardwareCursor` 构造函数参数或 `setShowHardwareCursor(true)` 启用。Pi 也会在创建渲染器之前将 `PI_HARDWARE_CURSOR=1` 映射到此设置。`Editor` 和 `Input` 内置组件已经实现了此接口。
 
 ### 包含嵌入式输入的容器组件
 
@@ -309,6 +311,22 @@ handleInput(data: string) {
 - 方向键：`Key.up`、`Key.down`、`Key.left`、`Key.right`
 - 带修饰键：`Key.ctrl("c")`、`Key.shift("tab")`、`Key.alt("left")`、`Key.ctrlShift("p")`
 - 字符串格式同样有效：`"enter"`、`"ctrl+c"`、`"shift+tab"`、`"ctrl+shift+p"`
+
+## 鼠标输入
+
+全屏模式会将规范化的按下、释放、点击、移动、拖拽和滚轮事件路由到组件和 overlay。返回 `{ handled: true }` 可抑制默认行为，`capture: true` 可保留拖拽/释放归属，`focus: true` 可请求键盘焦点，在悬停或释放操作在视觉上改变组件时返回 `render: true`。按下、点击、拖拽和滚轮默认会触发渲染；无操作的移动/释放事件则不会。
+
+```typescript
+import { MouseRegion } from '@earendil-works/pi-tui';
+
+const clickable = new MouseRegion(content, (event) => {
+  if (event.type !== 'click' || event.button !== 'left') return undefined;
+  expanded = !expanded;
+  return { handled: true };
+});
+```
+
+未处理的滚轮输入会滚动最近的 `ScrollView`；未处理的主按键拖拽会保留转录文本选择。OSC 8 链接优先级高于父级点击区域。`Input`、`Editor`、`SelectList` 和 `SettingsList` 均包含全屏鼠标行为。常规模式不捕获鼠标输入，因为终端拥有其自身的回滚历史。
 
 ## 行宽
 
@@ -924,6 +942,7 @@ export default function (pi: ExtensionAPI) {
 
 - **扩展 `CustomEditor`**（而非基础 `Editor`）以获取应用键绑定（escape 中止、ctrl+d 退出、模型切换等）
 - 对于未处理的键，调用 **`super.handleInput(data)`**
+- **工作状态**：自定义编辑器默认保留独立工作状态行。向 `CustomEditor` 构造函数的第四个参数传入 `{ embedWorkingStatus: true }`，以改用内置的编辑器边框 spinner。
 - **工厂模式**：`setEditorComponent` 接收一个工厂函数，该函数获取 `tui`、`theme` 和 `keybindings`
 - 传递 **`undefined`** 以恢复默认编辑器：`ctx.ui.setEditorComponent(undefined)`
 

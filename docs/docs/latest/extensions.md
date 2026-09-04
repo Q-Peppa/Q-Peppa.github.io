@@ -2843,6 +2843,7 @@ export default function (pi: ExtensionAPI) {
 
 - 继承 `CustomEditor`（而不是基础的 `Editor`）以获得应用快捷键（Escape 中止、ctrl+d、模型切换）
 - 对于您不处理的按键，调用 `super.handleInput(data)`
+- 自定义编辑器默认保留独立工作状态行。向 `CustomEditor` 构造函数的第四个参数传入 `{ embedWorkingStatus: true }`，以改用内置的编辑器边框 spinner。
 - 工厂接收来自应用的 `tui`、`theme` 和 `keybindings`
 - 工厂函数从应用接收 `theme` 和 `keybindings`
 - 在 `setEditorComponent()` 前使用 `ctx.ui.getEditorComponent()` 来包装先前配置的自定义编辑器

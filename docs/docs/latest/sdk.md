@@ -785,6 +785,11 @@ const { session: opened } = await createAgentSession({
   sessionManager: SessionManager.open('/path/to/session.jsonl'),
 });
 
+// 恢复保存在文件系统之外的会话，例如数据库中
+const { session: restored } = await createAgentSession({
+  sessionManager: SessionManager.inMemory(process.cwd(), { id: sessionId }, entries),
+});
+
 // 列出会话
 const currentProjectSessions = await SessionManager.list(process.cwd());
 const allSessions = await SessionManager.listAll(process.cwd());
