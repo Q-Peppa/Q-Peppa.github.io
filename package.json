@@ -14,15 +14,15 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@rspress/core": "^2.0.18"
+    "@rspress/core": "^2.0.21"
   },
   "devDependencies": {
-    "@types/node": "~26.1.1",
+    "@types/node": "~26.1.2",
     "husky": "^9.1.7",
-    "lint-staged": "^17.2.0",
+    "lint-staged": "^17.4.1",
     "oxfmt": "^0.60.0",
     "rsbuild-plugin-google-analytics": "^1.0.6",
-    "wrangler": "^4.112.0"
+    "wrangler": "^4.128.0"
   },
   "lint-staged": {
     "*": "oxfmt --no-error-on-unmatched-pattern"

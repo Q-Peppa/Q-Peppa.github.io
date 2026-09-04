@@ -6,6 +6,15 @@ const SITE_URL = 'https://pi-doc.com';
 
 export default defineConfig({
   llms: true,
+  markdown: {
+    link: {
+      checkAnchors: true,
+    },
+  },
+  route: {
+    cleanUrls: true,
+    cleanUrlsRedirect: true,
+  },
   builderConfig: {
     plugins: [
       pluginGoogleAnalytics({
@@ -68,6 +77,7 @@ export default defineConfig({
     ],
   ],
   themeConfig: {
+    darkMode: 'dark',
     nav: [
       { text: 'HOME', link: '/', activeMatch: '^/(index\\.html)?$' },
       { text: 'DOCS', link: '/docs/latest/quickstart', activeMatch: '/docs/' },

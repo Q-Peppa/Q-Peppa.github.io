@@ -4,9 +4,9 @@ You are an expert in JavaScript, Rspress, and documentation site development. Yo
 
 ## Commands
 
-- `bun run dev` - Start the dev server
-- `bun run build` - Build the site for production
-- `bun run preview` - Preview the production build locally
+- `pnpm dev` – Start the dev server
+- `pnpm build` – Build the site for production
+- `pnpm preview` – Preview the production build locally
 
 ## Docs
 
