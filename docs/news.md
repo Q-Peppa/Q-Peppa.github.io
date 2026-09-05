@@ -2,6 +2,55 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.85.1（2026-09-05）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **GPT-6 Astra** – 可通过 OpenAI API Key 和 OpenAI Codex 订阅使用。详见 [API Key](/docs/latest/providers#api-keys) 和 [OpenAI Codex](/docs/latest/providers#openai-codex)。
+
+新增
+
+- 添加 GPT-6 Astra 支持，适用于 OpenAI API Key 和 OpenAI Codex 订阅。
+- 在全屏模式下按住 Alt 时提供 5 倍速滚轮滚动（[#9166](https://github.com/earendil-works/pi/pull/9166) 由 [@xl0](https://github.com/xl0) 贡献）。
+
+修复
+
+- 修复模型和 thinking 选择器中可配置的保存快捷键（[#9149](https://github.com/earendil-works/pi/pull/9149) 由 [@rwachtler](https://github.com/rwachtler) 贡献）。
+- 修复因 0.85.0 意外发布内部实验性代码和依赖项导致的 SDK 导入失败。实验性的 `client` 和 `experimental/plugin` 子路径以及 server/client 命令现仅可通过 `pi-test.sh` 从源码运行；受支持的本地 SDK 和 stdio RPC API 保持不变（[#9132](https://github.com/earendil-works/pi/issues/9132)）。
+- 修复鼠标悬停改变选中项并重新居中自动补全和设置列表，导致点击命中不同条目的问题。
+- 修复 GPT-5.6+ Responses 模型的长 Prompt 缓存请求，改用 `prompt_cache_options.ttl: "30m"` 而非 `prompt_cache_retention: "24h"`。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 添加 GPT-6 Astra 支持，适用于 OpenAI API Key 和 OpenAI Codex 订阅。
+
+修复
+
+- 修复 GPT-5.6+ Responses 模型的长 Prompt 缓存请求，改用 `prompt_cache_options.ttl: "30m"` 而非 `prompt_cache_retention: "24h"`。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+新增
+
+- 在全屏模式下按住 Alt 时提供 5 倍速滚轮滚动（[#9166](https://github.com/earendil-works/pi/pull/9166) 由 [@xl0](https://github.com/xl0) 贡献）。
+
+修复
+
+- 修复鼠标悬停改变选中项并重新居中自动补全和设置列表，导致点击命中不同条目的问题。
+
+</details>
+
 ## v0.85.0（2026-09-04）
 
 <details>

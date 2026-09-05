@@ -9,11 +9,12 @@ Pi 默认以所有权限运行，但在某些情况下，你可能需要更精�
 
 ## 选择方案
 
-| 方案          | 隔离对象                         | 适用场景                             | 备注                                                                                                                  |
-| ------------- | -------------------------------- | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
-| Gondolin 扩展 | 内置工具和 `!` 命令              | 本地 micro-VM 隔离，同时保留主机认证 | 参见 [`examples/extensions/gondolin/`](https://github.com/earendil-works/pi/tree/main/examples/extensions/gondolin)。 |
-| 普通 Docker   | 整个 `pi` 进程在本地容器中       | 简单的本地隔离                       | Provider API 密钥会进入容器。                                                                                         |
-| OpenShell     | 整个 `pi` 进程在策略控制的沙箱中 | 本地或远程托管沙箱                   | 需要 OpenShell 网关                                                                                                   |
+| 方案             | 隔离对象                         | 适用场景                                   | 备注                                                                                                                  |
+| ---------------- | -------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| Gondolin 扩展    | 内置工具和 `!` 命令              | 本地 micro-VM 隔离，同时保留主机认证       | 参见 [`examples/extensions/gondolin/`](https://github.com/earendil-works/pi/tree/main/examples/extensions/gondolin)。 |
+| 普通 Docker      | 整个 `pi` 进程在本地容器中       | 简单的本地隔离                             | Provider API 密钥会进入容器。                                                                                         |
+| OpenShell        | 整个 `pi` 进程在策略控制的沙箱中 | 本地或远程托管沙箱                         | 需要 OpenShell 网关                                                                                                   |
+| Docker Sandboxes | 整个 `pi` 进程在托管沙箱中       | 本地隔离，同时将 Provider 密钥保留在主机上 | 需要 Docker Sandboxes（`sbx`）。                                                                                      |
 
 扩展在 `pi` 进程运行的位置执行。如果你在主机上运行带工具路由扩展的 `pi`，其他自定义扩展工具仍在主机上运行，除非它们也委托其操作。
 
@@ -110,3 +111,47 @@ openshell sandbox download pi-sandbox /workspace/repo ./repo-out
 OpenShell Provider 可以将原始模型 API 密钥保持在沙箱外。
 配置推理路由后，沙箱内的代码可以调用 `https://inference.local`，网关会在上游注入已配置的 Provider 凭证。
 如果你想让模型流量使用此路由，请配置 Pi 使用相应的 OpenAI 兼容或 Anthropic 兼容端点。
+
+## Docker Sandboxes
+
+[Docker Sandboxes](https://docs.docker.com/ai/sandboxes/) 是 Docker 提供的托管沙箱运行时，在沙箱内部运行整个 `pi` 进程。
+它是[无内置沙箱](/docs/latest/security#no-built-in-sandbox)所指的容器边界之一。
+
+与上面的普通 Docker 模式不同，Provider 凭证不会传入容器内部。
+沙箱会接收一个占位符哨兵值（sentinel value），`sbx` 代理会在流出到 `api.anthropic.com` 时将其替换为真实的凭证。
+凭证在创建时绑定，因此在创建沙箱之前请将其保存在主机上。
+
+对于 Claude Pro/Max 订阅，在装有 Claude Code 的机器上运行 `claude setup-token`，然后将结果保存在主机上。
+如果已绑定 `anthropic` secret，请先将其移除：否则代理会在 Bearer Token 旁边添加 `x-api-key` 请求头，Anthropic 将拒绝该请求。
+`sbx secret set-custom` 从标准输入（stdin）读取 Token，因此不会留在 Shell 历史记录中。
+
+```bash
+sbx secret rm anthropic
+
+sbx secret set-custom \
+  --host api.anthropic.com \
+  --env ANTHROPIC_OAUTH_TOKEN \
+  --placeholder 'sk-ant-oat01-{rand}'
+```
+
+沙箱会获取 OAuth 格式的占位符而非真实 Token，代理会在流出到该主机时进行替换；`ANTHROPIC_OAUTH_TOKEN` 是 Pi 已原生读取并优先于 API Key 使用的环境变量，因此无需额外配置 Pi。
+
+对于 API Key，改用 `sbx secret set anthropic` 进行存储。Kit 以相同方式连接它，作为代理在流出时替换的哨兵值。
+
+凭证存储完成后，从你希望挂载的项目中启动 `pi`：
+
+```bash
+sbx run --kit "docker.io/sbx/pi-kit:latest" pi
+```
+
+Kit 已预先将 `pi` 打包进镜像，因此沙箱启动时无需安装任何内容，当前目录即为沙箱工作区。
+
+请勿在沙箱内部进行认证：在沙箱内运行 `/login` 会将真实 Token 写入容器，从而破坏代理模型。
+
+脚本化使用方式相同：
+
+```bash
+sbx exec <sandbox-name> -- pi -p "list the failing tests"
+```
+
+完整凭证矩阵、故障排查和版本锁定请参见 [Kit 文档](https://github.com/docker/sbx-kits-contrib/tree/main/pi)。

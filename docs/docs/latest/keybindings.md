@@ -148,13 +148,15 @@
 
 ### 模型和思维
 
-| ID                        | 默认键                                        | 说明                     |
-| ------------------------- | --------------------------------------------- | ------------------------ |
-| `app.model.select`        | `ctrl+l`                                      | 打开模型选择器           |
-| `app.model.cycleForward`  | `ctrl+p`                                      | 切换到下一个模型         |
-| `app.model.cycleBackward` | `shift+ctrl+p`（Windows 和 WSL 上为 `alt+p`） | 切换到上一个模型         |
-| `app.thinking.cycle`      | `shift+tab`                                   | 循环切换 thinking level  |
-| `app.thinking.toggle`     | `ctrl+t`                                      | 折叠/展开 thinking block |
+| ID                        | 默认键                                        | 说明                                         |
+| ------------------------- | --------------------------------------------- | -------------------------------------------- |
+| `app.model.select`        | `ctrl+l`                                      | 打开模型选择器                               |
+| `app.model.cycleForward`  | `ctrl+p`                                      | 切换到下一个模型                             |
+| `app.model.cycleBackward` | `shift+ctrl+p`（Windows 和 WSL 上为 `alt+p`） | 切换到上一个模型                             |
+| `app.models.save`         | `ctrl+s`                                      | 将所选默认模型或 scoped model 配置保存到设置 |
+| `app.thinking.cycle`      | `shift+tab`                                   | 循环切换 thinking level                      |
+| `app.thinking.save`       | `ctrl+s`                                      | 将当前 thinking level 保存到设置             |
+| `app.thinking.toggle`     | `ctrl+t`                                      | 折叠/展开 thinking block                     |
 
 ### 显示和消息队列
 
@@ -187,7 +189,6 @@
 
 | ID                          | 默认键     | 说明                                 |
 | --------------------------- | ---------- | ------------------------------------ |
-| `app.models.save`           | `ctrl+s`   | 将当前模型选择保存到设置             |
 | `app.models.enableAll`      | `ctrl+a`   | 启用所有模型（或所有匹配当前搜索的） |
 | `app.models.clearAll`       | `ctrl+x`   | 清除所有模型（或所有匹配当前搜索的） |
 | `app.models.toggleProvider` | `ctrl+p`   | 切换当前 Provider 的所有模型         |

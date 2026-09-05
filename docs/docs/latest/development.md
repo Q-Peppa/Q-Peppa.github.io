@@ -21,6 +21,19 @@ npm run build
 
 该脚本可从任何目录运行，Pi 保留调用者的当前工作目录。
 
+### 实验性远程 Harness
+
+远程 Harness 服务端/客户端集成仅用于开发环境。在仓库中运行：
+
+```bash
+PI_EXPERIMENTAL=1 ./pi-test.sh server
+PI_EXPERIMENTAL=1 ./pi-test.sh client
+```
+
+`PI_SERVER_DIR` 覆盖服务端配置文件和套接字目录（默认：`~/.pi/server`）。当省略 `--server-id` 时，`PI_SERVER_ID` 选择逻辑服务端 ID。
+
+`client` 和 `experimental/plugin` 包子路径仅在本地检出的 `source` 条件下解析。它们的实现及 server/client 命令均已从 npm 包和独立二进制文件中排除。`pi-client`、`pi-protocol` 和 `pi-server` 是 coding-agent 的开发依赖，而非运行时依赖。本地 SDK 和 stdio RPC API 保持不变。
+
 ## Forking / Rebranding
 
 通过 `package.json` 配置：
@@ -62,6 +75,12 @@ import { getPackageDir, getThemeDir } from './config.js';
 npm test                     # 运行所有测试
 npm test -- test/specific.test.ts  # 运行特定测试文件
 ```
+
+### 发布包冒烟测试
+
+构建完成后，运行 `npm run check:package-install`。它会打包公开包，并在仓库外部的临时目录中仅将 coding-agent 作为直接依赖安装。本地 tarball 覆盖规则会选择已声明的传递依赖，而不会安装仅限开发的包。该检查在无需凭证或模型请求的情况下验证 SDK 导入和 CLI 启动。
+
+`npm run check` 还会检查运行时依赖声明，并拒绝通过 import 引入包构建中的被排除开发源码。
 
 ## 项目结构
 
