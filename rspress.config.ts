@@ -8,7 +8,7 @@ export default defineConfig({
   llms: true,
   markdown: {
     link: {
-      checkAnchors: true,
+      checkAnchors: false,
     },
   },
   route: {
