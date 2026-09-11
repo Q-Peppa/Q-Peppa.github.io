@@ -117,6 +117,7 @@ interface AgentSession {
 }
 ```
 
+`session.navigateTree()` 在 agent 响应、手动或自动压缩、或其他树导航进行中时会拒绝，即使传入 `summarize: false`。这些冲突下它不会排队等待导航，也不会返回 `{ cancelled: true }`。请等待当前操作结束（例如使用 `await session.waitForIdle()`）后重试。拒绝时活动分支保持不变。
 会话替换 API（如 new-session、resume、fork 和 import）位于 `AgentSessionRuntime` 上，而非 `AgentSession`。
 
 ### createAgentSessionRuntime() 和 AgentSessionRuntime

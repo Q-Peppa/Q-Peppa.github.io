@@ -107,7 +107,6 @@ termux-camera-photo out.jpg   # 拍照
 ## 限制
 
 - **无图像剪贴板**：Termux 剪贴板 API 仅支持文本
-- **无原生二进制文件**：某些可选原生依赖（如剪贴板模块）在 Android ARM64 上不可用，安装时会跳过
 - **存储访问**：访问 `/storage/emulated/0`（Downloads 等）需要运行 `termux-setup-storage` 一次以授予权限
 
 ## 故障排除

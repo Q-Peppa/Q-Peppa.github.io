@@ -6,7 +6,7 @@
 
 扩展和自定义工具可以渲染自定义 TUI 组件以构建交互式用户界面。本页面介绍组件系统和可用的构建块。
 
-**来源：** [`@earendil-works/pi-tui`](https://github.com/earendil-works/pi-mono/tree/main/packages/tui)
+**来源：** [`@earendil-works/pi-tui`](https://github.com/earendil-works/pi/tree/main/packages/tui)
 
 ## 组件接口
 
@@ -942,7 +942,7 @@ export default function (pi: ExtensionAPI) {
 
 - **扩展 `CustomEditor`**（而非基础 `Editor`）以获取应用键绑定（escape 中止、ctrl+d 退出、模型切换等）
 - 对于未处理的键，调用 **`super.handleInput(data)`**
-- **工作状态**：自定义编辑器默认保留独立工作状态行。向 `CustomEditor` 构造函数的第四个参数传入 `{ embedWorkingStatus: true }`，以改用内置的编辑器边框 spinner。
+- **状态 spinner**：自定义编辑器默认保留独立的 status 行。向 `CustomEditor` 构造函数的第四个参数传入 `{ embedWorkingStatus: true }`，可将工作、压缩、分支摘要和重试 spinner 内嵌到编辑器边框中。
 - **工厂模式**：`setEditorComponent` 接收一个工厂函数，该函数获取 `tui`、`theme` 和 `keybindings`
 - 传递 **`undefined`** 以恢复默认编辑器：`ctx.ui.setEditorComponent(undefined)`
 

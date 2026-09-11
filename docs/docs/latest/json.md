@@ -13,7 +13,7 @@ pi --mode json "Your prompt"
 ## 事件类型
 
 线上事件使用 `JsonAgentSessionEvent`。它与
-[`AgentSessionEvent`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/agent-session.ts) 匹配，
+[`AgentSessionEvent`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/agent-session.ts) 匹配，
 不同之处在于流式消息更新省略了累积快照：
 
 ```typescript
@@ -38,7 +38,7 @@ type JsonAgentSessionEvent =
 - `summarization_retry_scheduled` / `summarization_retry_attempt_start` / `summarization_retry_finished` —— 压缩或分支摘要生成重试事件。
 
 其他基础事件来自
-[`AgentEvent`](https://github.com/earendil-works/pi-mono/blob/main/packages/agent/src/types.ts)：
+[`AgentEvent`](https://github.com/earendil-works/pi/blob/main/packages/agent/src/types.ts)：
 
 ```typescript
 type AgentEvent =
@@ -100,13 +100,13 @@ type AgentEvent =
 
 ## 消息类型
 
-基础消息定义在 [`packages/ai/src/types.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/ai/src/types.ts#L134)：
+基础消息定义在 [`packages/ai/src/types.ts`](https://github.com/earendil-works/pi/blob/main/packages/ai/src/types.ts#L134)：
 
 - `UserMessage`（第 134 行）—— 用户消息
 - `AssistantMessage`（第 140 行）—— 助手消息，包含 `content` 数组、`usage`、`stopReason` 等
 - `ToolResultMessage`（第 152 行）—— 工具结果消息
 
-扩展消息定义在 [`packages/coding-agent/src/core/messages.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/messages.ts#L29)：
+扩展消息定义在 [`packages/coding-agent/src/core/messages.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/messages.ts#L29)：
 
 - `BashExecutionMessage`（第 29 行）—— Bash 命令执行消息
 - `CustomMessage`（第 46 行）—— 自定义消息

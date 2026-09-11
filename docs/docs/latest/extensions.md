@@ -1015,6 +1015,12 @@ ctx.sessionManager.getLeafId(); // 当前叶子条目 ID
 
 `ctx.scopedModels` 是限定到当前会话的只读模型列表——与 `/scoped-models` 命令显示的内容相同。它在会话启动时通过 `--models` CLI 标志和 `enabledModels` 设置解析（与可用目录进行 minimatch 匹配，匹配 `provider/modelId` 或纯 `modelId`）。未配置作用域时为空，表示所有可用模型均可使用。每个条目为 `{ model, thinkingLevel? }`，其中 `thinkingLevel` 仅在某个模式明确指定时才设置（例如 `anthropic/*:high`）。使用它可以构建与内置选择器一致的模型选择器，无需通过 `ctx.modelRegistry.getAvailable()` 枚举整个目录。
 
+#### 流式模型调用
+
+使用 `ctx.modelRegistry.streamSimple(model, context, options)` 传入 `reasoning` 等与 Provider 无关的选项，或使用 `stream()` 传入 API 特定的选项。两者都使用已配置的 Provider 并解析认证，包括通过 `pi.registerProvider()` 注册的 Provider。请用它们替代 `pi-ai/compat` 的流式函数，后者无法看到扩展注册的 Provider。
+
+两者都返回 `AssistantMessageEventStream`。迭代它以获取响应事件，并 await `.result()` 获得最终消息。设置失败会产生错误事件和错误结果。
+
 ### ctx.signal
 
 当前的 Agent 中止信号，如果未激活 Agent 回合则为 `undefined`。
@@ -1199,7 +1205,7 @@ if (cloneResult.cancelled) {
 
 ### ctx.navigateTree(targetId, options?)
 
-导航到会话树中的不同点：
+导航到会话树中的不同点。在 agent 响应、手动或自动压缩、或其他树导航进行中时会拒绝，即使传入 `summarize: false`。这些冲突下活动分支保持不变，promise 被拒绝而不是返回 `{ cancelled: true }`。请等待当前操作结束（例如在命令处理程序中使用 `await ctx.waitForIdle()`）后重试：
 
 ```typescript
 const result = await ctx.navigateTree('entry-id-456', {
@@ -2110,14 +2116,14 @@ pi --no-builtin-tools -e ./my-extension.ts
 
 内置工具实现：
 
-- [read.ts](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/tools/read.ts) - `ReadToolDetails`
-- [bash.ts](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/tools/bash.ts) - `BashToolDetails`
-- [powershell.ts](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/tools/powershell.ts) - `PowerShellToolDetails`
-- [edit.ts](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/tools/edit.ts)
-- [write.ts](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/tools/write.ts)
-- [grep.ts](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/tools/grep.ts) - `GrepToolDetails`
-- [find.ts](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/tools/find.ts) - `FindToolDetails`
-- [ls.ts](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/tools/ls.ts) - `LsToolDetails`
+- [read.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/tools/read.ts) - `ReadToolDetails`
+- [bash.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/tools/bash.ts) - `BashToolDetails`
+- [powershell.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/tools/powershell.ts) - `PowerShellToolDetails`
+- [edit.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/tools/edit.ts)
+- [write.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/tools/write.ts)
+- [grep.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/tools/grep.ts) - `GrepToolDetails`
+- [find.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/tools/find.ts) - `FindToolDetails`
+- [ls.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/tools/ls.ts) - `LsToolDetails`
 
 ### 远程执行
 
@@ -2252,7 +2258,7 @@ export default function (pi: ExtensionAPI) {
 
 ### 自定义渲染
 
-工具可以提供 `renderCall` 和 `renderResult` 用于自定义 TUI 显示。完整的组件 API 请参见 [tui.md](tui.md)，工具行组合方式请参见 [tool-execution.ts](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/modes/interactive/components/tool-execution.ts)。
+工具可以提供 `renderCall` 和 `renderResult` 用于自定义 TUI 显示。完整的组件 API 请参见 [tui.md](tui.md)，工具行组合方式请参见 [tool-execution.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/modes/interactive/components/tool-execution.ts)。
 
 默认情况下，工具输出包装在 `Box` 中，用于处理内边距和背景。定义的 `renderCall` 或 `renderResult` 必须返回一个 `Component`。如果某个插槽渲染器未定义，`tool-execution.ts` 会为该插槽使用后备渲染。
 
@@ -2400,6 +2406,10 @@ renderResult(result, { expanded }, theme, context) {
 - **Anthropic**
   - **模型：** Sonnet、Opus、Fable 版本 4.5 或更新（不含 Haiku）
   - **原生表示：** 延迟定义使用 `defer_loading`；加载点使用 `tool_reference` 内容。
+- **Fireworks Messages API**
+  - **原生表示：** 延迟定义使用 `defer_loading`；加载点使用 `tool_reference` 内容。
+  - **加载器名称：** 使用 `ToolSearch` 或 `tool_search` 可实现前缀延迟。其他加载器名称仍然有效，但 Fireworks 会将已加载的 schema 包含在初始工具前缀中，从而失去缓存收益。
+  - 这不会改变 API 路由：Fireworks GLM 模型和 Kimi K3 使用 Chat Completions，而非 Messages。
 - **OpenAI**
   - **模型：** `gpt-5.4` 及更新系列
   - **原生表示：** Pi 在加载点添加已完成的客户端 `tool_search_call` 和 `tool_search_output` 项。
@@ -3016,6 +3026,7 @@ const highlighted = highlightCode(code, lang, theme);
 | `ssh.ts`                       | SSH 远程执行                                                                             | `registerFlag`、`on("user_bash")`、`on("before_agent_start")`、工具操作                                                        |
 | `interactive-shell.ts`         | 持久 Shell 会话                                                                          | `on("user_bash")`                                                                                                              |
 | `sandbox/`                     | 沙箱化工具执行                                                                           | 工具操作                                                                                                                       |
+| `gondolin/`                    | 将内置工具和 `!` 命令路由到 Gondolin micro-VM                                            | 工具操作、内置工具覆盖、`on("user_bash")`                                                                                      |
 | `subagent/`                    | 生成子 Agent                                                                             | `registerTool`、`exec`                                                                                                         |
 | **游戏**                       |                                                                                          |                                                                                                                                |
 | `snake.ts`                     | 贪吃蛇游戏                                                                               | `registerCommand`、`ui.custom`、键盘处理                                                                                       |

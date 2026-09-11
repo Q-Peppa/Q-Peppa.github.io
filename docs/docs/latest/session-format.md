@@ -7,10 +7,10 @@
 ## 文件位置
 
 ```
-~/.pi/agent/sessions/--<path>--/<timestamp>_<uuid>.jsonl
+~/.pi/agent/sessions/--<path>--/<timestamp>_<session-id>.jsonl
 ```
 
-其中 `<path>` 是工作目录，路径中的 `/` 替换为 `-`。
+默认情况下，`<session-id>` 是 UUID。调用方可以通过 SDK 或 `--session-id` 提供自定义 ID。对于 `<path>`，Pi 会移除开头的路径分隔符，并将 `/`、`\\` 和 `:` 替换为 `-`。
 
 ## 删除会话
 
@@ -28,12 +28,12 @@ Pi 也支持从 `/resume` 交互式删除会话（选择一个会话后按 `Ctrl
 
 ## 源文件
 
-GitHub 上的源代码（[pi-mono](https://github.com/earendil-works/pi-mono)）：
+GitHub 上的源代码（[pi](https://github.com/earendil-works/pi)）：
 
-- [`packages/coding-agent/src/core/session-manager.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/session-manager.ts) - 会话条目类型和 SessionManager
-- [`packages/coding-agent/src/core/messages.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/messages.ts) - 扩展消息类型（BashExecutionMessage、CustomMessage 等）
-- [`packages/ai/src/types.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/ai/src/types.ts) - 基础消息类型（UserMessage、AssistantMessage、ToolResultMessage）
-- [`packages/agent/src/types.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/agent/src/types.ts) - AgentMessage 联合类型
+- [`packages/coding-agent/src/core/session-manager.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/session-manager.ts) - 会话条目类型和 SessionManager
+- [`packages/coding-agent/src/core/messages.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/messages.ts) - 扩展消息类型（BashExecutionMessage、CustomMessage 等）
+- [`packages/ai/src/types.ts`](https://github.com/earendil-works/pi/blob/main/packages/ai/src/types.ts) - 基础消息类型（UserMessage、AssistantMessage、ToolResultMessage）
+- [`packages/agent/src/types.ts`](https://github.com/earendil-works/pi/blob/main/packages/agent/src/types.ts) - AgentMessage 联合类型
 
 关于 TypeScript 类型定义，请查看项目中的 `node_modules/@earendil-works/pi-coding-agent/dist/` 和 `node_modules/@earendil-works/pi-ai/dist/`。
 
@@ -49,7 +49,7 @@ GitHub 上的源代码（[pi-mono](https://github.com/earendil-works/pi-mono)）
 interface TextContent {
   type: 'text';
   text: string;
-}
+  textSignature?: string;
 
 interface ImageContent {
   type: 'image';
@@ -60,6 +60,8 @@ interface ImageContent {
 interface ThinkingContent {
   type: 'thinking';
   thinking: string;
+  thinkingSignature?: string;
+  redacted?: boolean;
 }
 
 interface ToolCall {
@@ -67,6 +69,8 @@ interface ToolCall {
   id: string;
   name: string;
   arguments: Record<string, any>;
+  thoughtSignature?: string;
+  namespace?: string;
 }
 ```
 
@@ -85,9 +89,16 @@ interface AssistantMessage {
   api: string;
   provider: string;
   model: string;
+  responseModel?: string;
+  responseId?: string;
+  providerThinkingLevel?: string;
+  diagnostics?: AssistantMessageDiagnostic[];
   usage: Usage;
-  stopReason: 'stop' | 'length' | 'toolUse' | 'error' | 'aborted';
+  stopReason: 'pending' | 'stop' | 'length' | 'toolUse' | 'error' | 'aborted' | 'deferred';
+  deferred?: DeferredHandle;
   errorMessage?: string;
+  rawStopReason?: string;
+  endTurn?: boolean;
   timestamp: number;
 }
 
@@ -97,6 +108,8 @@ interface ToolResultMessage {
   toolName: string;
   content: (TextContent | ImageContent)[];
   details?: any; // 工具特定的元数据
+  usage?: Usage; // 工具执行的嵌套 LLM 工作
+  addedToolNames?: string[];
   isError: boolean;
   timestamp: number;
 }
@@ -106,6 +119,8 @@ interface Usage {
   output: number;
   cacheRead: number;
   cacheWrite: number;
+  cacheWrite1h?: number;
+  reasoning?: number;
   totalTokens: number;
   cost: {
     input: number;
@@ -117,7 +132,7 @@ interface Usage {
 }
 ```
 
-pi-ai 导出的 `StopReason` 类型还包含 `"pending"`，但该值保留用于流式事件中的部分消息。pi 在持久化 assistant 消息之前，终止性的 `done`/`error` 消息会将其替换为完成原因，因此 `"pending"` 不应出现在会话 JSONL 中。
+`"pending"` 保留用于流式事件中的部分消息。终止性事件会在 Pi 持久化 assistant 消息之前将其替换为完成原因，因此 `"pending"` 不应出现在会话 JSONL 中。`"deferred"` 是 Provider 响应将稍后完成的终止原因；其 `deferred` 句柄包含检索该响应所需的 Provider 数据。
 
 ### 扩展消息类型（来自 pi-coding-agent）
 
@@ -146,7 +161,7 @@ interface CustomMessage {
 interface BranchSummaryMessage {
   role: 'branchSummary';
   summary: string;
-  fromId: string; // 分支来源条目
+  fromId: string | null; // 被摘要的被遗弃路径的上一个叶条目
   timestamp: number;
 }
 
@@ -178,8 +193,8 @@ type AgentMessage =
 ```typescript
 interface SessionEntryBase {
   type: string;
-  id: string; // 8 字符十六进制 ID
-  parentId: string | null; // 父条目 ID（第一条目为 null）
+  id: string; // 通常为 8 字符十六进制 ID；可能回退为完整 UUID
+  parentId: string | null; // 父条目 ID（根条目为 null）
   timestamp: string; // ISO 时间戳
 }
 ```
@@ -212,9 +227,9 @@ interface SessionEntryBase {
 对话中的一条消息。`message` 字段包含一个 `AgentMessage`。
 
 ```json
-{"type":"message","id":"a1b2c3d4","parentId":"prev1234","timestamp":"2024-12-03T14:00:01.000Z","message":{"role":"user","content":"Hello"}}
-{"type":"message","id":"b2c3d4e5","parentId":"a1b2c3d4","timestamp":"2024-12-03T14:00:02.000Z","message":{"role":"assistant","content":[{"type":"text","text":"Hi!"}],"provider":"anthropic","model":"claude-sonnet-4-5","usage":{...},"stopReason":"stop"}}
-{"type":"message","id":"c3d4e5f6","parentId":"b2c3d4e5","timestamp":"2024-12-03T14:00:03.000Z","message":{"role":"toolResult","toolCallId":"call_123","toolName":"bash","content":[{"type":"text","text":"output"}],"isError":false}}
+{"type":"message","id":"a1b2c3d4","parentId":"prev1234","timestamp":"2024-12-03T14:00:01.000Z","message":{"role":"user","content":"Hello","timestamp":1733234401000}}
+{"type":"message","id":"b2c3d4e5","parentId":"a1b2c3d4","timestamp":"2024-12-03T14:00:02.000Z","message":{"role":"assistant","content":[{"type":"text","text":"Hi!"}],"api":"anthropic-messages","provider":"anthropic","model":"claude-sonnet-4-5","usage":{...},"stopReason":"stop","timestamp":1733234402000}}
+{"type":"message","id":"c3d4e5f6","parentId":"b2c3d4e5","timestamp":"2024-12-03T14:00:03.000Z","message":{"role":"toolResult","toolCallId":"call_123","toolName":"bash","content":[{"type":"text","text":"output"}],"isError":false,"timestamp":1733234403000}}
 ```
 
 ### ModelChangeEntry
@@ -262,8 +277,11 @@ interface SessionEntryBase {
 }
 ```
 
+`firstKeptEntryId` 是必填的。它标识压缩条目之前保留的第一个条目。重建上下文时，Pi 用压缩摘要替换较旧的已摘要条目，并保留从该条目开始的范围。
+
 可选字段：
 
+- `usage`：生成摘要的 LLM 用量；计入会话 Token 和成本总计
 - `details`：实现特定的数据（例如默认的 `{ readFiles: string[], modifiedFiles: string[] }`，或扩展的自定义数据）
 - `fromHook`：如果由扩展生成则为 `true`，如果由 Pi 生成则为 `false`/`undefined`（旧字段名）
 
@@ -281,6 +299,8 @@ interface SessionEntryBase {
   "summary": "Branch explored approach A..."
 }
 ```
+
+`parentId` 是新分支继续的起始条目。`fromId` 是被摘要的被遗弃路径的上一个叶条目。
 
 可选字段：
 
@@ -362,12 +382,13 @@ interface SessionEntryBase {
 
 ## 树状结构
 
-条目形成树：
+条目通常形成一棵树，但导航 API 可以创建多个根：
 
-- 第一个条目的 `parentId: null`
-- 每个后续条目通过 `parentId` 指向其父条目
+- 根条目的 `parentId: null`；第一个条目最初是根
+- 每个非根条目通过 `parentId` 指向其父条目
 - 分叉从较早的条目创建新的子条目
 - "叶节点"是树中的当前位置
+- 调用 `resetLeaf()` 或 `branchWithSummary(null, ...)` 可以让后续条目成为另一个根
 
 ```
 [user msg] ─── [assistant] ─── [user msg] ─── [assistant] ─┬─ [user msg] ← 当前叶节点
@@ -380,10 +401,10 @@ interface SessionEntryBase {
 `buildContextEntries()` 从当前叶节点向根节点遍历，生成活跃的条目列表，同时遵循压缩：
 
 1. 收集路径上的所有条目
-2. 如果路径上存在 `CompactionEntry`：
+2. 如果路径上存在一个或多个 `CompactionEntry`，使用最新的那个：
    - 首先包含压缩条目
-   - 然后是从 `firstKeptEntryId` 到压缩之间的条目
-   - 然后是压缩之后的条目
+   - 包含从 `firstKeptEntryId` 到压缩条目（不含压缩条目本身）之间的条目
+   - 包含压缩条目之后的条目
 3. 保留选中范围内的非消息条目，以便交互模式可以渲染它们
 
 `buildSessionContext()` 在该条目列表之上构建发送给 LLM 的消息列表：
@@ -395,6 +416,8 @@ interface SessionEntryBase {
    - `branch_summary` -> `branchSummary`
    - `custom_message` -> `CustomMessage`
    - `custom` -> 无上下文消息
+
+压缩摘要替换 `firstKeptEntryId` 之前的条目。保留的条目以及压缩条目之后的所有条目仍可供 LLM 使用。
 
 ## 解析示例
 
@@ -444,20 +467,21 @@ for (const line of lines) {
 
 ### 静态创建方法
 
-- `SessionManager.create(cwd, sessionDir?)` - 新会话
-- `SessionManager.open(path, sessionDir?)` - 打开现有会话文件
+- `SessionManager.create(cwd, sessionDir?, options?)` - 新会话；`options` 可设置 `id` 和 `parentSession`
+- `SessionManager.open(path, sessionDir?, cwdOverride?)` - 打开现有会话文件
 - `SessionManager.continueRecent(cwd, sessionDir?)` - 继续最近会话或创建新会话
-- `SessionManager.inMemory(cwd?)` - 无文件持久化
-- `SessionManager.forkFrom(sourcePath, targetCwd, sessionDir?)` - 从其他项目分叉会话
+- `SessionManager.inMemory(cwd?, options?, entries?)` - 无文件持久化，可选择从条目初始化
+- `SessionManager.forkFrom(sourcePath, targetCwd, sessionDir?, options?)` - 从其他项目分叉会话
 
 ### 静态列表方法
 
 - `SessionManager.list(cwd, sessionDir?, onProgress?)` - 列出目录的会话
 - `SessionManager.listAll(onProgress?)` - 列出所有项目的所有会话
+- `SessionManager.listAll(sessionDir?, onProgress?)` - 从自定义会话根目录列出会话
 
 ### 实例方法 - 会话管理
 
-- `newSession(options?)` - 开始新会话（options：`{ parentSession?: string }`）
+- `newSession(options?)` - 开始新会话（options：`{ id?: string, parentSession?: string }`）
 - `setSessionFile(path)` - 切换到不同的会话文件
 - `createBranchedSession(leafId)` - 将分支提取到新会话文件
 
@@ -466,7 +490,7 @@ for (const line of lines) {
 - `appendMessage(message)` - 追加消息
 - `appendThinkingLevelChange(level)` - 记录 thinking 变更
 - `appendModelChange(provider, modelId)` - 记录模型变更
-- `appendCompaction(summary, firstKeptEntryId, tokensBefore, details?, fromHook?)` - 追加压缩
+- `appendCompaction(summary, firstKeptEntryId, tokensBefore, details?, fromHook?, usage?)` - 追加压缩
 - `appendCustomEntry(customType, data?)` - 扩展状态（不在上下文中）
 - `appendSessionInfo(name)` - 设置会话显示名称
 - `appendCustomMessageEntry(customType, content, display, details?)` - 扩展消息（在上下文中）
@@ -483,7 +507,7 @@ for (const line of lines) {
 - `getLabel(id)` - 获取条目标记
 - `branch(entryId)` - 将叶节点移动到较早的条目
 - `resetLeaf()` - 将叶节点重置为 null（在任何条目之前）
-- `branchWithSummary(entryId, summary, details?, fromHook?)` - 带上下文摘要的分支
+- `branchWithSummary(entryId, summary, details?, fromHook?, usage?)` - 带上下文摘要的分支；`entryId` 可以为 `null`，表示从根条目分叉
 
 ### 实例方法 - 上下文和信息
 

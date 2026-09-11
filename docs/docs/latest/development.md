@@ -2,13 +2,13 @@
 
 > 本页面是 [Pi 官方文档](https://pi.dev/docs/latest/development) 的中文翻译。仅供学习参考。
 
-请参阅 [AGENTS.md](https://github.com/earendil-works/pi-mono/blob/main/AGENTS.md) 获取更多指南。
+请参阅 [AGENTS.md](https://github.com/earendil-works/pi/blob/main/AGENTS.md) 获取更多指南。
 
 ## 设置
 
 ```bash
-git clone https://github.com/earendil-works/pi-mono
-cd pi-mono
+git clone https://github.com/earendil-works/pi
+cd pi
 npm install
 npm run build
 ```
@@ -16,7 +16,7 @@ npm run build
 从源码运行：
 
 ```bash
-/path/to/pi-mono/pi-test.sh
+/path/to/pi/pi-test.sh
 ```
 
 该脚本可从任何目录运行，Pi 保留调用者的当前工作目录。

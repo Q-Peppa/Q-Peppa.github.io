@@ -115,11 +115,12 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 
 ### Compaction（压缩）
 
-| 设置项                        | 类型    | 默认值  | 说明                       |
-| ----------------------------- | ------- | ------- | -------------------------- |
-| `compaction.enabled`          | boolean | `true`  | 启用自动压缩               |
-| `compaction.reserveTokens`    | number  | `16384` | 为 LLM 响应预留的 Token    |
-| `compaction.keepRecentTokens` | number  | `20000` | 保留的最近 Token（不总结） |
+| 设置项                        | 类型    | 默认值  | 说明                                                                               |
+| ----------------------------- | ------- | ------- | ---------------------------------------------------------------------------------- |
+| `compaction.enabled`          | boolean | `true`  | 启用自动压缩                                                                       |
+| `compaction.reserveTokens`    | number  | `16384` | 为 LLM 响应预留的 Token                                                            |
+| `compaction.keepRecentTokens` | number  | `20000` | 保留的最近 Token（不总结）                                                         |
+| `compaction.modelOverrides`   | object  | -       | 按精确的 `"provider/modelId"` 为每个模型覆盖 `reserveTokens` 和 `keepRecentTokens` |
 
 ```json
 {
@@ -130,6 +131,37 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
   }
 }
 ```
+
+#### 按模型覆盖压缩设置
+
+```json
+{
+  "compaction": {
+    "enabled": true,
+    "reserveTokens": 16384,
+    "keepRecentTokens": 20000,
+    "modelOverrides": {
+      "some-provider/big-model": {
+        "reserveTokens": 400000
+      },
+      "local/small-model": {
+        "reserveTokens": 2048,
+        "keepRecentTokens": 4096
+      }
+    }
+  }
+}
+```
+
+键按精确、区分大小写的 `provider/modelId` 匹配，不是名称或 glob 模式。模型 ID 可以包含斜杠（例如 `openrouter/anthropic/claude-sonnet-4`）。
+
+每个 Token 设置独立解析：匹配的模型覆盖 → 普通的 `compaction` 设置 → 内置默认值。在上例中，`some-provider/big-model` 保留普通的 20000 最近 Token。Token 值必须是非负安全整数。匹配的模型覆盖中的无效值在读取时报错；只有省略的字段才回退到普通设置。模型覆盖条目必须是对象。无效的普通 Token 设置在读取时报错，即使活动模型有有效的覆盖。只有省略的普通值才使用内置默认值。接受零，但 `reserveTokens: 0` 不保留响应余量，也会把摘要输出预算设为零。
+
+全局和项目设置在模型查找**之前**递归合并。项目可以覆盖某个模型的一个字段，而不替换它的其他字段或其他模型。全局的模型特定值优先于项目级回退；要改变它，请在项目中覆盖同一个模型条目。
+
+`enabled` 不是按模型的。活动模型的 Token 设置适用于手动压缩、自动阈值检查（包括助手回合之间）和溢出恢复。切换模型在下次检查或压缩时生效。请在 JSON 中配置覆盖；`/settings` 保留普通的自动压缩开关。
+
+触发和摘要行为参见 [compaction.md](compaction.md)。
 
 ### Branch Summary（分支摘要）
 
@@ -145,9 +177,12 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 | `retry.enabled`                  | boolean | `true`   | 启用自动 Agent 级别重试（针对瞬态错误）    |
 | `retry.maxRetries`               | number  | `3`      | 最大 Agent 级别重试次数                    |
 | `retry.baseDelayMs`              | number  | `2000`   | Agent 级别指数退避的基础延迟（2s、4s、8s） |
+| `retry.maxAgentDelayMs`          | number  | `60000`  | 最大 Agent 级别重试延迟（60s）             |
 | `retry.provider.timeoutMs`       | number  | SDK 默认 | Provider/SDK 请求超时（毫秒）              |
 | `retry.provider.maxRetries`      | number  | `0`      | Provider/SDK 重试次数                      |
 | `retry.provider.maxRetryDelayMs` | number  | `60000`  | 最大服务器请求延迟，超时则直接失败（60s）  |
+
+Agent 级别重试使用指数退避，并以 `retry.maxAgentDelayMs` 为上限，因此长时间重试在持续故障后仍保持响应。
 
 当 Provider 请求的重试延迟超过 `retry.provider.maxRetryDelayMs` 时，请求会立即失败并显示信息性错误，而不是静默等待。设置为 `0` 可禁用此限制。
 
@@ -159,6 +194,7 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
     "enabled": true,
     "maxRetries": 3,
     "baseDelayMs": 2000,
+    "maxAgentDelayMs": 60000,
     "provider": {
       "timeoutMs": 3600000,
       "maxRetries": 0,

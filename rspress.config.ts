@@ -133,7 +133,10 @@ export default defineConfig({
         },
         {
           text: '参考',
-          items: [{ text: '会话格式', link: '/docs/latest/session-format' }],
+          items: [
+            { text: '环境变量', link: '/docs/latest/environment-variables' },
+            { text: '会话格式', link: '/docs/latest/session-format' },
+          ],
         },
         {
           text: '编程式使用',

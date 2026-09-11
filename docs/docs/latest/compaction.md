@@ -4,13 +4,13 @@
 
 LLM 的上下文窗口有限。当对话过长时，Pi 使用压缩（compaction）来总结较旧的内容，同时保留近期工作。本页面涵盖自动压缩和分支摘要。
 
-**源文件**（[pi-mono](https://github.com/earendil-works/pi-mono)）:
+**源文件**（[pi](https://github.com/earendil-works/pi)）:
 
-- [`packages/coding-agent/src/core/compaction/compaction.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/compaction/compaction.ts) - 自动压缩逻辑
-- [`packages/coding-agent/src/core/compaction/branch-summarization.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/compaction/branch-summarization.ts) - 分支摘要
-- [`packages/coding-agent/src/core/compaction/utils.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/compaction/utils.ts) - 共享工具（文件追踪、序列化）
-- [`packages/coding-agent/src/core/session-manager.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/session-manager.ts) - 条目类型（`CompactionEntry`、`BranchSummaryEntry`）
-- [`packages/coding-agent/src/core/extensions/types.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/extensions/types.ts) - 扩展事件类型
+- [`packages/coding-agent/src/core/compaction/compaction.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/compaction/compaction.ts) - 自动压缩逻辑
+- [`packages/coding-agent/src/core/compaction/branch-summarization.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/compaction/branch-summarization.ts) - 分支摘要
+- [`packages/coding-agent/src/core/compaction/utils.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/compaction/utils.ts) - 共享工具（文件追踪、序列化）
+- [`packages/coding-agent/src/core/session-manager.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/session-manager.ts) - 条目类型（`CompactionEntry`、`BranchSummaryEntry`）
+- [`packages/coding-agent/src/core/extensions/types.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/extensions/types.ts) - 扩展事件类型
 
 关于 TypeScript 类型定义，请查看项目中的 `node_modules/@earendil-works/pi-coding-agent/dist/`。
 
@@ -125,7 +125,7 @@ LLM 看到的内容：
 
 ### CompactionEntry 结构
 
-定义在 [`session-manager.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/session-manager.ts) 中：
+定义在 [`session-manager.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/session-manager.ts) 中：
 
 ```typescript
 interface CompactionEntry<T = unknown> {
@@ -150,7 +150,7 @@ interface CompactionDetails {
 
 扩展可以在 `details` 中存储任何 JSON 可序列化的数据。默认压缩追踪文件操作，但自定义扩展实现可以使用自己的结构。生成的和扩展提供的摘要会在可用时存储其 LLM `usage`，以便会话总计包含摘要工作。
 
-参考 [`prepareCompaction()`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/compaction/compaction.ts) 和 [`compact()`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/compaction/compaction.ts) 查看实现。对于直接编程式摘要，`generateSummary()` 返回摘要文本，`generateSummaryWithUsage()` 返回 `{ text, usage }`。
+参考 [`prepareCompaction()`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/compaction/compaction.ts) 和 [`compact()`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/compaction/compaction.ts) 查看实现。对于直接编程式摘要，`generateSummary()` 返回摘要文本，`generateSummaryWithUsage()` 返回 `{ text, usage }`。
 
 ## Branch Summarization（分支摘要）
 
@@ -194,7 +194,7 @@ interface CompactionDetails {
 
 ### BranchSummaryEntry 结构
 
-定义在 [`session-manager.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/session-manager.ts) 中：
+定义在 [`session-manager.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/session-manager.ts) 中：
 
 ```typescript
 interface BranchSummaryEntry<T = unknown> {
@@ -218,7 +218,7 @@ interface BranchSummaryDetails {
 
 与压缩相同，扩展可以在 `details` 中存储自定义数据。
 
-参考 [`collectEntriesForBranchSummary()`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/compaction/branch-summarization.ts)、[`prepareBranchEntries()`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/compaction/branch-summarization.ts) 和 [`generateBranchSummary()`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/compaction/branch-summarization.ts) 查看实现。
+参考 [`collectEntriesForBranchSummary()`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/compaction/branch-summarization.ts)、[`prepareBranchEntries()`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/compaction/branch-summarization.ts) 和 [`generateBranchSummary()`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/compaction/branch-summarization.ts) 查看实现。
 
 ## 摘要格式
 
@@ -271,7 +271,7 @@ path/to/changed.ts
 
 ### 消息序列化
 
-在摘要之前，消息通过 [`serializeConversation()`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/compaction/utils.ts) 序列化为文本：
+在摘要之前，消息通过 [`serializeConversation()`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/compaction/utils.ts) 序列化为文本：
 
 ```
 [User]: 他们说的内容
@@ -287,7 +287,7 @@ path/to/changed.ts
 
 ## 通过扩展自定义摘要
 
-扩展可以拦截并自定义压缩和分支摘要。关于事件类型定义，请参考 [`extensions/types.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/extensions/types.ts)。
+扩展可以拦截并自定义压缩和分支摘要。关于事件类型定义，请参考 [`extensions/types.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/extensions/types.ts)。
 
 ### session_before_compact
 
@@ -303,7 +303,7 @@ pi.on('session_before_compact', async (event, ctx) => {
   // preparation.fileOps - 提取的文件操作
   // preparation.tokensBefore - 压缩前的上下文 Token 数
   // preparation.firstKeptEntryId - 保留消息的起始位置
-  // preparation.settings - 压缩设置
+  // preparation.settings - 应用模型覆盖后的有效设置
 
   // branchEntries - 当前分支上的所有条目（用于自定义状态）
   // reason - "manual"（/compact）、"threshold" 或 "overflow"
@@ -429,6 +429,32 @@ pi.on('session_before_tree', async (event, ctx) => {
 | `keepRecentTokens` | `20000` | 保留的最近 Token（不总结） |
 
 使用 `"enabled": false` 禁用自动压缩。你仍可以使用 `/compact` 手动压缩。
+
+### 按模型覆盖
+
+使用 `compaction.modelOverrides` 为不同模型调整 Token 预算：
+
+```json
+{
+  "compaction": {
+    "reserveTokens": 16384,
+    "keepRecentTokens": 20000,
+    "modelOverrides": {
+      "some-provider/big-model": {
+        "reserveTokens": 400000
+      }
+    }
+  }
+}
+```
+
+对于上下文窗口为 1M 的模型，此覆盖会在超过 600K Token 时触发压缩，并保留普通的 20000 最近 Token。其他模型保留普通的 16384 Token 预留。`reserveTokens` 也会影响摘要输出上限，并受模型最大输出 Token 限制；它不只是触发阈值。
+
+键是精确、区分大小写的 `provider/modelId` 值，包括模型 ID 中的任何斜杠。每个 `reserveTokens` 和 `keepRecentTokens` 值独立回退：从模型覆盖到普通设置再到内置默认值。值必须是非负安全整数。匹配的模型覆盖中的无效值在读取时报错；只有省略的字段才回退到普通设置。模型覆盖条目必须是对象。无效的普通 Token 设置在读取时报错，即使活动模型有有效的覆盖。只有省略的普通值才使用内置默认值。`enabled` 仍然是全局的，不按模型区分。
+
+这些解析后的值用于手动压缩、所有自动阈值检查、溢出恢复，以及扩展可见的 `preparation.settings`。切换模型会影响后续检查和压缩，但不会改变普通设置。已在进行中的压缩使用该操作捕获的模型和设置。分支摘要设置不受影响。
+
+覆盖在全局和项目设置中均生效。两个文件在查找前递归合并，因此全局的模型特定值优先于项目级回退；要改变它，项目必须覆盖同一个模型条目。详见 [settings.md](/docs/latest/settings#按模型覆盖压缩设置)。
 
 ---
 

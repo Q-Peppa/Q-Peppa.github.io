@@ -54,6 +54,6 @@ Pi 不包含内置沙箱。内置工具可以读写文件、编辑文件，并�
 
 ## 报告安全问题
 
-要报告安全问题，请遵循仓库的[安全策略](https://github.com/earendil-works/pi-mono/blob/main/SECURITY.md)。不要为安全敏感的报告创建公开 Issue。
+要报告安全问题，请遵循仓库的[安全策略](https://github.com/earendil-works/pi/blob/main/SECURITY.md)。不要为安全敏感的报告创建公开 Issue。
 
 预期的本地 agent 行为、缺乏内置沙箱、来自不受信任内容的 Prompt 注入以及用户安装的扩展或 Skill 的行为通常不在安全边界之内，除非该报告证明存在真正的权限边界绕过，或证明 Pi 授予了本地用户原本并不具备的访问权限。
