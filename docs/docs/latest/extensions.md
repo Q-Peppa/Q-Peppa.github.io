@@ -560,7 +560,7 @@ pi.on('before_agent_start', async (event, ctx) => {
 });
 ```
 
-`systemPromptOptions` 字段为扩展提供了与 Pi 构建系统提示相同的结构化数据。这些集合是可变的。优先修改 `sections`、`selectedTools` 或 `promptGuidelines`：Pi 会把生成的提示区块与模型已有的内容做 diff，然后追加一条系统消息，只修补发生变化的区块。返回 `systemPrompt`，或设置 `forceSystemPrompt`，会用单个无标签的 `preamble` 区块替换整个提示。工具选择的变更会同时更新提示贡献和可执行的 Provider 工具；在处理程序内调用 `pi.setActiveTools()` 与修改 `selectedTools` 效果相同。接受会话中途系统消息的模型会就地收到补丁并保留已缓存的前缀；其他模型会得到重放后的提示作为系统提示，每次变更会有一次缓存未命中。
+`systemPromptOptions` 字段为扩展提供了与 Pi 构建系统提示相同的结构化数据。这些集合是可变的。优先修改 `sections`、`selectedTools` 或 `promptGuidelines`：Pi 会把生成的提示区块与模型已有的内容做 diff，然后追加一条系统消息，只修补发生变化的区块。返回 `systemPrompt`，或设置 `forceSystemPrompt`，会用单个无标签的 `preamble` 区块替换整个提示。工具选择的变更会同时改系统提示里的工具说明，以及实际可调用的 Provider 工具；在处理程序内调用 `pi.setActiveTools()` 与修改 `selectedTools` 效果相同。接受会话中途系统消息的模型会在对话中间直接收到补丁，并保留已缓存的前缀；其他模型会得到重放后的提示作为系统提示，每次变更会有一次缓存未命中。
 
 在 `before_agent_start` 内部，`event.systemPrompt` 和 `ctx.getSystemPrompt()` 都反映当前处理程序的链式系统提示。后面的 `before_agent_start` 处理程序仍可再次修改它。
 
@@ -1128,7 +1128,7 @@ const options = ctx.getSystemPromptOptions();
 const contextPaths = options.contextFiles?.map((file) => file.path) ?? [];
 ```
 
-其形状和可变性与 `before_agent_start` 的 `event.systemPromptOptions` 相同：自定义或强制的提示、活跃工具、工具代码片段、按工具的规则和自定义规则、自定义区块、追加的系统提示文本、cwd、已加载的上下文文件和已加载的 Skill。它可能包含完整的上下文文件内容，因此请将其视为敏感的扩展本地数据，避免通过命令列表、日志或自动补全元数据暴露它。
+其形状和可变性与 `before_agent_start` 的 `event.systemPromptOptions` 相同：自定义或强制的提示、活跃工具、每个工具的一行描述、按工具的准则要点和自定义准则、自定义区块、追加的系统提示文本、cwd、已加载的上下文文件和已加载的 Skill。它可能包含完整的上下文文件内容，因此请将其视为敏感的扩展本地数据，避免通过命令列表、日志或自动补全元数据暴露它。
 
 此方法报告当前的基础提示输入。它不包括每轮 `before_agent_start` 链式系统提示更改、后续的 `context` 事件消息修改或 `before_provider_request` 负载重写。
 

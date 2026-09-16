@@ -408,7 +408,7 @@ interface OAuthCredentials {
 
 ### 流式模式
 
-所有 Provider 遵循相同的模式。context 是一份规范化后的 transcript：系统提示和工具声明位于它的系统消息中，因此要用 `getCurrentSystemPrompt(context.messages)` 和 `getCurrentTools(context.messages)` 读取，而不要指望 `context.systemPrompt` 或 `context.tools`。接受会话中途系统消息的模型可以就地发送这些消息；否则先调用 `collapseSystemMessages(context)`，把后续的系统消息折叠进开头那条。
+所有 Provider 遵循相同的模式。context 是一份规范化后的 transcript：系统提示和工具声明位于它的系统消息中，因此要用 `getCurrentSystemPrompt(context.messages)` 和 `getCurrentTools(context.messages)` 读取，而不要依赖 `context.systemPrompt` 或 `context.tools`。接受会话中途系统消息的模型可以在对话中间直接发送这些消息；否则先调用 `collapseSystemMessages(context)`，把后续的系统消息折叠进开头那条。
 
 ```typescript
 import {

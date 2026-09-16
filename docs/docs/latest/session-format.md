@@ -302,7 +302,7 @@ interface SessionEntryBase {
 
 可选字段：
 
-- `systemMessage`：压缩边界处重放的提示区块和工具声明；它成为压缩后上下文的开头系统消息，保留条目中的系统消息会因它而被丢弃。较旧的会话条目没有该字段。
+- `systemMessage`：压缩边界处重放的提示区块和工具声明；它成为压缩后上下文的开头系统消息，保留范围内的系统消息会被丢掉，改用这条检查点。较旧的会话条目没有该字段。
 
 - `usage`：生成摘要的 LLM 用量；计入会话 Token 和成本总计
 - `details`：实现特定的数据（例如默认的 `{ readFiles: string[], modifiedFiles: string[] }`，或扩展的自定义数据）

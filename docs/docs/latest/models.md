@@ -439,7 +439,7 @@
 | `supportsMidConvoEffort`          | 该 Claude 模型的传输层是否支持每轮 effort 系统消息和 thinking 绑定控制。Pi 会持久化原生 effort 级别，启用后始终发送 `drop_block`。默认：`false` |
 | `allowEmptySignature`             | 是否将空的 thinking 签名作为 `signature: ""` 重放，而不是把 thinking 转换为文本。默认：`false`                                                  |
 | `supportsStrictTools`             | Provider 是否接受严格 JSON Schema 工具定义。默认：`false`；内置 Anthropic 模型在生成的元数据中启用此项。                                        |
-| `allowedFallbackModels`           | 最多三个服务端 fallback 模型，每个包含 `provider`、`model` 和完整的 `cost` 元数据。空数组表示禁用 fallback。                                    |
+| `allowedFallbackModels`           | 最多三个服务端回退模型，每个包含 `provider`、`model` 和完整的 `cost` 元数据。空数组表示禁用回退。                                               |
 
 ## OpenAI 兼容性
 
