@@ -252,8 +252,8 @@ const state = session.agent.state;
 // state.messages: AgentMessage[] - 对话历史
 // state.model: Model - 当前模型
 // state.thinkingLevel: ThinkingLevel - 当前思考级别
-// state.systemPrompt: string - 系统提示
-// state.tools: AgentTool[] - 可用工具
+// state.systemPrompt: string - 只读，从 transcript 的系统消息中重放
+// state.tools: AgentTool[] - 可执行工具；变更会在下一次请求前告知模型
 // state.streamingMessage?: AgentMessage - 当前部分助手消息
 // state.errorMessage?: string - 最新的助手错误
 

@@ -77,6 +77,14 @@ interface ToolCall {
 ### 基础消息类型（来自 pi-ai）
 
 ```typescript
+interface SystemMessage {
+  role: 'system';
+  content: string | TextContent[];
+  toolsAdded?: Tool[];
+  toolsRemoved?: Array<{ name: string }>;
+  timestamp: number; // Unix 毫秒
+}
+
 interface UserMessage {
   role: 'user';
   content: string | (TextContent | ImageContent)[];
@@ -109,7 +117,6 @@ interface ToolResultMessage {
   content: (TextContent | ImageContent)[];
   details?: any; // 工具特定的元数据
   usage?: Usage; // 工具执行的嵌套 LLM 工作
-  addedToolNames?: string[];
   isError: boolean;
   timestamp: number;
 }
@@ -177,6 +184,7 @@ interface CompactionSummaryMessage {
 
 ```typescript
 type AgentMessage =
+  | SystemMessage
   | UserMessage
   | AssistantMessage
   | ToolResultMessage
@@ -224,7 +232,14 @@ interface SessionEntryBase {
 
 ### SessionMessageEntry
 
-对话中的一条消息。`message` 字段包含一个 `AgentMessage`。
+对话中的一条消息。`message` 字段包含一个 `AgentMessage`。系统消息承载提示和工具配置：会话的第一次请求会持久化一条系统消息，包含全部提示区块和工具声明；之后的变更以系统消息形式持久化，按名称修补 `sections`（值为 `null` 表示移除该区块），并列出 `toolsAdded`/`toolsRemoved`。按顺序重放这些消息即可得到当前的提示和工具；不存在单独的提示状态条目。
+
+```json
+{"type":"message","id":"a0b1c2d3","parentId":null,"timestamp":"2024-12-03T14:00:00.000Z","message":{"role":"system","content":"","sections":{"preamble":"You are an expert coding assistant...","tools":"<tools>\n- read: ...\n</tools>","cwd":"/project"},"toolsAdded":[{"name":"read","description":"...","parameters":{}}],"timestamp":1733234400000}}
+{"type":"message","id":"d4e5f6g7","parentId":"c3d4e5f6","timestamp":"2024-12-03T14:04:00.000Z","message":{"role":"system","content":"","sections":{"skills":"<skills>...</skills>"},"toolsRemoved":[{"name":"write"}],"timestamp":1733234640000}}
+```
+
+在系统消息出现之前创建的会话没有开头的系统消息；第一次请求会把当前提示声明为一条靠后的系统消息，重放方式相同。
 
 ```json
 {"type":"message","id":"a1b2c3d4","parentId":"prev1234","timestamp":"2024-12-03T14:00:01.000Z","message":{"role":"user","content":"Hello","timestamp":1733234401000}}
@@ -263,7 +278,7 @@ interface SessionEntryBase {
 
 ### CompactionEntry
 
-当上下文被压缩时创建。存储之前消息的摘要。
+当上下文被压缩时创建。存储之前消息的摘要，以及一份完整的系统提示/工具检查点。
 
 ```json
 {
@@ -273,13 +288,21 @@ interface SessionEntryBase {
   "timestamp": "2024-12-03T14:10:00.000Z",
   "summary": "User discussed X, Y, Z...",
   "firstKeptEntryId": "c3d4e5f6",
-  "tokensBefore": 50000
+  "tokensBefore": 50000,
+  "systemMessage": {
+    "role": "system",
+    "content": "You are a coding assistant.",
+    "toolsAdded": [],
+    "timestamp": 1733235000000
+  }
 }
 ```
 
 `firstKeptEntryId` 是必填的。它标识压缩条目之前保留的第一个条目。重建上下文时，Pi 用压缩摘要替换较旧的已摘要条目，并保留从该条目开始的范围。
 
 可选字段：
+
+- `systemMessage`：压缩边界处重放的提示区块和工具声明；它成为压缩后上下文的开头系统消息，保留条目中的系统消息会因它而被丢弃。较旧的会话条目没有该字段。
 
 - `usage`：生成摘要的 LLM 用量；计入会话 Token 和成本总计
 - `details`：实现特定的数据（例如默认的 `{ readFiles: string[], modifiedFiles: string[] }`，或扩展的自定义数据）
@@ -403,7 +426,7 @@ interface SessionEntryBase {
 1. 收集路径上的所有条目
 2. 如果路径上存在一个或多个 `CompactionEntry`，使用最新的那个：
    - 首先包含压缩条目
-   - 包含从 `firstKeptEntryId` 到压缩条目（不含压缩条目本身）之间的条目
+   - 包含从 `firstKeptEntryId` 到压缩条目（不含压缩条目本身）之间的非系统条目
    - 包含压缩条目之后的条目
 3. 保留选中范围内的非消息条目，以便交互模式可以渲染它们
 
@@ -412,12 +435,12 @@ interface SessionEntryBase {
 1. 从完整路径中提取当前模型和 thinking level 设置
 2. 将选中的条目转换为消息：
    - `message` -> 存储的 `AgentMessage`
-   - `compaction` -> `compactionSummary`
+   - `compaction` -> 完整的系统检查点，后接 `compactionSummary`
    - `branch_summary` -> `branchSummary`
    - `custom_message` -> `CustomMessage`
    - `custom` -> 无上下文消息
 
-压缩摘要替换 `firstKeptEntryId` 之前的条目。保留的条目以及压缩条目之后的所有条目仍可供 LLM 使用。
+压缩摘要替换 `firstKeptEntryId` 之前的条目。压缩前的系统消息会被折叠进完整检查点，而不是从保留的范围中重放。保留的非系统条目以及压缩条目之后的所有条目仍可供 LLM 使用。
 
 ## 解析示例
 

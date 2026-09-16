@@ -535,10 +535,13 @@ pi.on('before_agent_start', async (event, ctx) => {
   // event.systemPrompt - 当前为此处理程序链式拼接的系统提示
   //   （包括之前 before_agent_start 处理程序的更改）
   // event.systemPromptOptions - 用于构建系统提示的结构化选项
-  //   .customPrompt - 任何自定义系统提示（来自 --system-prompt、SYSTEM.md 或自定义模板）
+  //   .customPrompt - 来自 --system-prompt、SYSTEM.md 或自定义模板的精确提示前缀
+  //   .forceSystemPrompt - 可选，精确替换完整提示
   //   .selectedTools - 当前在提示中激活的工具
   //   .toolSnippets - 每个工具的一行描述
-  //   .promptGuidelines - 自定义准则要点
+  //   .toolGuidelines - 按工具名索引的准则要点
+  //   .promptGuidelines - 额外的自定义准则要点
+  //   .sections - 按标签名索引的自定义 XML 包裹区块
   //   .appendSystemPrompt - 来自 --append-system-prompt 标志的文本
   //   .cwd - 工作目录
   //   .contextFiles - AGENTS.md 文件和其他加载的上下文文件
@@ -557,7 +560,7 @@ pi.on('before_agent_start', async (event, ctx) => {
 });
 ```
 
-`systemPromptOptions` 字段为扩展提供了与 Pi 构建系统提示相同的结构化数据。这使您可以检查 Pi 加载的内容——自定义提示、准则、工具片段、上下文文件、skill——而无需重新发现资源或重新解析标志。当您的扩展需要对系统提示进行深入、有根据的修改，同时尊重用户提供的配置时使用此字段。
+`systemPromptOptions` 字段为扩展提供了与 Pi 构建系统提示相同的结构化数据。这些集合是可变的。优先修改 `sections`、`selectedTools` 或 `promptGuidelines`：Pi 会把生成的提示区块与模型已有的内容做 diff，然后追加一条系统消息，只修补发生变化的区块。返回 `systemPrompt`，或设置 `forceSystemPrompt`，会用单个无标签的 `preamble` 区块替换整个提示。工具选择的变更会同时更新提示贡献和可执行的 Provider 工具；在处理程序内调用 `pi.setActiveTools()` 与修改 `selectedTools` 效果相同。接受会话中途系统消息的模型会就地收到补丁并保留已缓存的前缀；其他模型会得到重放后的提示作为系统提示，每次变更会有一次缓存未命中。
 
 在 `before_agent_start` 内部，`event.systemPrompt` 和 `ctx.getSystemPrompt()` 都反映当前处理程序的链式系统提示。后面的 `before_agent_start` 处理程序仍可再次修改它。
 
@@ -1125,7 +1128,7 @@ const options = ctx.getSystemPromptOptions();
 const contextPaths = options.contextFiles?.map((file) => file.path) ?? [];
 ```
 
-其形状和可变性与 `before_agent_start` 的 `event.systemPromptOptions` 相同：自定义提示、活跃工具、工具代码片段、提示指南、追加的系统提示文本、cwd、已加载的上下文文件和已加载的 Skill。它可能包含完整的上下文文件内容，因此请将其视为敏感的扩展本地数据，避免通过命令列表、日志或自动补全元数据暴露它。
+其形状和可变性与 `before_agent_start` 的 `event.systemPromptOptions` 相同：自定义或强制的提示、活跃工具、工具代码片段、按工具的规则和自定义规则、自定义区块、追加的系统提示文本、cwd、已加载的上下文文件和已加载的 Skill。它可能包含完整的上下文文件内容，因此请将其视为敏感的扩展本地数据，避免通过命令列表、日志或自动补全元数据暴露它。
 
 此方法报告当前的基础提示输入。它不包括每轮 `before_agent_start` 链式系统提示更改、后续的 `context` 事件消息修改或 `before_provider_request` 负载重写。
 
@@ -2387,42 +2390,13 @@ renderResult(result, { expanded }, theme, context) {
 
 ### 动态工具加载
 
-扩展可以注册大量工具，同时只保持少量初始工具处于激活状态。然后工具可以在执行期间通过 `pi.setActiveTools()` 添加更多工具。Pi 检测纯增量更改，在该工具结果上记录新可用的工具名称，并在下一次模型请求之前应用更新后的激活集。
-
-这适用于所有模型。支持原生延迟加载的模型保留稳定的提示前缀，并在工具结果位置加载新定义。其他模型使用下文描述的回退方案。
+扩展可以注册大量工具，同时只保持少量初始工具处于激活状态。之后工具可以在执行期间用 `pi.setActiveTools()` 改变激活集。Pi 会把初始提示和工具配置存进 transcript 的第一条系统消息，然后在下一次模型请求前追加工具和提示的增量。无法表示这种切换的 Provider 会收到一份完整的 transcript 检查点，这可能使已缓存的前缀失效。
 
 生命周期如下：
 
 1. 使用 `pi.registerTool()` 注册每个工具，使其出现在 `pi.getAllTools()` 中。
 2. 保持加载器工具（如 `search_tools`）处于激活状态，将可搜索工具保持为非激活状态。
-3. 在加载器执行期间，调用 `pi.setActiveTools([...currentTools, ...matchingTools])`。更改必须是增量的：不要在同一调用中移除当前激活的工具。
-4. Pi 在加载器的工具结果上记录添加了哪些工具。
-5. 在下一次模型响应之前，Pi 在支持原生延迟加载时使用原生延迟加载暴露添加的定义，否则使用常规激活工具列表。
-
-您不需要返回 Provider 特定的工具引用或将加载器标记为特殊的搜索工具。激活工具集的更改就是信号。传递给 `pi.setActiveTools()` 的名称必须已经注册；未知名称会被忽略。
-
-#### 支持原生延迟加载的模型
-
-- **Anthropic**
-  - **模型：** Sonnet、Opus、Fable 版本 4.5 或更新（不含 Haiku）
-  - **原生表示：** 延迟定义使用 `defer_loading`；加载点使用 `tool_reference` 内容。
-- **Fireworks Messages API**
-  - **原生表示：** 延迟定义使用 `defer_loading`；加载点使用 `tool_reference` 内容。
-  - **加载器名称：** 使用 `ToolSearch` 或 `tool_search` 可实现前缀延迟。其他加载器名称仍然有效，但 Fireworks 会将已加载的 schema 包含在初始工具前缀中，从而失去缓存收益。
-  - 这不会改变 API 路由：Fireworks GLM 模型和 Kimi K3 使用 Chat Completions，而非 Messages。
-- **OpenAI**
-  - **模型：** `gpt-5.4` 及更新系列
-  - **原生表示：** Pi 在加载点添加已完成的客户端 `tool_search_call` 和 `tool_search_output` 项。
-
-对于已验证的自定义模型或代理，可以通过为 `anthropic-messages` 设置 `compat.supportsToolReferences: true`，或为 `openai-responses` 和 `openai-codex-responses` 设置 `compat.supportsToolSearch: true` 来启用原生处理。除非端点和模型接受相应的原生协议，否则请保持这些选项禁用。
-
-#### 回退行为
-
-对于所有其他模型和 Provider，动态激活仍然有效：Pi 在下一次请求中正常发送完整的当前激活工具列表。模型可以调用新激活的工具，但添加其定义可能会使 Provider 的缓存提示前缀失效。
-
-当激活集不是纯增量时（例如用一组工具替换另一组），Pi 也会使用此安全回退。因此工具移除仍然有效，但不会使用延迟加载。
-
-为了获得最佳的缓存行为，请在整个会话中保持加载器工具处于激活状态，并添加工具而不是替换激活集。另请注意，激活带有 `promptSnippet` 或 `promptGuidelines` 的工具会重建系统提示；即使 Provider 支持延迟模式，该系统提示更改也可能使前缀失效。延迟加载的工具通常应依赖其工具 `description`，并省略仅激活时的提示元数据。
+3. 在加载器执行期间，用期望激活的工具名调用 `pi.setActiveTools()`。名称必须已经注册；未知名称会被忽略。
 
 #### 搜索工具示例
 
@@ -2523,7 +2497,7 @@ export default function (pi: ExtensionAPI) {
 }
 ```
 
-当 `search_tools` 添加匹配项时，模型会在紧随其后的请求中收到该定义。在支持原生能力的模型上，定义锚定在搜索结果之后，而不更改初始工具模式前缀。在其他模型上，它出现在同一后续请求的常规工具列表中。
+当 `search_tools` 添加匹配项时，模型会在紧随其后的请求中收到完整的更新后工具列表。
 
 ## 自定义 UI
 

@@ -408,25 +408,31 @@ interface OAuthCredentials {
 
 ### 流式模式
 
-所有 Provider 遵循相同的模式：
+所有 Provider 遵循相同的模式。context 是一份规范化后的 transcript：系统提示和工具声明位于它的系统消息中，因此要用 `getCurrentSystemPrompt(context.messages)` 和 `getCurrentTools(context.messages)` 读取，而不要指望 `context.systemPrompt` 或 `context.tools`。接受会话中途系统消息的模型可以就地发送这些消息；否则先调用 `collapseSystemMessages(context)`，把后续的系统消息折叠进开头那条。
 
 ```typescript
 import {
   type AssistantMessage,
   type AssistantMessageEventStream,
-  type Context,
   type Model,
   type SimpleStreamOptions,
+  type TranscriptContext,
   calculateCost,
+  collapseSystemMessages,
   createAssistantMessageEventStream,
+  getCurrentSystemPrompt,
+  getCurrentTools,
 } from '@earendil-works/pi-ai';
 
 function streamMyProvider(
   model: Model<any>,
-  context: Context,
+  context: TranscriptContext,
   options?: SimpleStreamOptions,
 ): AssistantMessageEventStream {
   const stream = createAssistantMessageEventStream();
+  const transcript = collapseSystemMessages(context);
+  const systemPrompt = getCurrentSystemPrompt(transcript.messages);
+  const tools = getCurrentTools(transcript.messages);
 
   (async () => {
     // 初始化输出消息
@@ -665,8 +671,12 @@ interface ProviderConfig {
   /** 流式传输的 API 类型。定义模型时需要在 Provider 或模型级别指定。 */
   api?: Api;
 
-  /** 非标准 API 的自定义流式实现。 */
-  streamSimple?: (model: Model<Api>, context: Context, options?: SimpleStreamOptions) => AssistantMessageEventStream;
+  /** 非标准 API 的自定义流式实现。接收一份规范化后的 transcript。 */
+  streamSimple?: (
+    model: Model<Api>,
+    context: TranscriptContext,
+    options?: SimpleStreamOptions,
+  ) => AssistantMessageEventStream;
 
   /** 包含在请求中的自定义请求头。值可以是环境变量名。 */
   headers?: Record<string, string>;

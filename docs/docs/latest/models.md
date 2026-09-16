@@ -439,6 +439,7 @@
 | `supportsMidConvoEffort`          | 该 Claude 模型的传输层是否支持每轮 effort 系统消息和 thinking 绑定控制。Pi 会持久化原生 effort 级别，启用后始终发送 `drop_block`。默认：`false` |
 | `allowEmptySignature`             | 是否将空的 thinking 签名作为 `signature: ""` 重放，而不是把 thinking 转换为文本。默认：`false`                                                  |
 | `supportsStrictTools`             | Provider 是否接受严格 JSON Schema 工具定义。默认：`false`；内置 Anthropic 模型在生成的元数据中启用此项。                                        |
+| `allowedFallbackModels`           | 最多三个服务端 fallback 模型，每个包含 `provider`、`model` 和完整的 `cost` 元数据。空数组表示禁用 fallback。                                    |
 
 ## OpenAI 兼容性
 
@@ -485,7 +486,6 @@
 | `sessionAffinityFormat`                       | 对于 `openai-completions` 和 `openai-responses`，会话亲和请求头格式：`openai` 发送 `session_id`/`x-client-request-id`（completions 还发送 `x-session-affinity`），`openai-nosession` 省略包含下划线的 `session_id` 请求头，`openrouter` 发送 `x-session-id`。不影响 `prompt_cache_key` body 参数。默认：自动检测。 |
 | `supportsStrictMode`                          | Provider 是否接受严格 JSON Schema 函数工具定义。默认值取决于 API；内置 OpenAI 模型带有明确的能力元数据。                                                                                                                                                                                                           |
 | `supportsOpenAIGrammarTools`                  | OpenAI 兼容 API 是否发出自定义 Lark/regex 语法工具。为 `false` 时，语法约束工具回退到普通 function tools。默认：`false`；内置模型目录为 OpenAI、OpenAI Codex、Azure OpenAI、GitHub Copilot、opencode 和 Cloudflare AI Gateway 上的 GPT-5+ 模型启用此项。                                                           |
-| `deferredToolsMode`                           | 使用 Provider 特定的延迟工具序列化。目前仅支持 `"kimi"`，用于 Kimi 的 OpenAI 兼容 Chat Completions 格式                                                                                                                                                                                                            |
 | `supportsLongCacheRetention`                  | Provider 是否在缓存保留为 `long` 时接受长缓存保留：GPT-5.6+ Responses 模型的 `prompt_cache_options.ttl: "30m"`，早期 OpenAI 模型的 `prompt_cache_retention: "24h"`，或当 `cacheControlFormat` 为 `anthropic` 时的 `cache_control.ttl: "1h"`。默认：`true`。                                                        |
 | `openRouterRouting`                           | OpenRouter Provider 路由偏好。此对象按原样作为 [OpenRouter API 请求](https://openrouter.ai/docs/guides/routing/provider-selection) 的 `provider` 字段发送                                                                                                                                                          |
 | `vercelGatewayRouting`                        | Vercel AI Gateway 路由配置，用于 Provider 选择（`only`、`order`）                                                                                                                                                                                                                                                  |
