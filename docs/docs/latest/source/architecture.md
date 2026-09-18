@@ -1,12 +1,12 @@
 # 核心架构与设计哲学
 
-本文档讨论 Pi 为什么这样设计，而不只是列出目录和接口。以 **Pi v0.80.10** 源码为基准。建议先读 [从一个最小 Agent 开始](minimal-agent.md)，再回来理解下面这些取舍。
+本文讨论 Pi 为什么这样设计。以 **Pi v0.85.1** 源码为基准。建议先读 [从一个最小 Agent 开始](minimal-agent.md)。
 
 ## 先从一个任务想起
 
 用户说：“找到项目里的登录错误，修好它，并运行测试。”
 
-一个只会聊天的程序只能给建议；一个 Agent 需要在模型和程序之间来回传递：模型决定先搜索什么，程序执行搜索，结果回到模型，模型再决定是否修改文件和运行测试。Pi 的大部分架构，都是在回答三个问题：
+一个只会聊天的程序只能给建议；一个 Agent 需要在模型和程序之间来回传递。Pi 的大部分架构，都在回答三个问题：
 
 - 模型如何保持可替换？
 - 工具和扩展如何不把核心循环变成一团耦合代码？
@@ -14,372 +14,184 @@
 
 后面的 `Models`、事件、扩展、项目信任和会话设计，都可以看作这三个问题的不同答案。
 
-## 一、关注点分离：四个核心包
+## 一、先读四个核心包
 
-Pi 被拆成四个包，每层都有清晰边界：
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  pi-tui                                                     │
-│  终端 UI 库：差分渲染、组件、编辑器、事件分发                 │
-├─────────────────────────────────────────────────────────────┤
-│  pi-ai                                                      │
-│  LLM 通信层：Models 运行时、Provider factory、API 实现、认证  │
-├─────────────────────────────────────────────────────────────┤
-│  pi-agent-core                                              │
-│  智能体运行时：Agent Loop、工具调用、事件流、状态管理         │
-├─────────────────────────────────────────────────────────────┤
-│  pi-coding-agent                                            │
-│  应用层：CLI、项目信任、扩展、会话、TUI 集成、工具实现        │
-└─────────────────────────────────────────────────────────────┘
-```
-
-| 包                | 职责                                           | 不做什么                   |
-| ----------------- | ---------------------------------------------- | -------------------------- |
-| `pi-ai`           | 统一调用各家 LLM，管理 Provider 认证与模型目录 | 不处理工具循环、不保存会话 |
-| `pi-agent-core`   | 实现 Agent Loop、事件流、工具执行协议          | 不处理 CLI、不直接读终端   |
-| `pi-coding-agent` | 组装服务、处理用户输入、管理项目信任、加载扩展 | 不自己实现 LLM 协议        |
-| `pi-tui`          | 渲染终端 UI、处理按键                          | 不了解 Agent 业务          |
-
-这种分层让每一层都可以独立测试、替换或复用。例如你可以用 `pi-agent-core` + `pi-ai` 写一个没有 TUI 的脚本，也可以用 `pi-tui` 做其他终端应用。
-
-## 二、Models 运行时与 Provider 抽象
-
-Pi 的 `pi-ai` 从全局 API registry 转向 **Models 运行时**；在 coding-agent 中，这个能力进一步由 **ModelRuntime** 组合为应用级模型门面。
-
-### 旧架构（v0.78 及以前）
+读 `pi` 命令，从这四层开始：
 
 ```
-调用者
-  → stream(model, context, opts)   // 全局函数
-      → api-registry 根据 model.api 查找 ApiProvider
-      → ApiProvider.stream(model, context, opts)
+pi-tui            终端 UI：差分渲染、组件、编辑器
+pi-ai             LLM：Models 运行时、Provider、API 实现、认证
+pi-agent-core     Agent Loop、工具执行协议、事件
+pi-coding-agent   CLI、项目信任、扩展、会话、TUI 集成
 ```
 
-问题：
+| 包                | 职责                  | 不做什么                 |
+| ----------------- | --------------------- | ------------------------ |
+| `pi-ai`           | 统一调用各家 LLM      | 不跑工具循环，不保存会话 |
+| `pi-agent-core`   | Agent Loop 和工具协议 | 不解析 CLI，不直接读终端 |
+| `pi-coding-agent` | 把上面两层组装成产品  | 不自己实现 LLM 协议      |
+| `pi-tui`          | 渲染和按键            | 不了解 Agent 业务        |
 
-- 全局注册表有副作用，tree-shaking 困难
-- 认证在调用侧临时注入，难以管理 OAuth 刷新
-- 所有模型元数据塞在一个巨型 `models.generated.ts` 中
+主路径是 `AgentSession` → `Agent` → `runAgentLoop` → `streamFn` → `ModelRuntime`。
 
-### 当前架构（v0.80.10）
+`packages/agent/src/harness/` 里的 `AgentHarness` 是更通用的会话运行时，实验性 remote/plugin 路径会用到它。它不是 `pi` 交互模式的入口。
+
+## 二、仓库里还有什么（先跳过）
+
+v0.85 的 monorepo 比四个包更大。这些目录存在，但不应该挡住第一次阅读：
+
+| 目录                                      | 做什么               | 何时再看                                        |
+| ----------------------------------------- | -------------------- | ----------------------------------------------- |
+| `packages/chord`                          | 插件/facet 运行时    | 做插件宿主时                                    |
+| `packages/telemetry`                      | 遥测                 | 看事件 schema 时                                |
+| `packages/protocol` / `client` / `server` | 实验性远程 harness   | `PI_EXPERIMENTAL=1 ./pi-test.sh server\|client` |
+| `packages/session-backends`               | 例如 sqlite 会话后端 | 不走默认 JSONL 时                               |
+| `packages/evals`                          | 文档和运行时评估     | 做回归时                                        |
+| `packages/coding-agent/src/experimental/` | 未进 npm 的开发代码  | 明确做实验功能时                                |
+
+官方开发文档写得很清楚：`client` 和 `experimental/plugin` 子路径只在源码 checkout 里解析，不会进 npm 包和独立二进制。
+
+## 三、Models 运行时：让模型可替换
+
+旧的全局 `stream()` + `api-registry` 还在 `@earendil-works/pi-ai/compat`。新代码的方向是：
 
 ```
-调用者
-  → models = createModels({ credentials, authContext })
-  → models.setProvider(anthropicProvider())
-  → models.setProvider(openAIProvider())
+createModels()
+  → setProvider(anthropicProvider())
   → models.stream(model, context, opts)
-      → Models 运行时根据 model.provider 找到 Provider
-      → Provider 自己解析 auth（CredentialStore + AuthContext）
-      → Provider.api.stream(model, context, opts)
+      → Provider 自己解析 auth
+      → Provider.api.stream(...)
 ```
 
-核心抽象：
+coding-agent 再包一层 `ModelRuntime`：加载 `models.json` / `auth.json`、叠加扩展 Provider、维护可用性快照。详细实现见 [Models 运行时与 Provider](models-runtime.md)。
 
-| 概念                | 职责                                                                 | 示例                                 |
-| ------------------- | -------------------------------------------------------------------- | ------------------------------------ |
-| **Provider**        | 一个 LLM Provider 的完整配置：id、名称、baseUrl、auth、模型列表、api | `anthropicProvider()`                |
-| **API**             | 一种 LLM 协议实现：只负责 `stream` / `streamSimple`                  | `anthropicMessagesApi()`             |
-| **Models**          | 管理一组 Provider，提供统一的 `stream` / `complete` / `getModel`     | `createModels()`                     |
-| **CredentialStore** | 凭证存储：读写 API key / OAuth token                                 | `InMemoryCredentialStore` / 文件存储 |
-| **AuthContext**     | 认证上下文：UI 回调、环境变量解析                                    | `defaultAuthContext()`               |
+无论底层是哪家 SSE，pi-ai 都收成同一组 assistant 事件：`start`、`text_delta`、`thinking_delta`、`toolcall_delta`、`done`、`error`。Agent Loop 不需要知道当前是 Anthropic 还是 OpenAI。
 
-详细实现见 [pi-ai：Models 运行时与 Provider 架构](models-runtime.md)。
+## 四、事件分三层看
 
-### 事件流抽象依然不变
+不要把所有 `*_start` 都当成同一种事件。
 
-无论底层是 OpenAI SSE、Anthropic SSE、Google 流式还是其他协议，pi-ai 都把它们统一成同一组事件：
+### 1. Agent 循环事件
 
-```typescript
-type AssistantMessageEvent =
-  | { type: 'start'; partial: AssistantMessage }
-  | { type: 'text_start'; contentIndex: number }
-  | { type: 'text_delta'; delta: string; contentIndex: number }
-  | { type: 'text_end'; content: string; contentIndex: number }
-  | { type: 'thinking_start'; contentIndex: number }
-  | { type: 'thinking_delta'; delta: string }
-  | { type: 'thinking_end'; content: string }
-  | { type: 'toolcall_start'; contentIndex: number }
-  | { type: 'toolcall_delta'; delta: string; partial: AssistantMessage }
-  | { type: 'toolcall_end'; toolCall: ToolCall }
-  | { type: 'done'; reason: StopReason; message: AssistantMessage }
-  | { type: 'error'; reason: 'error' | 'aborted'; error: AssistantMessage };
+**文件**：`packages/agent/src/types.ts`
+
+```text
+agent_start / agent_end
+turn_start / turn_end
+message_start / message_update / message_end
+tool_execution_start / tool_execution_update / tool_execution_end
 ```
 
-Agent Loop 代码**完全不需要关心是哪个 Provider**。它只处理这些标准事件。
+这是 `runAgentLoop` 发出的最小集合。
 
-## 三、事件驱动架构
+### 2. AgentSession 事件
 
-Pi 的整个架构是**事件驱动**的。从 LLM 流式响应到 TUI 更新，从工具执行到扩展触发，全部通过事件传递。
+**文件**：`packages/coding-agent/src/core/agent-session.ts`
 
-### Agent 层事件
+在 Agent 事件之上，会话层补了产品语义：
 
-```
-AgentEvent
-├── agent_start        — Agent 开始处理
-├── agent_end          — Agent 处理完成
-├── turn_start         — 一轮 LLM+工具 开始
-├── turn_end           — 一轮结束
-├── message_start      — 消息开始
-├── message_end        — 消息结束
-├── message_update     — 消息更新（流式 delta）
-│   └── assistantMessageEvent — 嵌套 LLM 原始事件
-├── tool_call_start    — 工具调用开始
-├── tool_call          — 工具调用
-├── tool_result        — 工具结果
-├── compaction_start   — 上下文压缩开始
-├── compaction_end     — 上下文压缩结束
-└── auto_retry_start / end — 自动重试
+```text
+agent_settled
+queue_update
+compaction_start / compaction_end
+auto_retry_start / auto_retry_end
+entry_appended
+thinking_level_changed
+...
 ```
 
-### 事件流示例
+TUI 监听的是这一层。压缩指示器和自动重试文案都不在 `agent-loop.ts`。
 
-用户输入 `"解释这个文件"` 后的事件序列：
+### 3. 扩展事件
 
-```
-1. agent_start
-2. turn_start
-3. message_start { role: "user", content: "解释这个文件" }
-4. message_end
-5. message_start { role: "assistant" }
-6. message_update { delta: "好的" }
-7. message_update { delta: "，让" }
-8. ...
-9. tool_call_start { name: "read" }
-10. tool_call { name: "read", args: { path: "..." } }
-11. tool_result { content: "文件内容..." }
-12. turn_end
-13. turn_start
-14. message_update { delta: "这个文件..." }
-15. ...
-16. agent_end
+扩展既能听到循环，也能介入产品边界。和读码最相关的是：
+
+```text
+input
+before_agent_start / agent_start / agent_end / agent_settled
+before_provider_request / before_provider_headers / after_provider_response
+tool_call / tool_result
+tool_execution_start / update / end
+project_trust
+session_before_compact / session_compact / session_compact_failed
+session_start / session_shutdown
+ui_prompt_start / ui_prompt_end
 ```
 
-TUI 监听这些事件并实时更新界面。
+`tool_call` 仍然是扩展拦截工具的钩子；循环内部的进度事件则叫 `tool_execution_*`。两者同时存在，职责不同。
 
-### 扩展事件
-
-扩展系统有自己的事件体系，扩展可以在多个环节拦截或增强行为：
-
-```typescript
-type ExtensionEvent =
-  | 'input'
-  | 'before_agent_start'
-  | 'message_end'
-  | 'tool_call'
-  | 'tool_result'
-  | 'before_provider_request'
-  | 'after_provider_response'
-  | 'agent_end'
-  | 'session_shutdown'
-  | 'project_trust' // 项目信任决策
-  | 'session_before_compact' // 压缩前事件，包含 reason/willRetry
-  | 'session_compact';
-```
-
-## 四、TUI 差分渲染
+## 五、TUI：差分渲染 + 两种屏幕
 
 **文件**：`packages/tui/src/tui.ts`
 
-传统终端 UI 每帧清屏重绘会闪烁且性能差。Pi 的解决方案是**差分渲染**：
-
-1. 保存上一帧的输出（`previousLines: string[]`）
-2. 渲染当前帧
-3. 逐行对比，**只输出变化的行**
-
-```typescript
-class TUI extends Container {
-  private previousLines: string[] = [];
-  private previousWidth = -1;
-  private previousHeight = -1;
-  private renderRequested = false;
-  private lastRenderAt = 0;
-
-  requestRender(force = false): void {
-    if (force) {
-      this.previousLines = [];
-      this.previousWidth = -1;
-      this.previousHeight = -1;
-    }
-    this.renderRequested = true;
-    process.nextTick(() => this.scheduleRender());
-  }
-
-  private scheduleRender(): void {
-    if (this.stopped || this.renderTimer || !this.renderRequested) return;
-    const elapsed = performance.now() - this.lastRenderAt;
-    const delay = Math.max(0, TUI.MIN_RENDER_INTERVAL_MS - elapsed);
-    this.renderTimer = setTimeout(() => {
-      this.renderTimer = undefined;
-      this.renderRequested = false;
-      this.lastRenderAt = performance.now();
-      this.doRender();
-    }, delay);
-  }
-}
-```
-
-### 组件接口
+Pi 不每帧清屏。它保存上一帧的行，只输出变化的行。组件接口是：
 
 ```typescript
 interface Component {
   render(width: number): string[];
   handleInput?(data: string): void;
+  handleMouse?(event: TuiMouseEvent): TuiMouseEventResult | undefined;
   invalidate(): void;
 }
 ```
 
-所有 UI 元素都是 `Component`：
+输入监听的结果字段是 `consume`。
 
-- `Text` — 纯文本行
-- `Container` — 子组件容器（递归渲染）
-- `Editor` — 编辑器（含光标、选区）
-- `Markdown` — Markdown 渲染
-- `Loader` — 加载动画
-- `SelectList` — 选择列表
+coding-agent 在这之上分两种屏幕：
 
-### Overlay 系统
+- `TuiMainScreen`：普通交互
+- `TuiAltScreen`：fullscreen，带搜索、跳到最新消息、选区复制
 
-Pi TUI 支持模态覆盖层：
+Overlay 还在：`ui.showOverlay(component, { anchor, width, height })`。模型选择器、信任选择器都走这条路。
 
-```typescript
-ui.showOverlay(new ModelSelectorComponent(), {
-  anchor: 'center',
-  width: 60,
-  height: 20,
-});
-```
-
-Overlay 渲染时先渲染基础内容，再叠加 overlay；关闭时只更新被覆盖区域。
-
-## 五、扩展系统
+## 六、扩展优于修改核心
 
 **文件**：`packages/coding-agent/src/core/extensions/runner.ts`
 
-扩展是一个 TypeScript 模块，通过 `ExtensionFactory` 函数创建。扩展可以：
+扩展是 TypeScript 模块。它可以：
 
-1. **注册自定义工具** — `pi.registerTool({ ... })`
-2. **注册斜杠命令** — `pi.registerCommand({ ... })`
-3. **监听事件** — `pi.on('tool_call', handler)`
-4. **拦截输入** — `pi.on('input', handler)`
-5. **修改系统提示** — 在 `before_agent_start` 中修改
-6. **创建 UI 组件** — `ctx.ui.setWidget()` / `ctx.ui.setStatus()`
-7. **注册快捷键** — 自定义按键绑定
-8. **参与项目信任决策** — `pi.on('project_trust', handler)`
+1. 注册工具和斜杠命令
+2. 监听或改写事件
+3. 改系统提示
+4. 挂自定义 UI
+5. 参与项目信任决策
 
-### 扩展加载流程
+加载顺序仍然是：用户/全局/CLI 扩展先到，项目本地扩展只有在项目被信任后才加载。
 
-```
-1. discoverAndLoadExtensions()
-   ├── 扫描 ~/.pi/agent/extensions/ (全局)
-   ├── 扫描 .pi/extensions/ (项目，仅在项目被信任后加载)
-   ├── 扫描已安装的 Pi Packages
-   └── 加载 CLI --extensions 指定的路径
+## 七、项目信任是安全边界，不是设置项
 
-2. 对每个扩展：
-   ├── import(filePath)
-   ├── 调用 ExtensionFactory(cwd, agentDir)
-   └── 注册工具、命令、事件监听
+Pi 会加载 `.pi/`、`AGENTS.md`、项目扩展。这些东西能跑代码，所以启动时要先问。细节见 [项目信任与认证](trust-and-auth.md)。
 
-3. ExtensionRunner 汇总所有扩展
-   ├── 工具注册到 ToolRegistry
-   ├── 命令注册到 SlashCommands
-   └── 事件监听注册到事件总线
-```
+可以先记一句：未信任的项目，本地扩展不会执行。
 
-### 输入拦截示例
-
-```typescript
-pi.on('input', (event) => {
-  const match = event.text.match(/#(\d+)/);
-  if (match) {
-    const issueUrl = `https://github.com/${repo}/issues/${match[1]}`;
-    return {
-      action: 'transform',
-      text: event.text.replace(/#\d+/, `[Issue #${match[1]}](${issueUrl})`),
-    };
-  }
-  return { action: 'pass' };
-});
-```
-
-## 六、项目信任与安全边界
-
-当前 Pi 使用**项目信任（project trust）**：在加载项目本地 `.pi` 目录、扩展、资源前，会先请求用户确认。
-
-信任流程：
-
-```
-启动时
-  → 检查 cwd 是否有需要信任的项目资源
-  → 触发 project_trust 扩展事件
-  → 若未决策，弹出 TUI 选择器
-  → 用户选择：始终信任 / 仅本次 / 从不
-  → 决策写入 trust store
-  → 继续加载项目本地扩展和资源
-```
-
-这防止了恶意项目的 `.pi/extensions` 或 `AGENTS.md` 在不被察觉的情况下执行。
-
-详见 [项目信任与认证体系](trust-and-auth.md)。
-
-## 七、设计哲学总结
+## 八、设计哲学
 
 ### 1. 关注点分离
 
-```
-pi-ai          → LLM 通信（怎么跟大模型说话）
-pi-agent-core  → 智能体逻辑（怎么循环、怎么调用工具）
-pi-coding-agent → 应用层（CLI、扩展、会话、TUI 集成、项目信任）
-pi-tui         → 终端 UI（怎么在终端里显示和交互）
-```
+循环不知道 API key。TUI 不知道 Provider。认证不知道工具。扩展不能在信任前加载项目代码。
 
-### 2. 事件驱动而非回调嵌套
+### 2. 注入模型，而不是写死模型
 
-```typescript
-// ✅ 事件流（线性、可组合）
-for await (const event of stream) {
-  emit(event); // 所有监听者收到
-}
-```
+`streamFn` 是循环和产品之间的合同。换 Provider、加请求头、做重试，都发生在合同外侧。
 
-### 3. 类型安全贯穿
+### 3. 无状态工厂，有状态门面
 
-```typescript
-const model = getBuiltinModel('anthropic', 'claude-sonnet-4');
-//     ^ Model<'anthropic-messages'>
+`anthropicProvider()` 是纯工厂。`createModels()` 得到一份可替换的运行时。coding-agent 的 `ModelRuntime` 再把文件、扩展和凭证变成产品门面。
 
-models.stream(model, context, {
-  // TypeScript 知道这里是 AnthropicMessagesStreamOptions
-  maxTokens: 4096,
-});
-```
+### 4. 扩展优于改核心
 
-### 4. 无状态优于全局副作用
+能用事件和注册 API 做的事，不要去改 `agent-loop.ts`。
 
-pi-ai 的 `Models` 与 Provider factory 仍然是可独立创建的运行时对象；coding-agent 则由 `ModelRuntime` 持有并组合内置 Provider、配置文件、扩展 Provider 和凭证。这让多个 Agent session 可以拥有独立的模型配置，也便于测试。
-
-### 5. 扩展优于修改
-
-不鼓励修改核心代码。通过扩展系统：
-
-- 添加自定义工具
-- 注册斜杠命令
-- 监听/修改事件
-- 创建 UI 组件
-- 参与项目信任决策
-
-### 6. 渐进式复杂度
+### 5. 渐进式复杂度
 
 ```
-简单使用：pi "解释这个文件"
-进阶使用：pi --model anthropic/claude-sonnet-4
-高级使用：自定义扩展、自定义 Provider、修改 TUI
+pi "解释这个文件"
+pi --model anthropic/claude-sonnet-4-5
+自定义扩展 / 自定义 Provider / 改 TUI
 ```
 
 ## 下一步
 
-- [pi-ai：Models 运行时与 Provider 架构](models-runtime.md) — 深入新架构
-- [项目信任与认证体系](trust-and-auth.md) — 安全与认证
-- [上下文压缩与会话分支](compaction-and-branches.md) — 长会话管理
+- [Models 运行时与 Provider](models-runtime.md)
+- [项目信任与认证](trust-and-auth.md)
+- [上下文压缩与会话分支](compaction-and-branches.md)

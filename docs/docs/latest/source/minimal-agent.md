@@ -2,7 +2,7 @@
 
 如果只把 Agent 理解成“调用一次大模型”，很快就会迷路。我们先做一个足够小、但已经具备 Agent 核心特征的例子：它可以查看天气；如果用户没有提供城市，就先调用工具，再根据工具结果回答。
 
-这篇文章不追求马上做出一个生产级产品。目标是建立一张可靠的心智模型：**模型负责决定下一步，程序负责提供能力并执行，循环负责把两者接起来。**
+这篇文章不追求马上做出生产级产品。目标是建立一张可靠的心智模型：**模型负责决定下一步，程序负责提供能力并执行，循环负责把两者接起来。**
 
 ## 1. 先看普通聊天
 
@@ -109,7 +109,7 @@ LLM 的回答通常不是一次性返回。`text_delta`、`toolcall_delta` 等�
 
 ### 5.2 多轮输入
 
-用户可能在 Agent 工作时继续输入。输入可以成为 steer（尽快插入当前工作）或 follow-up（当前任务完成后再处理），而不是简单地丢弃。
+用户可能在 Agent 工作时继续输入。输入可以成为 steer（当前工具执行完、下一次 LLM 调用前插入）或 follow-up（当前任务完成后再处理），而不是简单地丢弃。
 
 ### 5.3 工具安全
 
@@ -119,20 +119,26 @@ LLM 的回答通常不是一次性返回。`text_delta`、`toolcall_delta` 等�
 
 历史消息会超过模型窗口。Agent 需要保留最近工作的细节，把更早的部分压缩成摘要；这就是 Pi 中 compaction 存在的原因。
 
+### 5.5 项目信任
+
+如果 Agent 会加载项目目录里的扩展和提示文件，就必须先问：这个项目能不能跑任意代码？Pi 用项目信任把这条边界放在加载资源之前。
+
 ## 6. 对照 Pi 源码
 
 在 Pi 中，上面的几个角色大致对应：
 
-| 最小例子         | Pi 中的实现                      | 先看什么                                          |
-| ---------------- | -------------------------------- | ------------------------------------------------- |
-| `messages`       | `AgentContext` 与会话消息        | `packages/agent/src/types.ts`                     |
-| `while (true)`   | `runAgentLoop()`                 | `packages/agent/src/agent-loop.ts`                |
-| `tool.execute()` | `executeToolCalls()` 与工具定义  | `packages/agent/src/agent-loop.ts`                |
-| `llm.chat()`     | 注入的 `streamFn`                | `packages/coding-agent/src/core/agent-session.ts` |
-| 工具结果回填     | `tool_result` / Agent message    | `packages/agent/src/agent-loop.ts`                |
-| 压缩历史         | compaction preparation / summary | [上下文压缩与分支](compaction-and-branches.md)    |
+| 最小例子         | Pi 中的实现               | 先看什么                                       |
+| ---------------- | ------------------------- | ---------------------------------------------- |
+| `messages`       | `AgentContext` 与会话消息 | `packages/agent/src/types.ts`                  |
+| `while (true)`   | `runAgentLoop()`          | `packages/agent/src/agent-loop.ts`             |
+| `tool.execute()` | `executeToolCalls()`      | `packages/agent/src/agent-loop.ts`             |
+| `llm.chat()`     | 注入的 `streamFn`         | `packages/coding-agent/src/core/sdk.ts`        |
+| 工具结果回填     | `toolResult` 消息         | `packages/agent/src/agent-loop.ts`             |
+| 压缩历史         | compaction                | [上下文压缩与分支](compaction-and-branches.md) |
 
 Pi 的重要取舍是：`Agent Loop` 不直接知道 API key，也不把具体 Provider 写死。它只需要一个能流式调用模型的 `streamFn`。coding-agent 再用 `ModelRuntime` 把模型、认证、Provider 配置和扩展接到这个接口上。
+
+默认内置工具是 `read`、`bash`、`edit`、`write`。`find`、`grep`、`ls`、`powershell` 也在仓库里，但启动时不一定全部打开。
 
 ## 7. 读完后试着自己解释
 
@@ -142,4 +148,4 @@ Pi 的重要取舍是：`Agent Loop` 不直接知道 API key，也不把具体 P
 - 为什么模型可以提出工具调用，但程序必须负责执行和校验？
 - 为什么 Agent Loop 应该通过 `streamFn` 依赖模型，而不是直接依赖某一家 API？
 
-接下来再读 [从输入到 LLM 循环](input-to-llm.md)，你会看到这个小循环如何变成 Pi 的完整会话；再读 [核心架构与设计哲学](architecture.md)，理解 Pi 为什么把能力拆成这些边界。
+接下来可以先 [把源码跑起来](setup-and-debug.md)，也可以直接读 [从输入到 LLM 循环](input-to-llm.md)，看这个小循环如何变成 Pi 的完整会话。

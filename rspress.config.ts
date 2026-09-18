@@ -171,14 +171,14 @@ export default defineConfig({
           items: [
             { text: '概述', link: '/docs/latest/source/' },
             {
-              text: '前置知识与学习路径',
-              link: '/docs/latest/source/prerequisites',
+              text: '从一个最小 Agent 开始',
+              link: '/docs/latest/source/minimal-agent',
               tag: '入门',
             },
             {
-              text: '从一个最小 Agent 开始',
-              link: '/docs/latest/source/minimal-agent',
-              tag: 'new',
+              text: '前置知识与学习路径',
+              link: '/docs/latest/source/prerequisites',
+              tag: '入门',
             },
             {
               text: '环境搭建与调试',
@@ -198,7 +198,7 @@ export default defineConfig({
             {
               text: '核心架构与设计哲学',
               link: '/docs/latest/source/architecture',
-              tag: '深入',
+              tag: '核心',
             },
             {
               text: 'pi-ai 运行时与 Provider',

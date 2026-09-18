@@ -1,401 +1,178 @@
 # 上下文压缩与会话分支
 
-在长会话中，LLM 的上下文窗口有限。Pi 通过 **上下文压缩（compaction）** 将历史消息摘要化，从而释放 token 空间。同时，Pi 支持会话分支（fork），每个分支可以独立演化，分支摘要则帮助用户理解被放弃的路径。本文以 **Pi v0.80.10** 源码为基准。
+长会话会把模型窗口填满。Pi 用 **compaction** 把较早的消息收成摘要，同时保留最近几轮原文。会话本身是树：`/fork` 可以从历史节点长出新分支。本文以 **Pi v0.85.1** 为基准。
 
-## 什么是上下文压缩？
+## 先分清两套实现
 
-当会话越来越长时，Pi 会把较早的消息交给一个" summarizer 模型"，生成一段摘要，然后用摘要替换掉原始消息。这样：
+仓库里有两份压缩代码，读的时候不要混：
 
-- 保留关键上下文
-- 释放大量 token
-- 让长会话能继续推进
+|          | coding-agent（`pi` 主路径）                  | agent harness                            |
+| -------- | -------------------------------------------- | ---------------------------------------- |
+| 位置     | `packages/coding-agent/src/core/compaction/` | `packages/agent/src/harness/compaction/` |
+| 切割标记 | `firstKeptEntryId`                           | `retainedTail`                           |
+| 调用方   | `AgentSession`                               | `AgentHarness` / 实验路径                |
+| 扩展钩子 | `session_before_compact` 等                  | harness 自己的事件                       |
 
-压缩并不是把所有历史都丢掉，而是保留一个**后缀（suffix）**：最近的几轮对话保持完整，只有更早的部分被摘要替换。
+下面默认讲 **coding-agent**。那是你运行 `pi` 时实际走的路径。
 
-## 压缩触发时机
+## 压缩在做什么？
 
-有三种情况会触发压缩：
+不是删除历史。JSONL 里的原始消息还在。变的是送给 LLM 的上下文：较早的部分变成一段摘要，最近的后缀保持完整。
 
-| 触发方式              | 原因                           | 是否自动重试           |
-| --------------------- | ------------------------------ | ---------------------- |
-| **手动**              | 用户输入 `/compact`            | 否                     |
-| **阈值（threshold）** | 上下文 token 数超过设置阈值    | 否                     |
-| **溢出（overflow）**  | LLM 返回 context overflow 错误 | 是（willRetry = true） |
+三种触发方式：
 
-压缩相关事件携带 `reason` 和 `willRetry`，扩展可以据此区分手动压缩、阈值压缩和溢出重试。
+| 触发          | 原因                                   | 压缩后是否自动重试        |
+| ------------- | -------------------------------------- | ------------------------- |
+| **manual**    | 用户 `/compact`                        | 否                        |
+| **threshold** | 上下文超过设置阈值                     | 否                        |
+| **overflow**  | 模型报窗口溢出，或可恢复的 length stop | 通常会 `willRetry = true` |
 
-## 核心数据流
+扩展事件带 `reason` 和 `willRetry`，用来区分这三种情况。
 
+## 它在循环的哪一步发生？
+
+有三条时机，不要只记“发送前”：
+
+```text
+1. prompt() 发送新问题之前
+     └─ 上一条 assistant 已经过大，或上次生成被中断
+
+2. 一轮工具执行完、下一轮 LLM 之前
+     └─ Agent.prepareNextTurn → AgentSession._compactBeforeNextAssistantResponse()
+     └─ 避免超大 tool result 先被送给模型再溢出
+
+3. agent_end 之后的 _handlePostAgentRun()
+     └─ overflow 时去掉失败的 assistant 消息，压缩，再 agent.continue()
 ```
-触发压缩
-  │
-  ▼
-prepareCompaction(pathEntries, settings)
-  │
-  ▼
-找到 cut point（切割点）
-  │
-  ▼
-生成 CompactionPreparation
-  ├── messagesToSummarize — 需要被摘要的消息
-  ├── turnPrefixMessages  — 若切割点在一轮中间，需要单独摘要的前缀
-  ├── firstKeptEntryId    — 保留后缀的起始条目 ID
-  ├── tokensBefore        — 压缩前的 token 数
-  └── previousSummary     — 上一次的摘要
-  │
-  ▼
-触发 session_before_compact 扩展事件（可取消或提供自定义摘要）
-  │
-  ▼
-compact(preparation, models, model, customInstructions, signal)
-  │
-  ▼
-将摘要写入 session（JSONL 中的 compaction entry）
-  │
-  ▼
-触发 session_compact 扩展事件
-  │
-  ▼
-触发 compaction_end 事件
-```
+
+第 2 条是后来补上的重要边界。阈值压缩不一定要等整段任务结束。
 
 ## prepareCompaction：找到切割点
 
-**文件**：`packages/coding-agent/src/core/compaction/compaction.ts`（coding-agent 会话整合层）
+**文件**：`packages/coding-agent/src/core/compaction/compaction.ts`
 
 ```typescript
-export function prepareCompaction(
-  pathEntries: SessionEntry[],
-  settings: CompactionSettings,
-): CompactionPreparation | undefined {
-  // 1. 如果最后一条已经是 compaction，无需再压缩
-  if (pathEntries.length > 0 && pathEntries[pathEntries.length - 1].type === 'compaction') {
-    return undefined;
-  }
-
-  // 2. 找到上一次 compaction 的位置
-  let prevCompactionIndex = -1;
-  for (let i = pathEntries.length - 1; i >= 0; i--) {
-    if (pathEntries[i].type === 'compaction') {
-      prevCompactionIndex = i;
-      break;
-    }
-  }
-
-  // 3. 计算 cut point
-  const cutPoint = findCutPoint(pathEntries, settings, prevCompactionIndex);
-
-  // 4. 提取需要摘要的消息和保留后缀
-  const messagesToSummarize: AgentMessage[] = [];
-  for (let i = boundaryStart; i < historyEnd; i++) {
-    const msg = getMessageFromEntryForCompaction(pathEntries[i]);
-    if (msg) messagesToSummarize.push(msg);
-  }
-
-  // 5. 若切割点在一轮中间，提取 turn prefix
-  const turnPrefixMessages: AgentMessage[] = [];
-  if (cutPoint.isSplitTurn) {
-    for (let i = cutPoint.turnStartIndex; i < cutPoint.firstKeptEntryId; i++) {
-      const msg = getMessageFromEntryForCompaction(pathEntries[i]);
-      if (msg) turnPrefixMessages.push(msg);
-    }
-  }
-
-  // 6. 提取文件操作记录
-  const fileOps = extractFileOperations(messagesToSummarize, pathEntries, prevCompactionIndex);
-
-  return {
-    firstKeptEntryId,
-    messagesToSummarize,
-    turnPrefixMessages,
-    isSplitTurn: cutPoint.isSplitTurn,
-    tokensBefore,
-    previousSummary,
-    fileOps,
-    settings,
-  };
+export interface CompactionPreparation {
+  firstKeptEntryId: string;
+  messagesToSummarize: AgentMessage[];
+  turnPrefixMessages: AgentMessage[];
+  isSplitTurn: boolean;
+  tokensBefore: number;
+  previousSummary?: string;
+  fileOps: FileOperations;
+  settings: CompactionSettings;
 }
 ```
 
-### CompactionPreparation 字段
+步骤可以记成：
 
-| 字段                  | 含义                               |
-| --------------------- | ---------------------------------- |
-| `messagesToSummarize` | 需要被摘要的历史消息               |
-| `turnPrefixMessages`  | 当一轮被切分时，该轮前缀单独摘要   |
-| `firstKeptEntryId`    | 保留后缀的第一条条目 ID            |
-| `isSplitTurn`         | 是否切割在一轮中间                 |
-| `tokensBefore`        | 压缩前的上下文 token 数            |
-| `previousSummary`     | 上一次的摘要（用于增量摘要）       |
-| `fileOps`             | 从消息中提取的文件操作记录         |
-| `settings`            | 压缩配置（保留 token、摘要模型等） |
+1. 最后一条已经是 compaction → 不再压
+2. 找到上一次 compaction，作为新的历史起点
+3. `findCutPoint()` 按 `keepRecentTokens` 决定后缀从哪开始
+4. 切割点落在一轮中间时，前缀单独摘要（`isSplitTurn`）
+5. 抽出读过/改过的文件列表，写进摘要细节
+
+`firstKeptEntryId` 是 JSONL 里第一条被保留的条目。扩展自定义摘要时也要带着它。
 
 ## compact：生成摘要
 
-**文件**：`packages/agent/src/harness/compaction/compaction.ts`（通用 Agent Harness）
+coding-agent 的 `compact()` 不接收 `Models` 实例。它拿当前 `model`、可选 `apiKey` / `streamFn`，去调 summarizer：
 
 ```typescript
 export async function compact(
   preparation: CompactionPreparation,
-  models: Models,
   model: Model<any>,
+  apiKey: string | undefined,
+  headers?: Record<string, string>,
   customInstructions?: string,
   signal?: AbortSignal,
   thinkingLevel?: ThinkingLevel,
-): Promise<Result<CompactionResult, CompactionError>> {
-  const {
-    firstKeptEntryId,
-    messagesToSummarize,
-    turnPrefixMessages,
-    isSplitTurn,
-    tokensBefore,
-    previousSummary,
-    fileOps,
-    settings,
-  } = preparation;
-
-  let summary: string;
-
-  if (isSplitTurn && turnPrefixMessages.length > 0) {
-    // 同时生成历史摘要和 turn prefix 摘要
-    const [historyResult, turnPrefixResult] = await Promise.all([
-      generateSummary(
-        messagesToSummarize,
-        models,
-        model,
-        settings.reserveTokens,
-        signal,
-        customInstructions,
-        previousSummary,
-        thinkingLevel,
-      ),
-      generateTurnPrefixSummary(turnPrefixMessages, models, model, settings.reserveTokens, signal, thinkingLevel),
-    ]);
-    summary = combineSummaries(historyResult.value, turnPrefixResult.value);
-  } else {
-    const result = await generateSummary(
-      messagesToSummarize,
-      models,
-      model,
-      settings.reserveTokens,
-      signal,
-      customInstructions,
-      previousSummary,
-      thinkingLevel,
-    );
-    summary = result.value;
-  }
-
-  return ok({
-    summary,
-    firstKeptEntryId,
-    tokensBefore,
-    estimatedTokensAfter: estimateTokens(summary),
-    details: { fileOps },
-  });
-}
-```
-
-`generateSummary()` 会把 `messagesToSummarize` 序列化成文本，然后调用 summarizer 模型生成摘要。
-
-## AgentSession 中的压缩事件
-
-**文件**：`packages/coding-agent/src/core/agent-session.ts`
-
-### 手动压缩
-
-```typescript
-async compact(customInstructions?: string): Promise<CompactionResult> {
-  this._disconnectFromAgent();
-  await this.abort();
-  this._compactionAbortController = new AbortController();
-  this._emit({ type: "compaction_start", reason: "manual" });
-
+  streamFn?: StreamFn,
   // ...
-  const result: CompactionResult = {
-    summary,
-    firstKeptEntryId,
-    tokensBefore,
-    estimatedTokensAfter,
-    details,
-  };
-  this._emit({ type: "compaction_end", reason: "manual", result, aborted: false, willRetry: false });
-  return result;
-}
+): Promise<CompactionResult>;
 ```
 
-### 自动压缩
+如果一轮被切开，会并行生成“历史摘要”和“turn prefix 摘要”，再拼成一段。
 
-```typescript
-private async _checkCompaction(assistantMessage: AssistantMessage, willRetry: boolean): Promise<boolean> {
-  // Case 1: Overflow — LLM 返回 context overflow
-  if (assistantMessage.stopReason === "error" && isContextOverflowError(assistantMessage)) {
-    // 移除导致 overflow 的 assistant 消息，然后压缩并自动重试
-    const messages = this.agent.state.messages;
-    if (messages.length > 0 && messages[messages.length - 1].role === "assistant") {
-      this.agent.state.messages = messages.slice(0, -1);
-    }
-    return await this._runAutoCompaction("overflow", willRetry);
-  }
+Harness 那边的 `compact(preparation, models, model, ...)` 是另一份 API，给 `AgentHarness` 用。读 `pi` 交互模式时可以先不看。
 
-  // Case 2: Threshold — 上下文超过阈值
-  const contextTokens = calculateContextTokens(assistantMessage.usage);
-  if (shouldCompact(contextTokens, contextWindow, settings)) {
-    return await this._runAutoCompaction("threshold", false);
-  }
+## AgentSession 里的事件
 
-  return false;
-}
+手动压缩：
+
+```text
+compaction_start { reason: "manual" }
+  → session_before_compact
+  → compact() 或扩展提供的摘要
+  → 写入 compaction 条目
+  → session_compact 或 session_compact_failed
+  → compaction_end
 ```
 
-### 事件字段
+自动压缩同样带 `reason`。`overflow` 且 assistant 不是正常 `stop` 时，`willRetry` 为 true，随后 `agent.continue()`。
 
-```typescript
-// compaction_start
-{ type: "compaction_start", reason: "manual" | "threshold" | "overflow" }
+失败或取消会发 `session_compact_failed`，里面有 `aborted`、`errorMessage`、`fromExtension`。
 
-// compaction_end
-{
-  type: "compaction_end",
-  reason: "manual" | "threshold" | "overflow",
-  result?: CompactionResult,
-  aborted: boolean,
-  willRetry: boolean,
-  errorMessage?: string,
-}
-```
-
-## 扩展钩子：session_before_compact / session_compact
-
-扩展可以监听压缩事件，提供自定义摘要或执行额外逻辑。
-
-### session_before_compact
+## 扩展钩子
 
 ```typescript
 pi.on('session_before_compact', async (event, ctx) => {
-  const { preparation, branchEntries, customInstructions, reason, willRetry, signal } = event;
+  // event.reason: "manual" | "threshold" | "overflow"
+  // event.willRetry
+  // event.preparation.firstKeptEntryId
 
-  // reason: "manual" | "threshold" | "overflow"
-  // willRetry: 压缩后是否自动重试（overflow 时为 true）
-
-  // 取消压缩
   return { cancel: true };
-
-  // 或提供自定义摘要
+  // 或
   return {
     compaction: {
       summary: '自定义摘要...',
-      firstKeptEntryId: preparation.firstKeptEntryId,
-      tokensBefore: preparation.tokensBefore,
+      firstKeptEntryId: event.preparation.firstKeptEntryId,
+      tokensBefore: event.preparation.tokensBefore,
       details: {},
     },
   };
 });
 ```
 
-### session_compact
+`session_compact` 在写入成功后触发。扩展可以用 `reason` 做不同 UI，或在 `willRetry` 时保存临时状态。
 
-```typescript
-pi.on('session_compact', async (event, ctx) => {
-  // event.compactionEntry — 保存的 compaction 条目
-  // event.fromExtension — 是否由扩展提供摘要
-  // event.reason — 触发原因
-  // event.willRetry — 是否自动重试
-});
-```
+## 会话分支
 
-通过 `reason` 和 `willRetry`，扩展可以：
+Pi 的会话是树。每次用户从历史某处回复，都会长出新节点。`/fork` 显式从某条消息分叉。
 
-- 对 `overflow` 做更激进的摘要策略
-- 对 `manual` 展示不同的 UI 反馈
-- 在 `willRetry = true` 时保存临时状态
+被放弃的分支可以生成摘要，帮助用户回忆“那条路做过什么”。coding-agent 的实现在：
 
-## 会话分支与分支摘要
+`packages/coding-agent/src/core/compaction/branch-summarization.ts`
 
-Pi 的会话是树形结构，每次用户回复都会形成新的节点。`/fork` 可以从历史任意消息创建新分支。
+结果通常包括：
 
-### 分支结构
+- `summary`：这段分支的文字摘要
+- 读过/改过的文件列表
 
-```
-session.jsonl
-├── message (user)
-├── message (assistant)
-├── message (user)
-│   └── fork A
-│       ├── message (assistant)
-│       └── message (user)
-└── message (assistant) [当前分支]
-```
-
-### 分支摘要
-
-当一个分支被放弃（例如 fork 出去但不再访问），Pi 可以为其生成摘要，帮助用户理解这条分支上发生了什么。
-
-**文件**：`packages/agent/src/harness/compaction/branch-summarization.ts`
-
-```typescript
-export async function generateBranchSummary(
-  entries: SessionTreeEntry[],
-  options: GenerateBranchSummaryOptions,
-): Promise<Result<BranchSummaryResult, BranchSummaryError>> {
-  const { models, model, signal, customInstructions, reserveTokens = 16384 } = options;
-
-  const contextWindow = model.contextWindow || 128000;
-  const tokenBudget = contextWindow - reserveTokens;
-
-  // 准备分支条目，截断到 token 预算内
-  const { messages, fileOps } = prepareBranchEntries(entries, tokenBudget);
-
-  // 序列化对话
-  const conversationText = serializeConversation(convertToLlm(messages));
-
-  // 调用 summarizer 模型
-  const response = await models.completeSimple(model, context, options);
-
-  return ok({
-    summary: response.contentText,
-    readFiles: fileOps.readFiles,
-    modifiedFiles: fileOps.modifiedFiles,
-  });
-}
-```
-
-分支摘要的结果会包含：
-
-- `summary`：分支内容的文字摘要
-- `readFiles`：分支中读取过的文件
-- `modifiedFiles`：分支中修改过的文件
+Harness 里也有同名函数，同样是另一套调用约定。
 
 ## 会话格式：JSONL
 
 **文件**：`packages/coding-agent/src/core/session-manager.ts`
 
-Pi 的会话是每行一条 JSON 的格式（JSONL）：
-
 ```jsonl
-{"type":"session_start","id":"abc123","cwd":"/path/to/project","timestamp":1234567890}
-{"type":"message","message":{"role":"user","content":[{"type":"text","text":"hello"}]}}
-{"type":"message","message":{"role":"assistant","content":[{"type":"text","text":"Hi!"}]}}
+{"type":"session_start","id":"abc123","cwd":"/path/to/project","timestamp":"..."}
+{"type":"message","id":"...","parentId":"...","message":{"role":"user","content":[{"type":"text","text":"hello"}]}}
+{"type":"message","id":"...","parentId":"...","message":{"role":"assistant","content":[{"type":"text","text":"Hi!"}]}}
 {"type":"compaction","summary":"...","firstKeptEntryId":"...","tokensBefore":10000}
-{"type":"session_end","timestamp":1234567893}
 ```
 
-用 JSONL 的好处：
-
-1. **流式写入**：不需要等会话结束才写文件
-2. **崩溃恢复**：即使进程崩溃，已写入的行仍然有效
-3. **增量读取**：可以继续附加，不需要重写整个文件
-4. **大文件友好**：不需要一次性加载到内存
+JSONL 的好处是流式追加、崩溃后已写入的行仍然有效。仓库里还有 sqlite 等 session backend，但默认交互模式仍然是文件 JSONL。
 
 ## 设计要点
 
-1. **压缩不是删除历史**：原始消息仍保存在 session 文件中，只是从 LLM 上下文中移除。
-2. **保留后缀**：最近的几轮对话保持完整，避免丢失当前工作上下文。
-3. **overflow 自动重试**：遇到上下文溢出时，Pi 会移除错误消息、压缩、然后自动继续。
-4. **threshold 不自动重试**：仅提示用户上下文已压缩，由用户决定是否继续。
-5. **扩展可自定义摘要**：通过 `session_before_compact` 提供自己的摘要逻辑。
+1. **压缩不是删历史。** 原文留在 session 文件里，只是不再全部送给模型。
+2. **保留后缀。** 最近工作必须完整，摘要只覆盖更早的部分。
+3. **工具结果过大时，在下一轮 LLM 前压。** 不要等溢出之后再补救。
+4. **overflow 才自动重试。** threshold 只腾地方，由用户或后续输入继续。
+5. **扩展可以取消或替换摘要。** 失败会走 `session_compact_failed`。
 
 ## 下一步
 
-- [核心架构与设计哲学](architecture.md) — 回到高层设计模式
-- [pi-ai：Models 运行时与 Provider 架构](models-runtime.md) — 压缩调用的 summarizer 模型如何被调用
+- [核心架构](architecture.md)
+- [从输入到 LLM 循环](input-to-llm.md)
