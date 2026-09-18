@@ -560,7 +560,7 @@ pi.on('before_agent_start', async (event, ctx) => {
 });
 ```
 
-`systemPromptOptions` 字段为扩展提供了与 Pi 构建系统提示相同的结构化数据。这些集合是可变的。优先修改 `sections`、`selectedTools` 或 `promptGuidelines`：Pi 会把生成的提示区块与模型已有的内容做 diff，然后追加一条系统消息，只修补发生变化的区块。返回 `systemPrompt`，或设置 `forceSystemPrompt`，会用单个无标签的 `preamble` 区块替换整个提示。工具选择的变更会同时改系统提示里的工具说明，以及实际可调用的 Provider 工具；在处理程序内调用 `pi.setActiveTools()` 与修改 `selectedTools` 效果相同。接受会话中途系统消息的模型会在对话中间直接收到补丁，并保留已缓存的前缀；其他模型会得到重放后的提示作为系统提示，每次变更会有一次缓存未命中。
+`systemPromptOptions` 字段为扩展提供了与 Pi 构建系统提示相同的结构化数据。这些集合是可变的。优先修改 `sections`、`selectedTools` 或 `promptGuidelines`：Pi 会把生成的提示区块与模型已有的内容做 diff，然后追加一条系统消息，只修补发生变化的区块。返回 `systemPrompt`，或设置 `forceSystemPrompt`，会为本轮运行替换整个提示：每个 Provider 都会收到该强制文本作为其前置系统提示（变更时会造成一次缓存未命中），会话记录则继续记录结构化区块。工具选择的变更会同时改系统提示里的工具说明，以及实际可调用的 Provider 工具；在处理程序内调用 `pi.setActiveTools()` 与修改 `selectedTools` 效果相同。接受会话中途系统消息的模型会在对话中间直接收到补丁，并保留已缓存的前缀；其他模型会得到重放后的提示作为系统提示，每次变更会有一次缓存未命中。
 
 在 `before_agent_start` 内部，`event.systemPrompt` 和 `ctx.getSystemPrompt()` 都反映当前处理程序的链式系统提示。后面的 `before_agent_start` 处理程序仍可再次修改它。
 
@@ -906,6 +906,8 @@ pi.on('user_bash', (event, ctx) => {
   return { result: { output: '...', exitCode: 0, cancelled: false, truncated: false } };
 });
 ```
+
+返回 `undefined` 会继续传递给下一个处理程序，如果都没有处理则本地执行。返回有效结果会停止传播：`operations` 通过所提供的后端执行命令，而 `result` 直接记录已完成的命令，不再执行它。
 
 ### 输入事件
 
@@ -1375,7 +1377,16 @@ export default function (pi: ExtensionAPI) {
 
 ### pi.on(event, handler)
 
-订阅事件。事件类型和返回值请参见 [事件](#事件)。
+订阅事件。返回取消订阅函数，只移除本次注册。事件类型和返回值请参见 [事件](#事件)。
+
+```typescript
+const unsubscribe = pi.on('agent_end', async (event) => {
+  unsubscribe();
+  await updateIntegration(event.messages);
+});
+```
+
+处理程序按扩展加载顺序运行，同一扩展内按注册顺序运行。在一次分发进行中添加或移除处理程序，不影响本次分发。
 
 ### pi.registerTool(definition)
 
