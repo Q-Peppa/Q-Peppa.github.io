@@ -12,6 +12,7 @@
 - [支持的 API 类型](#支持的-api-类型)
 - [Provider 配置](#provider-配置)
 - [模型配置](#模型配置)
+- [Prompt Cache Lifetimes](#prompt-cache-lifetimes)
 - [覆盖内置 Provider](#覆盖内置-provider)
 - [逐模型覆盖](#逐模型覆盖)
 - [Anthropic Messages 兼容性](#anthropic-messages-兼容性)
@@ -209,6 +210,7 @@
 | `maxTokens`        | 否   | `16384`              | 最大输出 Token                                                             |
 | `samplingParams`   | 否   | 省略                 | 按原样合并到每个请求体中的采样参数（见下文）                               |
 | `cost`             | 否   | 全零                 | 每百万 Token 费率，可选请求级输入定价阶梯                                  |
+| `promptCache`      | 否   | 省略                 | 每个保留档位的尽力而为 Prompt 缓存生命周期（秒）（见下文）                 |
 | `compat`           | 否   | Provider 的 `compat` | Provider 兼容性覆盖。当两者都设置时，与 Provider 级别的 `compat` 合并      |
 
 一个成本阶梯提供一套完整的替代费率，并在总输入使用量（`input + cacheRead + cacheWrite`）超过 `inputTokensAbove` 时应用于整个请求。多个阶梯同时匹配时，最高阈值生效。
@@ -237,6 +239,19 @@
 
 - `/model`、`--list-models` 和交互式页脚按模型 `id` 显示条目。
 - 配置的 `name` 用于模型匹配和次要模型详情文本。它不会替换页脚/状态栏中的模型 id。
+
+### Prompt Cache Lifetimes
+
+`promptCache` 说明 Provider 为 pi 可以请求的每个保留档位保留 Prompt 缓存条目的时长（`short` 是默认档位；设置 `PI_CACHE_RETENTION=long` 时使用 `long`）。值以秒为单位，且只是估算：Provider 给出的是范围，请取保守的一端。
+
+```json
+{
+  "id": "claude-sonnet-5",
+  "promptCache": { "short": 300, "long": 3600 }
+}
+```
+
+内置目录为直连 Anthropic 填好了该值（5 分钟 / 1 小时）。其他 Provider（包括直连 OpenAI）在缓存过期和重放行为经过预热验证前没有内置生命周期。某次请求使用的档位在模型上取不到值时，该模型永远不会被预热；自定义模型和 Provider 覆盖可以在明确底层缓存行为后选择启用。详见 [缓存预热](/docs/latest/settings#cache-warming)。
 
 ### 采样参数
 
@@ -362,7 +377,23 @@
 }
 ```
 
-`modelOverrides` 支持每个模型的以下字段：`name`、`reasoning`、`thinkingLevelMap`、`input`、`cost`（部分）、`contextWindow`、`maxTokens`、`samplingParams`（按 key 合并）、`headers`、`compat`。
+`modelOverrides` 支持每个模型的以下字段：`name`、`reasoning`、`thinkingLevelMap`、`input`、`cost`（部分）、`promptCache`（按档位合并）、`contextWindow`、`maxTokens`、`samplingParams`（按 key 合并）、`headers`、`compat`。
+
+用 `promptCache` 覆盖可以通过你知道底层缓存行为的代理启用缓存预热。例如路由到 Anthropic 的 OpenRouter：
+
+```json
+{
+  "providers": {
+    "openrouter": {
+      "modelOverrides": {
+        "anthropic/claude-sonnet-4": {
+          "promptCache": { "short": 300 }
+        }
+      }
+    }
+  }
+}
+```
 
 直接 OpenAI 的 GPT-5.6 Sol、Terra 和 Luna 默认使用 `272000` 上下文窗口，使请求保持在 OpenAI 的短上下文定价阶梯内。要选择使用 OpenAI 的 1.05M 上下文窗口，为每个使用的模型增加它：
 

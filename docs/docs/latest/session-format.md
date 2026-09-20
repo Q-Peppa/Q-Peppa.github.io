@@ -276,6 +276,32 @@ interface SessionEntryBase {
 }
 ```
 
+### UsageEntry
+
+记录归属于模型、但不是助手消息、也不参与 LLM 上下文的用量。`kind` 是标识该操作的任意字符串；例如缓存预热使用 `"cache_warm"`。
+
+```json
+{
+  "type": "usage",
+  "id": "f6g7h8i9",
+  "parentId": "e5f6g7h8",
+  "timestamp": "2024-12-03T14:08:00.000Z",
+  "kind": "cache_warm",
+  "provider": "anthropic",
+  "model": "claude-sonnet-4-5",
+  "usage": {
+    "input": 0,
+    "output": 0,
+    "cacheRead": 50000,
+    "cacheWrite": 0,
+    "totalTokens": 50000,
+    "cost": { "input": 0, "output": 0, "cacheRead": 0.015, "cacheWrite": 0, "total": 0.015 }
+  }
+}
+```
+
+用量条目会计入会话的 Token 和成本总计。Pi 会把它从对话树中隐藏。消费方应把未知的 `kind` 值当作普通用量处理，而不是拒绝。
+
 ### CompactionEntry
 
 当上下文被压缩时创建。存储之前消息的摘要，以及一份完整的系统提示/工具检查点。
@@ -438,7 +464,7 @@ interface SessionEntryBase {
    - `compaction` -> 完整的系统检查点，后接 `compactionSummary`
    - `branch_summary` -> `branchSummary`
    - `custom_message` -> `CustomMessage`
-   - `custom` -> 无上下文消息
+   - `usage` 和 `custom` -> 无上下文消息
 
 压缩摘要替换 `firstKeptEntryId` 之前的条目。压缩前的系统消息会被折叠进完整检查点，而不是从保留的范围中重放。保留的非系统条目以及压缩条目之后的所有条目仍可供 LLM 使用。
 
@@ -464,6 +490,9 @@ for (const line of lines) {
       break;
     case 'branch_summary':
       console.log(`[${entry.id}] Branch from ${entry.fromId}`);
+      break;
+    case 'usage':
+      console.log(`[${entry.id}] Usage (${entry.kind}): ${entry.usage.totalTokens} tokens`);
       break;
     case 'custom':
       console.log(`[${entry.id}] Custom (${entry.customType}): ${JSON.stringify(entry.data)}`);
@@ -513,6 +542,7 @@ for (const line of lines) {
 - `appendMessage(message)` - 追加消息
 - `appendThinkingLevelChange(level)` - 记录 thinking 变更
 - `appendModelChange(provider, modelId)` - 记录模型变更
+- `appendUsage(kind, provider, model, usage)` - 记录对话之外的模型归因用量
 - `appendCompaction(summary, firstKeptEntryId, tokensBefore, details?, fromHook?, usage?)` - 追加压缩
 - `appendCustomEntry(customType, data?)` - 扩展状态（不在上下文中）
 - `appendSessionInfo(name)` - 设置会话显示名称

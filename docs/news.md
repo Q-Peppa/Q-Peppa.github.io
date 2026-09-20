@@ -2,6 +2,162 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.86.0（2026-09-19）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **Prompt 缓存预热** – 用成本感知的刷新在长时间工具运行期间保持有价值的 Prompt 缓存存活，也可选择在空闲时保持。详见 [缓存预热](/docs/latest/settings#cache-warming)。
+- **Bug 上报** – 用 `/bug` 上报问题，可附带脱敏诊断信息、可选的转录或导出的 ZIP 归档。详见 [上报 Bug](/docs/latest/sessions#reporting-bugs)。
+- **感知转录的 Prompt 与工具更新** – 在恢复会话和分支导航后保留指令与工具的变更，同时保留缓存前缀。详见 [`before_agent_start`](/docs/latest/extensions#before_agent_start)。
+- **离线 Radius 模型目录** – 可立即选择 Radius 模型，并在可用时叠加缓存的与实时的目录。详见 [Radius](/docs/latest/providers#radius)。
+- **按模型的压缩预算** – 按模型配置保留 Token 与近期 Token 预算。详见 [按模型覆盖](/docs/latest/compaction#per-model-overrides)。
+
+不兼容变更
+
+- 将来自 `@earendil-works/pi-ai` 的 Provider 流输入从 `Context` 改为规范化的 `TranscriptContext` 值。自定义 Provider 必须通过 `getCurrentSystemPrompt()` 和 `getCurrentTools()` 从 `context.messages` 读取系统提示和工具声明。详见 [自定义流式 API](/docs/latest/custom-provider#custom-streaming-api)。
+- 将来自 `@earendil-works/pi-ai` 的 `ToolCall.arguments` 和 `ToolResultMessage.details` 限制为 JSON 兼容值，把 `ToolResultMessage` 改为条件类型，并使 `JsonValue` 数组只读。
+- `user_bash` 现在失败即关闭：出错或定义的结果无效时会中止命令，不再调用后续处理器或在本地执行。返回 `undefined` 继续传播；否则返回 `{ operations }` 或 `{ result }`（[#9068](https://github.com/earendil-works/pi/issues/9068)）。
+
+新增
+
+- 添加基于转录的会话中途系统提示与工具变更，使指令和工具的更新在恢复会话和分支导航后仍然生效，并在支持的模型上保留缓存前缀。详见 [`before_agent_start`](/docs/latest/extensions#before_agent_start) 和 [条目类型](/docs/latest/session-format#entry-types)（[#9548](https://github.com/earendil-works/pi/pull/9548)）。
+- 为 Fireworks Messages 模型添加来自 `@earendil-works/pi-ai` 的原生延迟工具加载。使用 `ToolSearch` 或 `tool_search` 作为加载器名称来延迟 Prompt 前缀（[#9323](https://github.com/earendil-works/pi/issues/9323)）。
+- 为分支摘要、压缩摘要和 Skill 调用条目添加点击展开/收起。
+- 添加公开的 Radius 模型目录，用于即时和离线的模型选择，并在可用时叠加缓存的与实时的网关目录。
+- 添加 `ctx.modelRegistry.stream()` 和 `streamSimple()`，让扩展能通过已配置的 Provider 发起模型调用，并完成认证解析（[#8964](https://github.com/earendil-works/pi/issues/8964)）。
+- 通过 `compaction.modelOverrides` 添加按模型的 `reserveTokens` 和 `keepRecentTokens` 设置，并以常规压缩设置作为回退（[#8133](https://github.com/earendil-works/pi-mono/issues/8133)）。
+- 添加 `compat.allowedFallbackModels` 配置，用于覆盖或禁用 Anthropic 服务端回退模型（[#9294](https://github.com/earendil-works/pi/issues/9294)）。
+- `pi.on()` 现在返回取消订阅函数，扩展可以移除事件处理器。分发期间添加或移除的处理器对后续分发生效，不影响当前分发（[#8967](https://github.com/earendil-works/pi/issues/8967)）。
+- 导出此前从包入口点遗漏的扩展 hook 事件与结果类型（[#9642](https://github.com/earendil-works/pi/pull/9642)）。
+- 添加 `/bug [description]`，用于向 Pi 开发者上报 bug。报告会打包环境、模型、Provider、扩展和设置元数据（密钥已脱敏）、会话中的助手消息诊断信息，以及可选的会话转录；若不上传转录，则改为由模型撰写一段问题摘要。报告会上传到 Radius（无需登录；登录后会归属到你的账号），也可以导出为 zip 归档，报告 id 会作为 `pi.bug-report` 条目记入会话。崩溃会记录到 `~/.pi/agent/crashes.json`，下次启动时提示一次，并附加到下一次报告；无法解释的错误和重试次数耗尽每会话会提示一次 `/bug`。
+- 添加成本感知的 Prompt 缓存预热，在长时间工具运行期间进行，可选在空闲时也进行，支持可配置模式、模型缓存生命周期元数据、`/session` 诊断、转录提示和 `cache_warming_decision` 扩展事件。详见 [缓存预热](/docs/latest/settings#cache-warming)（[#9668](https://github.com/earendil-works/pi/pull/9668)）。
+
+变更
+
+- 让 `--resume` 的会话结果逐步显示：用文件修改时间优先加载所有目录，并在选择后取消尚未完成的转录读取。
+- 通过按修改时间顺序检查候选会话头部、找到最新匹配会话后停止，缩短 `--continue` 的启动时间。
+- 用内置的 macOS、Windows 和 X11 异步辅助程序替换外部原生剪贴板依赖，同时保留平台命令和 OSC 52 回退（[#9163](https://github.com/earendil-works/pi/pull/9163)）。
+- 用原生子串搜索代替在 JavaScript 中逐字符扫描，降低模糊搜索在长文本上的延迟（来自 `pi-tui`）（[#9267](https://github.com/earendil-works/pi/issues/9267)）。
+- 将压缩、分支摘要和重试的 spinner 移入编辑器边框，与工作指示器并列。自定义编辑器对所有状态 spinner 使用相同的嵌入选项。
+- 内置 `read`、`bash`、`powershell`、`edit` 和 `write` 工具默认启用 strict-prefer JSON-schema 采样，不再需要 `PI_EXPERIMENTAL`。扩展可以用 `constrainedSampling: false` 重新注册工具定义。
+- Bash 和 PowerShell 工具耗时达到一分钟以上时改用「分:秒」格式，必要时显示小时（[#9628](https://github.com/earendil-works/pi/issues/9628)）。
+- 将扩展编译器和内置虚拟模块推迟到加载文件系统扩展时，降低 SDK 的基线导入开销（[#9540](https://github.com/earendil-works/pi/issues/9540)）。
+
+修复
+
+- 修复 GitHub Copilot GPT 模型（包括 GPT-6 Astra）使用 Chat Completions 适配器而非所需的 Responses 适配器的问题（[#9253](https://github.com/earendil-works/pi/pull/9253) 由 [@petrroll](https://github.com/petrroll) 贡献）。
+- 修复来自 `@earendil-works/pi-ai` 的 OpenRouter 和 OpenCode Go 上 DeepSeek V4.1 thinking 等级丢失 Provider effort 元数据的问题（[#9485](https://github.com/earendil-works/pi/issues/9485)）。
+- 修复来自 `@earendil-works/pi-ai` 的无正文 HTTP 400/413 错误（非 Cerebras Provider）被误判为上下文溢出的问题（[#9482](https://github.com/earendil-works/pi/issues/9482)）。
+- 修复来自 `@earendil-works/pi-ai` 的 Vercel AI Gateway 将未签名 thinking 作为助手文本重放的问题（[#9676](https://github.com/earendil-works/pi/issues/9676)）。
+- 修复来自 `@earendil-works/pi-ai` 的 Google Generative AI 和 Vertex AI 在省略 reasoning 或同一 Gemini 系列内模型能力不同时使用不支持的 thinking 等级的问题（[#9455](https://github.com/earendil-works/pi/issues/9455)）。
+- 修复来自 `@earendil-works/pi-ai` 的 Anthropic 兼容中继在返回模型不同时破坏签名 thinking 重放的问题，同时保留回退计价（[#9188](https://github.com/earendil-works/pi/issues/9188)）。
+- 修复来自 `@earendil-works/pi-ai` 的 Amazon Bedrock 一小时缓存写入按五分钟费率计价的问题（[#9457](https://github.com/earendil-works/pi/issues/9457)）。
+- 修复来自 `@earendil-works/pi-ai` 的排空缓冲 `EventStream` 事件时的二次方 CPU 占用（[#9055](https://github.com/earendil-works/pi/issues/9055)）。
+- 修复来自 `@earendil-works/pi-ai` 的 Mistral Medium reasoning 请求对所有支持 reasoning 的 `mistral-medium-*` 模型 ID 使用 `reasoning_effort`，而不是不受支持的 `prompt_mode`（[#8700](https://github.com/earendil-works/pi/issues/8700)）。
+- 修复来自 `@earendil-works/pi-ai` 的 OpenCode 和 OpenCode Go 请求在所有支持的 API 适配器上从 `sessionId` 发送 `x-opencode-session`（[#9326](https://github.com/earendil-works/pi/issues/9326)）。
+- 修复来自 `@earendil-works/pi-ai` 的 OpenAI Codex 请求发送模型的 Off reasoning 等级而不是省略它，同时遵守不支持 Off 映射的情况（[#9191](https://github.com/earendil-works/pi/issues/9191)）。
+- 修复来自 `@earendil-works/pi-ai` 的 Fireworks 未签名 thinking 重放和 reasoning 等级选择，改用目录元数据，并验证了 DeepSeek V4 和 Qwen3.8 的回退、移除了冗余的 GLM 5.2 和 Kimi K3 effort 别名（[#9323](https://github.com/earendil-works/pi/issues/9323)）。
+- 修复来自 `@earendil-works/pi-ai` 的 OpenRouter 请求在启用 Prompt 缓存时，为 Chat Completions 和 Anthropic Messages 模型从 `sessionId` 发送 `x-session-id`（[#9102](https://github.com/earendil-works/pi/issues/9102)）。
+- 修复来自 `@earendil-works/pi-ai` 的 DeepSeek 目录：为 DeepSeek V4.1 Flash 声明 `deepseek-flash` 以替代已停用的 Flash 别名，并刷新 DeepSeek 定价元数据（[#9423](https://github.com/earendil-works/pi/issues/9423)）。
+- 修复来自 `@earendil-works/pi-ai` 的 Mistral 托管的 GLM-5.2 reasoning 请求改用 `reasoning_effort`，而不是被忽略的 `prompt_mode`（[#9375](https://github.com/earendil-works/pi/issues/9375)）。
+- 修复来自 `@earendil-works/pi-ai` 的 OpenAI 兼容 Responses 错误识别实际 Provider，而不是一律标记为 OpenAI 错误（[#9298](https://github.com/earendil-works/pi/issues/9298)）。
+- 修复来自 `@earendil-works/pi-ai` 的 Baseten 请求从 `sessionId` 发送会话亲和性请求头，以支持自动 Prompt 缓存路由（[#9629](https://github.com/earendil-works/pi/issues/9629)）。
+- 修复来自 `@earendil-works/pi-ai` 的 Cloudflare 520 响应的重试分类（[#9627](https://github.com/earendil-works/pi/issues/9627)）。
+- 修复来自 `@earendil-works/pi-ai` 的 Azure 峰值负载临时容量错误的重试分类（[#9669](https://github.com/earendil-works/pi/issues/9669)）。
+- 修复会话树导航与进行中的压缩竞争并替换其进度 UI 的问题（[#9179](https://github.com/earendil-works/pi/pull/9179) 由 [@acmerfight](https://github.com/acmerfight) 贡献）。
+- 修复精确会话 ID 查找扫描完整转录正文而不是读取会话头部的问题（[#9601](https://github.com/earendil-works/pi/pull/9601) 由 [@metaist](https://github.com/metaist) 贡献）。
+- 修复对同一批被丢弃的块重复显示 Anthropic thinking 丢弃提示的问题，并缩短提示，同时把详情保留在会话中（[#9391](https://github.com/earendil-works/pi/issues/9391)）。
+- 修复运行中途的阈值压缩静默跳过超大尾部工具结果的问题（[#9740](https://github.com/earendil-works/pi/issues/9740)）。
+- 修复被信号终止的本地 shell 命令被报告为成功并带部分输出的问题（[#9577](https://github.com/earendil-works/pi/issues/9577) 由 [@BrendanJMurphy](https://github.com/BrendanJMurphy) 贡献）。
+- 修复终端忽略 OSC 52 回退写入时本地剪贴板失败仍报告成功的问题，并在没有可用剪贴板 backend 时添加平台相关的设置指引（[#9618](https://github.com/earendil-works/pi/issues/9618)）。
+- 将 agent 级重试退避上限设为 `retry.maxAgentDelayMs`（默认 60 秒），使长时间的持续瞬时故障期间重试仍保持响应（[#8826](https://github.com/earendil-works/pi/issues/8826)）。
+- 修复直接 RPC `steer` 和 `follow_up` 命令绕过扩展 `input` 处理器的问题（[#8718](https://github.com/earendil-works/pi/issues/8718)）。
+- 修复登录后因未等待目录发现而过早报模型缺失的问题。Radius 现在默认使用 `balanced`，必要时回退到第一个可用的 Radius 模型。
+- 修复全屏模式下为渲染零行的自定义 footer 预留空行的问题（[#8919](https://github.com/earendil-works/pi/issues/8919)）。
+- 修复没有参数 Schema 的扩展工具在注册时才被拒绝，而不是破坏 Provider 请求（[#9300](https://github.com/earendil-works/pi/issues/9300)）。
+- 修复在带会话中途系统消息的模型上，`before_agent_start` 处理器返回 `systemPrompt`（以及 `forceSystemPrompt`）的行为：强制提示现在作为 Provider 的前置系统提示发送，而不是在原始提示之后追加为区块补丁。
+- 修复加载的 llama.cpp 模型在 `enable_thinking` 对话模板下忽略 Pi thinking 等级的问题（[#9528](https://github.com/earendil-works/pi/issues/9528)）。
+- 修复取消竞态可能启动自动压缩、留下过期重试状态，或在等待摘要认证时错过取消的问题（[#9340](https://github.com/earendil-works/pi/issues/9340)、[#9777](https://github.com/earendil-works/pi/issues/9777)）。
+- 修复异步 Kitty 图片转换替换较新的部分工具输出图片的问题（[#8743](https://github.com/earendil-works/pi/pull/8743) 由 [@wutongyuonce](https://github.com/wutongyuonce) 贡献）。
+- 修复来自 `pi-tui` 的 Skill 斜杠命令自动补全按 `skill:` 前缀而不是裸 Skill 名排序的问题（[#9120](https://github.com/earendil-works/pi/pull/9120) 由 [@yearth](https://github.com/yearth) 贡献）。
+- 修复来自 `pi-tui` 的文件自动补全边界和 CJK 标点附近的路径引用问题（[#9746](https://github.com/earendil-works/pi/pull/9746) 由 [@haoqixu](https://github.com/haoqixu) 贡献）。
+- 修复来自 `pi-tui` 的 LaTeX 旧式字体切换回退为原始源码、`cases` 布局未围绕周围公式居中，以及不支持的和嵌套的显示脚标竖直排布的问题（[#8827](https://github.com/earendil-works/pi/issues/8827)、[#9564](https://github.com/earendil-works/pi/issues/9564)、[#7929](https://github.com/earendil-works/pi/issues/7929)）。
+- 修复来自 `pi-tui` 的全屏 Kitty 图片在 WezTerm 中被后续行清除擦除的问题（[#9169](https://github.com/earendil-works/pi/issues/9169)）。
+
+移除
+
+- 在 GPT-5.4 和 GPT-5.4 mini 不可用后，从 OpenAI Codex 选择中移除这两个模型（来自 `@earendil-works/pi-ai`）（[#9394](https://github.com/earendil-works/pi/issues/9394)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+不兼容变更
+
+- 将面向 Provider 的 `ProviderStreams` 和 `StreamFunction` 输入从 `Context` 改为规范化的 `TranscriptContext` 值。系统提示和工具声明现在位于转录系统消息中；自定义 Provider 必须用 `getCurrentSystemPrompt()` 和 `getCurrentTools()` 读取它们。详见 [系统消息](https://github.com/earendil-works/pi/blob/main/packages/ai/README.md#system-messages)。
+- 将 `ToolCall.arguments` 和 `ToolResultMessage.details` 限制为 JSON 兼容值，把 `ToolResultMessage` 改为条件类型，并使 `JsonValue` 数组只读。
+
+新增
+
+- 添加基于转录的会话中途系统提示与工具变更，在支持的模型上原生重放，其他 Provider 则自动折叠。详见 [系统消息](https://github.com/earendil-works/pi/blob/main/packages/ai/README.md#system-messages)（[#9548](https://github.com/earendil-works/pi/pull/9548)）。
+- 添加生成的公开 Radius 模型目录，用于同步 API 查询，并在运行时叠加缓存的与实时的网关目录。
+- 为 Fireworks Messages 模型启用原生延迟工具加载。使用 `ToolSearch` 或 `tool_search` 作为加载器名称来延迟 Prompt 前缀（[#9323](https://github.com/earendil-works/pi/issues/9323)）。
+- 添加 `RetryPolicy.maxAgentDelayMs` 支持，用于限制摘要调用的共享助手重试退避（[#8826](https://github.com/earendil-works/pi/issues/8826)）。
+- 添加 `Model.promptCache` 生命周期元数据，用于短期和长期保留档位，以支持 Prompt 缓存预热的决策（[#9668](https://github.com/earendil-works/pi/pull/9668)）。
+
+修复
+
+- 修复 GitHub Copilot GPT 模型（包括 GPT-6 Astra）使用 Chat Completions 适配器而非所需的 Responses 适配器的问题（[#9253](https://github.com/earendil-works/pi/pull/9253) 由 [@petrroll](https://github.com/petrroll) 贡献）。
+- 修复 OpenRouter 和 OpenCode Go 上 DeepSeek V4.1 thinking 等级丢失 Provider effort 元数据的问题（[#9485](https://github.com/earendil-works/pi/issues/9485)）。
+- 修复无正文 HTTP 400/413 错误（非 Cerebras Provider）被误判为上下文溢出的问题（[#9482](https://github.com/earendil-works/pi/issues/9482)）。
+- 修复 Vercel AI Gateway 将未签名 thinking 作为助手文本重放的问题（[#9676](https://github.com/earendil-works/pi/issues/9676)）。
+- 修复 Google Generative AI 和 Vertex AI 在省略 reasoning 或同一 Gemini 系列内模型能力不同时使用不支持的 thinking 等级的问题（[#9455](https://github.com/earendil-works/pi/issues/9455)）。
+- 修复 Anthropic 兼容中继在返回模型不同时破坏签名 thinking 重放的问题，同时保留回退计价（[#9188](https://github.com/earendil-works/pi/issues/9188)）。
+- 修复 Amazon Bedrock 一小时缓存写入按五分钟费率计价的问题（[#9457](https://github.com/earendil-works/pi/issues/9457)）。
+- 修复排空缓冲 `EventStream` 事件时的二次方 CPU 占用（[#9055](https://github.com/earendil-works/pi/issues/9055)）。
+- 修复 Mistral Medium reasoning 请求对所有支持 reasoning 的 `mistral-medium-*` 模型 ID 使用 `reasoning_effort`，而不是不受支持的 `prompt_mode`（[#8700](https://github.com/earendil-works/pi/issues/8700)）。
+- 修复 OpenCode 和 OpenCode Go 请求在所有支持的 API 适配器上从 `sessionId` 发送 `x-opencode-session`（[#9326](https://github.com/earendil-works/pi/issues/9326)）。
+- 修复 OpenAI Codex 请求发送模型的 Off reasoning 等级而不是省略它，同时遵守不支持 Off 映射的情况（[#9191](https://github.com/earendil-works/pi/issues/9191)）。
+- 修复 Fireworks 未签名 thinking 重放和 reasoning 等级选择，改用目录元数据，并验证了 DeepSeek V4 和 Qwen3.8 的回退、移除了冗余的 GLM 5.2 和 Kimi K3 effort 别名（[#9323](https://github.com/earendil-works/pi/issues/9323)）。
+- 修复 OpenRouter 请求在启用 Prompt 缓存时，为 Chat Completions 和 Anthropic Messages 模型从 `sessionId` 发送 `x-session-id`（[#9102](https://github.com/earendil-works/pi/issues/9102)）。
+- 修复 DeepSeek 目录：为 DeepSeek V4.1 Flash 声明 `deepseek-flash` 以替代已停用的 Flash 别名，并刷新 DeepSeek 定价元数据（[#9423](https://github.com/earendil-works/pi/issues/9423)）。
+- 修复 Mistral 托管的 GLM-5.2 reasoning 请求改用 `reasoning_effort`，而不是被忽略的 `prompt_mode`（[#9375](https://github.com/earendil-works/pi/issues/9375)）。
+- 修复 OpenAI 兼容 Responses 错误识别实际 Provider，而不是一律标记为 OpenAI 错误（[#9298](https://github.com/earendil-works/pi/issues/9298)）。
+- 修复 Baseten 请求从 `sessionId` 发送会话亲和性请求头，以支持自动 Prompt 缓存路由（[#9629](https://github.com/earendil-works/pi/issues/9629)）。
+- 修复 Cloudflare 520 响应的重试分类（[#9627](https://github.com/earendil-works/pi/issues/9627)）。
+- 修复 Azure 峰值负载临时容量错误的重试分类（[#9669](https://github.com/earendil-works/pi/issues/9669)）。
+
+移除
+
+- 在 GPT-5.4 和 GPT-5.4 mini 对 ChatGPT 账号不可用后，从 OpenAI Codex 目录中移除这两个模型（[#9394](https://github.com/earendil-works/pi/issues/9394)）。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+新增
+
+- 通过导出的 `getNativeClipboard()` API 添加内置的 macOS、Windows 和 X11 异步原生剪贴板读取器，替换消费方使用的外部原生剪贴板依赖（[#9163](https://github.com/earendil-works/pi/pull/9163)）。
+
+变更
+
+- 用原生子串搜索代替在 JavaScript 中逐字符扫描，降低模糊搜索在长文本上的延迟（[#9267](https://github.com/earendil-works/pi/issues/9267)）。
+
+修复
+
+- 修复 LaTeX 旧式字体切换回退为原始源码、`cases` 布局未围绕周围公式居中，以及不支持的和嵌套的显示脚标竖直排布的问题（[#8827](https://github.com/earendil-works/pi/issues/8827)、[#9564](https://github.com/earendil-works/pi/issues/9564)、[#7929](https://github.com/earendil-works/pi/issues/7929)）。
+- 修复全屏剪贴板失败时把可操作的 backend 错误信息藏在通用提示之后的问题，并把失败提示延长到五秒（[#9618](https://github.com/earendil-works/pi/issues/9618)）。
+- 修复全屏 Kitty 图片在 WezTerm 中被后续行清除擦除的问题（[#9169](https://github.com/earendil-works/pi/issues/9169)）。
+- 修复 Skill 斜杠命令自动补全按 `skill:` 前缀而不是裸 Skill 名排序的问题（[#9120](https://github.com/earendil-works/pi/pull/9120) 由 [@yearth](https://github.com/yearth) 贡献）。
+- 修复文件自动补全边界和 CJK 标点附近的路径引用问题（[#9746](https://github.com/earendil-works/pi/pull/9746) 由 [@haoqixu](https://github.com/haoqixu) 贡献）。
+
+</details>
+
 ## v0.85.1（2026-09-05）
 
 <details>

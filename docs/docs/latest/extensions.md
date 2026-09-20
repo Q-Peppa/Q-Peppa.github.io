@@ -736,6 +736,25 @@ pi.on('after_provider_response', (event, ctx) => {
 
 标头的可用性取决于 Provider 和传输层。抽象 HTTP 响应的 Provider 可能不会暴露标头。
 
+#### cache_warming_decision
+
+在每次 Prompt 缓存刷新前触发，此时已填入 pi 的决定。事件只携带 pi 的成本估算；其他信息请用 `ctx.model`、`ctx.isIdle()` 和 `ctx.getContextUsage()`。
+
+```typescript
+pi.on('cache_warming_decision', (event, ctx) => {
+  // event.warmCost: 本次刷新的价格
+  // event.missCost: 如果该缓存条目丢失，下一次请求的额外价格
+  // event.continuationProbability: pi 对请求能否及时到达的估计
+  // event.action: "warm" | "stop"，pi 的决定
+
+  if (ctx.model?.provider === 'my-provider') {
+    return { action: 'stop' };
+  }
+});
+```
+
+返回 `{ action: "warm" }` 或 `{ action: "stop" }` 可以覆盖 pi 的决定；最后一个返回 action 的处理器生效。`"stop"` 会结束预热，直到下一次真实请求。
+
 ### 模型事件
 
 #### model_select

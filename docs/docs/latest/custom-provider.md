@@ -730,6 +730,9 @@ interface ProviderModelConfig {
     cacheWrite: number;
   };
 
+  /** 每个保留档位的尽力而为 Prompt 缓存生命周期（秒）。未设置则禁用缓存预热。 */
+  promptCache?: { short?: number; long?: number };
+
   /** 最大上下文窗口大小（Token）。 */
   contextWindow: number;
 

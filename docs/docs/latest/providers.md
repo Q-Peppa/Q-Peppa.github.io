@@ -57,7 +57,7 @@ Anthropic 订阅认证适用于 Claude Pro/Max 账户。第三方工具的使用
 
 ### Radius
 
-Radius 是一个动态 `pi-messages` 网关。`/login radius` 将 OAuth 令牌存储在 `auth.json` 中；网关目录独立刷新并缓存在 `models-store.json` 中。自定义 Radius 网关可以在 `models.json` 中通过 `"oauth": "radius"` 和网关 `baseUrl` 声明。
+Radius 是一个 `pi-messages` 网关。Pi 内置公开的 Radius 模型目录，用于即时和离线的模型查找，并在认证后用生效的网关目录叠加它。`/login radius` 将 OAuth 令牌存储在 `auth.json` 中；刷新后的目录缓存在 `models-store.json` 中。自定义 Radius 网关可以在 `models.json` 中通过 `"oauth": "radius"` 和网关 `baseUrl` 声明；它们不会继承公开的 `radius.pi.dev` 目录。
 
 ## API Keys
 

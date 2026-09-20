@@ -88,6 +88,7 @@ const powershellTool = createPowerShellTool(cwd, {
 | `PI_TELEMETRY`                | 覆盖安装/更新遥测和 Provider 归因请求头：`1`/`true`/`yes` 或 `0`/`false`/`no`                                                      |
 | `PI_CACHE_RETENTION`          | 设置为 `long` 以在支持的 Provider 上启用扩展 prompt 缓存                                                                           |
 | `PI_SHARE_VIEWER_URL`         | 覆盖 `/share` 使用的基础 URL                                                                                                       |
+| `PI_RADIUS_GATEWAY`           | 覆盖 `/bug` 上传和 Radius 中继连接使用的 Radius 网关源                                                                             |
 | `PI_HARDWARE_CURSOR`          | 设置为 `1` 以显示硬件光标；参见 [Terminal setup](/docs/latest/terminal-setup)                                                      |
 | `PI_HYPERLINKS`               | 用 `1`、`0` 或 `auto` 覆盖 OSC 8 超链接检测                                                                                        |
 | `PI_IMAGE_PROTOCOL`           | 用 `kitty`、`iterm2`、`none` 或 `auto` 覆盖内联图片检测                                                                            |

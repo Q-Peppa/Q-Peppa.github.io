@@ -27,15 +27,38 @@ Pi 使用 JSON 设置文件，项目级配置优先于全局配置。
 
 ### 模型和思维（Model & Thinking）
 
-| 设置项                 | 类型    | 默认值  | 说明                                                                                                                                                                                      |
-| ---------------------- | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `defaultProvider`      | string  | -       | 启动 Provider，如 `"anthropic"`、`"openai"`（在 `/model` 中按 Ctrl+S 保存，或手动编辑）                                                                                                   |
-| `defaultModel`         | string  | -       | 启动模型 ID（在 `/model` 中按 Ctrl+S 保存，或手动编辑）                                                                                                                                   |
-| `defaultThinkingLevel` | string  | -       | 启动 thinking level（在 `/thinking` 中按 Ctrl+S 保存，或手动编辑）：`"off"`、`"minimal"`、`"low"`、`"medium"`、`"high"`、`"xhigh"`、`"max"`                                               |
-| `modelThinkingLevels`  | object  | -       | 按模型的启动 thinking level，以 `"provider/modelId"` 为键；可在 `/settings` → 每个模型的默认 thinking level 中配置，或手动编辑                                                            |
-| `hideThinkingBlock`    | boolean | `false` | 是否隐藏 thinking block                                                                                                                                                                   |
-| `showCacheMissNotices` | boolean | `false` | 显示显著的 Prompt 缓存未命中、压缩或分支摘要使用，以及 Provider 恢复诊断（如被丢弃的 Anthropic thinking 块）的转录通知                                                                    |
-| `thinkingBudgets`      | object  | -       | 每个 thinking level 的自定义 Token 预算。Anthropic、Google 和 Bedrock 原生使用这些预算。OpenAI 兼容模型在设置 `compat.thinkingTokenBudgetField`（或 `supportsThinkingTokenBudget`）时使用 |
+| 设置项                 | 类型    | 默认值        | 说明                                                                                                                                                                                      |
+| ---------------------- | ------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `defaultProvider`      | string  | -             | 启动 Provider，如 `"anthropic"`、`"openai"`（在 `/model` 中按 Ctrl+S 保存，或手动编辑）                                                                                                   |
+| `defaultModel`         | string  | -             | 启动模型 ID（在 `/model` 中按 Ctrl+S 保存，或手动编辑）                                                                                                                                   |
+| `defaultThinkingLevel` | string  | -             | 启动 thinking level（在 `/thinking` 中按 Ctrl+S 保存，或手动编辑）：`"off"`、`"minimal"`、`"low"`、`"medium"`、`"high"`、`"xhigh"`、`"max"`                                               |
+| `modelThinkingLevels`  | object  | -             | 按模型的启动 thinking level，以 `"provider/modelId"` 为键；可在 `/settings` → 每个模型的默认 thinking level 中配置，或手动编辑                                                            |
+| `hideThinkingBlock`    | boolean | `false`       | 是否隐藏 thinking block                                                                                                                                                                   |
+| `showCacheMissNotices` | boolean | `false`       | 显示显著的 Prompt 缓存未命中、成功的缓存预热用量、压缩或分支摘要用量，以及 Provider 恢复诊断（如被丢弃的 Anthropic thinking 块）的转录通知                                                |
+| `thinkingBudgets`      | object  | -             | 每个 thinking level 的自定义 Token 预算。Anthropic、Google 和 Bedrock 原生使用这些预算。OpenAI 兼容模型在设置 `compat.thinkingTokenBudgetField`（或 `supportsThinkingTokenBudget`）时使用 |
+| `cacheWarming`         | string  | `"streaming"` | Prompt 缓存预热模式：`"off"`、`"streaming"` 或 `"idle"`。仅全局设置。                                                                                                                     |
+
+#### Cache Warming
+
+Provider 在一段时间没有活动后会丢弃 Prompt 缓存条目，因此暂停后的第一次请求要重新支付完整的输入价格。缓存预热会在过期前不久用一 Token 的输出预算重发上一次请求：
+
+- `"off"` 禁用预热。
+- `"streaming"` 在长时间工具执行期间保护昂贵的缓存前缀，并在 agent 稳定下来后立即停止。
+- `"idle"` 还会在等待你下一条 Prompt 时考虑刷新，使用从真实用量测得的固定 15% 继续概率。
+
+```json
+{
+  "cacheWarming": "idle"
+}
+```
+
+只有当「预计避免的缓存未命中成本」减去刷新成本后仍至少有 $0.05 的预期节省时，才会发送刷新。agent 运行期间使用 100% 的继续概率。`/session` 会显示下一次决策、继续概率、预期节省、阈值和估算成本。启用缓存未命中通知后，每次成功的刷新都会带成本出现在转录中；通知会标明扩展的覆盖。
+
+上下文变化（切换模型、压缩、分支导航）时预热停止。空闲预热最迟在最后一次真实 Provider 请求后 30 分钟停止；agent 运行期间的预热在 60 分钟后停止。扩展可以通过 [`cache_warming_decision`](/docs/latest/extensions#cache_warming_decision) 事件覆盖每次决策。
+
+每次刷新都按完整上下文的缓存读取加一个输出 Token 计费。用量和成本会出现在会话总计中，但永远不会进入模型上下文。Pi 在缓存生命周期的 90% 处安排候选刷新，同时至少留出十秒才到期。
+
+预热需要已知该模型和请求所用保留档位（`short`，或配合 `PI_CACHE_RETENTION=long` 时的 `long`）的缓存生命周期。内置目录为直连 Anthropic 携带生命周期；自定义模型和其他 Provider 可以在 `models.json` 中用 `promptCache` 声明（见 [Prompt 缓存生命周期](/docs/latest/models#prompt-cache-lifetimes)）。使用基于预算而非自适应 thinking 的 Claude 模型在 thinking 开启时会被跳过，因为 Anthropic 从 `max_tokens` 推导 thinking 预算并以它为消息缓存建键，所以一 Token 的请求无法复现该缓存条目。
 
 #### thinkingBudgets
 
