@@ -2,6 +2,47 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.86.1（2026-09-20）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **Meta Muse Provider** – 用 `/login meta` 以 Meta 账号登录，或使用 `META_API_KEY` 访问 Muse Spark 模型。详见 [Meta（Muse 订阅）](/docs/latest/providers#meta-muse-subscription)。
+
+新增
+
+- 添加通过 `/login meta` 的 Meta（Muse 订阅）登录，Model API Key 自动刷新，并支持 `META_API_KEY`（[#9096](https://github.com/earendil-works/pi/pull/9096) 由 [@xl0](https://github.com/xl0) 贡献）。
+
+变更
+
+- 在加载打包的 CLI 运行时之前启用 Node 的持久编译缓存，缩短重复启动时间。
+
+修复
+
+- 修复 `/bug` 的描述丢失粘贴诊断信息中换行的问题。
+- 修复用户取消和可重试的 Provider 故障（如服务不可用）时仍显示 `/bug` 提示的问题。
+- 修复没有 WSLg 的容器和 WSL 中剪贴板复制失败的问题：在没有可用显示时恢复 OSC 52 回退，并为 WSL 添加经过验证的 Windows 剪贴板 backend（[#9688](https://github.com/earendil-works/pi/issues/9688)）。
+- 修复来自 `@earendil-works/pi-ai` 的 z.ai `Prompt too long` 错误未被识别为上下文溢出的问题（[#9805](https://github.com/earendil-works/pi/issues/9805)）。
+- 修复来自 `@earendil-works/pi-ai` 的 Cerebras 模型声明不受支持的严格工具 Schema，导致严格与非严格工具混用时出现 HTTP 400 错误的问题（[#9804](https://github.com/earendil-works/pi/pull/9804) 由 [@EdenGottlieb](https://github.com/EdenGottlieb) 贡献）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 添加 Meta Provider（Model API Key 和 Muse 订阅 OAuth），带 Muse Spark 模型（[#9096](https://github.com/earendil-works/pi/pull/9096) 由 [@xl0](https://github.com/xl0) 贡献）。
+
+修复
+
+- 修复 z.ai `Prompt too long` 错误未被识别为上下文溢出的问题（[#9805](https://github.com/earendil-works/pi/issues/9805)）。
+- 修复 Cerebras 模型声明不受支持的严格工具 Schema，导致严格与非严格工具混用时出现 HTTP 400 错误的问题（[#9804](https://github.com/earendil-works/pi/pull/9804) 由 [@EdenGottlieb](https://github.com/EdenGottlieb) 贡献）。
+
+</details>
+
 ## v0.86.0（2026-09-19）
 
 <details>

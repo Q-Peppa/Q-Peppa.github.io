@@ -206,6 +206,7 @@
 | `reasoning`        | 否   | `false`              | 是否支持 extended thinking                                                 |
 | `thinkingLevelMap` | 否   | 省略                 | 将 Pi 的 thinking level 映射到 Provider 值，并标记不支持的 level（见下文） |
 | `input`            | 否   | `["text"]`           | 输入类型：`["text"]` 或 `["text", "image"]`                                |
+| `inputLimits`      | 否   | 省略                 | 该模型的请求限制和图片预处理（见下文）                                     |
 | `contextWindow`    | 否   | `128000`             | 上下文窗口大小（Token）                                                    |
 | `maxTokens`        | 否   | `16384`              | 最大输出 Token                                                             |
 | `samplingParams`   | 否   | 省略                 | 按原样合并到每个请求体中的采样参数（见下文）                               |
@@ -239,6 +240,33 @@
 
 - `/model`、`--list-models` 和交互式页脚按模型 `id` 显示条目。
 - 配置的 `name` 用于模型匹配和次要模型详情文本。它不会替换页脚/状态栏中的模型 id。
+
+### Image Input Limits
+
+用 `inputLimits.images.resize` 配置新图片在进入对话历史前的编码方式：
+
+```json
+{
+  "id": "vision-model",
+  "input": ["text", "image"],
+  "inputLimits": {
+    "images": {
+      "resize": {
+        "maxWidth": 1568,
+        "maxHeight": 1568,
+        "maxBytes": 524288,
+        "jpegQuality": 75
+      }
+    }
+  }
+}
+```
+
+`maxBytes` 是 base64 编码后载荷的最大体积。省略的 resize 字段使用 pi 的保守默认值：2000×2000、编码后 4.5 MiB、JPEG 质量 80。内置视觉模型显式携带该配置，使未知网关收到的图片永远不会比之前更大。
+
+Pi 会把所选模型的 resize 配置应用到 `@file` 附件、`read` 工具和工具返回的图片。图片在进入历史前只编码一次；切换模型不会重写历史图片，也不会使缓存的对话前缀失效。`images.autoResize` 设置可以全局禁用缩放。
+
+目录还可以记录 `inputLimits.maxRequestBytes`、`images.maxPerMessage` 和 `images.maxPerRequest`。这些字段描述 Provider 的硬性限制；当前实现尚未据此重写或拒绝对话历史。
 
 ### Prompt Cache Lifetimes
 
@@ -377,7 +405,7 @@
 }
 ```
 
-`modelOverrides` 支持每个模型的以下字段：`name`、`reasoning`、`thinkingLevelMap`、`input`、`cost`（部分）、`promptCache`（按档位合并）、`contextWindow`、`maxTokens`、`samplingParams`（按 key 合并）、`headers`、`compat`。
+`modelOverrides` 支持每个模型的以下字段：`name`、`reasoning`、`thinkingLevelMap`、`input`、`inputLimits`（深度合并）、`cost`（部分）、`promptCache`（按档位合并）、`contextWindow`、`maxTokens`、`samplingParams`（按 key 合并）、`headers`、`compat`。
 
 用 `promptCache` 覆盖可以通过你知道底层缓存行为的代理启用缓存预热。例如路由到 Anthropic 的 OpenRouter：
 

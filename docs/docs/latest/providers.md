@@ -26,6 +26,7 @@ Pi 支持两类 Provider：基于订阅的（通过 OAuth）和 API Key 型（�
 - **Claude Pro/Max**
 - **GitHub Copilot**
 - **xAI (Grok/X subscription)**
+- **Meta (Muse subscription)**
 - **OpenRouter（通过 OAuth 创建的 API Key，从 OpenRouter 余额扣费）**
 - Radius
 
@@ -47,6 +48,12 @@ Anthropic 订阅认证适用于 Claude Pro/Max 账户。第三方工具的使用
 
 - 运行 `/login xai`，然后选择 **Use a subscription**
 - `XAI_API_KEY` 仍可通过 **Use an API key** 使用
+
+### Meta (Muse subscription)
+
+- 运行 `/login meta`，然后选择 **Sign in with Meta** 打开设备授权流程
+- 登录会创建一个 Model API Key，大约每天自动重新创建一次
+- `META_API_KEY` 仍可通过 **Use an API key** 使用
 
 ### OpenRouter
 
@@ -98,6 +105,7 @@ pi
 | Together AI                          | `TOGETHER_API_KEY`                                                         | `together`                   |
 | Baseten                              | `BASETEN_API_KEY`                                                          | `baseten`                    |
 | Kimi For Coding                      | `KIMI_API_KEY`                                                             | `kimi-coding`                |
+| Meta                                 | `META_API_KEY`                                                             | `meta`                       |
 | MiniMax                              | `MINIMAX_API_KEY`                                                          | `minimax`                    |
 | MiniMax（中国）                      | `MINIMAX_CN_API_KEY`                                                       | `minimax-cn`                 |
 | Qwen Token Plan（现有目录）          | `QWEN_TOKEN_PLAN_API_KEY`                                                  | `qwen-token-plan`            |
