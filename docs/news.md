@@ -2,6 +2,81 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.87.0（2026-09-21）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **规范的会话上下文与扩展边界** – 无需重写历史即可编辑模型上下文，并添加可操作的 lifecycle hook。详见 [ContextEditEntry](/docs/latest/session-format#contexteditentry) 和 [扩展事件](/docs/latest/extensions#extension-events)。
+- **全转录上下文扩展** – 用 `context_with_system` 对每次请求做系统消息转换。详见 [`context_with_system`](/docs/latest/extensions#context_with_system)。
+- **按模型的图片输入限制** – 按模型为附件、`read` 和工具结果图片配置缓存安全的图片缩放。详见 [图片输入限制](/docs/latest/models#image-input-limits)。
+
+不兼容变更
+
+- 移除来自 `@earendil-works/pi-agent-core` 的 `shouldStopAfterTurn` agent 选项。改用 `finishTurn` 并返回 `{ action: "end" }`。`finishTurn` 在 `turn_end` 之前运行，但决策在之后生效，并且也会收到 error 和 aborted 响应；迁移时让这些硬退出返回 `undefined`，可保留原选项只对正常响应生效的行为。完整的迁移前后示例见 `@earendil-works/pi-agent-core` 的 changelog。
+- 在导出的 `SessionEntry` 联合类型中添加 `ContextEditEntry`。对条目做穷尽 switch 的 TypeScript 使用方必须处理 `context_edit`；省略用 `replacement: null`，否则传入内容替换。
+- 让 `SessionManager` 成为 `AgentSession` Provider 上下文的唯一来源。给 `session.agent.state.messages` 赋值不再替换后续请求历史；请用 `SessionManager.inMemory(cwd, { id }, entries)` 恢复、用 `session.navigateTree()` 导航，或通过 `session.sessionManager` 追加后调用 `session.refreshContext()`。
+- 为 `TurnEndEvent` 扩展必需的边界字段，并把 `AgentBeforeSettleEvent` 加入导出的 `ExtensionEvent` 联合类型。构造事件或对 `ExtensionEvent` 做穷尽 switch 的使用方必须处理新结构。`ExtensionRunner.emit()` 不再接受 `turn_end`；宿主集成用 `emitBoundary(baseEvent, buildContext)` 分发可操作的边界。
+- 把 `agent_settled` 处理器请求的运行推迟到所有 settled 处理器执行完。处理器仍会看到 `ctx.isIdle() === true`，但在同一次通知分发中不再看到可重入的 `agent_start`。
+
+新增
+
+- 添加仅追加的模型上下文编辑。例如 `sessionManager.appendContextEdit(entryId, null)` 会在后续 Provider 上下文中省略一条消息，而不改动原始历史、用量或 UI 历史。
+- 添加可操作的 `turn_end` 和 `agent_before_settle` 扩展边界。返回 `{ entries: [...event.entries, draft], continue: true }` 可按顺序持久化结构条目，并确保发出一次后续 Provider 请求，同时不改变 steering 或 follow-up 调度。
+- 添加不保留任何内容的压缩输入：`sessionManager.appendCompaction(summary, null, tokensBefore)` 会把压缩自身的 ID 记为保留边界。
+- 添加 `context_with_system` 扩展事件，它在 `context` 处理器之后对包含系统消息的完整转录运行，并原样发送其结果。详见 [`context_with_system`](/docs/latest/extensions#context_with_system)。
+- 通过 `models.json` 中的 `inputLimits.images.resize` 添加按模型的图片缩放配置，应用于文件附件、图片读取和工具结果图片（[#9631](https://github.com/earendil-works/pi/issues/9631)）。
+
+修复
+
+- 修复字符串形式的上下文编辑替换产生无效的 assistant 与工具结果消息内容，而不是文本块的问题。
+- 修复上下文不可见的边界元数据和替换编辑导致新追加或替换的输入在首次 Provider 请求前就被摘要的问题。
+- 修复编辑后上下文的用量统计既丢弃最近一次上下文编辑之后捕获的有效 assistant 用量，又在后续压缩使其过期后复用该用量的问题。
+- 修复选定的错误重试和最终的长度/溢出恢复在后续 Provider 上下文中保留已放弃的模型尝试的问题；运行后恢复的省略现在会被持久化，同时不隐藏原始转录历史、不改变队列调度。
+- 修复过滤或截取消息的 `context` 处理器丢失提示与工具声明的问题，这会在扩展驱动的压缩后让请求缺少内置工具，或让 Codex 输出原始 tool-call 文本。处理器不再看到系统消息；Pi 在它们运行后恢复提示与工具状态。详见 [`context`](/docs/latest/extensions#context)（[#9789](https://github.com/earendil-works/pi/issues/9789)、[#9822](https://github.com/earendil-works/pi/issues/9822)）。
+- 修复 `/bug` 在离线模式下仍允许上传的问题，同时保留本地 zip 导出（[#9841](https://github.com/earendil-works/pi/pull/9841) 由 [@christianklotz](https://github.com/christianklotz) 贡献）。
+- 修复空闲 Prompt 缓存预热在定时器或扩展决策延迟时重建已过期缓存的问题。
+- 改进崩溃诊断，添加提示以识别出现在堆栈跟踪中的已加载扩展。
+- 修复以 `GIF` 开头的文本文件被误判为图片并从 `read` 和 CLI `@file` 输入中省略的问题（[#9755](https://github.com/earendil-works/pi/issues/9755)）。
+- 修复格式错误的 Prompt 模板 frontmatter 被静默忽略、而不是作为资源警告上报的问题（[#9830](https://github.com/earendil-works/pi/pull/9830) 由 [@christianklotz](https://github.com/christianklotz) 贡献）。
+- 修复来自 `@earendil-works/pi-ai` 的未知 OpenAI 兼容 Chat Completions 端点收到严格工具 Schema 的问题，除非它们明确声明支持（[#9816](https://github.com/earendil-works/pi/issues/9816)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 在生成的目录中添加模型图片输入限制和缓存安全的缩放元数据（[#9631](https://github.com/earendil-works/pi/issues/9631)）。
+
+修复
+
+- 修复未知 OpenAI 兼容 Chat Completions 端点收到严格工具 Schema 的问题，除非它们明确声明支持，同时为支持的内置模型保留严格工具（[#9816](https://github.com/earendil-works/pi/issues/9816)）。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+不兼容变更
+
+- 移除 `AgentOptions.shouldStopAfterTurn` 和 `AgentLoopConfig.shouldStopAfterTurn`。改用 `finishTurn` 并返回 `{ action: "end" }`，在完成的 turn 之后停止。`finishTurn` 在 assistant 与所有工具结果定稿之后、`turn_end` 之前运行，其决策在 `turn_end` 之后生效，并且也会对 error 和 aborted 响应运行——这些响应的决策会被忽略，因为它们仍是硬退出。原选项只对正常响应调用，迁移时给硬退出返回 `undefined` 可保留该行为。返回 `{ action: "end" }` 不会改动 steering 与 follow-up 队列，并跳过 `prepareNextTurn`。
+
+新增
+
+- 添加 `prepareRequest`，它在每次 Provider 请求（包括第一次）之前运行。例如返回 `{ context: { ...context, messages: persistedMessages } }`，可在已选定的输入发出后安装规范上下文，而不引入额外的队列轮询。
+- 添加 `finishTurn`，它在 assistant 与工具结果定稿之后、`turn_end` 之前运行，适用于正常、error 和 aborted 响应。返回 `{ action: "end" }` 可在 `turn_end` 后结束正常运行，返回 `undefined` 保持常规调度。`{ action: "continue" }` 确保发出一次后续 Provider 请求：已有的工具结果、steering 或 follow-up 调度可以满足该请求而不额外增加一次；否则循环会发出一次仅上下文的请求。error 和 aborted 响应仍是硬退出。
+- 添加 `Agent.peekQueuedMessages()`，可在不消费的情况下预览下一次队列选中的批次。
+
+修复
+
+- 修复 harness 读取把以 `GIF` 开头的文本文件误判为图片的问题（[#9755](https://github.com/earendil-works/pi/issues/9755)）。
+
+</details>
+
 ## v0.86.1（2026-09-20）
 
 <details>

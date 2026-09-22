@@ -94,6 +94,8 @@ interface AgentSession {
 
   // 状态访问
   agent: Agent;
+  sessionManager: SessionManager;
+  refreshContext(): void;
   model: Model | undefined;
   thinkingLevel: ThinkingLevel;
   messages: AgentMessage[];
@@ -257,8 +259,8 @@ const state = session.agent.state;
 // state.streamingMessage?: AgentMessage - 当前部分助手消息
 // state.errorMessage?: string - 最新的助手错误
 
-// 替换消息（用于分支或恢复）
-session.agent.state.messages = messages; // 复制顶层数组
+// 模型可见的消息由 session.sessionManager 投影而来。
+// agent.state.messages 是刷新过的检查缓存；不要通过给它赋值来恢复状态。
 
 // 替换工具
 session.agent.state.tools = tools; // 复制顶层数组
@@ -266,6 +268,15 @@ session.agent.state.tools = tools; // 复制顶层数组
 // 等待 Agent 完成处理
 await session.agent.waitForIdle();
 ```
+
+Provider 请求使用 `session.sessionManager` 作为规范化的最终上下文。给 `session.agent.state.messages` 赋值不会替换已持久化的上下文，并可能在下一次请求边界被覆盖。需要恢复外部保存的历史时，请在构造会话时传入：
+
+```typescript
+const restoredManager = SessionManager.inMemory(process.cwd(), { id: sessionId }, entries);
+const { session } = await createAgentSession({ sessionManager: restoredManager });
+```
+
+对于已存在的会话，用 `session.navigateTree(entryId)` 移动其活动分支。只有在你确实要追加外部管理的条目时，才使用 `session.sessionManager.appendMessage(...)` 加 `session.refreshContext()`。
 
 ### 事件
 

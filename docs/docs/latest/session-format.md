@@ -324,7 +324,7 @@ interface SessionEntryBase {
 }
 ```
 
-`firstKeptEntryId` 是必填的。它标识压缩条目之前保留的第一个条目。重建上下文时，Pi 用压缩摘要替换较旧的已摘要条目，并保留从该条目开始的范围。
+`firstKeptEntryId` 是必填的。它标识压缩条目之前保留的第一个条目。重建上下文时，Pi 用压缩摘要替换较旧的已摘要条目，并保留从该条目开始的范围。不保留任何内容的压缩会把自身的 ID 写在该字段中，因此不会保留任何更早的条目。
 
 可选字段：
 
@@ -333,6 +333,23 @@ interface SessionEntryBase {
 - `usage`：生成摘要的 LLM 用量；计入会话 Token 和成本总计
 - `details`：实现特定的数据（例如默认的 `{ readFiles: string[], modifiedFiles: string[] }`，或扩展的自定义数据）
 - `fromHook`：如果由扩展生成则为 `true`，如果由 Pi 生成则为 `false`/`undefined`（旧字段名）
+
+### ContextEditEntry
+
+对某个更早的、会生成上下文的条目做仅追加的编辑。它只改变后续的模型上下文；目标条目及其元数据在原始历史、UI、导出和会话记账中保持不变。
+
+```json
+{
+  "type": "context_edit",
+  "id": "g6h7i8j9",
+  "parentId": "f6g7h8i9",
+  "timestamp": "2024-12-03T14:11:00.000Z",
+  "targetId": "c3d4e5f6",
+  "replacement": null
+}
+```
+
+目标可以是用户、assistant、工具结果或自定义消息条目。`replacement: null` 会把目标从模型上下文中省略。非空的 `replacement` 只替换目标消息的内容。assistant 和工具结果条目的字符串替换会被规范化为一个文本块，因为这些角色要求内容为数组。如果多个编辑指向同一个条目，活动分支上最新的编辑生效。编辑是相对于分支的：导航到该编辑之前的某个位置，目标的原始贡献会重新出现。
 
 ### BranchSummaryEntry
 
@@ -456,7 +473,9 @@ interface SessionEntryBase {
    - 包含压缩条目之后的条目
 3. 保留选中范围内的非消息条目，以便交互模式可以渲染它们
 
-`buildSessionContext()` 在该条目列表之上构建发送给 LLM 的消息列表：
+`buildSessionProjection()` 随后为每个选中的目标应用最新的 `context_edit`。它返回模型可见的消息及其来源条目。被省略的目标不产生消息；替换会保留来源条目的角色和元数据，只改变内容。原始选中的条目不会被修改。
+
+`buildSessionContext()` 在该投影之上构建发送给 LLM 的消息列表：
 
 1. 从完整路径中提取当前模型和 thinking level 设置
 2. 将选中的条目转换为消息：
@@ -464,6 +483,7 @@ interface SessionEntryBase {
    - `compaction` -> 完整的系统检查点，后接 `compactionSummary`
    - `branch_summary` -> `branchSummary`
    - `custom_message` -> `CustomMessage`
+   - `context_edit` -> 无自身的上下文消息
    - `usage` 和 `custom` -> 无上下文消息
 
 压缩摘要替换 `firstKeptEntryId` 之前的条目。压缩前的系统消息会被折叠进完整检查点，而不是从保留的范围中重放。保留的非系统条目以及压缩条目之后的所有条目仍可供 LLM 使用。

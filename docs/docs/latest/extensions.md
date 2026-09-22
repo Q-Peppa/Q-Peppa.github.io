@@ -291,7 +291,8 @@ pi 启动
   │   ┌─── 回合（LLM 调用工具时重复） ───┐                    │
   │   │                                            │       │
   │   ├─► turn_start                               │       │
-  │   ├─► context（可修改消息）                     │       │
+  │   ├─► context（可修改对话消息）                 │       │
+  │   ├─► context_with_system（可修改完整转录）      │       │
   │   ├─► before_provider_headers（可修改请求头）            │
   │   ├─► before_provider_request（可检查或替换负载）          │
   │   ├─► after_provider_response（状态+标头，流消费前）      │
@@ -304,9 +305,13 @@ pi 启动
   │   │     └─► tool_execution_end                 │       │
   │   │                                            │       │
   │   └─► turn_end                                 │       │
+  │       └─► 在自然需要下一回合之前进行阈值压缩            │
   │                                                        │
   ├─► agent_end                                            │
-  └─► agent_settled（无剩余重试/压缩/follow-up）           │
+  ├─► 重试退避或最后一次尝试的恢复（被选中时）                  │
+  │   └─► 恢复成功后发出全新的 agent_start                  │
+  ├─► agent_before_settle（可追加条目并请求继续）            │
+  └─► agent_settled（最终，仅通知）                         │
                                                            │
 用户发送另一个提示 ◄────────────────────────────────────────┘
 
@@ -564,9 +569,9 @@ pi.on('before_agent_start', async (event, ctx) => {
 
 在 `before_agent_start` 内部，`event.systemPrompt` 和 `ctx.getSystemPrompt()` 都反映当前处理程序的链式系统提示。后面的 `before_agent_start` 处理程序仍可再次修改它。
 
-#### agent_start / agent_end / agent_settled
+#### agent_start / agent_end / agent_before_settle / agent_settled
 
-`agent_start` 在底层 agent 运行开始时触发。`agent_end` 在该运行结束时触发，但 Pi 可能仍会自动重试、自动压缩后重试或继续排队的 follow-up 消息。对于需要知道 Pi 不会再自动继续运行的状态集成，使用 `agent_settled`。
+`agent_start` 在底层 agent 运行开始时触发。`agent_end` 在该运行结束时触发，但 Pi 可能仍会自动重试、自动压缩后重试或继续排队的 follow-up 消息。`agent_before_settle` 是最后一个可操作的边界：它可以追加会话条目并请求一次继续。`agent_settled` 是最终且仅通知的边界；对于需要知道 Pi 不会再自动继续运行的状态集成，使用它。
 
 ```typescript
 pi.on('agent_start', async (_event, ctx) => {});
@@ -575,10 +580,30 @@ pi.on('agent_end', async (event, ctx) => {
   // event.messages - 此次底层运行产生的消息
 });
 
+let addedReviewReminder = false;
+pi.on('agent_before_settle', async (event, ctx) => {
+  if (addedReviewReminder) return;
+  addedReviewReminder = true;
+  return {
+    entries: [
+      ...event.entries,
+      {
+        type: 'custom_message',
+        customType: 'review-reminder',
+        content: 'Review the final diff before replying.',
+        display: false,
+      },
+    ],
+    continue: true,
+  };
+});
+
 pi.on('agent_settled', async (_event, ctx) => {
-  // 除非另一个扩展启动了新的运行，否则此处 ctx.isIdle() 为 true。
+  // ctx.isIdle() 为 true；在此请求的运行会在所有 settled 处理程序完成后启动。
 });
 ```
+
+如果在 `agent_before_settle` 处理程序运行期间运行被中止，仍然有效的返回值会被提交，但请求的继续会被抑制。从 `agent_settled` 请求的工作会推迟到所有 settled 处理程序完成之后，因此通知分发不可重入。
 
 #### ui_prompt_start / ui_prompt_end
 
@@ -607,10 +632,33 @@ pi.on('turn_start', async (event, ctx) => {
   // event.turnIndex, event.timestamp
 });
 
+let replacedResponse = false;
 pi.on('turn_end', async (event, ctx) => {
   // event.turnIndex, event.message, event.toolResults
+  // event.entries 包含到目前为止提议的结构条目。
+  if (replacedResponse || event.outcome !== 'completed' || event.toolResults.length > 0) return;
+  replacedResponse = true;
+  return {
+    entries: [
+      ...event.entries,
+      { type: 'context_edit', targetId: event.messageEntryId, replacement: null },
+      {
+        type: 'custom_message',
+        customType: 'replacement-instruction',
+        content: 'Answer again using the persisted user request.',
+        display: false,
+      },
+    ],
+    continue: true,
+  };
 });
 ```
+
+`turn_end` 在 assistant 和工具结果消息持久化之后、底层 `turn_end` 事件之前运行。重试退避和最后一次尝试的恢复仍然发生在 `agent_end` 之后，保持其既有的生命周期与队列顺序；`agent_before_settle` 在该工作完成后看到修复过的投影。边界处理程序按扩展加载和注册顺序运行。每个处理程序都会在 `event.entries` 中看到此前的提议，并看到由这些提议重建的 `event.context`。返回 `entries` 或 `continue` 只替换该字段；省略的字段保留当前提议。允许的草稿条目类型为 `custom`、`custom_message`、`context_edit` 和 `compaction`。完整的提议会在所有处理程序结束后按列表顺序追加之前被校验；处理程序出错会报告，后续处理程序仍会运行。校验可以防止部分应用的语义错误，但持久化不是事务性的。
+
+`continue: true` 确保该次边界调用会发出一次后续 Provider 请求。如果工具结果、steering 或 follow-up 已经触发该请求，则由它们满足该决策，不再额外发起请求；否则 Pi 会发出一次仅上下文的请求。error 和 aborted 响应仍是硬退出。`continue: false` 永远不会抑制自然产生的工作。请为继续条件加保护：无条件的 `continue: true` 会在下一次响应后再次被求值，可能形成死循环。`custom_message` 草稿会贡献一条 user 角色的模型消息，但它由扩展撰写：不会运行人类输入钩子、斜杠命令、Skill 或 Prompt 模板。
+
+构造 `TurnEndEvent` 值的宿主集成现在必须提供 `messageEntryId`、`toolResultEntryIds`、`outcome`、`entries`、`continue` 和 `context`。对 `ExtensionEvent` 做穷尽 switch 也必须处理 `agent_before_settle`。`ExtensionRunner.emit()` 不再包含可操作的回合边界；请通过 `emitBoundary(baseEvent, buildContext)` 分发 `turn_end` 和 `agent_before_settle`，以便处理程序收到链式预览。其他专用 runner 方法仍会为 `session_before_*` 等事件返回结果。
 
 #### message_start / message_update / message_end
 
@@ -679,11 +727,30 @@ pi.on('tool_execution_end', async (event, ctx) => {
 
 ```typescript
 pi.on('context', async (event, ctx) => {
-  // event.messages - 深拷贝，可安全修改
+  // event.messages - 深拷贝，不含系统消息，可安全修改
   const filtered = event.messages.filter((m) => !shouldPrune(m));
   return { messages: filtered };
 });
 ```
+
+`event.messages` 保存的是不含系统消息的对话。提示与工具声明属于 Pi，不在此钩子的范围内：当处理程序返回改动过的列表时，Pi 会把当前的提示区块和工具声明重放为一条置于返回消息之前的开头系统消息。因此从压缩摘要过滤、开窗或截取都不会丢掉提示或工具。列表未改动时，会话中途的系统消息会留在原位，接受它们的模型因此保留缓存前缀。处理程序添加的系统消息会保留在 Pi 的头部之后。要持久地修改提示或工具集，请使用 [`before_agent_start`](#before_agent_start) 或 `pi.setActiveTools()`；要针对单次请求编辑系统消息，请使用 [`context_with_system`](#context_with_system)。
+
+#### context_with_system
+
+在每次 LLM 调用前触发，此时所有 `context` 处理程序都已运行，且 Pi 已恢复提示与工具状态。`event.messages` 是完整转录，包括开头的系统消息以及任何会话中途的提示或工具补丁（见 [Session Format](session-format.md#sessionmessageentry)）。返回的消息会原样发送：该钩子对该请求的提示和工具声明拥有控制权。
+
+```typescript
+import { getCurrentSystemMessage } from '@earendil-works/pi-ai';
+
+pi.on('context_with_system', async (event, ctx) => {
+  const cut = findCutIndex(event.messages);
+  // 折叠被丢弃的前缀，让其中的提示和工具状态作为新的头部保留下来。
+  const head = getCurrentSystemMessage(event.messages.slice(0, cut));
+  return { messages: head ? [head, ...event.messages.slice(cut)] : event.messages.slice(cut) };
+});
+```
+
+规则：保持索引 0 处有一条系统消息（Provider 从那里读取提示和初始工具声明；如果处理程序把它丢掉，Pi 会报错）。删除一条系统消息会同时删除它携带的工具声明和区块补丁。用 `@earendil-works/pi-ai` 的 `getCurrentSystemPrompt()` 和 `getCurrentTools()` 检查输出。处理程序按扩展加载顺序运行；从 `before_agent_start` 强制设置的 `systemPrompt` 之后仍会投射到请求上。
 
 #### before_provider_headers
 
