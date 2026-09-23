@@ -1,68 +1,60 @@
-# tmux 设置
+# 在 tmux 中运行 Pi
 
 > 本页面是 [Pi 官方文档](https://pi.dev/docs/latest/tmux) 的中文翻译。仅供学习参考。
 
-Pi 可在 tmux 内工作，但 tmux 默认会剥离某些按键的修饰键信息。未配置时，`Shift+Enter` 和 `Ctrl+Enter` 通常与普通 `Enter` 无法区分。
+Pi 可以在 tmux 内工作，但 tmux 可能把 `Shift+Enter`、`Ctrl+Enter` 和普通的 `Enter` 报告为同一个键。请启用扩展键，让 Pi 能区分它们。
 
-## 推荐配置
+## 检查 tmux 版本
 
-添加到 `~/.tmux.conf`：
+```bash
+tmux -V
+```
+
+tmux 3.5 或更新版本请使用下面推荐的 CSI-u 配置。tmux 3.2 到 3.4 请使用旧版本配置。
+
+## 在 tmux 3.5 或更新版本中启用扩展键
+
+把下面几行加入 `~/.tmux.conf`：
 
 ```text
 set -g extended-keys on
 set -g extended-keys-format csi-u
 ```
 
-然后完全重启 tmux：
+当终端不直接提供 Kitty 键盘协议时，Pi 会请求扩展键报告。CSI-u 是通过 tmux 转发带修饰键最可靠的格式。
+
+## 重启 tmux
+
+该配置作用于 tmux 服务器。为确保它生效，请关闭你的 tmux 会话并启动新的服务器。
+
+如果你选择从命令行停止服务器，请先保存工作。下面的命令会终止该服务器管理的每个会话：
 
 ```bash
 tmux kill-server
 tmux
 ```
 
-当 Kitty 键盘协议不可用时，Pi 会自动请求扩展按键报告。使用 `extended-keys-format csi-u` 时，tmux 以 CSI-u 格式转发修饰键，这是最可靠的配置。`extended-keys-format` 选项需要 tmux 3.5 或更高版本。
+## 验证修饰键
 
-## 为什么推荐 `csi-u`
+在新的 tmux 会话中启动 Pi，并检查：
 
-仅使用：
+1. `Shift+Enter` 在编辑器中插入新行。
+2. `Enter` 提交 Prompt。
+3. 在 macOS 和 Linux 上 `Alt+Enter` 排队一条 follow-up。Windows 和 WSL 默认使用 `Ctrl+Q`。
+
+如果这些键仍然表现得像普通的 `Enter`，请确认 tmux 之外的终端能报告修饰键。见[配置终端](terminal-setup.md)。
+
+## 使用 tmux 3.2 到 3.4
+
+这些版本支持扩展键，但不支持 `extended-keys-format csi-u`。只添加：
 
 ```text
 set -g extended-keys on
 ```
 
-时，tmux 默认使用 `extended-keys-format xterm`。当应用请求扩展按键报告时，修饰键以 xterm 的 `modifyOtherKeys` 格式转发，例如：
+Pi 支持这些版本使用的 xterm `modifyOtherKeys` 格式。重启 tmux 并重复验证步骤。
 
-- `Ctrl+C` → `\x1b[27;5;99~`
-- `Ctrl+D` → `\x1b[27;5;100~`
-- `Ctrl+Enter` → `\x1b[27;5;13~`
-
-使用 `extended-keys-format csi-u` 时，相同的按键以 CSI-u 格式转发：
-
-- `Ctrl+C` → `\x1b[99;5u`
-- `Ctrl+D` → `\x1b[100;5u`
-- `Ctrl+Enter` → `\x1b[13;5u`
-
-Pi 支持两种格式，但对于 tmux 推荐使用 `csi-u`。
-
-## 这修复了什么
-
-没有 tmux 扩展按键时，带修饰的 Enter 键会退化为旧版序列：
-
-| 按键             | 无扩展按键 | 有 `csi-u`   |
-| ---------------- | ---------- | ------------ |
-| Enter            | `\r`       | `\r`         |
-| Shift+Enter      | `\r`       | `\x1b[13;2u` |
-| Ctrl+Enter       | `\r`       | `\x1b[13;5u` |
-| Alt/Option+Enter | `\x1b\r`   | `\x1b[13;3u` |
-
-这影响默认快捷键（`Enter` 提交，`Shift+Enter` 换行）和任何使用修饰 Enter 的自定义快捷键。
-
-## 要求
-
-- tmux 3.5 或更高版本支持 `extended-keys-format csi-u`（`tmux -V` 检查）
-- 支持扩展按键的终端模拟器：Ghostty、Kitty、iTerm2、WezTerm、Windows Terminal
-
-使用 tmux 3.2 至 3.4 时，省略 `extended-keys-format csi-u`；Pi 仍支持 tmux 默认的 xterm `modifyOtherKeys` 格式。
+对于更旧的版本，请升级 tmux，或在 tmux 之外使用 Pi，而不要依赖带修饰键的 Enter 快捷键。
 
 ---
 

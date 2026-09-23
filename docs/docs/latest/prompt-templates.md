@@ -1,104 +1,65 @@
-# Prompt Templates（Prompt 模板）
+# Prompt 模板
 
 > 本页面是 [Pi 官方文档](https://pi.dev/docs/latest/prompt-templates) 的中文翻译。仅供学习参考。
 
-> Pi 可以创建 Prompt 模板。让它为你的工作流构建一个。
+Prompt 模板把 Markdown 文件变成可复用的 `/` 命令。当你想复用同一段 Prompt，又不需要添加可执行行为或更大一组配套指令时，使用它。
 
-Prompt 模板是**可以展开为完整 Prompt 的 Markdown 片段**。输入 `/name` 即可调用模板，其中 `name` 是不含 `.md` 的文件名。
+模板可以接受参数，并出现在命令补全中。Pi 可以从个人配置、项目配置、显式路径或 Pi 包加载模板。项目配置只在项目信任被授予后加载。
 
-## 位置
+## 创建模板
 
-Pi 从以下位置加载 Prompt 模板：
-
-- **全局**：`~/.pi/agent/prompts/*.md`
-- **项目**：`.pi/prompts/*.md`（仅在项目被信任后加载）
-- **包**：`prompts/` 目录或 `package.json` 中的 `pi.prompts` 条目
-- **设置**：`prompts` 数组，包含文件或目录
-- **CLI**：`--prompt-template <path>`（可重复）
-
-使用 `--no-prompt-templates` 禁用发现。
-
-## 格式
+创建 `~/.pi/agent/prompts/review.md`：
 
 ```markdown
 ---
 description: Review staged git changes
+argument-hint: '[focus]'
 ---
 
-Review the staged changes (`git diff --cached`). Focus on:
-
-- Bugs and logic errors
-- Security issues
-- Error handling gaps
+Review the staged changes. Focus on ${1:-correctness, security, and error handling}.
 ```
 
-- 文件名即命令名。`review.md` 变为 `/review`。
-- `description` 可选。缺少时使用第一行非空内容。
-- `argument-hint` 可选。设置后，在自动补全下拉框中，提示信息会显示在描述之前。
+文件名成为命令名，所以这个模板可以通过 `/review` 使用。`description` 出现在命令补全中。如果省略它，Pi 使用第一个非空行。
 
-### 参数提示
+`argument-hint` 是可选的。必需的参数用 `<尖括号>`，可选的参数用 `[方括号]`。
 
-使用 frontmatter 中的 `argument-hint` 在自动补全中显示期望的参数。使用 `<angle brackets>` 表示必需参数，使用 `[square brackets]` 表示可选参数：
+在活动会话中添加或修改模板后运行 `/reload`。
 
-```markdown
----
-description: Review PRs from URLs with structured issue and code analysis
-argument-hint: '<PR-URL>'
----
+<a id="invoke-a-template"></a>
+
+## 使用模板
+
+在编辑器中输入模板命令：
+
+```text
+/review
+/review concurrency
 ```
 
-在自动补全下拉框中渲染为：
+Pi 在生成的文本进入 Agent 之前展开模板。除非同名的扩展命令处理了它，扩展会先通过 `input` 事件收到原始输入。
 
-```
-→ pr   <PR-URL>       — Review PRs from URLs with structured issue and code analysis
-  is   <issue>        — Analyze GitHub issues (bugs or feature requests)
-  wr   [instructions] — Finish the current task end-to-end
-  cl   — Audit changelog entries before release
-```
+模板支持以下替换：
 
-## 使用
+| 语法                 | 结果                         |
+| -------------------- | ---------------------------- |
+| `$1`、`$2`、…        | 一个位置参数                 |
+| `$@` 或 `$ARGUMENTS` | 所有参数用空格连接           |
+| `${1:-default}`      | 第一个参数，或一个默认值     |
+| `${@:-default}`      | 所有参数，或一个默认值       |
+| `${@:N}`             | 从位置 `N` 开始的参数        |
+| `${@:N:L}`           | 从位置 `N` 开始的 `L` 个参数 |
 
-在编辑器中输入 `/`，然后输入模板名称。自动补全会显示带描述的可用模板。
+参数遵循类似 Shell 的引号规则，所以 `/review "API compatibility"` 提供一个包含空格的参数。
 
-```
-/review                           # 展开 review.md
-/component Button                 # 带参数展开
-/component Button "click handler" # 多个参数
-```
+<a id="choose-where-it-loads"></a>
 
-## 参数
+## 加入 Pi
 
-模板支持位置参数、默认值和简单切片：
+把模板放在你的用户或项目 Prompt 目录中。约定俗成的 Prompt 目录只加载直接的 `.md` 子文件。
 
-- `$1`、`$2` 等 —— 位置参数
-- `$@` 或 `$ARGUMENTS` —— 所有参数连接
-- `${1:-default}` —— 当参数 1 存在且非空时使用参数 1，否则使用 `default`
-- `${@:-default}` 或 `${ARGUMENTS:-default}` —— 当所有参数存在且非空时使用所有参数，否则使用 `default`
-- `${@:N}` —— 从第 N 个位置开始的参数（1-indexed）
-- `${@:N:L}` —— 从 N 开始取 L 个参数
+设置和包可以选择嵌套的 Markdown 文件；包清单可以用显式路径和 glob 收窄发现范围。这些选项见[设置](settings.md#resources)和 [Pi 包](packages.md)。
 
-示例：
-
-```markdown
----
-description: Create a component
----
-
-Create a React component named $1 with features: $@
-```
-
-默认值对可选参数很有用：
-
-```markdown
-Summarize the current state in ${1:-7} bullet points.
-```
-
-用法：`/component Button "onClick handler" "disabled support"`
-
-## 加载规则
-
-- `prompts/` 中的模板发现是**非递归的**。
-- 子目录中的模板必须通过 `prompts` 设置或包清单显式添加。
+项目模板在信任被授予后成为编辑器中的命令。信任不熟悉的项目之前，请先审阅它们的内容。见[安全](security.md#understand-project-trust)。
 
 ---
 

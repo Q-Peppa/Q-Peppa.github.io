@@ -1,54 +1,41 @@
-# 容器化
+# 在隔离环境中运行 Pi
 
-Pi 默认以所有权限运行，但在某些情况下，你可能需要更精细地控制 Pi 可以写入的目录以及它拥有的访问权限。
+> 本页面是 [Pi 官方文档](https://pi.dev/docs/latest/containerization) 的中文翻译。仅供学习参考。
 
-有两种通用方案。你可以：
+使用隔离环境来限制生成的命令能够访问或影响的文件、凭证、进程和网络服务。
 
-1. 在隔离环境中运行整个 `pi` 进程，或
-2. 在主机上运行 `pi`，并将工具执行路由到隔离环境中。
+你可以隔离完整的 Pi 进程，也可以把 Pi 留在宿主机上，只把选定的工具路由到隔离环境中。
 
-## 选择方案
+## 选择隔离方式
 
-| 方案             | 隔离对象                         | 适用场景                                   | 备注                                                                                                                  |
-| ---------------- | -------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
-| Gondolin 扩展    | 内置工具和 `!` 命令              | 本地 micro-VM 隔离，同时保留主机认证       | 参见 [`examples/extensions/gondolin/`](https://github.com/earendil-works/pi/tree/main/examples/extensions/gondolin)。 |
-| 普通 Docker      | 整个 `pi` 进程在本地容器中       | 简单的本地隔离                             | Provider API 密钥会进入容器。                                                                                         |
-| OpenShell        | 整个 `pi` 进程在策略控制的沙箱中 | 本地或远程托管沙箱                         | 需要 OpenShell 网关                                                                                                   |
-| Docker Sandboxes | 整个 `pi` 进程在托管沙箱中       | 本地隔离，同时将 Provider 密钥保留在主机上 | 需要 Docker Sandboxes（`sbx`）。                                                                                      |
+| 方式             | Pi 在哪里运行  | 被隔离的内容                 | 凭证处理                                           | 最适合                                        |
+| ---------------- | -------------- | ---------------------------- | -------------------------------------------------- | --------------------------------------------- |
+| 普通 Docker      | 容器           | Pi、内置工具、`!` 命令和扩展 | 凭证传入容器                                       | 直接明了的本地容器边界                        |
+| Docker Sandboxes | 托管沙箱       | Pi、内置工具、`!` 命令和扩展 | Provider 凭证留在宿主机，由代理替换                | 不暴露真实 Provider Key 的托管本地隔离        |
+| OpenShell        | 本地或远程沙箱 | Pi、内置工具、`!` 命令和扩展 | 由策略控制凭证和推理路由                           | 文件系统、进程、网络和凭证策略                |
+| Gondolin 扩展    | 宿主机         | 内置工具和 `!` 命令          | 已存储的 Pi 凭证留在宿主机，但命令继承宿主环境变量 | 用于工具执行的本地 micro-VM，同时保留宿主界面 |
 
-扩展在 `pi` 进程运行的位置执行。如果你在主机上运行带工具路由扩展的 `pi`，其他自定义扩展工具仍在主机上运行，除非它们也委托其操作。
+不同方式改变扩展的运行位置。完整的 Pi 进程在隔离环境中运行时，它的扩展也在那里运行。宿主机上的 Pi 通过 Gondolin 委派内置工具时，其他扩展工具仍在宿主机上运行，除非它们也委派自己的工作。
 
-## Gondolin
+## 决定 Pi 能访问什么
 
-[Gondolin](https://github.com/earendil-works/gondolin) 是一个本地 Linux micro-VM。
-当你想在主机上运行 `pi` 但将所有内置工具路由到 VM 中时，使用[示例扩展](https://github.com/earendil-works/pi/tree/main/examples/extensions/gondolin)。
+隔离的进程仍然可以影响你暴露给它的资源：
 
-设置：
+- 读写挂载的宿主目录允许 Pi 修改这些宿主文件。
+- 挂载 `~/.pi/agent` 会暴露你的 Pi 凭证、设置、扩展和会话。
+- 传入容器的环境变量对容器内的进程可用。
+- 网络访问可能让代码或工具输出离开该环境。
+- 仅隔离工具不会约束宿主机的 Pi 进程，也不会约束未使用隔离后端的扩展工具。
 
-```bash
-cp -R packages/coding-agent/examples/extensions/gondolin ~/.pi/agent/extensions/gondolin
-cd ~/.pi/agent/extensions/gondolin
-npm install --ignore-scripts
-```
+只暴露任务所需的工作文件夹、凭证和网络目标。不希望写入影响宿主机时，使用只读挂载，或在环境内外复制文件。
 
-从你希望挂载的项目运行：
+## 用普通 Docker 运行 Pi
 
-```bash
-cd /path/to/project
-pi -e ~/.pi/agent/extensions/gondolin
-```
+普通 Docker 提供最简单的整进程容器边界。
 
-该扩展将主机的当前工作目录挂载到 VM 的 `/workspace`，并覆盖 `read`、`write`、`edit`、`bash`、`grep`、`find` 和 `ls`。
-用户的 `!` 命令也会被路由到 VM 中。
-`/workspace` 下的文件变更会直接写入主机。
+### 构建镜像
 
-要求：Node.js >= 23.6.0 以运行 `@earendil-works/gondolin`，以及 QEMU（需要通过包管理器安装）。
-
-## 普通 Docker
-
-当你想要最简单的本地容器边界时，在 Docker 中运行整个 `pi` 进程。
-
-`Dockerfile.pi`：
+创建 `Dockerfile.pi`：
 
 ```dockerfile
 FROM node:24-bookworm-slim
@@ -62,11 +49,17 @@ WORKDIR /workspace
 ENTRYPOINT ["pi"]
 ```
 
-构建并运行：
+在包含该文件的目录中构建：
 
 ```bash
 docker build -t pi-sandbox -f Dockerfile.pi .
+```
 
+### 启动 Pi
+
+在你想让 Pi 访问的工作文件夹中运行：
+
+```bash
 docker run --rm -it \
   -e ANTHROPIC_API_KEY \
   -v "$PWD:/workspace" \
@@ -74,56 +67,29 @@ docker run --rm -it \
   pi-sandbox
 ```
 
-`-v "$PWD:/workspace"` 将你当前目录挂载到容器的 /workspace，这样 Docker 内 `/workspace` 中的读写操作会直接影响你主机上的文件，与 Gondolin 示例类似。
+把 `ANTHROPIC_API_KEY` 换成你的 Provider 所需的凭证。命名的 `pi-agent-home` 卷让容器本地的设置、凭证和会话在多次运行之间保留。
 
-如果你想使用容器本地的设置和会话，请为 `/root/.pi/agent` 使用命名卷。挂载你主机的 `~/.pi/agent` 会将主机认证和会话文件暴露给容器。
+不要挂载宿主机的 `~/.pi/agent`，除非该容器应当访问你宿主机的 Pi 配置和凭证。
 
-## OpenShell
+### 验证工作目录
 
-当你需要一个带有文件系统、进程、网络、凭证和推理控制的策略控制沙箱时，使用 [NVIDIA OpenShell](https://docs.nvidia.com/openshell/about/overview)。
-OpenShell 可以通过 Docker、Podman 或 VM 运行时支持的本地网关运行沙箱，也可以通过远程 Kubernetes 网关运行。
+在 Pi 内部运行：
 
-每个沙箱都需要一个活跃的网关。
-在创建沙箱之前注册并选择一个：
-
-```bash
-openshell gateway add <gateway-url> --name <name>
-openshell gateway select <name>
+```text
+!pwd
 ```
 
-在 OpenShell 沙箱中启动 `pi`：
+该命令应报告 `/workspace`。`/workspace` 下的改动会写回挂载的宿主文件夹。如果这不可接受，请去掉绑定挂载，或改用只读挂载。
 
-```bash
-openshell sandbox create --name pi-sandbox --from pi -- pi
-```
+## 用 Docker Sandboxes 运行 Pi
 
-在这种方案下，整个 `pi` 进程在沙箱内运行。
-内置工具、`!` 命令和扩展工具在 OpenShell 边界内执行。
+[Docker Sandboxes](https://docs.docker.com/ai/sandboxes/) 在托管沙箱中运行完整的 Pi 进程。它的代理可以把真实的 Provider 凭证留在宿主机上，并在请求离开沙箱时替换。
 
-如果网关是远程的，项目文件不会从主机绑定挂载，这意味着沙箱内的写操作不会反映到你的机器上。
-在沙箱内克隆仓库或使用 OpenShell 文件传输命令：
+在创建沙箱之前配置凭证。不要在沙箱内运行 `/login`，因为那会把真实凭证写入其中。
 
-```bash
-openshell sandbox upload pi-sandbox ./repo /workspace
-openshell sandbox download pi-sandbox /workspace/repo ./repo-out
-```
+### 使用 Claude Pro 或 Max Token
 
-OpenShell Provider 可以将原始模型 API 密钥保持在沙箱外。
-配置推理路由后，沙箱内的代码可以调用 `https://inference.local`，网关会在上游注入已配置的 Provider 凭证。
-如果你想让模型流量使用此路由，请配置 Pi 使用相应的 OpenAI 兼容或 Anthropic 兼容端点。
-
-## Docker Sandboxes
-
-[Docker Sandboxes](https://docs.docker.com/ai/sandboxes/) 是 Docker 提供的托管沙箱运行时，在沙箱内部运行整个 `pi` 进程。
-它是[无内置沙箱](/docs/latest/security#no-built-in-sandbox)所指的容器边界之一。
-
-与上面的普通 Docker 模式不同，Provider 凭证不会传入容器内部。
-沙箱会接收一个占位符哨兵值（sentinel value），`sbx` 代理会在流出到 `api.anthropic.com` 时将其替换为真实的凭证。
-凭证在创建时绑定，因此在创建沙箱之前请将其保存在主机上。
-
-对于 Claude Pro/Max 订阅，在装有 Claude Code 的机器上运行 `claude setup-token`，然后将结果保存在主机上。
-如果已绑定 `anthropic` secret，请先将其移除：否则代理会在 Bearer Token 旁边添加 `x-api-key` 请求头，Anthropic 将拒绝该请求。
-`sbx secret set-custom` 从标准输入（stdin）读取 Token，因此不会留在 Shell 历史记录中。
+在装有 Claude Code 的机器上用 `claude setup-token` 生成 Token。如果已经配置了 `anthropic` secret，先删除它，以免代理在 bearer token 之外再加一个 API Key header：
 
 ```bash
 sbx secret rm anthropic
@@ -134,24 +100,90 @@ sbx secret set-custom \
   --placeholder 'sk-ant-oat01-{rand}'
 ```
 
-沙箱会获取 OAuth 格式的占位符而非真实 Token，代理会在流出到该主机时进行替换；`ANTHROPIC_OAUTH_TOKEN` 是 Pi 已原生读取并优先于 API Key 使用的环境变量，因此无需额外配置 Pi。
+`sbx secret set-custom` 从标准输入读取真实 Token。沙箱收到一个 OAuth 形式的占位符，代理只对发往已配置主机的请求替换它。
 
-对于 API Key，改用 `sbx secret set anthropic` 进行存储。Kit 以相同方式连接它，作为代理在流出时替换的哨兵值。
+对于 Anthropic API Key，改用 `sbx secret set anthropic`。
 
-凭证存储完成后，从你希望挂载的项目中启动 `pi`：
+### 启动 Pi
+
+在你想挂载的工作文件夹中运行：
 
 ```bash
 sbx run --kit "docker.io/sbx/pi-kit:latest" pi
 ```
 
-Kit 已预先将 `pi` 打包进镜像，因此沙箱启动时无需安装任何内容，当前目录即为沙箱工作区。
-
-请勿在沙箱内部进行认证：在沙箱内运行 `/login` 会将真实 Token 写入容器，从而破坏代理模型。
-
-脚本化使用方式相同：
+对于已有的沙箱，用下面的命令非交互地运行 Pi：
 
 ```bash
 sbx exec <sandbox-name> -- pi -p "list the failing tests"
 ```
 
-完整凭证矩阵、故障排查和版本锁定请参见 [Kit 文档](https://github.com/docker/sbx-kits-contrib/tree/main/pi)。
+其他 Provider、问题排查和镜像固定见 [Pi kit 文档](https://github.com/docker/sbx-kits-contrib/tree/main/pi)。
+
+## 用 OpenShell 运行 Pi
+
+[NVIDIA OpenShell](https://docs.nvidia.com/openshell/about/overview) 提供带文件系统、进程、网络、凭证和推理策略的本地或远程沙箱。
+
+### 选择网关
+
+每个沙箱都需要一个活跃的网关：
+
+```bash
+openshell gateway add <gateway-url> --name <name>
+openshell gateway select <name>
+```
+
+### 创建沙箱
+
+```bash
+openshell sandbox create --name pi-sandbox --from pi -- pi
+```
+
+Pi、它的内置工具、`!` 命令和扩展工具都在 OpenShell 边界内运行。
+
+### 向远程沙箱传输文件
+
+远程网关不会绑定挂载你的宿主工作文件夹。请在沙箱内克隆仓库，或显式传输文件：
+
+```bash
+openshell sandbox upload pi-sandbox ./working-folder /workspace
+openshell sandbox download pi-sandbox /workspace/working-folder ./working-folder-out
+```
+
+OpenShell 的推理路由可以把原始模型凭证留在沙箱之外。配置好之后，让 Pi 指向网关暴露的相应 OpenAI 兼容或 Anthropic 兼容端点。
+
+## 通过 Gondolin 路由工具
+
+[Gondolin](https://github.com/earendil-works/gondolin) 是一个本地 Linux micro-VM。它的示例扩展把 Pi 进程和基于文件的 Provider 凭证留在宿主机上，同时把内置工具和用户的 `!` 命令路由到该 VM 中。
+
+VM 内的命令会继承宿主进程的环境。因此通过环境变量提供的 Provider Key 在 VM 内可能可见。除非你移除敏感变量或改变扩展的环境处理方式，不要把这种模式当作凭证边界。
+
+Gondolin 需要 Node.js 23.6 或更高版本，以及通过操作系统包管理器安装的 QEMU。
+
+### 安装扩展
+
+在 Pi 源码检出目录中：
+
+```bash
+mkdir -p ~/.pi/agent/extensions
+cp -R packages/coding-agent/examples/extensions/gondolin ~/.pi/agent/extensions/gondolin
+cd ~/.pi/agent/extensions/gondolin
+npm install --ignore-scripts
+```
+
+### 启动 Pi
+
+在你想挂载的工作文件夹中运行 Pi：
+
+```bash
+cd /path/to/working-folder
+pi -e ~/.pi/agent/extensions/gondolin
+```
+
+该扩展把宿主工作文件夹挂载到 VM 中的 `/workspace`，并覆盖 `read`、`write`、`edit`、`bash`、`grep`、`find` 和 `ls`。`/workspace` 下的文件改动会写回宿主机。
+
+其他扩展工具仍在宿主机上运行，除非它们显式委派自己的操作。添加可能绕过 VM 边界的工具之前，请先审阅 [Gondolin 示例](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/gondolin/)。
+
+---
+
+> **法律声明**：本页面是 pi.dev 官方文档的中文翻译版本，仅供学习参考。本网站与 [pi.dev](https://pi.dev/) 及 Earendil Inc. 无任何法律关系。

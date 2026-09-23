@@ -2,310 +2,98 @@
 
 > 本页面是 [Pi 官方文档](https://pi.dev/docs/latest/usage) 的中文翻译。仅供学习参考。
 
-本页面汇集了不在快速入门页面中的日常使用细节。
+在你想工作的文件夹中运行 `pi`。Pi 用该文件夹发现文件、指令和配置，并据此对保存的会话分组。如果你还没安装 Pi 或选择模型，请先看[快速开始](quickstart.md)。
 
-## 交互模式
+在加载项目的资源之前，Pi 可能会询问你是否信任该工作文件夹。见[项目信任](security.md#understand-project-trust)。
 
-<p align="center"><img src="/images/interactive-mode.png" alt="交互模式" width="600"></p>
+<p align="center"><img src="/images/interactive-mode.png" alt="Pi 交互模式，显示对话、编辑器和状态信息" width="750" /></p>
 
-交互界面分为四个主要区域：
+转录显示你的 Prompt、Pi 的回复、tool call、结果和错误。你在编辑器中输入 Prompt 和命令。页脚显示当前文件夹、会话、模型、上下文用量，以及累计用量和成本。
 
-- **启动栏（Startup header）** —— 显示快捷键、已加载的上下文文件、Prompt 模板、Skills 和扩展
-- **消息区域（Messages）** —— 用户消息、助手回复、tool call、工具结果、通知、错误和扩展 UI
-- **编辑器（Editor）** —— 输入区域，边框颜色反映当前 thinking level
-- **底部栏（Footer）** —— 显示工作目录、会话名称、Token/缓存使用、成本、上下文使用量和当前模型。总计包括助手响应、工具报告的用量以及摘要生成。
+## 输入 Prompt
 
-编辑器可以被内置面板（如 `/settings`）或自定义扩展 UI 临时替换。
+输入请求并按 `Enter` 发送。用 `Shift+Enter` 换行，或按 `Ctrl+G` 在配置好的外部编辑器中编写更长的 Prompt。
 
-### 编辑器功能
+要包含文件或图片：
 
-| 功能            | 操作                                                                                                                     |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| 文件引用        | 输入 `@` 来模糊搜索项目文件                                                                                              |
-| 路径补全        | 按 Tab 补全路径                                                                                                          |
-| 多行输入        | Shift+Enter（Windows Terminal 上为 Ctrl+Enter）                                                                          |
-| 复制回复        | Ctrl+X 复制 `/tree` 中选中的消息；否则复制最后一条助手消息，或在 `fullscreenCopyOnSelect` 禁用时复制当前全屏文本选中内容 |
-| 图像            | Ctrl+V 粘贴（Windows 为 Alt+V），或拖入终端                                                                              |
-| Shell 命令      | `!command` 执行命令，输出发送给模型                                                                                      |
-| 隐藏 Shell 命令 | `!!command` 执行命令但不发送输出给模型                                                                                   |
-| 外部编辑器      | Ctrl+G 打开 `externalEditor`、`$VISUAL`、`$EDITOR`，Windows 上为 Notepad，其他平台为 `nano`                              |
+- 输入 `@` 搜索文件并把它加入 Prompt。
+- 按 `Tab` 补全路径。
+- 粘贴图片或把它拖入兼容的终端。
 
-有关所有快捷键和自定义设置，请参阅 [Keybindings](keybindings.md)。
+## 跟踪 Pi 的工作
 
-## 斜杠命令（Slash Commands）
+Pi 在工作时显示每次 tool call 和结果。按 `Ctrl+O` 展开或折叠工具输出。按 `Ctrl+T` 显示或隐藏 thinking 块。
 
-在编辑器中输入 `/` 会打开命令补全。扩展可以注册自定义命令，Skills 以 `/skill:name` 形式出现，Prompt 模板以 `/templatename` 展开。
+启动头部列出 Pi 加载的指令和资源。编辑器边框指示当前的 thinking level。页脚随着模型使用上下文而更新，并报告用量。
 
-| 命令                     | 说明                                                                        |
-| ------------------------ | --------------------------------------------------------------------------- |
-| `/login`、`/logout`      | 管理 OAuth 或 API Key 凭证                                                  |
-| [`/llama`](llama-cpp.md) | 下载、加载和卸载 llama.cpp 路由器模型                                       |
-| `/model`                 | 切换模型；在选择器中按 Ctrl+S 保存启动默认                                  |
-| `/thinking`              | 切换 thinking level；在选择器中按 Ctrl+S 保存启动默认                       |
-| `/scoped-models`         | 启用/禁用 Ctrl+P 循环的模型                                                 |
-| `/settings`              | 主题、消息传递、传输及其他偏好                                              |
-| `/resume`                | 从历史会话中选择                                                            |
-| `/new`                   | 开始新会话                                                                  |
-| `/name <name>`           | 设置会话显示名称                                                            |
-| `/session`               | 显示会话文件、ID、消息数、Token 和费用                                      |
-| `/tree`                  | 跳转到会话中的任意点并继续                                                  |
-| `/trust`                 | 保存项目信任决策以供将来会话使用                                            |
-| `/fork`                  | 从先前的用户消息创建新会话                                                  |
-| `/clone`                 | 将当前活跃分支复制到新会话                                                  |
-| `/compact [prompt]`      | 手动压缩上下文，可选自定义指令                                              |
-| `/copy`                  | 复制最后一条助手消息到剪贴板                                                |
-| `/export [file]`         | 导出会话为 HTML 或 JSONL                                                    |
-| `/import <file>`         | 从 JSONL 文件导入并恢复会话                                                 |
-| `/share`                 | 上传为私有 GitHub Gist，附带可分享的 HTML 链接                              |
-| `/bug [description]`     | 向 Pi 开发者上报 bug；参阅 [Sessions](/docs/latest/sessions#reporting-bugs) |
-| `/reload`                | 重新加载快捷键、扩展、Skills、Prompt、主题和上下文文件                      |
-| `/hotkeys`               | 显示所有键盘快捷键                                                          |
-| `/changelog`             | 显示版本历史                                                                |
-| `/quit`                  | 退出 Pi                                                                     |
+Pi 不会在每次 tool call 之前都询问。请审阅命令和改动的文件，对不可信或无人值守的工作使用沙箱。见[安全](security.md)。
 
-## 消息队列
+## 改变方向
 
-在 Agent 仍在工作时可以提交消息：
+Pi 工作时你可以继续输入：
 
-- **Enter** 将 steering 消息加入队列，在当前助手回合完成 tool call 后送达。
-- **Alt+Enter** 将 follow-up 消息加入队列，在 Agent 完成所有工作后送达。
-- **Escape** 中断并将队列消息恢复到编辑器。
-- **Alt+Up** 将队列消息取回编辑器。
+| 你想做的事             | 操作                     |
+| ---------------------- | ------------------------ |
+| 调整当前任务           | 输入消息并按 `Enter`     |
+| 在当前任务之后追加工作 | 输入消息并按 `Alt+Enter` |
+| 把排队消息退回编辑器   | 按 `Alt+Up`              |
+| 停止当前任务           | 按 `Escape`              |
 
-在 Windows Terminal 上，Alt+Enter 默认为全屏。如要使 Pi 接收到该快捷键，请按照 [Terminal 设置](terminal-setup.md) 中的描述重新映射。
+用 `Enter` 发送的消息会等到当前回复及其 tool call 结束，然后引导下一次回复。用 `Alt+Enter` 发送的 follow-up 会等到 Pi 完成当前任务。中止会把排队消息退回编辑器。
 
-送达行为可通过 [Settings](settings.md) 中的 `steeringMode` 和 `followUpMode` 配置。
+Windows Terminal 保留了一些 Alt 快捷键。Windows 上的替代方案见[终端设置](terminal-setup.md)。
 
-## 会话（Sessions）
+## 更换模型或设置
 
-会话自动保存到 `~/.pi/agent/sessions/`，按工作目录组织。
+输入 `/` 搜索可用命令。最常用的命令有：
 
-```bash
-pi -c                  # 继续最近的会话
-pi -r                  # 浏览并选择会话
-pi --no-session        # 临时模式，不保存
-pi --name "my task"    # 启动时设置会话显示名称
-pi --session <path|id> # 使用特定会话文件或会话 ID
-pi --fork <path|id>    # 从会话分叉到新会话文件
+- `/model` 选择模型。按 `Ctrl+L` 打开同一个选择器。
+- `/thinking` 选择当前模型使用多少推理。按 `Shift+Tab` 循环切换支持的级别。
+- `/login` 和 `/logout` 管理 Provider 访问。
+- `/settings` 修改常用偏好。
+
+Prompt 模板、Skill 和扩展可以向同一个菜单添加更多命令。见[选择模型](models.md)、[配置](configuration.md)或完整的[斜杠命令参考](slash-commands.md)。
+
+## 继续或重新开始
+
+除非禁用了会话持久化，Pi 会自动保存会话。
+
+- `/new` 开始新会话。
+- `/resume` 打开另一个已保存的会话。
+- `/name` 给当前会话起一个容易识别的名字。
+- `/session` 显示它的文件、ID、消息数、Token 用量和成本。
+
+当你想在不丢失现有工作的情况下探索另一种思路时，使用 `/tree`、`/fork` 或 `/clone`。用 `/compact` 减少发送给模型的对话历史。这些工作流见[会话与上下文](sessions.md)。
+
+离开 Pi 之后，在同一文件夹运行 `pi --continue` 恢复它最近的会话。
+
+## 运行终端命令
+
+在命令前加 `!` 运行它，并把输出加入对话：
+
+```text
+!git status
 ```
 
-有用的会话命令：
+如果你想让命令的输出不发送给模型，使用 `!!`。
 
-- `/session` 显示当前会话文件和 ID。
-- `/tree` 导航文件内的会话树，可以摘要被放弃的分支。
-- `/fork` 从之前的用户消息创建新会话。
-- `/clone` 将当前活跃分支复制到新会话文件。
-- `/compact` 总结旧消息以释放上下文。
+## 复制、导出或分享结果
 
-详见 [Sessions](sessions.md) 和 [Compaction](compaction.md)。
+按 `Ctrl+X` 或运行 `/copy` 复制最后一条 assistant 回复。用 `/export` 把会话保存为 HTML 或 JSONL。
 
-## 上下文文件
+用 `/share` 上传会话并获得查看链接。使用 Radius 认证时，产物对你的 Radius 组织可见。否则 Pi 通过 GitHub CLI 创建一个私有 GitHub gist。请先审阅会话，因为它可能包含对话期间暴露的 Prompt、工具输出、文件内容和凭证。
 
-Pi 在启动时加载 `AGENTS.md` 或 `CLAUDE.md`：
+## 调整终端
 
-- `~/.pi/agent/AGENTS.md` —— 全局指令
-- 从当前工作目录向上遍历的父目录
-- 当前目录
+常规模式使用终端正常的回滚缓冲区。全屏模式让编辑器和状态区域保持固定，转录在终端窗口内滚动。通过 `/settings` 或 `--tui-mode` 选择模式。
 
-如果目录包含 `AGENTS.override.md`，Pi 会加载它，而不是该目录中的 `AGENTS.md` 或 `CLAUDE.md`。其他目录的上下文文件仍会正常分层。
+终端对鼠标输入、键盘快捷键和内联图片的支持各有不同。平台相关配置见[终端设置](terminal-setup.md)，所有可配置的快捷键见[快捷键](keybindings.md)。运行 `/hotkeys` 可以查看当前会话中生效的快捷键。
 
-使用上下文文件来定义项目规范、命令、安全规则和偏好。使用 `--no-context-files` 或 `-nc` 禁用加载。
+## 收集诊断信息
 
-### 系统 Prompt 文件
+排查终端渲染或对话状态问题时，运行 `/debug`。Pi 会把渲染后的终端行和当前会话消息写入你的 [agent 目录](configuration.md#agent-directory)中的 `pi-debug.log`。
 
-使用 `.pi/SYSTEM.md` 替换项目默认系统 Prompt，或 `~/.pi/agent/SYSTEM.md` 全局替换。使用 `APPEND_SYSTEM.md` 在相同位置追加到默认 Prompt 之后，而不替换它。
-
-### 项目信任
-
-在交互式启动时，如果项目目录包含项目本地设置、资源或项目 `.agents/skills`，且在 `~/.pi/agent/trust.json` 中该目录或父目录没有已保存的决策，Pi 会询问是否信任该目录。信任项目后，Pi 可以加载 `.pi/settings.json` 和 `.pi` 资源、自动安装缺失的项目包，并执行项目扩展。
-
-在信任决策之前，Pi 只加载上下文文件、用户/全局扩展和 CLI `-e` 扩展，以便它们能够处理 `project_trust` 事件。项目本地扩展、项目包管理的扩展和项目设置仅在项目被信任后才会加载。当切换到来自不同 cwd 的会话（且该 cwd 的信任在当前进程中尚未解决）时，此分割同样适用。
-
-非交互模式（`-p`、`--mode json` 和 `--mode rpc`）不显示信任提示。在没有适用的已保存信任决策时，它们使用全局设置中的 `defaultProjectTrust`：`ask`（默认）和 `never` 忽略这些项目资源，而 `always` 则信任它们。传入 `--approve`/`-a` 或 `--no-approve`/`-na` 可在单次运行中覆盖项目信任。
-
-如果没有扩展或已保存决策适用，则由 `defaultProjectTrust` 控制回退行为。可在 `~/.pi/agent/settings.json` 中将其设置为 `"ask"`、`"always"` 或 `"never"`，或通过 `/settings` 更改。
-
-`pi config` 与包命令使用相同的项目信任流程，但 `pi update` 从不进行提示。传入 `--approve` 即可在单次命令中信任项目本地设置，或传入 `--no-approve` 忽略它们。
-
-在交互模式中使用 `/trust` 保存项目的信任决策以供未来会话使用，包括对直接父目录的信任。该命令仅写入 `~/.pi/agent/trust.json`；当前会话不会重新加载，需要重启 Pi 才能使更改生效。
-
-## 导出和分享会话
-
-使用 `/export [file]` 将会话写入 HTML 文件。
-
-使用 `/share` 上传为私有 GitHub Gist 附带可分享的 HTML 链接。
-
-如果你将 Pi 用于开源工作，并希望发布用于模型、Prompt、工具和评估研究的会话，请参考 [`badlogic/pi-share-hf`](https://github.com/badlogic/pi-share-hf)。它将会话发布到 Hugging Face 数据集。
-
-## CLI 参考
-
-```bash
-pi [options] [--] [@files...] [messages...]
-```
-
-### Package 管理命令
-
-```bash
-pi install <source> [-l]     # 安装 Package，-l 为项目本地安装
-pi remove <source> [-l]      # 移除 Package
-pi uninstall <source> [-l]   # remove 的别名
-pi update [source|self|pi]   # 仅更新 Pi，或更新单个 Package 源
-pi update --all              # 更新 Pi 和 Packages；协调固定的 git ref
-pi update --extensions       # 仅更新 Packages；协调固定的 git ref
-pi update --models           # 仅刷新模型目录
-pi update --self             # 仅更新 Pi
-pi update --extension <src>  # 更新单个 Package
-pi list                      # 列出已安装的 Packages
-pi config                    # 启用/禁用 Package 资源
-```
-
-这些命令管理 Pi Packages，且 `pi update` 可以更新 Pi CLI 安装本身。要卸载 Pi 本身，请参阅 [Quickstart](quickstart)。`pi config` 与项目 Package 命令接受 `--approve`/`--no-approve`，以便在单次命令中信任或忽略项目本地设置。`pi update` 从不提示项目信任。
-
-Package 源和安全说明请参阅 [Pi Packages](packages.md)。
-
-### 模式
-
-| 标志                  | 说明                                                |
-| --------------------- | --------------------------------------------------- |
-| 默认                  | 交互模式                                            |
-| `-p`、`--print`       | 打印响应并退出                                      |
-| `--mode json`         | 将所有事件输出为 JSON 行；参见 [JSON mode](json.md) |
-| `--mode rpc`          | stdin/stdout RPC 模式；参见 [RPC mode](rpc.md)      |
-| `--export <in> [out]` | 导出会话为 HTML                                     |
-
-在 print 模式下，Pi 也会读取通过管道传来的 stdin 并将其合并到初始提示中：
-
-```bash
-cat README.md | pi -p "Summarize this text"
-```
-
-### 模型选项
-
-| 选项                     | 说明                                                      |
-| ------------------------ | --------------------------------------------------------- |
-| `--provider <name>`      | Provider，如 `anthropic`、`openai`、`google`              |
-| `--model <pattern>`      | 模型模式或 ID；支持 `provider/id` 和可选的 `:<thinking>`  |
-| `--api-key <key>`        | API Key，覆盖环境变量                                     |
-| `--thinking <level>`     | `off`、`minimal`、`low`、`medium`、`high`、`xhigh`、`max` |
-| `--models <patterns>`    | 逗号分隔的 Ctrl+P 循环模式                                |
-| `--list-models [search]` | 列出可用模型                                              |
-
-### 会话选项
-
-| 选项                         | 说明                               |
-| ---------------------------- | ---------------------------------- |
-| `-c`、`--continue`           | 继续最近会话                       |
-| `-r`、`--resume`             | 浏览并选择会话                     |
-| `--session <path\|id>`       | 使用特定会话文件或部分 UUID        |
-| `--fork <path\|id>`          | 从会话文件或部分 UUID 分叉到新会话 |
-| `--session-dir <dir>`        | 自定义会话存储目录                 |
-| `--no-session`               | 临时模式，不保存                   |
-| `--name <name>`、`-n <name>` | 启动时设置会话显示名称             |
-
-### 工具选项
-
-| 选项                                   | 说明                                               |
-| -------------------------------------- | -------------------------------------------------- |
-| `--tools <list>`、`-t <list>`          | 白名单指定内置、扩展和自定义工具                   |
-| `--exclude-tools <list>`、`-xt <list>` | 禁用指定的内置、扩展和自定义工具，其余工具保持可用 |
-| `--no-builtin-tools`、`-nbt`           | 禁用内置工具但保留扩展/自定义工具                  |
-| `--no-tools`、`-nt`                    | 禁用所有工具                                       |
-
-内置工具：`read`、`bash`、`powershell`（Windows）、`edit`、`write`、`grep`、`find`、`ls`。
-
-### 资源选项
-
-| 选项                         | 说明                                 |
-| ---------------------------- | ------------------------------------ |
-| `-e`、`--extension <source>` | 从路径、npm 或 git 加载扩展；可重复  |
-| `--no-extensions`            | 禁用扩展发现                         |
-| `--skill <path>`             | 加载 Skill；可重复                   |
-| `--no-skills`                | 禁用 Skill 发现                      |
-| `--prompt-template <path>`   | 加载 Prompt 模板；可重复             |
-| `--no-prompt-templates`      | 禁用 Prompt 模板发现                 |
-| `--theme <path>`             | 加载主题；可重复                     |
-| `--no-themes`                | 禁用主题发现                         |
-| `--no-context-files`、`-nc`  | 禁用 `AGENTS.md` 和 `CLAUDE.md` 发现 |
-
-将 `--no-*` 与显式标志结合使用，以精确加载所需内容，忽略设置。示例：
-
-```bash
-pi --no-extensions -e ./my-extension.ts
-```
-
-### 其他选项
-
-| 选项                            | 说明                                             |
-| ------------------------------- | ------------------------------------------------ |
-| `--system-prompt <text>`        | 替换默认 Prompt；上下文文件和 Skills 仍会被追加  |
-| `--append-system-prompt <text>` | 追加到系统 Prompt                                |
-| `--verbose`                     | 强制详细启动                                     |
-| `-a`、`--approve`               | 在本次运行中信任项目本地文件                     |
-| `-na`、`--no-approve`           | 在本次运行中忽略项目本地文件                     |
-| `--`                            | 停止选项解析；剩余参数是 Prompt 或 `@file` 输入  |
-| `-h`、`--help`                  | 显示帮助                                         |
-| `--tui-mode <mode>`             | TUI 模式：`regular`（默认）或实验性 `fullscreen` |
-| `--use-theme <name[/name]>`     | 设置本次运行的初始交互主题，但不更改设置         |
-| `-v`、`--version`               | 显示版本                                         |
-
-在 `fullscreen` 模式下，转录在终端视口内滚动，而排队消息、工作状态、扩展组件、编辑器和底部栏固定在底部。鼠标/触控板输入会滚动指针所在区域；键盘视口操作始终可用。内联图片在支持 Kitty 图形协议的终端（包括 Kitty 和 Ghostty）中正常工作。在 iTerm2 中它们渲染为文本占位符，因为其内联图片协议无法在应用自控滚动期间删除或裁剪渲染。在 `regular` 模式下，pi 使用主屏幕和终端自有的回滚缓冲，iTerm2 内联图片继续正常渲染。终端特定的设置和临时解决方案参见 [终端设置](/docs/latest/terminal-setup)。
-
-在 `/settings` 中设置 **TUI 模式**，可立即在 `regular` 和 `fullscreen` 之间切换，并为以后的会话选择默认模式。**全屏退出输出** 控制退出全屏时打印最终转录，还是恢复之前的屏幕并只打印会话恢复提示。
-
-### 文件参数
-
-文件前加 `@` 以包含到消息中：
-
-```bash
-pi @prompt.md "Answer this"
-pi -p @screenshot.png "What's in this image?"
-pi @code.ts @test.ts "Review these files"
-```
-
-### 示例
-
-```bash
-# 交互式初始提示
-pi "List all .ts files in src/"
-
-# 非交互式
-pi -p "Summarize this codebase"
-
-# 以连字符开头的 Prompt
-pi -p -- "- Summarize these points"
-
-# 非交互式带管道传入
-cat README.md | pi -p "Summarize this text"
-
-# 命名的一次性会话
-pi --name "release audit" -p "Audit this repository"
-
-# 不同模型
-pi --provider openai --model gpt-4o "Help me refactor"
-
-# 带 Provider 前缀的模型
-pi --model openai/gpt-4o "Help me refactor"
-
-# 带 thinking level 简写的模型
-pi --model sonnet:high "Solve this complex problem"
-
-# 限制模型循环
-pi --models "claude-*,gpt-4o"
-
-# 只读模式
-pi --tools read,grep,find,ls -p "Review the code"
-
-# 禁用一个扩展或内置工具，同时保持其余工具可用
-pi --exclude-tools ask_question
-```
-
-## 设计原则
-
-Pi 将核心保持小巧，将工作流特定的行为下放到扩展、Skills、Prompt 模板和包中。
-
-它有意不包含内置的 MCP、子 Agent、权限弹窗、Plan 模式、待办事项或后台 Bash。你可以将工作流作为扩展或包来构建或安装，或使用外部工具如容器和 tmux。
-
-如需完整理由，请阅读[博客文章](https://mariozechner.at/posts/2025-11-30-pi-coding-agent/)。
+分享该文件之前请先审阅。它可能包含 Prompt、模型响应、工具输出、文件内容和终端数据。
 
 ---
 

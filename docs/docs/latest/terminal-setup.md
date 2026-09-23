@@ -1,73 +1,76 @@
-# Terminal Setup（终端设置）
+# 配置终端
 
 > 本页面是 [Pi 官方文档](https://pi.dev/docs/latest/terminal-setup) 的中文翻译。仅供学习参考。
 
-Pi 使用 [Kitty 键盘协议](https://sw.kovidgoyal.net/kitty/keyboard-protocol/) 进行可靠的修饰键检测。大多数现代终端支持此协议，但某些需要配置更改。
+大多数现代终端无需额外设置就能配合 Pi 工作。当修饰键、滚动、链接、图片、颜色或输入法（IME）候选框位置表现不符合预期时，请使用本页。
 
-## 能力覆盖
+Pi 使用扩展键协议，让终端能把 `Shift+Enter`、`Alt+Enter` 这类组合与普通的 `Enter` 区分开。终端代理、多路复用器和 IDE 内置终端可能改变或丢弃这些信息。
 
-Pi 会自动检测 OSC 8 超链接、内联图片协议和真彩色。如果检测在终端代理或多路复用器后面失败，可以使用以下高级覆盖：
+## 排查问题
 
-| 能力         | 环境变量                                      | JSON 设置                                           |
-| ------------ | --------------------------------------------- | --------------------------------------------------- |
-| OSC 8 超链接 | `PI_HYPERLINKS=1\|0\|auto`                    | `terminal.hyperlinks: true\|false\|"auto"`          |
-| 内联图片     | `PI_IMAGE_PROTOCOL=kitty\|iterm2\|none\|auto` | `terminal.images: "kitty"\|"iterm2"\|false\|"auto"` |
-| 真彩色       | `PI_TRUE_COLOR=1\|0\|auto`                    | `terminal.trueColor: true\|false\|"auto"`           |
+| 症状                                 | 从这里开始                                                                            |
+| ------------------------------------ | ------------------------------------------------------------------------------------- |
+| `Shift+Enter` 变为提交而不是插入换行 | 下面你所用终端的小节；tmux 请见[在 tmux 中运行 Pi](tmux.md)                           |
+| `Alt+Enter` 不排队 follow-up         | [WezTerm](#wezterm)、[Alacritty](#alacritty) 或 [Windows Terminal](#windows-terminal) |
+| 全屏滚动异常缓慢                     | [iTerm2](#iterm2)                                                                     |
+| 链接可点但没有悬停预览               | [Ghostty](#ghostty)                                                                   |
+| 未检测到内联图片或颜色               | [覆盖检测到的能力](#override-detected-capabilities)                                   |
+| IME 候选框出现在错误位置             | [WezTerm](#wezterm) 或 [IntelliJ IDEA](#intellij-idea-integrated-terminal)            |
+| 修饰键只在 tmux 内失效               | [在 tmux 中运行 Pi](tmux.md)                                                          |
 
-设置优先于环境变量；未设置或 `auto` 时保持自动检测。只强制完整终端路径支持的能力，因为不支持的转义序列会破坏渲染。
+用 `/hotkeys` 查看 Pi 当前生效的快捷键。修改它们见[快捷键](keybindings.md)。
 
 ## Kitty
 
-开箱即用。
+Kitty 无需额外配置就支持所需的键盘协议。
 
 ## iTerm2
 
-### 常规 TUI 模式
+常规终端模式无需额外配置即可工作。
 
-开箱即用。
+### 修复全屏滚动缓慢
 
-### 全屏 TUI 模式
+在全屏模式下，视口由 Pi 接管，因此 iTerm2 发送的是鼠标滚轮事件，而不是滚动终端原生历史。快速触控板手势因此每次大约只能移动一行。
 
-Pi 接管视口后，iTerm2 会发送鼠标滚轮报告，而不是滚动原生回滚缓冲区。iTerm2 默认的快速触控板行为可能丢失大部分加速滚动增量，导致全屏模式下的滚动速度远慢于常规模式。
+要改变这种行为：
 
-如果快速滚动手势在全屏模式下一次只能移动约一行：
+1. 打开 **iTerm2 > Settings > Advanced**。
+2. 搜索 **Trackpad scrolls fast?**。
+3. 把它设为 **No**。
 
-1. 打开 **iTerm2 → Settings → Advanced**。
-2. 搜索 **Trackpad scrolls fast?**，并将其设为 **No**。
-
-这是影响整个 iTerm2 的临时解决方案，也可能改变原生触控板滚动行为。底层问题记录在 [iTerm2 issue 9619](https://gitlab.com/gnachman/iterm2/-/work_items/9619) 中。
+这是 iTerm2 的全局设置，也可能改变原生触控板滚动。底层行为记录在 [iTerm2 issue 9619](https://gitlab.com/gnachman/iterm2/-/work_items/9619)。
 
 ## Apple Terminal
 
-Pi 在可用时启用增强按键报告。如果 Terminal.app 仍然为 `Shift+Enter` 发送普通 Return，Pi 会使用本地 macOS 修饰键回退机制，将该 Return 视为 `Shift+Enter`。
+可用时 Pi 会启用增强键报告。如果 Terminal.app 对 `Shift+Enter` 仍然发送普通的 Return，Pi 会使用本地 macOS 修饰键回退，并把它当作 `Shift+Enter`。
 
-此回退仅在 Pi 与 Terminal.app 运行在同一台 Mac 上时有效。它无法通过远程 SSH 检测本地键盘。
+该回退仅在 Pi 与 Terminal.app 运行在同一台 Mac 上时有效。Pi 通过 SSH 运行在另一台机器上时，它无法读取本地修饰键状态。
 
 ## Ghostty
 
-在 Ghostty 配置中添加（macOS：`~/Library/Application Support/com.mitchellh.ghostty/config`，Linux：`~/.config/ghostty/config`）：
+如果 `Alt+Backspace` 不工作，把下面的映射加入 Ghostty 配置：
 
-```
+```text
 keybind = alt+backspace=text:\x1b\x7f
 ```
 
-注意：旧版 Claude Code 可能添加了以下 Ghostty 映射：
+配置文件在 macOS 上是 `~/Library/Application Support/com.mitchellh.ghostty/config`，在 Linux 上是 `~/.config/ghostty/config`。
 
-```
+旧的 Claude Code 配置里可能包含：
+
+```text
 keybind = shift+enter=text:\n
 ```
 
-该映射发送原始的换行符字节。在 Pi 内部，这与 `Ctrl+J` 无法区分，因此 tmux 和 Pi 不再看到真正的 `shift+enter` 按键事件。
+这会发送一个原始换行符，Pi 无法把它与 `Ctrl+J` 区分开。如果添加该映射只是因为旧的 Claude Code 安装，请删除它。Pi 已经把 `Ctrl+J` 绑定为换行替代键，所以该映射可能看起来有效，实际上却阻止 Pi 和 tmux 收到真正的 `Shift+Enter` 事件。
 
-如果仅为 Claude Code 2.x+ 添加的该映射，可以删除，除非你想在 tmux 中使用 Claude Code，它仍然需要该 Ghostty 映射。Pi 默认将 `Ctrl+J` 绑定为换行别名，因此 `Shift+Enter` 无需额外 Pi 配置即可在 tmux 中通过该重映射继续工作。
+### 在全屏模式下打开链接
 
-### 全屏 TUI 模式
-
-在全屏模式下，链接仍可点击，但 Pi 捕获鼠标输入时，Ghostty 不会显示悬停下划线或左下角 URL 预览。在 macOS 上按住 `Shift+Command`，或在 Linux 上按住 `Shift+Ctrl`，即可使用 Ghostty 的原生链接处理。
+链接在全屏模式下仍可点击，但 Pi 接管鼠标输入时，Ghostty 不会显示它平常的悬停下划线或 URL 预览。在 macOS 上按住 `Shift+Command`，在 Linux 上按住 `Shift+Ctrl`，即可使用 Ghostty 原生的链接处理。
 
 ## WezTerm
 
-WezTerm 通常通过 xterm modifyOtherKeys 开箱即用地支持 `Shift+Enter`。若要显式使用 Kitty 键盘协议，创建 `~/.wezterm.lua`：
+WezTerm 通常通过 xterm 扩展键报告 `Shift+Enter`。要显式启用 Kitty 键盘协议，请创建 `~/.wezterm.lua`：
 
 ```lua
 local wezterm = require 'wezterm'
@@ -76,7 +79,19 @@ config.enable_kitty_keyboard = true
 return config
 ```
 
-在 macOS 上，WezTerm 默认将 `Option+Enter` 绑定为全屏。若要使用 `Option+Enter` 进行 pi follow-up 队列，添加此按键覆盖：
+### 在 macOS 上转发 Alt+Enter
+
+在 macOS 上 WezTerm 默认把 `Option+Enter` 绑定到全屏。要把它用于 Pi 的 follow-up 队列，请把下面的条目加入你的 `config.keys` 表：
+
+```lua
+{
+  key = 'Enter',
+  mods = 'ALT',
+  action = wezterm.action.SendString('\x1b[13;3u'),
+}
+```
+
+完整的最小配置是：
 
 ```lua
 local wezterm = require 'wezterm'
@@ -91,13 +106,20 @@ config.keys = {
 return config
 ```
 
-如果你已有 `config.keys` 表，将条目添加到其中。
+### 在 WSL 中定位 IME 候选框
 
-在 WSL 上，WezTerm 可能需要可见的硬件光标来定位 IME 候选窗口。如果中日韩 IME 候选不跟随文本光标，请在运行 Pi 前设置 `PI_HARDWARE_CURSOR=1` 或在设置中将 `showHardwareCursor` 设为 `true`。
+如果 CJK 输入法候选框在 WSL 中不跟随 Pi 的文本光标，请显示硬件光标：
+
+```bash
+export PI_HARDWARE_CURSOR=1
+pi
+```
+
+也可以在 Pi 设置中把 `showHardwareCursor` 设为 `true`。
 
 ## Alacritty
 
-Alacritty 通常开箱即用地支持 `Shift+Enter`。在 macOS 上，`Option+Enter` 可能被识别为普通 `Enter`。若要使用 `Option+Enter` 进行 pi follow-up 队列，添加到 `~/.config/alacritty/alacritty.toml`：
+Alacritty 通常能报告 `Shift+Enter`。在 macOS 上，`Option+Enter` 可能以普通 `Enter` 到达。把下面的内容加入 `~/.config/alacritty/alacritty.toml`，把它转发给 Pi：
 
 ```toml
 [[keyboard.bindings]]
@@ -106,21 +128,13 @@ mods = "Alt"
 chars = "\u001b[13;3u"
 ```
 
-更改配置后重新启动 Alacritty。
+修改文件后重启 Alacritty。
 
-## VS Code（集成终端）
+## VS Code 内置终端
 
-VS Code 1.109.5 及更新版本默认在集成终端中启用了 Kitty 键盘协议，因此 `Shift+Enter` 应开箱即用。
+VS Code 1.109.5 及更新版本默认在内置终端中启用 Kitty 键盘协议。
 
-VS Code 版本低于 1.109.5 需要显式添加终端快捷键以支持 `Shift+Enter`。
-
-`keybindings.json` 位置：
-
-- **macOS**：`~/Library/Application Support/Code/User/keybindings.json`
-- **Linux**：`~/.config/Code/User/keybindings.json`
-- **Windows**：`%APPDATA%\Code\User\keybindings.json`
-
-添加到 `keybindings.json`：
+对于更旧的版本，把 `Shift+Enter` 终端绑定加入 `keybindings.json`：
 
 ```json
 {
@@ -131,9 +145,15 @@ VS Code 版本低于 1.109.5 需要显式添加终端快捷键以支持 `Shift+E
 }
 ```
 
-## Zed（集成终端）
+用户的 `keybindings.json` 文件通常位于：
 
-将以下按键绑定添加到 Zed 的 `keymap.json`：
+- macOS：`~/Library/Application Support/Code/User/keybindings.json`
+- Linux：`~/.config/Code/User/keybindings.json`
+- Windows：`%APPDATA%\\Code\\User\\keybindings.json`
+
+## Zed 内置终端
+
+把这些绑定加入 Zed 的 `keymap.json`：
 
 ```json
 {
@@ -148,50 +168,57 @@ VS Code 版本低于 1.109.5 需要显式添加终端快捷键以支持 `Shift+E
 
 ## Windows Terminal
 
-Pi 在 Windows 或 WSL 原生运行时使用 Windows 风格的快捷键：
+Windows Terminal 使用 Pi 在 Windows 和 WSL 上的默认快捷键。完整列表见[快捷键](keybindings.md)。
 
-- `Alt+V` 粘贴图像或剪贴板文本。
-- `Ctrl+F` 在全屏模式下搜索转录，`Ctrl+Up`/`Ctrl+Down` 在标记消息之间跳转。
-- `Alt+P` 切换到上一个模型。
-- `Ctrl+Z` 在原生 Windows 上撤销编辑；WSL 使用 `Alt+Z`，以便 `Ctrl+Z` 可以挂起 Pi。
-- `Ctrl+Q` 队列 follow-up 消息，`Alt+Q` 恢复队列消息。
+### 转发 Shift+Enter
 
-在 `settings.json` 中添加（通过 Ctrl+Shift+, 或设置 → 打开 JSON 文件），以转发用于插入新行的 `Shift+Enter`：
+用 `Ctrl+Shift+,` 或 **Settings > Open JSON file** 打开 Windows Terminal 的 `settings.json`。把下面的对象加入它的 `actions` 数组：
 
 ```json
 {
-  "actions": [
-    {
-      "command": { "action": "sendInput", "input": "\u001b[13;2u" },
-      "keys": "shift+enter"
-    }
-  ]
+  "command": { "action": "sendInput", "input": "\u001b[13;2u" },
+  "keys": "shift+enter"
 }
 ```
 
-Windows Terminal 默认将 `Alt+Enter` 绑定为全屏。若要替代 Pi 默认的 `Ctrl+Q`（用于 follow-up 队列），请将 Windows Terminal 配置为发送该按键，并在 Pi 中将 `app.message.followUp` 绑定为 `alt+enter`。
+完全关闭并重新打开 Windows Terminal，然后验证 `Shift+Enter` 在 Pi 中插入新行。
 
-如果你已有 `actions` 数组，将上述对象添加到其中。更改设置后请完全关闭并重新打开 Windows Terminal。
+### 用 Alt+Enter 处理 follow-up
 
-## xfce4-terminal、terminator
+Windows Terminal 默认把 `Alt+Enter` 绑定到全屏。因此 Pi 在 Windows 和 WSL 上使用 `Ctrl+Q` 处理 follow-up。
 
-这些终端对转义序列支持有限。带修饰的 Enter 键（Ctrl+Enter、Shift+Enter）无法与普通 Enter 区分，导致 `submit: ["ctrl+enter"]` 等自定义快捷键无法工作。
+要改用 `Alt+Enter`，请配置 Windows Terminal 转发该键，并在 Pi 的 `keybindings.json` 中把 `app.message.followUp` 绑定到 `alt+enter`。见[快捷键](keybindings.md#assign-keybindings)。
 
-为获得最佳体验，请使用支持 Kitty 键盘协议的终端：
+## xfce4-terminal 和 Terminator
 
-- [Kitty](https://sw.kovidgoyal.net/kitty/)
-- [Ghostty](https://ghostty.org/)
-- [WezTerm](https://wezfurlong.org/wezterm/)
-- [iTerm2](https://iterm2.com/)
-- [Alacritty](https://github.com/alacritty/alacritty)（需要使用 Kitty 协议支持编译）
+这些终端无法可靠地区分带修饰键的 Enter 和普通 `Enter`。因此 `Ctrl+Enter`、`Shift+Enter` 等自定义绑定可能不工作。
 
-## IntelliJ IDEA（集成终端）
+需要这些快捷键时，请使用支持现代扩展键的终端，例如 Kitty、Ghostty、WezTerm、iTerm2、Windows Terminal，或兼容的 Alacritty 构建。
 
-内置终端对转义序列支持有限。在 IntelliJ 终端中，Shift+Enter 无法与 Enter 区分。
+## IntelliJ IDEA 内置终端
 
-如果你需要显示硬件光标，在运行 pi 前设置 `PI_HARDWARE_CURSOR=1`（默认禁用以保证兼容性）。
+IntelliJ IDEA 的内置终端无法可靠地区分 `Shift+Enter` 和普通 `Enter`。请用 `Ctrl+J` 换行，或在支持现代扩展键的终端中运行 Pi。
 
-建议使用专用终端模拟器以获得最佳体验。
+如果 IME 候选框不跟随文本光标，请显示硬件光标：
+
+```bash
+export PI_HARDWARE_CURSOR=1
+pi
+```
+
+## 覆盖检测到的能力
+
+Pi 会自动检测 OSC 8 超链接、内联图片协议和 truecolor 支持。终端代理或多路复用器可能让该检测不准确。
+
+| 能力      | 环境变量                                      | 设置                                                |
+| --------- | --------------------------------------------- | --------------------------------------------------- |
+| 超链接    | `PI_HYPERLINKS=1\|0\|auto`                    | `terminal.hyperlinks: true\|false\|"auto"`          |
+| 内联图片  | `PI_IMAGE_PROTOCOL=kitty\|iterm2\|none\|auto` | `terminal.images: "kitty"\|"iterm2"\|false\|"auto"` |
+| Truecolor | `PI_TRUE_COLOR=1\|0\|auto`                    | `terminal.trueColor: true\|false\|"auto"`           |
+
+设置优先于环境变量。未设置的值或 `auto` 保留自动检测。
+
+只强制启用整条终端链路都支持的能力。不受支持的转义序列会破坏渲染。规范的取值定义见[环境变量](environment-variables.md#pi-process-configuration)和[设置](settings.md)。
 
 ---
 

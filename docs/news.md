@@ -2,6 +2,52 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.87.1（2026-09-22）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **最新前沿模型** – 在支持的 Provider（包括 GitHub Copilot）上使用 Claude Opus 5.5、GPT-6 Sol 和 GPT-6 Luna。详见 [选择模型](/docs/latest/models#select-a-model)。
+- **xAI 默认使用 Grok 4.7** – 新建的 xAI 会话现在默认使用 Grok 4.7。详见 [Provider 认证](/docs/latest/providers#use-an-api-key-from-the-environment)。
+
+新增
+
+- 为 GitHub Copilot 添加 Claude Opus 5.5、GPT-6 Sol 和 GPT-6 Luna 支持（来自 `@earendil-works/pi-ai`）。
+- 为 OpenAI API key 和 OpenAI Codex 订阅添加 GPT-6 Sol 和 GPT-6 Luna 支持（来自 `@earendil-works/pi-ai`）。
+- 为 Anthropic 添加 Claude Opus 5.5 支持，带自适应 thinking 和 1M 上下文窗口（来自 `@earendil-works/pi-ai`）。
+
+变更
+
+- 把 xAI 默认模型改为 Grok 4.7。
+
+修复
+
+- 修复分轮压缩摘要被 Claude Fable 5.1 拒绝的问题：明确分隔对话，并使用面向续写的指令（[#9908](https://github.com/earendil-works/pi/pull/9908) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 修复缺失或无效的 `--mode` 值被静默忽略、而不是报错并以非零状态退出的问题（[#9045](https://github.com/earendil-works/pi/issues/9045)）。
+- 修复仅含图片的用户消息因为带有空文本部分而被部分 OpenAI 兼容 Provider 拒绝的问题（来自 `@earendil-works/pi-ai`）（[#9797](https://github.com/earendil-works/pi/issues/9797)）。
+- 修复 Anthropic OAuth 请求上报过期的 Claude Code 版本的问题（来自 `@earendil-works/pi-ai`）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 把 Claude Opus 5.5、GPT-6 Sol 和 GPT-6 Luna 加入 GitHub Copilot 目录。
+- 为 OpenAI API key 和 OpenAI Codex 订阅添加 GPT-6 Sol 和 GPT-6 Luna，带完整的 reasoning effort、Prompt 缓存、工具搜索、长上下文定价和官方成本元数据。
+- 把 Claude Opus 5.5 加入内置 Anthropic 模型目录，带自适应 thinking、1M 上下文和官方定价元数据。
+- 把 Grok 4.7 加入内置 xAI 模型目录，带长上下文定价元数据。
+
+修复
+
+- 修复仅含图片的用户消息因为带有空文本部分而被部分 OpenAI 兼容 Provider 拒绝的问题（[#9797](https://github.com/earendil-works/pi/issues/9797)）。
+- 修复 Anthropic OAuth 请求上报过期的 Claude Code 版本的问题。
+
+</details>
+
 ## v0.87.0（2026-09-21）
 
 <details>

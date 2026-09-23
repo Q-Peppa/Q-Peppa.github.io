@@ -1,244 +1,199 @@
-# Keybindings（快捷键）
+# 快捷键参考
 
 > 本页面是 [Pi 官方文档](https://pi.dev/docs/latest/keybindings) 的中文翻译。仅供学习参考。
 
-所有键盘快捷键可通过 `~/.pi/agent/keybindings.json` 自定义。每个操作可绑定一个或多个按键。
+Pi 暴露具名动作，例如 `app.session.new`，可以为它们分配快捷键。你可以在 Pi 的[用户配置](configuration.md#agent-directory)中修改默认分配，或为未分配的动作绑定按键。
 
-配置文件使用 Pi 内部使用的相同命名空间快捷键 ID，扩展作者在 `keyHint()` 和注入的 `keybindings` 管理器中也使用这些 ID。
+运行 `/hotkeys` 可以查看主编辑器和应用当前生效的快捷键。
 
-使用旧的非命名空间 ID（如 `cursorUp` 或 `expandTools`）的旧配置在启动时会自动迁移到命名空间 ID。
+## 分配快捷键
 
-编辑 `keybindings.json` 后，运行 `/reload` 在 Pi 中应用更改，无需重启会话。
+创建 `<agent-dir>/keybindings.json`。agent 目录默认为 `~/.pi/agent`，详见 [Agent 目录](configuration.md#agent-directory)。
 
-## 按键格式
+把每个动作标识符映射到一个按键或按键列表：
 
-格式：`modifier+key`，修饰键包括 `ctrl`、`shift`、`alt`、`super`（可组合），按键包括：
+```json
+{
+  "app.session.new": "ctrl+shift+n",
+  "app.session.tree": ["ctrl+shift+t", "alt+shift+t"]
+}
+```
 
-- **字母键**：`a-z`
-- **数字键**：`0-9`
-- **特殊键**：`escape`、`esc`、`enter`、`return`、`tab`、`space`、`backspace`、`delete`、`insert`、`clear`、`home`、`end`、`pageUp`、`pageDown`、`up`、`down`、`left`、`right`
-- **功能键**：`f1`–`f12`
-- **符号**：`` ` ``、`-`、`=`、`[`、`]`、`\`、`;`、`'`、`,`、`.`、`/`、`!`、`@`、`#`、`$`、`%`、`^`、`&`、`*`、`(`、`)`、`_`、`+`、`|`、`~`、`{`、`}`、`:`、`<`、`>`、`?`
+配置的值会替换该动作的默认值。用空列表可以禁用某个动作的快捷键：
 
-修饰键组合示例：`ctrl+shift+x`、`alt+ctrl+x`、`ctrl+shift+alt+x`、`super+k`、`ctrl+super+k`、`ctrl+1` 等。
+```json
+{
+  "tui.altScreen.pageUp": []
+}
+```
 
-`super` 绑定需要终端单独报告修饰键，通常通过 Kitty 键盘协议实现。在不支持该协议的终端上可能无法工作。
+编辑文件后，运行 `/reload` 把改动应用到当前会话。
 
-## 所有操作
+## 按键语法
 
-### TUI 编辑器光标移动
+按键写成 `modifier+key`。修饰键是 `ctrl`、`shift`、`alt` 和 `super`。可以组合修饰键。合法的按键有：
 
-| ID                           | 默认键                             | 说明                           |
+- **字母：** `a-z`
+- **数字：** `0-9`
+- **特殊：** `escape`、`esc`、`enter`、`return`、`tab`、`space`、`backspace`、`delete`、`insert`、`clear`、`home`、`end`、`pageUp`、`pageDown`、`up`、`down`、`left`、`right`
+- **功能键：** `f1`-`f12`
+- **符号：** `` ` ``、`-`、`=`、`[`、`]`、`\`、`;`、`'`、`,`、`.`、`/`、`!`、`@`、`#`、`$`、`%`、`^`、`&`、`*`、`(`、`)`、`_`、`+`、`|`、`~`、`{`、`}`、`:`、`<`、`>`、`?`
+
+示例：`ctrl+shift+x`、`alt+ctrl+x`、`ctrl+shift+alt+x`、`super+k`、`ctrl+super+k` 和 `ctrl+1`。
+
+`super` 绑定需要终端单独报告该修饰键，通常通过 Kitty 键盘协议。在不支持该协议的终端中它们可能不工作。
+
+## 动作
+
+### 终端 UI
+
+#### 光标移动
+
+| 快捷键 id                    | 默认值                             | 说明                           |
 | ---------------------------- | ---------------------------------- | ------------------------------ |
-| `tui.editor.cursorUp`        | `up`                               | 光标上移，在顶部浏览更早的历史 |
-| `tui.editor.cursorDown`      | `down`                             | 光标下移，在底部浏览更新的历史 |
-| `tui.editor.historyPrevious` | 无                                 | 选择上一条 prompt 历史记录     |
-| `tui.editor.historyNext`     | 无                                 | 选择下一条 prompt 历史记录     |
-| `tui.editor.cursorLeft`      | `left`、`ctrl+b`                   | 光标左移                       |
-| `tui.editor.cursorRight`     | `right`、`ctrl+f`                  | 光标右移                       |
-| `tui.editor.cursorWordLeft`  | `alt+left`、`ctrl+left`、`alt+b`   | 光标左移一个单词               |
-| `tui.editor.cursorWordRight` | `alt+right`、`ctrl+right`、`alt+f` | 光标右移一个单词               |
-| `tui.editor.cursorLineStart` | `home`、`ctrl+home`、`ctrl+a`      | 移至行首                       |
-| `tui.editor.cursorLineEnd`   | `end`、`ctrl+end`、`ctrl+e`        | 移至行尾                       |
-| `tui.editor.jumpForward`     | `ctrl+]`                           | 向前跳转至字符                 |
-| `tui.editor.jumpBackward`    | `ctrl+alt+]`                       | 向后跳转至字符                 |
-| `tui.editor.pageUp`          | `pageUp`、`ctrl+pageUp`            | 上翻页                         |
-| `tui.editor.pageDown`        | `pageDown`、`ctrl+pageDown`        | 下翻页                         |
+| `tui.editor.cursorUp`        | `up`                               | 上移光标，在顶部浏览更早的历史 |
+| `tui.editor.cursorDown`      | `down`                             | 下移光标，在底部浏览更新的历史 |
+| `tui.editor.historyPrevious` | 无                                 | 选择上一条 Prompt 历史条目     |
+| `tui.editor.historyNext`     | 无                                 | 选择下一条 Prompt 历史条目     |
+| `tui.editor.cursorLeft`      | `left`、`ctrl+b`                   | 左移光标                       |
+| `tui.editor.cursorRight`     | `right`、`ctrl+f`                  | 右移光标                       |
+| `tui.editor.cursorWordLeft`  | `alt+left`、`ctrl+left`、`alt+b`   | 光标左移一个词                 |
+| `tui.editor.cursorWordRight` | `alt+right`、`ctrl+right`、`alt+f` | 光标右移一个词                 |
+| `tui.editor.cursorLineStart` | `home`、`ctrl+home`、`ctrl+a`      | 移到行首                       |
+| `tui.editor.cursorLineEnd`   | `end`、`ctrl+end`、`ctrl+e`        | 移到行尾                       |
+| `tui.editor.jumpForward`     | `ctrl+]`                           | 向前跳到某个字符               |
+| `tui.editor.jumpBackward`    | `ctrl+alt+]`                       | 向后跳到某个字符               |
+| `tui.editor.pageUp`          | `pageUp`、`ctrl+pageUp`            | 向上翻页                       |
+| `tui.editor.pageDown`        | `pageDown`、`ctrl+pageDown`        | 向下翻页                       |
 
-专用历史操作始终改变历史条目，无论光标在多行 Prompt 中的位置。主编辑器聚焦时，显式历史绑定优先于应用程序操作，因此将 `tui.editor.historyPrevious` 绑定到 `ctrl+p` 会覆盖该上下文中的模型循环，而不改变选择器中的 `Ctrl+P`。
+专用的历史动作无论光标位置都会浏览 Prompt 历史，并优先于使用同一按键的应用动作。
 
-### TUI 编辑器删除
+#### 文本编辑
 
-| ID                              | 默认键                    | 说明             |
-| ------------------------------- | ------------------------- | ---------------- |
-| `tui.editor.deleteCharBackward` | `backspace`               | 删除前一个字符   |
-| `tui.editor.deleteCharForward`  | `delete`、`ctrl+d`        | 删除后一个字符   |
-| `tui.editor.deleteWordBackward` | `ctrl+w`、`alt+backspace` | 向前删除一个单词 |
-| `tui.editor.deleteWordForward`  | `alt+d`、`alt+delete`     | 向后删除一个单词 |
-| `tui.editor.deleteToLineStart`  | `ctrl+u`                  | 删除到行首       |
-| `tui.editor.deleteToLineEnd`    | `ctrl+k`                  | 删除到行尾       |
+| 快捷键 id                       | 默认值                                          | 说明                          |
+| ------------------------------- | ----------------------------------------------- | ----------------------------- |
+| `tui.editor.deleteCharBackward` | `backspace`                                     | 向后删除一个字符              |
+| `tui.editor.deleteCharForward`  | `delete`、`ctrl+d`                              | 向前删除一个字符              |
+| `tui.editor.deleteWordBackward` | `ctrl+w`、`alt+backspace`                       | 向后删除一个词                |
+| `tui.editor.deleteWordForward`  | `alt+d`、`alt+delete`                           | 向前删除一个词                |
+| `tui.editor.deleteToLineStart`  | `ctrl+u`                                        | 删除到行首                    |
+| `tui.editor.deleteToLineEnd`    | `ctrl+k`                                        | 删除到行尾                    |
+| `tui.editor.yank`               | `ctrl+y`                                        | 粘贴最近删除的文本            |
+| `tui.editor.yankPop`            | `alt+y`                                         | yank 之后循环切换删除过的文本 |
+| `tui.editor.undo`               | `ctrl+-`（Windows 为 `ctrl+z`；WSL 为 `alt+z`） | 撤销上次编辑                  |
 
-### TUI 输入
+#### 输入与选择
 
-| ID                  | 默认键                  | 说明           |
-| ------------------- | ----------------------- | -------------- |
-| `tui.input.newLine` | `shift+enter`、`ctrl+j` | 插入新行       |
-| `tui.input.submit`  | `enter`                 | 提交输入       |
-| `tui.input.tab`     | `tab`                   | Tab / 自动补全 |
+| 快捷键 id             | 默认值                  | 说明           |
+| --------------------- | ----------------------- | -------------- |
+| `tui.input.newLine`   | `shift+enter`、`ctrl+j` | 插入换行       |
+| `tui.input.submit`    | `enter`                 | 提交输入       |
+| `tui.input.tab`       | `tab`                   | Tab 或自动补全 |
+| `tui.input.copy`      | `ctrl+c`                | 复制选区       |
+| `tui.select.up`       | `up`                    | 上移选择       |
+| `tui.select.down`     | `down`                  | 下移选择       |
+| `tui.select.pageUp`   | `pageUp`                | 列表向上翻页   |
+| `tui.select.pageDown` | `pageDown`              | 列表向下翻页   |
+| `tui.select.confirm`  | `enter`                 | 确认选择       |
+| `tui.select.cancel`   | `escape`、`ctrl+c`      | 取消选择       |
 
-### TUI Kill Ring
+#### 全屏
 
-| ID                   | 默认键                                              | 说明                     |
-| -------------------- | --------------------------------------------------- | ------------------------ |
-| `tui.editor.yank`    | `ctrl+y`                                            | 粘贴最近删除的文本       |
-| `tui.editor.yankPop` | `alt+y`                                             | 在 yank 后循环已删除文本 |
-| `tui.editor.undo`    | `ctrl+-`（Windows 上为 `ctrl+z`；WSL 上为 `alt+z`） | 撤销上次编辑             |
+在全屏模式下，这些动作控制转录，并优先于使用同一按键的编辑器动作。
 
-### TUI 剪贴板和选择
-
-| ID                    | 默认键             | 说明           |
-| --------------------- | ------------------ | -------------- |
-| `tui.input.copy`      | `ctrl+c`           | 复制选中       |
-| `tui.select.up`       | `up`               | 向上移动选择   |
-| `tui.select.down`     | `down`             | 向下移动选择   |
-| `tui.select.pageUp`   | `pageUp`           | 列表中向上翻页 |
-| `tui.select.pageDown` | `pageDown`         | 列表中向下翻页 |
-| `tui.select.confirm`  | `enter`            | 确认选择       |
-| `tui.select.cancel`   | `escape`、`ctrl+c` | 取消选择       |
-
-### TUI 全屏视口
-
-这些操作在交互模式使用 `--tui-mode fullscreen` 时生效，作用于主转录滚动区域。双指触控板和鼠标滚轮输入可滚动指针所在区域，指针位于固定的编辑器/状态栏/底部停靠栏上方时则滚动转录。点击 OSC 8 超链接会以默认处理器打开。用鼠标主按钮拖拽可选中文本并复制到剪贴板；在转录顶部或底部边缘按住会自动滚动查看屏幕外内容。当转录向上滚动时，底部行上的可点击「Jump to latest message」标签会显示 `tui.altScreen.bottom` 快捷键。终端特定的鼠标和触控板行为参见 [终端设置](/docs/latest/terminal-setup)。
-
-全屏转录绑定优先于编辑器绑定。因此默认未修改的导航键在全屏模式下控制转录，而其 `ctrl` 变体继续控制编辑器。在全屏模式之外，两种变体都控制编辑器。
-
-转录搜索面板显示已配置的上一个/下一个快捷键和可点击的箭头控件。再次按下 `tui.altScreen.search` 或使用 `tui.altScreen.searchClose` 可将其关闭。
-
-| 按键                           | 默认模式 | 全屏模式 |
-| ------------------------------ | -------- | -------- |
-| `home`、`end`                  | 编辑器   | 转录     |
-| `ctrl+home`、`ctrl+end`        | 编辑器   | 编辑器   |
-| `pageUp`、`pageDown`           | 编辑器   | 转录     |
-| `ctrl+pageUp`、`ctrl+pageDown` | 编辑器   | 编辑器   |
-
-此路由仍可通过常规操作绑定配置。例如，`"tui.altScreen.pageUp": "ctrl+pageUp"` 让 `pageUp` 控制编辑器，`ctrl+pageUp` 在全屏模式下控制转录。绑定 `tui.altScreen.halfPageUp` 和 `tui.altScreen.halfPageDown` 可按半页滚动，绑定 `tui.altScreen.lineUp` 和 `tui.altScreen.lineDown` 可按单行滚动。设置 `"tui.altScreen.pageUp": []` 会完全禁用该转录快捷键。用户绑定会替换该操作的默认值。
-
-| ID                             | 默认键                                                            | 说明                       |
+| 快捷键 id                      | 默认值                                                            | 说明                       |
 | ------------------------------ | ----------------------------------------------------------------- | -------------------------- |
-| `tui.altScreen.pageUp`         | `pageUp`                                                          | 向上滚动转录一页           |
-| `tui.altScreen.pageDown`       | `pageDown`                                                        | 向下滚动转录一页           |
-| `tui.altScreen.halfPageUp`     | 无                                                                | 向上滚动转录半页           |
-| `tui.altScreen.halfPageDown`   | 无                                                                | 向下滚动转录半页           |
-| `tui.altScreen.lineUp`         | 无                                                                | 向上滚动转录一行           |
-| `tui.altScreen.lineDown`       | 无                                                                | 向下滚动转录一行           |
-| `tui.altScreen.previousPrompt` | `ctrl+shift+up`、`ctrl+up`（`ctrl+up` 仅限 Windows 和 WSL）       | 跳转到上一条标记消息       |
-| `tui.altScreen.nextPrompt`     | `ctrl+shift+down`、`ctrl+down`（`ctrl+down` 仅限 Windows 和 WSL） | 跳转到下一条标记消息       |
-| `tui.altScreen.search`         | `ctrl+shift+f`（Windows 和 WSL 上为 `ctrl+f`）                    | 搜索已渲染的转录           |
+| `tui.altScreen.pageUp`         | `pageUp`                                                          | 转录向上滚动一页           |
+| `tui.altScreen.pageDown`       | `pageDown`                                                        | 转录向下滚动一页           |
+| `tui.altScreen.halfPageUp`     | 无                                                                | 转录向上滚动半页           |
+| `tui.altScreen.halfPageDown`   | 无                                                                | 转录向下滚动半页           |
+| `tui.altScreen.lineUp`         | 无                                                                | 转录向上滚动一行           |
+| `tui.altScreen.lineDown`       | 无                                                                | 转录向下滚动一行           |
+| `tui.altScreen.previousPrompt` | `ctrl+shift+up`、`ctrl+up`（Windows 和 WSL 只有 `ctrl+up`）       | 跳到上一条标记的消息       |
+| `tui.altScreen.nextPrompt`     | `ctrl+shift+down`、`ctrl+down`（Windows 和 WSL 只有 `ctrl+down`） | 跳到下一条标记的消息       |
+| `tui.altScreen.search`         | `ctrl+shift+f`（Windows 和 WSL 为 `ctrl+f`）                      | 搜索已渲染的转录           |
 | `tui.altScreen.searchNext`     | `enter`、`ctrl+g`                                                 | 搜索时选择下一个匹配项     |
 | `tui.altScreen.searchPrevious` | `shift+enter`、`ctrl+shift+g`                                     | 搜索时选择上一个匹配项     |
 | `tui.altScreen.searchClose`    | `escape`                                                          | 关闭转录搜索               |
 | `tui.altScreen.top`            | `home`                                                            | 滚动到转录开头             |
 | `tui.altScreen.bottom`         | `end`                                                             | 滚动到转录末尾并跟随新输出 |
 
-### 应用程序
+### 应用
 
-| ID                         | 默认键                                | 说明                                                                                                |
-| -------------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `app.interrupt`            | `escape`                              | 取消/中断                                                                                           |
-| `app.clear`                | `ctrl+c`                              | 清空编辑器（第一次）/ 退出（第二次）                                                                |
-| `app.exit`                 | `ctrl+d`                              | 退出（编辑器为空时）                                                                                |
-| `app.suspend`              | `ctrl+z`（Windows 上无）              | 挂起到后台                                                                                          |
-| `app.editor.external`      | `ctrl+g`                              | 在外部编辑器打开（`externalEditor`、`$VISUAL`、`$EDITOR`，Windows 上为 Notepad，其他平台为 `nano`） |
-| `app.clipboard.pasteImage` | `ctrl+v`（Windows 和 WSL 为 `alt+v`） | 从剪贴板粘贴图像或文本                                                                              |
+| 快捷键 id                  | 默认值                                | 说明                                                                                                      |
+| -------------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `app.interrupt`            | `escape`                              | 取消 / 中止                                                                                               |
+| `app.clear`                | `ctrl+c`                              | 清空编辑器（第一次）/ 退出（第二次）                                                                      |
+| `app.exit`                 | `ctrl+d`                              | 退出（编辑器为空时）                                                                                      |
+| `app.suspend`              | `ctrl+z`（Windows 上无默认值）        | 挂起到后台                                                                                                |
+| `app.editor.external`      | `ctrl+g`                              | 在外部编辑器中打开（`externalEditor`、`$VISUAL`、`$EDITOR`、Windows 上的 Notepad，或其他平台上的 `nano`） |
+| `app.clipboard.pasteImage` | `ctrl+v`（Windows 和 WSL 为 `alt+v`） | 从剪贴板粘贴图片或文本                                                                                    |
+
+在原生 Windows 上，`app.suspend` 没有默认值，因为 Windows 终端不支持 Unix 作业控制。如果你手动分配它，Pi 会显示状态消息而不是挂起。WSL 使用正常的 `ctrl+z` 和 `fg` 行为。
 
 ### 会话
 
-| ID                              | 默认键           | 说明                            |
+| 快捷键 id                       | 默认值           | 说明                            |
 | ------------------------------- | ---------------- | ------------------------------- |
 | `app.session.new`               | 无               | 开始新会话（`/new`）            |
 | `app.session.tree`              | 无               | 打开会话树导航器（`/tree`）     |
-| `app.session.fork`              | 无               | 分叉当前会话（`/fork`）         |
+| `app.session.fork`              | 无               | Fork 当前会话（`/fork`）        |
 | `app.session.resume`            | 无               | 打开会话恢复选择器（`/resume`） |
 | `app.session.togglePath`        | `ctrl+p`         | 切换路径显示                    |
 | `app.session.toggleSort`        | `ctrl+s`         | 切换排序模式                    |
-| `app.session.toggleNamedFilter` | `ctrl+n`         | 切换仅显示命名会话过滤器        |
+| `app.session.toggleNamedFilter` | `ctrl+n`         | 切换仅命名过滤                  |
 | `app.session.rename`            | `ctrl+r`         | 重命名会话                      |
 | `app.session.delete`            | `ctrl+d`         | 删除会话                        |
 | `app.session.deleteNoninvasive` | `ctrl+backspace` | 查询为空时删除会话              |
 
-### 模型和思维
+### 模型与 Thinking
 
-| ID                        | 默认键                                        | 说明                                         |
-| ------------------------- | --------------------------------------------- | -------------------------------------------- |
-| `app.model.select`        | `ctrl+l`                                      | 打开模型选择器                               |
-| `app.model.cycleForward`  | `ctrl+p`                                      | 切换到下一个模型                             |
-| `app.model.cycleBackward` | `shift+ctrl+p`（Windows 和 WSL 上为 `alt+p`） | 切换到上一个模型                             |
-| `app.models.save`         | `ctrl+s`                                      | 将所选默认模型或 scoped model 配置保存到设置 |
-| `app.thinking.cycle`      | `shift+tab`                                   | 循环切换 thinking level                      |
-| `app.thinking.save`       | `ctrl+s`                                      | 将当前 thinking level 保存到设置             |
-| `app.thinking.toggle`     | `ctrl+t`                                      | 折叠/展开 thinking block                     |
+| 快捷键 id                 | 默认值                                      | 说明                                     |
+| ------------------------- | ------------------------------------------- | ---------------------------------------- |
+| `app.model.select`        | `ctrl+l`                                    | 打开模型选择器                           |
+| `app.model.cycleForward`  | `ctrl+p`                                    | 循环到下一个模型                         |
+| `app.model.cycleBackward` | `shift+ctrl+p`（Windows 和 WSL 为 `alt+p`） | 循环到上一个模型                         |
+| `app.models.save`         | `ctrl+s`                                    | 把选中的默认模型或范围模型配置保存到设置 |
+| `app.thinking.cycle`      | `shift+tab`                                 | 循环 thinking level                      |
+| `app.thinking.save`       | `ctrl+s`                                    | 把当前 thinking level 保存到设置         |
+| `app.thinking.toggle`     | `ctrl+t`                                    | 折叠或展开 thinking 块                   |
 
-### 显示和消息队列
+### 显示与消息队列
 
-| ID                     | 默认键                                      | 说明                                                                                                              |
-| ---------------------- | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `app.tools.expand`     | `ctrl+o`                                    | 折叠/展开工具输出                                                                                                 |
-| `app.message.copy`     | `ctrl+x`                                    | 复制 `/tree` 中选中的消息；否则复制最后一条助手消息，或在 `fullscreenCopyOnSelect` 禁用时复制当前全屏文本选中内容 |
-| `app.message.followUp` | `alt+enter`（Windows 和 WSL 上为 `ctrl+q`） | 队列 follow-up 消息                                                                                               |
-| `app.message.dequeue`  | `alt+up`（Windows 和 WSL 上为 `alt+q`）     | 恢复队列消息到编辑器                                                                                              |
+| 快捷键 id              | 默认值                                    | 说明                                                                                                                          |
+| ---------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `app.tools.expand`     | `ctrl+o`                                  | 折叠或展开工具输出                                                                                                            |
+| `app.message.copy`     | `ctrl+x`                                  | 在 `/tree` 中复制选中的消息；全屏模式下当 `fullscreenCopyOnSelect` 为 `false` 时复制活动选区；否则复制最后一条 assistant 消息 |
+| `app.message.followUp` | `alt+enter`（Windows 和 WSL 为 `ctrl+q`） | 排队 follow-up 消息                                                                                                           |
+| `app.message.dequeue`  | `alt+up`（Windows 和 WSL 为 `alt+q`）     | 把排队消息恢复到编辑器                                                                                                        |
 
 ### 树导航
 
-| ID                              | 默认键                    | 说明                                           |
-| ------------------------------- | ------------------------- | ---------------------------------------------- |
-| `app.tree.foldOrUp`             | `ctrl+left`、`alt+left`   | 折叠当前分支段，或跳转到上一个段起始           |
-| `app.tree.unfoldOrDown`         | `ctrl+right`、`alt+right` | 展开当前分支段，或跳转到下一个段起始或分支结束 |
-| `app.tree.editLabel`            | `shift+l`                 | 编辑树节点上的标签                             |
-| `app.tree.toggleLabelTimestamp` | `shift+t`                 | 切换树中标签时间戳显示                         |
-| `app.tree.filter.default`       | `ctrl+d`                  | 设置树过滤器为默认视图                         |
-| `app.tree.filter.noTools`       | `ctrl+t`                  | 切换隐藏工具结果的树过滤器                     |
-| `app.tree.filter.userOnly`      | `ctrl+u`                  | 切换仅显示用户消息的树过滤器                   |
-| `app.tree.filter.labeledOnly`   | `ctrl+l`                  | 切换仅显示带标签条目的树过滤器                 |
-| `app.tree.filter.all`           | `ctrl+a`                  | 切换显示所有条目的树过滤器                     |
-| `app.tree.filter.cycleForward`  | `ctrl+o`                  | 循环向前切换树过滤器                           |
-| `app.tree.filter.cycleBackward` | `shift+ctrl+o`            | 循环向后切换树过滤器                           |
+| 快捷键 id                       | 默认值                    | 说明                                       |
+| ------------------------------- | ------------------------- | ------------------------------------------ |
+| `app.tree.foldOrUp`             | `ctrl+left`、`alt+left`   | 折叠当前分支段，或跳到上一段起点           |
+| `app.tree.unfoldOrDown`         | `ctrl+right`、`alt+right` | 展开当前分支段，或跳到下一段起点或分支末尾 |
+| `app.tree.editLabel`            | `shift+l`                 | 编辑所选树节点的标签                       |
+| `app.tree.toggleLabelTimestamp` | `shift+t`                 | 在树中切换标签时间戳                       |
+| `app.tree.filter.default`       | `ctrl+d`                  | 把树过滤器设为默认视图                     |
+| `app.tree.filter.noTools`       | `ctrl+t`                  | 切换隐藏工具结果的树过滤器                 |
+| `app.tree.filter.userOnly`      | `ctrl+u`                  | 切换只显示用户消息的树过滤器               |
+| `app.tree.filter.labeledOnly`   | `ctrl+l`                  | 切换只显示带标签条目的树过滤器             |
+| `app.tree.filter.all`           | `ctrl+a`                  | 切换显示所有条目的树过滤器                 |
+| `app.tree.filter.cycleForward`  | `ctrl+o`                  | 向前循环树过滤器                           |
+| `app.tree.filter.cycleBackward` | `shift+ctrl+o`            | 向后循环树过滤器                           |
 
-### Scoped Models 选择器
+### 范围模型选择器
 
-在 scoped models 选择器（通过 `/scoped-models` 打开）内使用。
+在范围模型选择器中使用（通过 `/scoped-models` 打开）。
 
-| ID                          | 默认键     | 说明                                 |
+| 快捷键 id                   | 默认值     | 说明                                 |
 | --------------------------- | ---------- | ------------------------------------ |
-| `app.models.enableAll`      | `ctrl+a`   | 启用所有模型（或所有匹配当前搜索的） |
-| `app.models.clearAll`       | `ctrl+x`   | 清除所有模型（或所有匹配当前搜索的） |
+| `app.models.enableAll`      | `ctrl+a`   | 启用所有模型（或当前搜索匹配的全部） |
+| `app.models.clearAll`       | `ctrl+x`   | 清空所有模型（或当前搜索匹配的全部） |
 | `app.models.toggleProvider` | `ctrl+p`   | 切换当前 Provider 的所有模型         |
-| `app.models.reorderUp`      | `alt+up`   | 将选中模型在循环顺序中上移           |
-| `app.models.reorderDown`    | `alt+down` | 将选中模型在循环顺序中下移           |
-
-## 自定义配置
-
-创建 `~/.pi/agent/keybindings.json`：
-
-```json
-{
-  "tui.editor.historyPrevious": "ctrl+p",
-  "tui.editor.historyNext": "ctrl+n",
-  "tui.editor.deleteWordBackward": ["ctrl+w", "alt+backspace"]
-}
-```
-
-每个操作可以有一个按键或一个按键数组。用户配置覆盖默认值。
-
-在原生 Windows 上，`app.suspend` 没有默认绑定，因为 Windows 终端不支持 Unix 作业控制。如果手动绑定，Pi 会显示状态消息而非挂起。在 WSL 中，正常的 Linux `ctrl+z`/`fg` 行为仍然适用。
-
-### Emacs 风格示例
-
-```json
-{
-  "tui.editor.historyPrevious": "ctrl+p",
-  "tui.editor.historyNext": "ctrl+n",
-  "tui.editor.cursorLeft": ["left", "ctrl+b"],
-  "tui.editor.cursorRight": ["right", "ctrl+f"],
-  "tui.editor.cursorWordLeft": ["alt+left", "alt+b"],
-  "tui.editor.cursorWordRight": ["alt+right", "alt+f"],
-  "tui.editor.deleteCharForward": ["delete", "ctrl+d"],
-  "tui.editor.deleteCharBackward": ["backspace", "ctrl+h"],
-  "tui.input.newLine": ["shift+enter", "ctrl+j"]
-}
-```
-
-### Vim 风格示例
-
-```json
-{
-  "tui.editor.cursorUp": ["up", "alt+k"],
-  "tui.editor.cursorDown": ["down", "alt+j"],
-  "tui.editor.cursorLeft": ["left", "alt+h"],
-  "tui.editor.cursorRight": ["right", "alt+l"],
-  "tui.editor.cursorWordLeft": ["alt+left", "alt+b"],
-  "tui.editor.cursorWordRight": ["alt+right", "alt+w"]
-}
-```
+| `app.models.reorderUp`      | `alt+up`   | 在循环顺序中把所选模型上移           |
+| `app.models.reorderDown`    | `alt+down` | 在循环顺序中把所选模型下移           |
 
 ---
 

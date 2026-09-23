@@ -1,239 +1,98 @@
-# Skills（技能）
+# Skills
 
 > 本页面是 [Pi 官方文档](https://pi.dev/docs/latest/skills) 的中文翻译。仅供学习参考。
 
-> Pi 可以创建 Skills。让它为你的用例构建一个。
+Skill 为某一类工作给 Pi 提供专门的指令和配套文件。Pi 用名称和描述列出每个可用的 Skill，只在任务需要时才加载它的完整指令。
 
-Skills 是**自包含的能力包**，由 Agent 按需加载。每个 Skill 为特定任务提供专业化的工作流、设置说明、辅助脚本和参考文档。
+当某个工作流需要的上下文比 Prompt 模板多，但又不需要新的可执行集成点时，使用 Skill。Skill 可以把脚本、参考资料和资产与指令打包在一起。
 
-Pi 遵循 [Agent Skills 标准](https://agentskills.io/specification)，对违规会发出警告但保持宽容。Pi 允许 Skill 名称与其父目录不同（即使标准不允许），因为该规则对于跨多个 Agent 框架使用的共享 Skill 目录来说并不理想。
+Pi 实现 [Agent Skills 规范](https://agentskills.io/specification)。大多数字段无效时只会产生警告，而不会中止启动。
 
-## 目录
+## 创建 Skill
 
-- [位置](#位置)
-- [如何工作](#如何工作)
-- [Skill 命令](#skill-命令)
-- [Skill 结构](#skill-结构)
-- [Frontmatter](#frontmatter)
-- [验证](#验证)
-- [示例](#示例)
-- [Skill 仓库](#skill-仓库)
+Skill 是一个包含 `SKILL.md` 的目录：
 
-## 位置
-
-> **安全提示：** Skills 可以指示模型执行任何操作，并可能包含模型调用的可执行代码。使用前请审查 Skill 内容。
-
-Pi 从多个来源加载 Skills：
-
-- **全局**：
-  - `~/.pi/agent/skills/`
-  - `~/.agents/skills/`
-- **项目**（仅在项目被信任后加载）：
-  - `.pi/skills/`
-  - `.agents/skills/`（当前目录及向上到 git 仓库根目录或文件系统根目录的祖先目录）
-- **包**：`skills/` 目录或 `package.json` 中的 `pi.skills` 条目
-- **设置**：`skills` 数组，包含文件或目录
-- **CLI**：`--skill <path>`（可重复，即使 `--no-skills` 也会加载）
-
-发现规则：
-
-- 在 `~/.pi/agent/skills/` 和 `.pi/skills/` 中，直接根目录的 `.md` 文件在具有有效的 skill frontmatter 和非空 `description` 时被发现为独立 Skills
-- 在所有 Skill 位置中，包含 `SKILL.md` 的目录被递归发现
-- 在 `~/.agents/skills/` 和项目 `.agents/skills/` 中，根目录的 `.md` 文件被忽略，但分组文件夹中嵌套的 `.md` 文件在声明 skill frontmatter 时被发现
-- 根目录中除 `SKILL.md` 之外、看起来不像 Skill 的 Markdown 文件会被静默忽略
-
-使用 `--no-skills` 禁用发现（显式的 `--skill` 路径仍会加载）。
-
-### 使用其他工具的 Skills
-
-要使用 Claude Code 或 OpenAI Codex 的 Skills，将其目录添加到设置：
-
-```json
-{
-  "skills": ["~/.claude/skills", "~/.codex/skills"]
-}
-```
-
-对于项目级别的 Claude Code Skills，添加到 `.pi/settings.json`：
-
-```json
-{
-  "skills": ["../.claude/skills"]
-}
-```
-
-## 如何工作
-
-1. 启动时，Pi 扫描 Skill 位置并提取名称和描述
-2. 系统 Prompt 按[规范](https://agentskills.io/integrate-skills)以 XML 格式包含可用 Skills
-3. 当任务匹配时，Agent 使用 `read`（当 `read` 不可用时使用 `bash`）加载完整的 SKILL.md（模型不总是这样做；可使用提示或 `/skill:name` 强制加载）
-4. Agent 按照指令执行，使用相对路径引用脚本和资源
-
-这是一种渐进式披露：只有描述始终在上下文中，完整指令按需加载。
-
-## Skill 命令
-
-Skills 注册为 `/skill:name` 命令：
-
-```bash
-/skill:brave-search           # 加载并执行 Skill
-/skill:pdf-tools extract      # 带参数加载 Skill
-```
-
-命令后的参数会作为 `User: <args>` 附加到 Skill 内容后面。
-
-通过交互模式下的 `/settings` 或在 `settings.json` 中切换 Skill 命令：
-
-```json
-{
-  "enableSkillCommands": true
-}
-```
-
-## Skill 结构
-
-Skill 是一个包含 `SKILL.md` 文件的目录。其他内容自由组织。
-
-```
-my-skill/
-├── SKILL.md              # 必需：frontmatter + 指令
-├── scripts/              # 辅助脚本
-│   └── process.sh
-├── references/           # 按需加载的详细文档
-│   └── api-reference.md
+```text
+pdf-tools/
+├── SKILL.md
+├── scripts/
+│   └── extract.sh
+├── references/
+│   └── formats.md
 └── assets/
     └── template.json
 ```
 
-### SKILL.md 格式
-
-````markdown
----
-name: my-skill
-description: What this skill does and when to use it. Be specific.
----
-
-# My Skill
-
-## Setup
-
-Run once before first use:
-
-```bash
-cd /path/to/skill && npm install
-```
-
-## Usage
-
-```bash
-./scripts/process.sh <input>
-```
-````
-
-使用相对于 Skill 目录的路径：
+`SKILL.md` 以 frontmatter 开头，后面是直接的指令：
 
 ```markdown
-See [the reference guide](references/REFERENCE.md) for details.
-```
-
-## Frontmatter
-
-根据 [Agent Skills 规范](https://agentskills.io/specification#frontmatter-required)：
-
-| 字段                       | 必需 | 说明                                                                                                                    |
-| -------------------------- | ---- | ----------------------------------------------------------------------------------------------------------------------- |
-| `name`                     | 是   | 最多 64 字符。小写 a-z、0-9、连字符。与标准不同，Pi 不要求此值匹配父目录名，因为该标准要求对于共享 Skill 目录并不理想。 |
-| `description`              | 是   | 最多 1024 字符。Skill 做什么，何时使用。                                                                                |
-| `license`                  | 否   | 许可证名称或指向捆绑文件的引用。                                                                                        |
-| `compatibility`            | 否   | 最多 500 字符。环境要求。                                                                                               |
-| `metadata`                 | 否   | 任意键值映射。                                                                                                          |
-| `allowed-tools`            | 否   | 空格分隔的预批准工具列表（实验性）。                                                                                    |
-| `disable-model-invocation` | 否   | 设为 `true` 时从系统提示隐藏，只能通过 `/skill:name` 使用。                                                             |
-
-### 命名规则
-
-- 1–64 个字符
-- 只能小写字母、数字、连字符
-- 不能以连字符开头或结尾
-- 不能有连续连字符
-  Pi 不要求名称匹配父目录名。Agent Skills 标准有此要求，但该要求对于多个工具使用的共享 Skill 目录来说并不理想。
-
-有效：`pdf-processing`、`data-analysis`、`code-review`
-无效：`PDF-Processing`、`-pdf`、`pdf--processing`
-
-### 描述最佳实践
-
-描述决定了 Agent 何时加载 Skill。要具体。
-
-好：
-
-```yaml
-description: Extracts text and tables from PDF files, fills PDF forms, and merges multiple PDFs. Use when working with PDF documents.
-```
-
-差：
-
-```yaml
-description: Helps with PDFs.
-```
-
-## 验证
-
-Pi 根据 Agent Skills 标准验证 Skills。大多数问题只产生警告但仍会加载：
-
-- 名称超过 64 字符或包含无效字符
-- 名称以连字符开头/结尾或有连续连字符
-- 描述超过 1024 字符
-
-未知的 frontmatter 字段被忽略。
-
-**例外：** 声明了 frontmatter 但缺少 description 的 Skills 不会加载。格式错误的 `SKILL.md` 文件和没有 description 的 `SKILL.md` 文件会产生警告且不会被加载。其他没有有效 skill frontmatter 的 Markdown 文件会被忽略。
-
-名称冲突（不同位置的相同名称）会发出警告并保留第一个找到的 Skill。
-
-## 示例
-
-```
-brave-search/
-├── SKILL.md
-├── search.js
-└── content.js
-```
-
-**SKILL.md：**
-
-````markdown
 ---
-name: brave-search
-description: Web search and content extraction via Brave Search API. Use for searching documentation, facts, or any web content.
+name: pdf-tools
+description: Extract text and tables from PDF files. Use when reading, converting, or inspecting PDFs.
 ---
 
-# Brave Search
+# PDF tools
 
-## Setup
-
-```bash
-cd /path/to/brave-search && npm install
+Read `references/formats.md` before converting a document. Run scripts relative to this skill directory.
 ```
 
-## Search
+描述决定模型何时考虑加载该 Skill。请同时说明这个 Skill 做什么，以及它在什么情况下适用。避免「Helps with PDFs」这类描述，它没有提供足够的路由信息。
 
-```bash
-./search.js "query"              # Basic search
-./search.js "query" --content    # Include page content
+引用打包文件时使用相对于 Skill 目录的路径。Pi 会告诉模型该 Skill 的位置，以便解析这些路径。
+
+## 了解 Skill 如何加载
+
+启动时，Pi 扫描配置的 Skill 位置，并把每个 Skill 的名称、描述和路径加入系统提示。它不会加入完整指令。
+
+任务匹配时，模型读取 `SKILL.md` 并遵循其中的指令。这样详细的指引在需要之前不会占用上下文。模型可能会漏掉相关的 Skill，所以需要强制加载时使用 `/skill:name`。
+
+`/skill:name` 后面的参数会作为用户请求追加到已加载的指令之后：
+
+```text
+/skill:pdf-tools extract report.pdf
 ```
 
-## Extract Page Content
+当某个 Skill 只应通过它的显式命令使用时，在 frontmatter 中设置 `disable-model-invocation: true`。`enableSkillCommands` [设置](settings.md)控制 Skill 命令是否出现在交互式命令发现中；手动输入的 `/skill:name` 命令仍然有效。
 
-```bash
-./content.js https://example.com
-```
-````
+<a id="choose-where-it-loads"></a>
 
-## Skill 仓库
+## 加入 Pi
 
-- [Anthropic Skills](https://github.com/anthropics/skills) —— 文档处理（docx、pdf、pptx、xlsx）、Web 开发
-- [Pi Skills](https://github.com/badlogic/pi-skills) —— Web 搜索、浏览器自动化、Google API、转录
+把 Skill 放在你的用户或项目 Skill 目录中。包含 `SKILL.md` 的目录会被递归发现。
+
+Pi 也支持 Agent Skills 的位置 `~/.agents/skills/` 和 `.agents/skills/`。项目 `.agents/skills/` 目录从工作目录向上穿过各祖先目录发现，遇到仓库根目录时停止。
+
+Pi 接受某些独立的 Markdown Skill，但包含 `SKILL.md` 的目录是可移植的形式，应当优先使用。其他位置见[设置](settings.md#resources)和 [Pi 包](packages.md)。
+
+项目 Skill 可以指示模型运行脚本或修改文件。授予项目信任之前，请审阅不熟悉的 Skill 及其配套文件。
+
+## 编写可移植的 frontmatter
+
+Agent Skills 规范定义了这些字段：
+
+| 字段                       | 作用                          |
+| -------------------------- | ----------------------------- |
+| `name`                     | 命令名和显示名                |
+| `description`              | 展示给模型的路由描述          |
+| `license`                  | 许可证名称或随附的许可证文件  |
+| `compatibility`            | 环境要求                      |
+| `metadata`                 | 额外的键值元数据              |
+| `allowed-tools`            | 实验性的预批准工具列表        |
+| `disable-model-invocation` | 让该 Skill 不参与模型自动选择 |
+
+名称使用小写字母、数字和连字符，不得以连字符开头、结尾，也不得连续出现连字符。名称最多 64 个字符；描述最多 1024 个。
+
+Pi 不要求声明的名称与父目录一致，也不在两者不一致时警告。其他 Agent Skills 实现可能强制该要求，所以名称保持一致仍是可移植的选择。
+
+格式错误的 `SKILL.md` 文件和声明了但没有描述的 Skill 不会被加载。名称冲突时保留最先发现的 Skill，并产生一条警告。
+
+## 验证并分享 Skill
+
+在能发现该 Skill 的位置运行 Pi，然后检查启动诊断和 `/skill:name` 命令。在活动会话中修改 Skill 后运行 `/reload`。
+
+用 [Pi 包](packages.md)通过 npm 或 git 分发一个或多个 Skill。请把环境设置放在 Skill 内部，并在包中声明所需的运行时依赖。
+
+示例见 [Anthropic skills 合集](https://github.com/anthropics/skills)和 [Pi skills 合集](https://github.com/badlogic/pi-skills)。
 
 ---
 

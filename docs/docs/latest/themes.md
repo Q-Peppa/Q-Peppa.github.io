@@ -1,323 +1,115 @@
-# Themes（主题）
+# 用主题自定义 Pi
 
 > 本页面是 [Pi 官方文档](https://pi.dev/docs/latest/themes) 的中文翻译。仅供学习参考。
 
-> Pi 可以帮你创建主题。告诉它你想要什么风格即可。
+主题控制 Pi 在交互模式和 HTML 导出中使用的颜色。Pi 内置 `dark` 和 `light` 主题。你可以选择一个主题、跟随终端的浅色或深色外观，或创建自己的配色。
 
-Themes 是定义 TUI 颜色的 JSON 文件。
-
-## 目录
-
-- [位置](#位置)
-- [选择主题](#选择主题)
-- [创建自定义主题](#创建自定义主题)
-- [主题格式](#主题格式)
-- [颜色 Token](#颜色-token)
-- [颜色值](#颜色值)
-- [提示](#提示)
-- [示例](#示例)
-
-## 位置
-
-Pi 从以下位置加载主题：
-
-- 内置主题：`dark` 和 `light`
-- 全局：`~/.pi/agent/themes/*.json`
-- 项目：`.pi/themes/*.json`（仅在项目被信任后加载）
-- 包：`themes/` 目录或 `package.json` 中的 `pi.themes` 条目
-- 设置：`themes` 数组，包含文件或目录
-- CLI：`--theme <path>`（可重复）
-
-使用 `--no-themes` 禁用主题发现。
+<a id="selecting-a-theme"></a>
 
 ## 选择主题
 
-通过 `/settings` 或在 `settings.json` 中设置：
+打开 `/settings` 并选择 **Theme**。你可以让所有终端外观使用同一个主题，也可以为浅色和深色终端分别选择主题。
+
+该选择保存为 `theme` [设置](settings.md#terminal-and-display)：
 
 ```json
 {
-  "theme": "my-theme"
+  "theme": "dark"
 }
 ```
 
-首次运行时，Pi 检测终端背景色，默认选择 `dark` 或 `light`。
+自动模式先存浅色主题，再存深色主题：
 
-### 初始主题
+```json
+{
+  "theme": "light/dark"
+}
+```
 
-启动交互式运行时指定主题，但不更改已保存的设置：
+自动模式生效时，Pi 在终端报告外观变化时切换主题。主题名不能包含 `/`，因为 Pi 把它保留给这种设置格式。
+
+用 `--use-theme` 为单次调用选择初始主题，而不改动已保存的设置：
 
 ```bash
 pi --use-theme light
-```
-
-若要跟随终端外观，请使用 `lightTheme/darkTheme` 语法：
-
-```bash
 pi --use-theme light/dark
 ```
 
-CLI 值是本次运行的初始主题。之后在 `/settings` 中选择其他主题会立即应用并正常保存。
+该命令行选项见 [CLI 资源](cli.md#resources)。
 
 ## 创建自定义主题
 
-1. 创建主题文件：
+复制一个[内置主题](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/src/modes/interactive/theme)，或按照[ schema](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/modes/interactive/theme/theme-schema.json) 新建一个 JSON 文件。
 
-```bash
-mkdir -p ~/.pi/agent/themes
-vim ~/.pi/agent/themes/my-theme.json
-```
+1. 把文件保存为 `<agent-dir>/themes/my-theme.json`。agent 目录默认为 `~/.pi/agent`。
+2. 把它的 `name` 设为 `my-theme`。
+3. 修改 `vars` 和 `colors` 中的值。
+4. 通过 `/settings` 选择 `my-theme`。
 
-2. 使用所有必需颜色定义主题（见[颜色 Token](#颜色-token)）：
+请让文件名与主题名一致。Pi 只对 `<agent-dir>/themes/<name>.json` 中的当前用户主题做热重载。从任何其他来源添加或修改主题后，请运行 `/reload`。
 
-```json
-{
-  "$schema": "https://raw.githubusercontent.com/earendil-works/pi/main/packages/coding-agent/src/modes/interactive/theme/theme-schema.json",
-  "name": "my-theme",
-  "vars": {
-    "primary": "#00aaff",
-    "secondary": 242
-  },
-  "colors": {
-    "accent": "primary",
-    "border": "primary",
-    "borderAccent": "#00ffff",
-    "borderMuted": "secondary",
-    "success": "#00ff00",
-    "error": "#ff0000",
-    "warning": "#ffff00",
-    "muted": "secondary",
-    "dim": 240,
-    "text": "",
-    "thinkingText": "secondary",
-    "selectedBg": "#2d2d30",
-    "scrollbarTrack": "secondary",
-    "scrollbarThumb": "",
-    "searchMatchBg": "#2d2d30",
-    "searchMatchText": "",
-    "userMessageBg": "#2d2d30",
-    "userMessageText": "",
-    "customMessageBg": "#2d2d30",
-    "customMessageText": "",
-    "customMessageLabel": "primary",
-    "toolPendingBg": "#1e1e2e",
-    "toolSuccessBg": "#1e2e1e",
-    "toolErrorBg": "#2e1e1e",
-    "toolTitle": "primary",
-    "toolOutput": "",
-    "mdHeading": "#ffaa00",
-    "mdLink": "primary",
-    "mdLinkUrl": "secondary",
-    "mdCode": "#00ffff",
-    "mdCodeBlock": "",
-    "mdCodeBlockBorder": "secondary",
-    "mdQuote": "secondary",
-    "mdQuoteBorder": "secondary",
-    "mdHr": "secondary",
-    "mdListBullet": "#00ffff",
-    "toolDiffAdded": "#00ff00",
-    "toolDiffRemoved": "#ff0000",
-    "toolDiffContext": "secondary",
-    "syntaxComment": "secondary",
-    "syntaxKeyword": "primary",
-    "syntaxFunction": "#00aaff",
-    "syntaxVariable": "#ffaa00",
-    "syntaxString": "#00ff00",
-    "syntaxNumber": "#ff00ff",
-    "syntaxType": "#00aaff",
-    "syntaxOperator": "primary",
-    "syntaxPunctuation": "secondary",
-    "thinkingOff": "secondary",
-    "thinkingMinimal": "primary",
-    "thinkingLow": "#00aaff",
-    "thinkingMedium": "#00ffff",
-    "thinkingHigh": "#ff00ff",
-    "thinkingXhigh": "#ff0000",
-    "thinkingMax": "#ff0088",
-    "bashMode": "#ffaa00"
-  }
-}
-```
+## 了解主题文件
 
-3. 通过 `/settings` 选择主题。
+| 属性      | 必填 | 作用                                                        |
+| --------- | ---- | ----------------------------------------------------------- |
+| `$schema` | 否   | 按 Pi 发布的 schema 启用编辑器校验和补全。                  |
+| `name`    | 是   | 在选择器和设置中标识该主题。必须唯一，且不能包含 `/`。      |
+| `vars`    | 否   | 定义可复用的颜色值。变量可以引用其他变量。                  |
+| `colors`  | 是   | 把颜色分配给终端 UI 的角色。schema 标明了必需和可选的色名。 |
+| `export`  | 否   | 覆盖 HTML 导出中的页面和面板背景。                          |
 
-**热重载：** 编辑当前活跃的自定义主题文件时，Pi 自动重新加载，可即时预览效果。
+颜色可以写成四种形式：
 
-## 主题格式
+| 形式         | 示例        | 含义                                 |
+| ------------ | ----------- | ------------------------------------ |
+| RGB 十六进制 | `"#00aaff"` | 六位 RGB 颜色。                      |
+| 256 色索引   | `39`        | 从 `0` 到 `255` 的 ANSI 调色板索引。 |
+| 变量引用     | `"primary"` | `vars` 中某个条目的值。              |
+| 终端默认     | `""`        | 终端的默认前景色或背景色。           |
 
-```json
-{
-  "$schema": "https://raw.githubusercontent.com/earendil-works/pi/main/packages/coding-agent/src/modes/interactive/theme/theme-schema.json",
-  "name": "my-theme",
-  "vars": {
-    "blue": "#0066cc",
-    "gray": 242
-  },
-  "colors": {
-    "accent": "blue",
-    "muted": "gray",
-    "text": "",
-    ...
-  }
-}
-```
+Pi 会解析链式变量引用。缺失的变量或循环引用会让主题无效。十六进制颜色在支持时使用 truecolor，在只支持 256 色的终端中做近似。如果颜色与它们的十六进制值不同，请检查终端的 truecolor 检测和对比度设置。见[配置终端](terminal-setup.md#override-detected-capabilities)。
 
-- `name`：必需，必须唯一，且不能包含 `/`。
-- `vars`：可选。在此定义可复用的颜色，然后在 `colors` 中引用。
-- `colors`：必须定义全部 53 个必需 token。`thinkingMax` 和两个搜索高亮 token 为可选，并使用下文列出的回退值。
-- `$schema` 字段启用编辑器自动补全和验证。
+确切的属性、必需的色名和可接受的取值类型见[主题 JSON schema](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/modes/interactive/theme/theme-schema.json)。
 
-## 颜色 Token
+Pi 在启动和 `/reload` 时报告无效的主题文件。
 
-每个主题必须定义全部 53 个必需颜色 token。可选 token 用于兼容现有主题：`thinkingMax` 回退到 `thinkingXhigh`，`searchMatchBg` 回退到 `selectedBg`，`searchMatchText` 回退到 `text`。其他搜索匹配项使用 `searchMatchText` 作为前景色、`searchMatchBg` 作为背景色并添加下划线；当前匹配项会交换这组前景色和背景色，并使用粗体文本。
+## 找到要修改的颜色
 
-### 核心 UI（13 个）
+主题颜色描述的是界面角色，而不是单个组件。用下面这些分组定位 schema 中相关的部分：
 
-| Token            | 用途                                         |
-| ---------------- | -------------------------------------------- |
-| `accent`         | 主强调色（Logo、选中项、光标）               |
-| `border`         | 普通边框                                     |
-| `borderAccent`   | 高亮边框                                     |
-| `borderMuted`    | 微妙边框（编辑器）                           |
-| `success`        | 成功状态                                     |
-| `error`          | 错误状态                                     |
-| `warning`        | 警告状态                                     |
-| `muted`          | 次要文本                                     |
-| `dim`            | 三级文本                                     |
-| `text`           | 默认文本（通常为 `""`）                      |
-| `thinkingText`   | Thinking 块文本                              |
-| `scrollbarTrack` | 全屏滚动条轨道前景色                         |
-| `scrollbarThumb` | 全屏滚动条滑块前景色，在普通和展开状态下共用 |
+| 区域       | 色名                                                                       |
+| ---------- | -------------------------------------------------------------------------- |
+| 通用界面   | `accent`、`border*`、`text`、`muted`、`dim`、`success`、`error`、`warning` |
+| 选择与全屏 | `selectedBg`、`searchMatch*`、`scrollbar*`                                 |
+| 消息       | `userMessage*`、`customMessage*`、`thinkingText`                           |
+| 工具执行   | `toolPendingBg`、`toolSuccessBg`、`toolErrorBg`、`toolTitle`、`toolOutput` |
+| Markdown   | `md*`                                                                      |
+| 工具 diff  | `toolDiff*`                                                                |
+| 语法高亮   | `syntax*`                                                                  |
+| 编辑器模式 | `thinking*`、`bashMode`                                                    |
+| HTML 导出  | `export.pageBg`、`export.cardBg`、`export.infoBg`                          |
 
-### 背景和内容（11 个必需，2 个可选）
+schema 是格式参考。内置主题提供了完整的值，你可以复制并调整。
 
-| Token                | 用途                                                                |
-| -------------------- | ------------------------------------------------------------------- |
-| `selectedBg`         | 选中行背景                                                          |
-| `searchMatchBg`      | 转录搜索匹配项背景和当前匹配项文本；可选，缺失时回退到 `selectedBg` |
-| `searchMatchText`    | 转录搜索匹配项文本和当前匹配项背景；可选，缺失时回退到 `text`       |
-| `userMessageBg`      | 用户消息背景                                                        |
-| `userMessageText`    | 用户消息文本                                                        |
-| `customMessageBg`    | 扩展消息背景                                                        |
-| `customMessageText`  | 扩展消息文本                                                        |
-| `customMessageLabel` | 扩展消息标签                                                        |
-| `toolPendingBg`      | 工具框（等待中）                                                    |
-| `toolSuccessBg`      | 工具框（成功）                                                      |
-| `toolErrorBg`        | 工具框（错误）                                                      |
-| `toolTitle`          | 工具标题                                                            |
-| `toolOutput`         | 工具输出文本                                                        |
+有五个颜色是可选的，省略时继承另一个颜色：
 
-### Markdown（10 个）
+| 可选颜色          | 回退            |
+| ----------------- | --------------- |
+| `scrollbarTrack`  | `muted`         |
+| `scrollbarThumb`  | `text`          |
+| `searchMatchBg`   | `selectedBg`    |
+| `searchMatchText` | `text`          |
+| `thinkingMax`     | `thinkingXhigh` |
 
-| Token               | 用途         |
-| ------------------- | ------------ |
-| `mdHeading`         | 标题         |
-| `mdLink`            | 链接文本     |
-| `mdLinkUrl`         | 链接 URL     |
-| `mdCode`            | 行内代码     |
-| `mdCodeBlock`       | 代码块内容   |
-| `mdCodeBlockBorder` | 代码块边框   |
-| `mdQuote`           | 引用文本     |
-| `mdQuoteBorder`     | 引用边框     |
-| `mdHr`              | 水平分割线   |
-| `mdListBullet`      | 列表项目符号 |
+如果省略 `export` 颜色，Pi 从 `userMessageBg` 推导出 HTML 页面和面板背景。
 
-### 工具 Diff（3 个）
+## 从项目或包加载主题
 
-| Token             | 用途     |
-| ----------------- | -------- |
-| `toolDiffAdded`   | 新增行   |
-| `toolDiffRemoved` | 删除行   |
-| `toolDiffContext` | 上下文行 |
+把项目主题放在 `.pi/themes/`。项目主题只在[项目信任](security.md#understand-project-trust)被授予后加载。
 
-### 语法高亮（9 个）
+你也可以通过 `themes` 设置加载主题文件和目录，或在 Pi 包中分发它们。见[配置](configuration.md)、[设置](settings.md#resources)和 [Pi 包](packages.md)。
 
-| Token               | 用途     |
-| ------------------- | -------- |
-| `syntaxComment`     | 注释     |
-| `syntaxKeyword`     | 关键字   |
-| `syntaxFunction`    | 函数名   |
-| `syntaxVariable`    | 变量     |
-| `syntaxString`      | 字符串   |
-| `syntaxNumber`      | 数字     |
-| `syntaxType`        | 类型     |
-| `syntaxOperator`    | 运算符   |
-| `syntaxPunctuation` | 标点符号 |
-
-### Thinking Level 边框（6 个必需，1 个可选）
-
-编辑器边框颜色，指示思维级别（从微妙到突出的视觉层次）：
-
-| Token             | 用途                                         |
-| ----------------- | -------------------------------------------- |
-| `thinkingOff`     | 思维关闭                                     |
-| `thinkingMinimal` | 最简思维                                     |
-| `thinkingLow`     | 低思维                                       |
-| `thinkingMedium`  | 中等思维                                     |
-| `thinkingHigh`    | 高思维                                       |
-| `thinkingXhigh`   | 超高思维                                     |
-| `thinkingMax`     | 最高思维；可选，缺失时回退到 `thinkingXhigh` |
-
-### Bash 模式（1 个）
-
-| Token      | 用途                              |
-| ---------- | --------------------------------- |
-| `bashMode` | Bash 模式编辑器边框（`!` 前缀时） |
-
-### HTML Export（可选）
-
-`export` 部分控制 `/export` HTML 输出的颜色。如果省略，颜色从 `userMessageBg` 派生。
-
-```json
-{
-  "export": {
-    "pageBg": "#18181e",
-    "cardBg": "#1e1e24",
-    "infoBg": "#3c3728"
-  }
-}
-```
-
-## 颜色值
-
-支持四种格式：
-
-| 格式   | 示例        | 说明                            |
-| ------ | ----------- | ------------------------------- |
-| Hex    | `"#ff0000"` | 6 位十六进制 RGB                |
-| 256 色 | `39`        | xterm 256 色调色板索引（0-255） |
-| 变量   | `"primary"` | 引用 `vars` 条目                |
-| 默认   | `""`        | 终端默认颜色                    |
-
-### 256 色调色板
-
-- `0-15`：基本 ANSI 颜色（因终端而异）
-- `16-231`：6×6×6 RGB 色块（`16 + 36×R + 6×G + B`，其中 R、G、B 为 0-5）
-- `232-255`：灰度渐变
-
-### 终端兼容性
-
-Pi 使用 24 位 RGB 颜色（True Color）。大多数现代终端支持（iTerm2、Kitty、WezTerm、Windows Terminal、VS Code）。对于仅支持 256 色的旧终端，Pi 回退到最接近的近似值。
-
-检查 True Color 支持：
-
-```bash
-echo $COLORTERM   # 应输出 "truecolor" 或 "24bit"
-```
-
-## 提示
-
-- **暗色终端**：使用明亮、饱和度高的颜色，提高对比度。
-- **亮色终端**：使用较暗、柔和的颜色，降低对比度。
-- **色彩和谐**：从基础调色板（Nord、Gruvbox、Tokyo Night 等）开始，定义在 `vars` 中，统一引用。
-- **测试**：用不同的消息类型、工具状态、Markdown 内容和长折行文本检查主题效果。
-- **VS Code**：设置 `terminal.integrated.minimumContrastRatio` 为 `1` 以获得准确颜色。
-
-## 示例
-
-查看内置主题：
-
-- [dark.json](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/modes/interactive/theme/dark.json)
-- [light.json](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/modes/interactive/theme/light.json)
+每个已加载主题的名称必须唯一。Pi 把重名报告为资源冲突。
 
 ---
 
