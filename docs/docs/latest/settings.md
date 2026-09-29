@@ -75,7 +75,7 @@
 
 | 设置                            | 类型                                     | 默认值         | 说明                                                |
 | ------------------------------- | ---------------------------------------- | -------------- | --------------------------------------------------- |
-| `theme`                         | string                                   | 检测所得       | 内置或自定义主题名。                                |
+| `theme`                         | string                                   | `"system"`     | 内置或自定义主题名。`system` 从终端主题派生颜色。   |
 | `quietStartup`                  | boolean                                  | `false`        | 隐藏启动头部。                                      |
 | `tuiMode`                       | `"regular" \| "fullscreen"`              | `"regular"`    | 交互式终端 UI 模式。                                |
 | `fullscreenExitOutput`          | `"transcript" \| "resume-hint"`          | `"transcript"` | 全屏模式退出时打印的输出。                          |

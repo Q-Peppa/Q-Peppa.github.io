@@ -77,18 +77,19 @@ Pi 使用 `jiti`，所以本地 TypeScript 扩展不需要单独的编译步骤�
 
 ## 选择集成点
 
-| 能力                                | 主要 API                                       |
-| ----------------------------------- | ---------------------------------------------- |
-| 观察或修改生命周期行为              | `pi.on()`                                      |
-| 添加模型可调用的操作                | `pi.registerTool()`                            |
-| 添加 `/` 命令                       | `pi.registerCommand()`                         |
-| 添加快捷键或 CLI 标志               | `pi.registerShortcut()` 或 `pi.registerFlag()` |
-| 发送用户消息或自定义消息            | `pi.sendUserMessage()` 或 `pi.sendMessage()`   |
-| 持久化非上下文会话数据              | `pi.appendEntry()`                             |
-| 改变活动工具、模型或 thinking level | `pi` 上的会话控制方法                          |
-| 添加模型 Provider                   | `pi.registerProvider()`                        |
-| 添加终端渲染                        | 渲染器注册和 `ctx.ui`                          |
-| 与其他扩展通信                      | `pi.events`                                    |
+| 能力                                | 主要 API                                         |
+| ----------------------------------- | ------------------------------------------------ |
+| 观察或修改生命周期行为              | `pi.on()`                                        |
+| 添加模型可调用的操作                | `pi.registerTool()`                              |
+| 添加 `/` 命令                       | `pi.registerCommand()`                           |
+| 添加快捷键或 CLI 标志               | `pi.registerShortcut()` 或 `pi.registerFlag()`   |
+| 发送用户消息或自定义消息            | `pi.sendUserMessage()` 或 `pi.sendMessage()`     |
+| 持久化非上下文会话数据              | `pi.appendEntry()`                               |
+| 改变活动工具、模型或 thinking level | `pi` 上的会话控制方法                            |
+| 添加模型 Provider                   | `pi.registerProvider()`                          |
+| 把每次请求路由到一个模型            | [`pi.registerVirtualModel()`](virtual-models.md) |
+| 添加终端渲染                        | 渲染器注册和 `ctx.ui`                            |
+| 与其他扩展通信                      | `pi.events`                                      |
 
 确切的 event、context、tool 和 result 类型请参考 [`extensions/types.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/extensions/types.ts) 中导出的声明。
 
@@ -110,6 +111,12 @@ Pi 使用 `jiti`，所以本地 TypeScript 扩展不需要单独的编译步骤�
 `before_agent_start` 同时暴露当前 Prompt 和它的结构化 `systemPromptOptions`。请优先修改 Prompt 的分段、选中的工具或准则，让 Pi 能够追加转录增量。返回 `systemPrompt` 或设置 `forceSystemPrompt` 会为该次运行替换整个 Prompt，而转录会继续记录结构化分段。Provider 把强制的文本作为其开头的系统提示收到。
 
 `message_end` 可以在保留角色不变的情况下替换已定稿的消息。`tool_call` 可以修改输入或阻止执行。`tool_result` 处理器会叠加，每个处理器都能看到之前的改动。
+
+<a id="provider_stream_event"></a>
+
+`provider_stream_event` 在 Pi 规范化之前，为每个已解析的 Provider 流事件触发。该事件标识 Provider、API 和模型；`event.data` 是 Pi 能拿到的最早结构化值，不一定是原始 HTTP 字节或 SSE 帧。把它当作只读，因为改动可能影响规范化。该事件仅通知，不会持久化。
+
+处理器按流顺序 await，所以慢的处理器会延迟流消费。处理器错误会被报告，但不改变 Provider 响应。见 [`debug-provider.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/extensions/debug-provider.ts)，它是一个可选的查看器，按 assistant 消息分组原始事件。
 
 <a id="context_with_system"></a>
 

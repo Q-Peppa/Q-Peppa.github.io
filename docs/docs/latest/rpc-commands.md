@@ -42,8 +42,10 @@
 响应：
 
 ```json
-{ "id": "req-1", "type": "response", "command": "prompt", "success": true }
+{ "id": "req-1", "type": "response", "command": "prompt", "success": true, "data": { "disposition": "started" } }
 ```
+
+`data.disposition` 在扩展命令或输入处理器消费了该 Prompt 时为 `"handled"`，Pi 在运行期间排队它时为 `"queued"`，Pi 接受它以启动一次运行时为 `"started"`。它描述的是这次提交的 Prompt，不是扩展独立启动的工作，也不保证完成。
 
 `success: true` 表示 Prompt 已被接受、排队或立即处理。`success: false` 表示 Prompt 在接受之前被拒绝。接受之后的失败通过常规的事件和消息流报告，而不是对同一请求 id 再发一个 `response`。
 
@@ -72,8 +74,10 @@
 响应：
 
 ```json
-{ "type": "response", "command": "steer", "success": true }
+{ "type": "response", "command": "steer", "success": true, "data": { "disposition": "queued" } }
 ```
+
+`data.disposition` 在输入处理器消费了这次 steer 时为 `"handled"`，Pi 排队它时为 `"queued"`（包括处理器转换之后）。它不保证这条消息仍保持排队。
 
 控制 steering 消息处理方式见 [set_steering_mode](#set_steering_mode)。
 
@@ -100,8 +104,10 @@
 响应：
 
 ```json
-{ "type": "response", "command": "follow_up", "success": true }
+{ "type": "response", "command": "follow_up", "success": true, "data": { "disposition": "queued" } }
 ```
+
+`data.disposition` 对这次 follow-up 的含义与 `steer` 相同，为 `"handled"` 或 `"queued"`。
 
 控制 follow-up 消息处理方式见 [set_follow_up_mode](#set_follow_up_mode)。
 

@@ -67,7 +67,7 @@ runtime 替换之后，订阅属于旧的 `AgentSession`，必须重新绑定。
 
 在会话已经在流式输出时发送的 Prompt 必须指明它应当引导当前运行还是跟随其后。不带该选择调用 `prompt()` 会被拒绝，而不是猜测。
 
-Steering 消息在当前 assistant turn 及其 tool call 之后进入。Follow-up 在当前运行完成待处理工作之后进入。`steer()` 和 `followUp()` 直接暴露这些行为。
+Steering 消息在当前 assistant turn 及其 tool call 之后进入。Follow-up 在当前运行完成待处理工作之后进入。`steer()` 和 `followUp()` 直接暴露这些行为，如果输入被排队（包括扩展转换之后）则返回 `"queued"`，如果被扩展消费则返回 `"handled"`。
 
 `abort()` 停止活动操作并等待会话进入空闲。`waitForIdle()` 等待而不中止它。
 

@@ -140,6 +140,7 @@ export default defineConfig({
           items: [
             { text: '扩展', link: '/docs/latest/extensions', tag: 'updated' },
             { text: '自定义 Provider', link: '/docs/latest/custom-provider' },
+            { text: '用虚拟模型路由', link: '/docs/latest/virtual-models', tag: 'new' },
             { text: '终端 UI', link: '/docs/latest/tui' },
             { text: 'CLI 集成', link: '/docs/latest/cli-integration', tag: 'new' },
             { text: 'SDK', link: '/docs/latest/sdk' },

@@ -101,9 +101,11 @@ interface SessionEntryBase {
 {"type":"message","id":"c3d4e5f6","parentId":"b2c3d4e5","timestamp":"2024-12-03T14:00:03.000Z","message":{"role":"toolResult","toolCallId":"call_123","toolName":"bash","content":[{"type":"text","text":"output"}],"isError":false,"timestamp":1733234403000}}
 ```
 
+Assistant 消息会写出产出它们的模型。较新的消息还会记录 `thinkingLevel`，即该次响应请求的 Pi thinking level。
+
 ### ModelChangeEntry
 
-用户在会话中途切换模型时发出。
+用户在会话中途切换模型时发出。最新条目是所选模型，可能是[虚拟模型](virtual-models.md)；之后 assistant 消息写出作答的物理模型。
 
 ```json
 {
@@ -243,6 +245,8 @@ interface SessionEntryBase {
 ```
 
 用 `customType` 在重新加载时标识你的扩展条目。交互模式可以通过 `pi.registerEntryRenderer(customType, renderer)` 渲染自定义条目，但它们仍然不参与 LLM 上下文。
+
+Pi 把[虚拟模型](virtual-models.md)的路由器状态存为 `customType` 为 `pi.virtual-model-state` 的自定义条目，`data` 为 `{ provider, modelId, state }`。
 
 ### CustomMessageEntry
 

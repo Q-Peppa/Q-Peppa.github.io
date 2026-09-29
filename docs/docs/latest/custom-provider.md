@@ -29,7 +29,45 @@ Provider 扩展是一种[扩展](extensions.md)，所以它遵循相同的加载
 
 对于静态端点和模型元数据之外还要自己做更多事的新集成，请优先使用完整 Provider。Pi 会在已注册的原生 Provider 之上组合 `models.json` 覆盖。
 
-只为已有 Provider 注册 `baseUrl` 或 `headers` 会保留它的内置模型。在旧式形式中提供 `models` 会替换该注册所提供的模型。
+只为已有 Provider 注册 `baseUrl` 或 `headers` 会保留它的内置模型。在旧式形式中提供 `models` 会替换该 Provider 在 chat、图片和分类器操作上的模型。省略 `type` 表示 `"chat"`；图片和分类器模型需要显式判别，并通过 `images` 和 `classifiers` 字段、按其 `api` 值提供实现。
+
+例如，混合操作的 Provider 可以同时注册非 chat 模型及其实现：
+
+```typescript
+pi.registerProvider('media-tools', {
+  apiKey: '$MEDIA_TOOLS_API_KEY',
+  models: [
+    {
+      type: 'image',
+      id: 'image-v1',
+      name: 'Image V1',
+      api: 'media-images',
+      baseUrl: 'https://media.example.com/v1',
+      input: ['text'],
+      output: ['image'],
+      cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+    },
+    {
+      type: 'classifier',
+      id: 'classifier-v1',
+      name: 'Classifier V1',
+      api: 'media-classifier',
+      baseUrl: 'https://media.example.com/v1',
+      input: ['text'],
+      cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+      contextWindow: 64000,
+    },
+  ],
+  images: {
+    'media-images': { generateImages: async (model, context, options) => result },
+  },
+  classifiers: {
+    'media-classifier': { classify: async (model, context, options) => result },
+  },
+});
+```
+
+模型级 `baseUrl` 优先于 Provider 端点。如果没有提供 `models` 列表，每种操作的内置模型都保持注册。不同操作中相同的模型 ID 仍然彼此独立，包括它们各自的模型级 header。
 
 初始扩展加载之后发起的调用会立即生效。用 `pi.unregisterProvider()` 移除动态 Provider，并恢复它替换掉的内置行为。
 
@@ -54,7 +92,7 @@ OAuth 回调与 UI 无关。它们可以打开授权 URL、显示设备码、报
 
 ## 提供并刷新模型
 
-每个模型都需要 ID、显示名、输入能力、上下文窗口、输出上限、推理支持和成本元数据。除非某个模型需要单独覆盖，否则在 Provider 级别选择 API 实现。
+每个模型都需要 ID、显示名、输入能力和成本元数据。Chat 和分类器模型还需要上下文窗口；chat 模型需要输出上限和推理支持；图片模型声明其输出模态。除非某个模型需要单独覆盖，否则在 Provider 级别选择 API 实现。
 
 当 Pi 应当让空闲 Prompt 缓存保持温暖时，把 `promptCache.short` 或 `promptCache.long` 设为该 Provider 尽力而为的缓存时长（秒）。不设置它们会为对应保留层级禁用缓存预热。
 
@@ -67,7 +105,7 @@ OAuth 回调与 UI 无关。它们可以打开授权 URL、显示设备码、报
 两种注册形式有不同的刷新契约：
 
 - 完整的 `Provider` 不返回任何内容。它调用 `context.publish({ update })` 安装 Provider 自有的模型状态，之后它同步的 `getModels()` 暴露最新列表。
-- 旧式 `ProviderConfig.refreshModels` 返回模型定义。Pi 用返回的列表替换该注册的实时模型，并应用所请求的持久化。
+- 旧式 `ProviderConfig.refreshModels` 返回混合操作的模型定义。Pi 用返回的列表替换该注册的实时模型，并应用所请求的持久化。
 
 只有当持久化的目录数据应当跨运行保留时才发布它。像 llama.cpp 这样的实时服务可以更新内存中的列表而不持久化；远程目录可以保留快照以便离线启动。
 
@@ -104,9 +142,10 @@ Provider 仍然可以自定义认证、base URL、header、模型过滤和发现
 
 - 在发送 Provider 请求之前调用 `options.onPayload`，并使用它返回的任何替换载荷。
 - 在收到响应之后、消费其正文之前调用 `options.onResponse`。
+- 对每个已解析的 Provider 事件，在规范化之前 await `options.onProviderStreamEvent?.(providerEvent, model)`。
 - 透传 abort signal 和 Provider 作用域环境。
 
-这些钩子支撑扩展的请求检查和响应 header 事件。省略它们会让该 Provider 的行为与 Pi 的内置 Provider 不同。
+这些钩子支撑扩展的请求检查、响应 header 事件和 Provider 流观察。省略它们会让该 Provider 的行为与 Pi 的内置 Provider 不同。
 
 ## 报告失败和用量
 

@@ -63,8 +63,10 @@ RPC 使用严格的 JSONL 分帧。每条记录写一个完整的 JSON 对象，
 
 ```json
 {"id":"req-2","type":"prompt","message":"Review this repository"}
-{"id":"req-2","type":"response","command":"prompt","success":true}
+{"id":"req-2","type":"response","command":"prompt","success":true,"data":{"disposition":"started"}}
 ```
+
+`data.disposition` 报告 Prompt 发生了什么。如果是 `"handled"`，这次 Prompt 没有启动运行，所以不要等待 `agent_settled`。全部取值见 [RPC 命令](rpc-commands.md#prompt)。
 
 在该响应之后请继续消费[事件](json.md)。`agent_end` 标记一次底层 Agent 运行的结束，但重试、溢出恢复、压缩、steering 或 follow-up 工作仍可能随后进行。当客户端需要知道 Pi 不会自动继续时，等待 `agent_settled`。
 

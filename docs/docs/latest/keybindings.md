@@ -127,7 +127,7 @@ Pi 暴露具名动作，例如 `app.session.new`，可以为它们分配快捷�
 | `app.exit`                 | `ctrl+d`                              | 退出（编辑器为空时）                                                                                      |
 | `app.suspend`              | `ctrl+z`（Windows 上无默认值）        | 挂起到后台                                                                                                |
 | `app.editor.external`      | `ctrl+g`                              | 在外部编辑器中打开（`externalEditor`、`$VISUAL`、`$EDITOR`、Windows 上的 Notepad，或其他平台上的 `nano`） |
-| `app.clipboard.pasteImage` | `ctrl+v`（Windows 和 WSL 为 `alt+v`） | 从剪贴板粘贴图片或文本                                                                                    |
+| `app.clipboard.pasteImage` | `ctrl+v`（Windows 和 WSL 为 `alt+v`） | 从剪贴板粘贴 macOS 上的文件、图片或文本                                                                   |
 
 在原生 Windows 上，`app.suspend` 没有默认值，因为 Windows 终端不支持 Unix 作业控制。如果你手动分配它，Pi 会显示状态消息而不是挂起。WSL 使用正常的 `ctrl+z` 和 `fg` 行为。
 

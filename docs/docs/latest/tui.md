@@ -81,6 +81,24 @@
 
 请使用传给扩展或组件回调的主题。主题辅助函数会为 accent、muted text、success、warnings、errors、工具输出和 Markdown 等语义色生成 ANSI 样式字符串。
 
+用 `theme.style()` 组合前景色、背景色和文本属性：
+
+```typescript
+return new Text(
+  theme.style('Done!', {
+    fg: 'success',
+    bg: 'toolSuccessBg',
+    bold: true,
+  }),
+  0,
+  0,
+);
+```
+
+样式颜色可以是语义主题 Token，也可以是具体的 `Color`。前景 Token 作为 `fg` 接受，背景 Token 作为 `bg` 接受；要把某个 Token 的颜色用在另一侧，请传入它的具体颜色，例如 `{ fg: theme.colors.userMessageBg }`。通过 `theme.colors` 访问具体颜色，需要颜色计算时使用 `@earendil-works/pi-tui` 中的 `mixColors()` 等工具。主题设为终端默认的 Token 会用终端自己的颜色渲染；`theme.colors` 报告终端为它们宣布的颜色，没有宣布时则是猜测。用 `theme.appearance`（`"dark"` 或 `"light"`）来决定，例如把颜色调亮还是调暗。Pi 根据终端能力把结果转为 truecolor 或 256 色输出。主题 Token 按主题转换一次；尽量在渲染路径之外计算具体颜色。
+
+现有的 `theme.fg()` 和 `theme.bg()` 辅助函数仍然可用于应用一种语义色。
+
 除非 `invalidate()` 会重建它们，否则不要长期保存带主题颜色的字符串。主题变化会清空渲染缓存，但无法移除已嵌入应用状态的旧 ANSI 颜色。
 
 渲染期间求值的主题回调不需要特殊重建。无状态组件也可以在每次渲染时计算带主题的输出。
