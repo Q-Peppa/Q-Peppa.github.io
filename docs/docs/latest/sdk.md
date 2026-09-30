@@ -111,27 +111,32 @@ try {
 
 <a id="inlineextension"></a>
 
-内联扩展工厂可以通过 `DefaultResourceLoader` 提供。只有当它在诊断和启动输出中需要稳定的名称时，才给它一个 `InlineExtension` 名称。
+内联扩展工厂可以通过 `DefaultResourceLoader` 提供。只有当它在诊断和启动输出中需要稳定的名称时，才给它一个 `InlineExtension` 名称。带 `replaceable: true` 的命名内联扩展，在另一个扩展于加载期间注册了它也注册的工具、命令或 flag 时会被排除，而不是两者都加载并产生冲突。CLI 的内置 codemode、tool search 和 MCP 扩展是可替换的。带 `builtin: true` 的命名条目不是内联扩展：它提供 `builtin:<name>` 扩展的代码，加载方式与已配置的扩展文件相同。它默认加载，列在 `pi config` 中，并可通过 `extensions` 设置中的 `-builtin:<name>` 或 `noExtensions` 禁用；`additionalExtensionPaths: ["builtin:<name>"]` 显式加载它。它在项目信任解析之后加载，因此不能处理 `project_trust`。CLI 的内置扩展使用这种方式。
+
+<a id="codemode-mcp"></a>
+
+CLI 把 `codemode`、`tool_search` 和 MCP 作为内置扩展加载。SDK 会话不会；把 `createCodemodeExtension()`、`createToolSearchExtension()` 和 `createMcpExtension()` 加到 `DefaultResourceLoader` 的 `extensionFactories`。`codemode` 和 `tool_search` 以未激活状态注册：通过 `defaultTools` 设置启用它们（`["+codemode", "+tool_search"]` 会保留其他默认工具），或让 MCP 扩展激活它们：对 `codemode` 或 `codemode-deferred` exposure 的服务器激活 `codemode`，对 `deferred` exposure 的服务器激活 `tool_search`。MCP 扩展在 `session_start` 时连接服务器，所以要调用 `session.bindExtensions()`。见 [Codemode 与 MCP](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/14-codemode-mcp.ts)。
 
 聚焦的示例见[模型](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/02-custom-model.ts)、[工具](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/05-tools.ts)、[扩展](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/06-extensions.ts)和[完全控制](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/12-full-control.ts)。
 
 ## 示例
 
-| 示例                                                                                                                    | 用途                              |
-| ----------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| [最小示例](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/01-minimal.ts)             | 创建、发送 Prompt、观察并释放会话 |
-| [自定义模型](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/02-custom-model.ts)      | 选择模型和 thinking level         |
-| [系统提示](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/03-custom-prompt.ts)       | 替换或追加系统提示                |
-| [Skill](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/04-skills.ts)                 | 发现、过滤和添加 Skill            |
-| [工具](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/05-tools.ts)                   | 选择内置工具及其工作目录          |
-| [扩展](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/06-extensions.ts)              | 加载基于文件和内联的扩展          |
-| [上下文文件](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/07-context-files.ts)     | 添加或替换项目指令                |
-| [Prompt 模板](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/08-prompt-templates.ts) | 添加文件式 Prompt 模板            |
-| [凭证](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/09-api-keys-and-oauth.ts)      | 配置凭证和模型存储                |
-| [设置](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/10-settings.ts)                | 提供基于文件或内存中的设置        |
-| [会话](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/11-sessions.ts)                | 控制会话持久化和恢复              |
-| [完全控制](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/12-full-control.ts)        | 替换默认发现和状态服务            |
-| [会话 runtime](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/13-session-runtime.ts) | 安全地替换活动会话                |
+| 示例                                                                                                                    | 用途                                       |
+| ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| [最小示例](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/01-minimal.ts)             | 创建、发送 Prompt、观察并释放会话          |
+| [自定义模型](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/02-custom-model.ts)      | 选择模型和 thinking level                  |
+| [系统提示](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/03-custom-prompt.ts)       | 替换或追加系统提示                         |
+| [Skill](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/04-skills.ts)                 | 发现、过滤和添加 Skill                     |
+| [工具](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/05-tools.ts)                   | 选择内置工具及其工作目录                   |
+| [扩展](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/06-extensions.ts)              | 加载基于文件和内联的扩展                   |
+| [上下文文件](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/07-context-files.ts)     | 添加或替换项目指令                         |
+| [Prompt 模板](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/08-prompt-templates.ts) | 添加文件式 Prompt 模板                     |
+| [凭证](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/09-api-keys-and-oauth.ts)      | 配置凭证和模型存储                         |
+| [设置](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/10-settings.ts)                | 提供基于文件或内存中的设置                 |
+| [会话](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/11-sessions.ts)                | 控制会话持久化和恢复                       |
+| [完全控制](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/12-full-control.ts)        | 替换默认发现和状态服务                     |
+| [会话 runtime](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/13-session-runtime.ts) | 安全地替换活动会话                         |
+| [Codemode 与 MCP](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/14-codemode-mcp.ts) | 添加 `codemode`、`tool_search` 和 MCP 扩展 |
 
 <a id="exports"></a>
 

@@ -88,9 +88,11 @@ Hugging Face 搜索会依次使用 `HF_TOKEN`（如果已设置）、`$HF_TOKEN_
 
 如果 router 断开连接，`/llama` 会显示 **Retry** 和 **Close**。Retry 会重新连接并刷新模型状态，而不重放被中断的操作。
 
+<a id="classification"></a>
+
 ## 分类
 
-每个出现在 chat 列表中的模型，也会以相同 ID 和 `llama-cpp-classify` API 列为分类器模型。分类器模型回答关于 JSON 状态的带类型 `choice`、`bool` 和 `score` 问题，类似 TypeSafe 的 Jev 模型。
+每个出现在 chat 列表中的模型，也会以相同 ID 和 `llama-cpp-classify` API 列为分类器模型。分类器模型回答关于 JSON 状态的带类型 `choice`、`bool` 和 `score` 问题，类似 TypeSafe 的 Jev 模型。模型通过 [`codemode`](cli.md#enable-codemode) 脚本以及扩展的 `ctx.modelRegistry.classify()` 到达它们；见[分类器模型](models.md#use-classifier-models)。
 
 模型并不生成答案。每个问题变成一条 chat Prompt：状态、该请求的全部问题、状态再出现一次，然后是该问题及其答案（用单 Token 标签）。choice 的标签是字母（最多 62 个选项），bool 是 `Yes`/`No`，score 是数字（最多 10 级）。第二份状态是在已看到问题的情况下读取的，这在 JevBench 上提高了小模型的准确率。Pi 读取这些标签作为下一个 Token 的概率并做归一化。choice 返回每个选项的概率，以及置信度 `(n * peak - 1) / (n - 1)`；score 返回期望等级。
 
@@ -112,6 +114,8 @@ curl http://127.0.0.1:8080/models
 - **使用 `--no-models-autoload` 时 `/model` 中缺少模型：** 先用 `/llama` 加载它。
 - **加载失败或占用内存过多：** 降低 `-c`，或卸载另一个模型。
 - **服务器不在 router 模式：** 启动时不要传 `--model`、`-m` 或 `-hf`。
+
+要移除 `llama.cpp` Provider 和 `/llama`，在 `pi config` 的 Built-in 下禁用 `llama.cpp`，或在[设置](settings.md#resources)中设 `"extensions": ["-builtin:llama.cpp"]`。
 
 ---
 

@@ -39,6 +39,7 @@
 当 Pi 在当前工作目录中发现以下任一资源时，就要求做出项目信任决策：
 
 - `.pi/settings.json`
+- `.pi/mcp.json`
 - `.pi/extensions`、`.pi/skills`、`.pi/prompts` 或 `.pi/themes`
 - `.pi/SYSTEM.md` 或 `.pi/APPEND_SYSTEM.md`
 - 当前目录或某个祖先目录中的项目 `.agents/skills`
@@ -48,6 +49,7 @@
 授予项目信任后，Pi 可以加载：
 
 - 项目设置
+- 来自 `.pi/mcp.json` 的项目 MCP 服务器
 - `.pi` 下的扩展、Skill、Prompt 模板、主题和系统提示文件
 - 通过项目设置配置但缺失的包
 - 项目本地和项目包中的扩展

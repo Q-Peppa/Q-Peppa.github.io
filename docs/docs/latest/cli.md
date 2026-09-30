@@ -15,6 +15,7 @@ pi update [target] [options]
 pi list
 pi config [options]
 pi auth <check|print-api-key|print-bearer-token> [options]
+pi mcp <list|login|logout> [options]
 ```
 
 <a id="modes"></a>
@@ -108,6 +109,7 @@ pi --continue
 - `--session-id` 不能与 `--session`、`--continue` 或 `--resume` 组合。与 `--fork` 组合可以用它选择新的 ID。
 
 <a id="tool-options"></a>
+<a id="tools"></a>
 
 ## 工具
 
@@ -126,7 +128,7 @@ pi --tools read,grep,find,ls --print "Review this project"
 - `-nt`、`--no-tools`<br>
   启动时禁用所有内置、扩展和自定义工具。
 
-默认启用的工具是 `read`、`bash`、`edit` 和 `write`，除非 `defaultTools` 改变了它们。
+默认启用的工具是 `read`、`bash`、`edit` 和 `write`，除非 `defaultTools` 改变了它们。`--tools` 会替换整个选择，所以要写出你想要的每个工具；`defaultTools` 还接受 `+name` 和 `-name` 来改动默认列表，而不是替换。
 
 | 内置工具     | 作用                              |
 | ------------ | --------------------------------- |
@@ -139,6 +141,53 @@ pi --tools read,grep,find,ls --print "Review this project"
 | `find`       | 用 glob 模式查找路径              |
 | `ls`         | 列出目录内容                      |
 
+内置扩展再提供两个工具。它们默认关闭；MCP 扩展在 MCP 服务器需要它们时会打开（见 [MCP](mcp.md#exposure)）。要自己启用，在 `--tools` 或 `defaultTools` 中写出它们。
+
+| 内置扩展      | 作用                                                                                                   |
+| ------------- | ------------------------------------------------------------------------------------------------------ |
+| `codemode`    | 运行调用其他工具的 JavaScript，例如用 `Promise.allSettled` 并行调用；只有脚本的输出会到达模型          |
+| `tool_search` | 搜索未向模型声明的工具（`codemode` 和 `deferred` exposure，例如 MCP 工具），并把匹配项声明给下一次调用 |
+
+<a id="enable-codemode"></a>
+
+### 启用 codemode
+
+要为每个会话打开 `codemode`，把它加到 `~/.pi/agent/settings.json` 或项目 `.pi/settings.json` 的默认工具中：
+
+```json
+{
+  "defaultTools": ["+codemode"]
+}
+```
+
+这会保留 `read`、`bash`、`edit` 和 `write`，并加上 `codemode`。单次调用要列出每个工具，因为 `--tools` 会替换选择：
+
+```sh
+pi --tools read,bash,edit,write,codemode
+```
+
+没有 MCP 时，codemode 仍然有用：脚本可以并行运行多个 tool call、在输出到达模型前过滤大量输出，并通过 `models.classify()` 调用 TypeSafe 的 Jev 等分类器模型（见[分类器模型](models.md#use-classifier-models)）。
+
+<a id="how-codemode-works"></a>
+
+### codemode 如何工作
+
+codemode 脚本在 QuickJS 沙箱中运行，只能通过 `tools.<name>(args)` 到达其他工具；`ALL_TOOLS` 列出它们。输出通过 `text(value)`、`image(dataUrlOrImageContent)`、`console.*` 以及顶层 `return value` 产生；`exit()` 提前结束脚本。结果以 `Script completed` 或 `Script failed` 开头，然后是墙钟时间和输出；失败的脚本保留部分输出，后面是 `Script error:` 和错误。
+
+脚本可以以选项行开头，例如 `// @options: {"max_output_tokens": 2000, "timeout_ms": 60000}`。`max_output_tokens`（默认 10000）限制输出：更长的输出保留首尾，完整文本写入临时文件，路径包含在结果中。`timeout_ms` 是硬截止时间，默认未设置。
+
+`codemode` 激活时，[设置](settings.md#tools)中的 `codemode.mode` 决定其他工具如何呈现。`on`（默认）时，已声明的工具继续声明，描述中说明如何从脚本调用它们。`only` 时，它们对模型隐藏，改列在 `codemode` 描述中，因此模型通过脚本调用它们。
+
+`codemode` 描述用 TypeScript 声明列出可调用的工具，按 namespace 分组（例如一个 MCP 服务器）。声明共享 3000 估计 Token 的预算（[设置](settings.md#tools)中的 `codemode.inlineBudget`）；每个 namespace 仍会列出名称和工具数量，描述会说明列表是否完整。脚本用 `await searchTools(query, { limit, namespace })`（用 BM25 给工具排序）和 `await describeTool(name)` 查找其余工具，或过滤 `ALL_TOOLS`。
+
+带 output schema 的工具解析为结构化值：`bash` 为 `{ output, truncated, full_output_path?, exit_code, wall_time_seconds }`（非零退出码也如此），MCP 工具为它们的 `CallToolResult`。其他工具解析为文本输出。`bash` 的 `output` 不受模型看到的 2000 行或 50KB 限制：最多保留 1 MiB，更长的输出在省略标记两侧保留首尾各 512 KiB，并设置 `truncated`，完整输出在 `full_output_path`。
+
+`store(key, value)` 和 `load(key)` 在 `codemode` 调用之间保存 JSON 值：每个成功存储值的脚本会向会话追加一条 `codemode-store` 自定义条目，因此恢复的会话保留这些值，每个分支只看到自己路径上写入的值。脚本也可以使用 `models`：`getModelsOfType`、`getAvailableOfType` 和 `getModelOfType` 列出模型目录，`classify(model, context)` 用会话凭证运行分类器模型，每个脚本最多同时四个。
+
+### 工具搜索
+
+`tool_search` 默认关闭；用 `"defaultTools": ["+tool_search"]` 或 `--tools` 启用。它用与 `searchTools()` 相同的排序，覆盖尚未声明的工具，并把匹配项声明给下一次模型调用。已加载的工具像其他工具变更一样记入会话，因此在该分支上保持声明。
+
 <a id="resource-options"></a>
 
 ## 资源
@@ -150,9 +199,9 @@ pi --extension ./review.ts
 约定目录和项目信任见[配置](configuration.md)，已配置的路径见[设置](settings.md#resources)，包来源见 [Pi 包](packages.md)。
 
 - `-e`、`--extension <path>`<br>
-  加载一个扩展文件或目录，可重复。
+  加载一个扩展文件或目录，或内置扩展（例如 `builtin:mcp`），可重复。
 - `-ne`、`--no-extensions`<br>
-  禁用已发现和已配置的扩展。显式的 `-e` 路径仍会加载。
+  禁用已发现、已配置和内置的扩展。显式的 `-e` 路径仍会加载，所以 `pi -ne -e builtin:mcp` 只保留内置 MCP 支持。
 - `--skill <path>`<br>
   加载一个 Skill 文件或目录，可重复。
 - `-ns`、`--no-skills`<br>
@@ -268,6 +317,25 @@ pi auth check --provider openai --json
 | `--min-expiry <duration>` | `print-bearer-token` | 要求 Token 剩余有效期，使用 `ms`、`s`、`m` 或 `h`，如 `30m` |
 
 输出凭证的命令会把 secret 写到 stdout。
+
+<a id="mcp-commands"></a>
+
+## MCP 命令
+
+这些命令在会话之外工作，因此 agent 可以通过 `bash` 运行它们。见 [MCP 服务器](mcp.md)。
+
+| 命令                                                   | 说明                                                                                                                                                                                                                         |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pi mcp add <server> [options] -- <command> [args...]` | 在 `mcp.json` 中添加或替换 stdio 服务器；`--env KEY=VALUE`（可重复）和 `--cwd <dir>` 设置环境和工作目录。命令之后的参数会传给它                                                                                              |
+| `pi mcp add <server> [options] --url <url>`            | 添加或替换 streamable HTTP 服务器；`--header KEY=VALUE`（可重复）、`--bearer-token-env-var <NAME>`（发送 `Authorization: Bearer ${NAME}`）、`--oauth-client-id`、`--oauth-client-secret` 和 `--oauth-callback-port` 配置认证 |
+| `pi mcp remove <server>`                               | 从 `mcp.json` 移除服务器；已存储的 OAuth 凭证会保留                                                                                                                                                                          |
+| `pi mcp list [--json]`                                 | 连接每个已启用的服务器并打印状态、工具和错误；配置条目无效或已启用服务器未连接时以 `1` 退出                                                                                                                                  |
+| `pi mcp login <server> [--timeout <seconds>]`          | 登录 OAuth 服务器：打开授权页并等待浏览器（默认 300 秒）；终端也可以接受粘贴的重定向 URL                                                                                                                                     |
+| `pi mcp logout <server>`                               | 删除服务器已存储的 OAuth 凭证                                                                                                                                                                                                |
+
+`add` 和 `remove` 修改 `~/.pi/agent/mcp.json`，加上 `--local`（`-l`）则修改当前目录的 `.pi/mcp.json`。`add` 还接受 `--exposure <mode>`（见 [Exposure](mcp.md#exposure)），并且不会连接；运行 `pi mcp list` 检查服务器。
+
+项目 `.pi/mcp.json` 文件只对已经受信任的项目读取。
 
 ---
 

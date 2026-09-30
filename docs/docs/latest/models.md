@@ -100,6 +100,43 @@ Pi 直接集成 llama.cpp router。Router 会发现 GGUF 文件并按需加载�
 
 兼容性设置应当描述端点请求或响应行为中已验证的差异。不要仅因为某个端点宣称兼容 OpenAI 或 Anthropic 就开启这些设置。
 
+<a id="use-classifier-models"></a>
+
+## 使用分类器模型
+
+分类器模型不用于对话。它们回答关于 JSON 状态的带类型问题：从若干选项中选一个、回答是否，或给出分数，每项都带概率。Pi 通过这些 Provider 提供 TypeSafe 的 Jev 模型：
+
+| Provider                | 模型 ID                                     | 认证                                            |
+| ----------------------- | ------------------------------------------- | ----------------------------------------------- |
+| `typesafe`              | `jev-latest`                                | `TYPESAFE_API_KEY`                              |
+| `openrouter`            | `typesafe/jev-1.13`、`~typesafe/jev-latest` | `OPENROUTER_API_KEY` 或 `/login`                |
+| `cloudflare-workers-ai` | `typesafe/jev`                              | `CLOUDFLARE_API_KEY` 和 `CLOUDFLARE_ACCOUNT_ID` |
+| `vercel-ai-gateway`     | `typesafe-ai/jev`                           | `AI_GATEWAY_API_KEY`                            |
+| `opencode`              | `jev-1.13`、`jev-1.13-free`                 | `OPENCODE_API_KEY`                              |
+
+[llama.cpp router](llama-cpp.md#classification) 上的 chat 模型也会列为分类器模型。
+
+分类器模型不会出现在 `/model` 中。模型通过 [`codemode`](cli.md#enable-codemode) 工具到达它们；除非某个 MCP 服务器打开了它，否则它是关闭的。在[设置](settings.md#tools)中用 `"defaultTools": ["+codemode"]` 启用。脚本随后用 `models.getAvailableOfType("classifier")` 列出分类器模型，并调用 `models.classify(model, { state, questions })`：
+
+```js
+const jev = await models.getModelOfType('classifier', 'typesafe', 'jev-latest');
+const result = await models.classify(jev, {
+  state: { message: 'The change works, thanks.' },
+  questions: {
+    approved: {
+      type: 'bool',
+      instructions: 'Does the user approve of the result?',
+      criteria: { true: 'Approval', false: 'No approval' },
+    },
+  },
+});
+return result.answers;
+```
+
+当服务报告 Token 数时（所有 System One 服务都会），`result.usage` 会带上它们及其费用。Pi 把脚本的分类器调用用量加到 `codemode` 工具结果上，因此会计入页脚和 `/session` 的会话费用。费用使用模型目录中的价格；没有价格的模型（例如 TypeSafe 直接的 `jev-latest`）报告 Token 但不计费。
+
+扩展通过 `ctx.modelRegistry.classify()` 调用分类器，不经过 codemode。[虚拟模型](virtual-models.md#route-requests)可以用它们来路由请求；见 `jev-router.ts` 示例。
+
 ## 添加自定义 Provider
 
 当 Provider 需要自定义流式处理、模型发现或认证行为时，使用扩展。扩展工作流见[自定义 Provider](custom-provider.md)。

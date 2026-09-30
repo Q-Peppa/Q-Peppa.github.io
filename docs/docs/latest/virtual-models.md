@@ -62,6 +62,8 @@ export default function (pi: ExtensionAPI) {
 
 注册遵循与 `pi.registerProvider()` 相同的排队和重载规则。再次注册相同的 Provider 和 ID 会替换该虚拟模型。`pi.unregisterVirtualModel(provider, id)` 会移除它；`pi.unregisterProvider()` 不会。SDK 代码可以不通过扩展注册：`modelRuntime.registerVirtualModel(definition)`。
 
+<a id="route-requests"></a>
+
 ## 路由请求
 
 `route(request, ctx)` 在使用该虚拟模型发出的每次请求之前运行，并返回 `{ model, thinkingLevel }`。模型可以是目录中任意已有凭证的物理模型；用 `ctx.modelRegistry` 查找。虚拟模型不能路由到另一个虚拟模型。Pi 会把 thinking level 钳制到返回的模型。

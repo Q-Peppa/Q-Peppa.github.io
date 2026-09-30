@@ -32,40 +32,41 @@ pi
 
 下表覆盖只有一个主要 API Key 变量的 Provider。需要额外配置或支持环境凭证的 Provider 在[云 Provider](#cloud-providers) 中介绍。
 
-| Provider                             | 环境变量                        |
-| ------------------------------------ | ------------------------------- |
-| Anthropic                            | `ANTHROPIC_API_KEY`             |
-| Ant Ling                             | `ANT_LING_API_KEY`              |
-| OpenAI                               | `OPENAI_API_KEY`                |
-| DeepSeek                             | `DEEPSEEK_API_KEY`              |
-| NVIDIA NIM                           | `NVIDIA_API_KEY`                |
-| Google Gemini                        | `GEMINI_API_KEY`                |
-| GitHub Copilot                       | `COPILOT_GITHUB_TOKEN`          |
-| Mistral                              | `MISTRAL_API_KEY`               |
-| Groq                                 | `GROQ_API_KEY`                  |
-| Cerebras                             | `CEREBRAS_API_KEY`              |
-| xAI                                  | `XAI_API_KEY`                   |
-| OpenRouter                           | `OPENROUTER_API_KEY`            |
-| Vercel AI Gateway                    | `AI_GATEWAY_API_KEY`            |
-| ZAI Coding Plan（全球）              | `ZAI_API_KEY`                   |
-| ZAI Coding Plan（中国）              | `ZAI_CODING_CN_API_KEY`         |
-| OpenCode Zen and Go                  | `OPENCODE_API_KEY`              |
-| Radius                               | `RADIUS_API_KEY`                |
-| Hugging Face                         | `HF_TOKEN`                      |
-| Fireworks                            | `FIREWORKS_API_KEY`             |
-| Together AI                          | `TOGETHER_API_KEY`              |
-| Baseten                              | `BASETEN_API_KEY`               |
-| Kimi For Coding                      | `KIMI_API_KEY`                  |
-| Meta                                 | `META_API_KEY`                  |
-| MiniMax                              | `MINIMAX_API_KEY`               |
-| MiniMax（中国）                      | `MINIMAX_CN_API_KEY`            |
-| Moonshot AI（全球和中国）            | `MOONSHOT_API_KEY`              |
-| Qwen Token Plan and Individual       | `QWEN_TOKEN_PLAN_API_KEY`       |
-| Qwen Token Plan（中国）              | `QWEN_TOKEN_PLAN_CN_API_KEY`    |
-| Xiaomi MiMo                          | `XIAOMI_API_KEY`                |
-| Xiaomi MiMo Token Plan（中国）       | `XIAOMI_TOKEN_PLAN_CN_API_KEY`  |
-| Xiaomi MiMo Token Plan（阿姆斯特丹） | `XIAOMI_TOKEN_PLAN_AMS_API_KEY` |
-| Xiaomi MiMo Token Plan（新加坡）     | `XIAOMI_TOKEN_PLAN_SGP_API_KEY` |
+| Provider                                                  | 环境变量                        |
+| --------------------------------------------------------- | ------------------------------- |
+| Anthropic                                                 | `ANTHROPIC_API_KEY`             |
+| Ant Ling                                                  | `ANT_LING_API_KEY`              |
+| OpenAI                                                    | `OPENAI_API_KEY`                |
+| DeepSeek                                                  | `DEEPSEEK_API_KEY`              |
+| NVIDIA NIM                                                | `NVIDIA_API_KEY`                |
+| Google Gemini                                             | `GEMINI_API_KEY`                |
+| GitHub Copilot                                            | `COPILOT_GITHUB_TOKEN`          |
+| Mistral                                                   | `MISTRAL_API_KEY`               |
+| Groq                                                      | `GROQ_API_KEY`                  |
+| Cerebras                                                  | `CEREBRAS_API_KEY`              |
+| xAI                                                       | `XAI_API_KEY`                   |
+| OpenRouter                                                | `OPENROUTER_API_KEY`            |
+| Vercel AI Gateway                                         | `AI_GATEWAY_API_KEY`            |
+| ZAI Coding Plan（全球）                                   | `ZAI_API_KEY`                   |
+| ZAI Coding Plan（中国）                                   | `ZAI_CODING_CN_API_KEY`         |
+| OpenCode Zen and Go                                       | `OPENCODE_API_KEY`              |
+| Radius                                                    | `RADIUS_API_KEY`                |
+| TypeSafe（[分类器模型](models.md#use-classifier-models)） | `TYPESAFE_API_KEY`              |
+| Hugging Face                                              | `HF_TOKEN`                      |
+| Fireworks                                                 | `FIREWORKS_API_KEY`             |
+| Together AI                                               | `TOGETHER_API_KEY`              |
+| Baseten                                                   | `BASETEN_API_KEY`               |
+| Kimi For Coding                                           | `KIMI_API_KEY`                  |
+| Meta                                                      | `META_API_KEY`                  |
+| MiniMax                                                   | `MINIMAX_API_KEY`               |
+| MiniMax（中国）                                           | `MINIMAX_CN_API_KEY`            |
+| Moonshot AI（全球和中国）                                 | `MOONSHOT_API_KEY`              |
+| Qwen Token Plan and Individual                            | `QWEN_TOKEN_PLAN_API_KEY`       |
+| Qwen Token Plan（中国）                                   | `QWEN_TOKEN_PLAN_CN_API_KEY`    |
+| Xiaomi MiMo                                               | `XIAOMI_API_KEY`                |
+| Xiaomi MiMo Token Plan（中国）                            | `XIAOMI_TOKEN_PLAN_CN_API_KEY`  |
+| Xiaomi MiMo Token Plan（阿姆斯特丹）                      | `XIAOMI_TOKEN_PLAN_AMS_API_KEY` |
+| Xiaomi MiMo Token Plan（新加坡）                          | `XIAOMI_TOKEN_PLAN_SGP_API_KEY` |
 
 Anthropic 也把 `ANTHROPIC_OAUTH_TOKEN` 识别为 API 凭证，把 `ANTHROPIC_AUTH_TOKEN` 识别为 bearer 认证。
 

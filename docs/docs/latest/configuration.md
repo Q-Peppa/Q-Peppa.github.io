@@ -14,6 +14,7 @@ Pi 支持用户级和项目级配置。用户级配置位于 agent 目录，默�
 | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | `<agent-dir>/settings.json`                                                            | 用户级[设置](settings.md)，包括偏好、默认值、资源路径和 Pi 包声明。     |
 | `<agent-dir>/keybindings.json`                                                         | 自定义终端 UI 和应用[快捷键](keybindings.md)。                          |
+| `<agent-dir>/mcp.json`                                                                 | 在每个项目中可用的 [MCP 服务器](mcp.md)。                               |
 | `<agent-dir>/models.json`                                                              | [兼容端点、模型和模型覆盖](models.md#configure-a-compatible-endpoint)。 |
 | `<agent-dir>/auth.json`                                                                | 已保存的 API Key 和 OAuth 凭证。                                        |
 | `<agent-dir>/AGENTS.override.md`、`AGENTS.md`、`AGENTS.MD`、`CLAUDE.md` 或 `CLAUDE.MD` | 跨工作目录生效的用户指令。                                              |
@@ -29,6 +30,7 @@ Pi 支持用户级和项目级配置。用户级配置位于 agent 目录，默�
 | 路径                   | 作用                                              |
 | ---------------------- | ------------------------------------------------- |
 | `.pi/settings.json`    | 项目级[设置](settings.md)、资源路径和 Pi 包声明。 |
+| `.pi/mcp.json`         | 项目 [MCP 服务器](mcp.md)。                       |
 | `.pi/SYSTEM.md`        | 替换该项目的系统提示。                            |
 | `.pi/APPEND_SYSTEM.md` | 向系统提示添加项目专用指令。                      |
 | `.pi/extensions/`      | 项目扩展。                                        |

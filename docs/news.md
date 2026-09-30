@@ -2,6 +2,208 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.99.1（2026-09-29）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **GPT-6.1 Sol** – 可在 OpenAI、Azure OpenAI 和 OpenAI Codex 上使用，现为 OpenAI Codex 的默认模型。详见 [选择模型](/docs/latest/models#select-a-model)。
+
+新增
+
+- 为 OpenAI、Azure OpenAI Responses 和 OpenAI Codex Provider 添加 GPT-6.1 Sol（`gpt-6.1-sol`）。
+
+变更
+
+- 把 OpenAI Codex 默认模型改为 GPT-6.1 Sol（`gpt-6.1-sol`）。
+
+修复
+
+- 修复打包发行版中 `/login` 登录 OpenAI 因缺少 `openai-chatgpt.js` 模块而失败的问题。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 为 OpenAI、Azure OpenAI Responses 和 OpenAI Codex Provider 添加 GPT-6.1 Sol（`gpt-6.1-sol`）。
+
+</details>
+
+## v0.99.0（2026-09-29）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **Codemode 与 MCP** – 连接 MCP 服务器，让模型运行可并行调用工具的 JavaScript。详见 [MCP 服务器](/docs/latest/mcp) 和 [启用 codemode](/docs/latest/cli#enable-codemode)。
+- **System 主题** – Pi 的颜色默认来自终端自身的调色板。详见 [使用终端颜色](/docs/latest/themes#use-your-terminals-colors)。
+- **用 ChatGPT 登录** – 通过 `/login openai` 用 ChatGPT 订阅使用 OpenAI Provider。详见 [交互式认证](/docs/latest/providers#authenticate-interactively)。
+- **虚拟模型** – 扩展可以把每次请求路由到不同的物理模型。详见 [虚拟模型](/docs/latest/virtual-models)。
+- **Classifier 模型** – 从 codemode 脚本运行 Jev classifier，或把任意 llama.cpp 模型当 classifier 用。详见 [codemode 如何工作](/docs/latest/cli#how-codemode-works) 和 [分类](/docs/latest/llama-cpp#classification)。
+
+新增
+
+- 以内置扩展的形式添加 codemode、tool search 和 MCP 支持。`codemode` 工具在 QuickJS 沙箱中运行模型编写的 JavaScript 来调用 pi 的工具；用 `defaultTools` 或 `--tools` 启用，用 `codemode.mode` 和 `codemode.inlineBudget` 配置。`tool_search` 查找未向模型声明的工具并声明它们。stdio 或 streamable HTTP 的 MCP 服务器（支持 OAuth）来自 `mcp.json`（全局，或项目受信任后按项目）或 `pi.registerMcpServer()`，用 `/mcp` 和 `pi mcp add|remove|list|login|logout` 管理。详见 [MCP 服务器](/docs/latest/mcp) 和 [启用 codemode](/docs/latest/cli#enable-codemode)（[#10040](https://github.com/earendil-works/pi/issues/10040)）。
+- 为扩展工具添加编排 API：`exposure`（`direct`、`model-only`、`codemode`、`deferred` 或 `hidden`）、`namespace`、`annotations`、带 `structuredContent` 的 `outputSchema`、`isError` 结果、`prepareLoadout()`，以及用于嵌套工具调用的 `ctx.executeTool()`；嵌套调用会发出带 `parentToolCallId` 的事件，并作为有界 `nestedCalls` 记在调用方工具的结果上。详见 [工具暴露](/docs/latest/extensions#tool-exposure)。
+- 当扩展注册了与内置扩展相同的工具、命令或 flag 并替换内置扩展时，发出警告（[#10174](https://github.com/earendil-works/pi/pull/10174) 由 [@cristinaponcela](https://github.com/cristinaponcela) 贡献）。
+- 添加实验性虚拟模型：扩展用 `pi.registerVirtualModel()` 注册，并为每次请求选择物理模型和 thinking 级别。页脚显示路由后的模型，`/session` 按物理模型列出费用，`examples/extensions/jev-router.ts` 用 Jev classifier 做路由。详见 [虚拟模型](/docs/latest/virtual-models)。
+- 为 OpenAI Provider 的 `/login` 添加用 ChatGPT 登录，通过 ChatGPT 订阅使用 OpenAI API。Pi 在全局设置中存储稳定的 `deviceId` 用于此次登录，并在 bug report 中省略它。
+- 添加 `system` 主题（现为默认），根据终端报告的前景色、背景色和 ANSI 调色板推导 pi 的颜色，并在终端切换亮/暗时重建。详见 [使用终端颜色](/docs/latest/themes#use-your-terminals-colors)。
+- 为主题文件添加 `#rgb`、`oklch()` 和 `okhsl()` 颜色以及可选的 `appearance` 字段，并为扩展添加 `theme.style()`、`theme.colors` 和 `theme.appearance`。详见 [主题](/docs/latest/themes) 和 [TUI](/docs/latest/tui)。
+- 为每个 llama.cpp chat 模型添加 classifier 模型，用 next-token 标签概率作答。详见 [分类](/docs/latest/llama-cpp#classification)。
+- 在 OpenRouter、Cloudflare Workers AI、Vercel AI Gateway 和 OpenCode Zen 上添加 Jev classifier 模型（来自 `@earendil-works/pi-ai`）。
+- 添加 `fullscreenWheelScrollLines` 设置和 `/settings` 条目，用于全屏鼠标滚轮滚动。默认 `"auto"` 会在非本地 macOS 终端上加速快速滚轮（[#9758](https://github.com/earendil-works/pi/issues/9758)）。
+- 为成功的 RPC `prompt`、`steer` 和 `follow_up` 响应添加按输入的 disposition，以及 `AgentSession.steer()`/`followUp()` 和 `RpcClient.prompt()`/`steer()`/`followUp()`；`RpcClient.prompt()` 还接受 `streamingBehavior`（[#9098](https://github.com/earendil-works/pi/issues/9098)、[#9803](https://github.com/earendil-works/pi/issues/9803)）。
+- 为 `ModelRuntime` 添加图片生成：`generateImages()` 带运行时解析的认证（已存储凭证、OAuth、运行时 API key、`models.json` headers），以及 `getModelsOfType()`、`getModelOfType()`、`getAvailableOfType()`、`getAllModels()` 和 `getAllAvailable()`。OpenRouter 图片模型列在 `openrouter` Provider 下并共享其凭证；同一个上游 ID 可以有独立的 chat 和 image 条目。没有模型列表的 `models.json` Provider 和扩展注册会保留内置图片生成。扩展模型列表可以包含带判别的 chat、image 和 classifier 条目及操作实现；提供时，它们会替换该 Provider 在所有操作上的目录。面向 chat 的读取（`getModels()`、`getAvailableSnapshot()`、模型选择器）不变。
+- 为 `ModelRuntime` 添加 classifier 支持，包括 `classify()`、classifier 模型访问器、运行时解析的认证，以及内置 TypeSafe `jev-latest` 模型。
+- 为 pi.dev 模型目录请求添加 `types=chat,image,classifier`，使远程刷新覆盖所有支持的模型类型；未知类型的条目会被忽略。
+- 添加 `provider_stream_event` 扩展事件，用于在规范化之前观察已解析的 Provider 事件，并提供可选的 `/debug-provider` 示例查看器（[#9784](https://github.com/earendil-works/pi/issues/9784)、[#9901](https://github.com/earendil-works/pi/pull/9901) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 在 HTML 导出中为标记为 `display: false` 的自定义消息添加显示/隐藏切换（`H`）。消息默认保持隐藏，也可以从侧边栏显示（[#8896](https://github.com/earendil-works/pi/issues/8896)、[#10020](https://github.com/earendil-works/pi/pull/10020) 由 [@rwachtler](https://github.com/rwachtler) 贡献）。
+- 为 Anthropic 添加 Claude Sonnet 5.5 支持，带自适应 thinking 和 1M 上下文窗口（来自 `@earendil-works/pi-ai`）。
+- 在 `pi config` 中添加「内置」分区，用于全局或按项目禁用内置的 `mcp`、`llama.cpp`、`codemode` 和 `tool-search` 扩展，以 `-builtin:<name>` 的形式存入 `extensions` 设置。SDK 内联扩展用 `builtin: true` 选择加入。
+- 为 `defaultTools` 设置添加 `+name` 和 `-name` 条目，无需重复默认列表即可添加或移除工具，例如 `"defaultTools": ["+codemode"]`。项目中的这种条目会叠加在用户设置之上。文档说明了如何在不启用 MCP 的情况下启用 `codemode`，以及如何从 codemode 脚本使用 Jev 等 classifier 模型。
+- 把 codemode `models.classify()` 调用的 Token 用量和费用计入 codemode 工具结果，从而计入会话费用；codemode 结果会显示每次调用的费用。
+
+变更
+
+- 构建从 TypeScript native preview 切换到 TypeScript 7.0（ES2024 目标），并用 Node 内置的 type stripping 替代 `tsx` 来从源码运行（[#9965](https://github.com/earendil-works/pi/issues/9965)）。
+- 从启动 banner 移除 `[Themes]` 分区。自定义主题仍可在 `/settings` 中使用，主题冲突仍会报告。
+- 启动 header 改为显示 pi logo 和版本，而不再显示应用名。
+- 把内置 `dark` 和 `light` 主题改为修订后的 pi 颜色，用 OKHSL 编写。
+- 亮/暗终端检测改为优先使用报告的背景色，然后是终端的亮/暗报告，最后是 `COLORFGBG`。首次设置不再显示检测到的外观。
+- 把 OpenAI Codex Provider 改名为 "OpenAI Codex (legacy)"；OpenAI Provider 上的用 ChatGPT 登录取代它（来自 `@earendil-works/pi-ai`）。
+- 把 `TERM=*-direct` 视为 truecolor（来自 `@earendil-works/pi-tui`）。
+- 内置扩展和工具在错误、诊断、RPC 源信息和 bug report 中命名为 `builtin:<name>`（例如 `builtin:mcp` 和 `builtin:read`），不再使用 `<inline:name>` 和 `<builtin:name>`。它们的斜杠命令不再带 `[t]` 自动补全标签。
+- `--no-extensions` 也会禁用内置扩展，包括 llama.cpp Provider。用 `-e builtin:<name>` 显式加载其中一个，例如 `pi -ne -e builtin:mcp`。
+- 没有自定义 call renderer 的工具调用（包括直接 MCP 工具调用）现在会显示参数：折叠时在标题行以 `key=value` 显示，展开时每个参数一行 `key: value`。MCP 调用标题为 `server/tool`，结果折叠为 5 行。
+- `bash` 和 `powershell` 结构化结果（codemode 脚本会收到）现在最多保留 1 MiB 输出，而不是面向模型的 2000 行或 50KB，并添加 `truncated` 和 `full_output_path`。更长的输出保留首尾各 512 KiB。空输出是 `""` 而不是 `(no output)`。
+
+修复
+
+- 修复 X11 剪贴板文本在剪贴板所有者接受未声明的图片目标时被误识别为图片的问题（[#9786](https://github.com/earendil-works/pi/issues/9786)）。
+- 阻止托管 git 包自动安装 Pi peer 依赖，并为在 `dependencies` 中列出宿主提供模块的扩展包添加警告（[#9863](https://github.com/earendil-works/pi/issues/9863)）。
+- 修复用 `-e` 加载的 pinned git 扩展在 ref 变更后仍使用首次下载的 commit 的问题（[#9982](https://github.com/earendil-works/pi/issues/9982)）。
+- 修复 `RpcClient` 在监听器处理事件时取消订阅会跳过下一个事件监听器的问题，这可能导致 `collectEvents()` 之后 `waitForIdle()` 超时（[#9990](https://github.com/earendil-works/pi/issues/9990)）。
+- 修复模型对省略的 `offset` 和 `limit` 发送 `null` 时，整文件 `read` 调用渲染为 `:1` 的问题（[#9996](https://github.com/earendil-works/pi/issues/9996)）。
+- 修复 pi 在首次 assistant 响应前退出时新会话丢失的问题。现在在发送第一条用户消息时创建会话文件（[#10000](https://github.com/earendil-works/pi/issues/10000)）。
+- 修复未加载的 llama.cpp 自动加载预设用 GGUF 训练上下文覆盖缓存的运行时上下文窗口的问题（[#10077](https://github.com/earendil-works/pi/issues/10077)、[#10158](https://github.com/earendil-works/pi/pull/10158) 由 [@cristinaponcela](https://github.com/cristinaponcela) 贡献）。
+- 修复自定义主题忽略 `terminal.trueColor` 及其他终端能力覆盖、以 256 色渲染的问题（[#9973](https://github.com/earendil-works/pi/issues/9973)、[#10039](https://github.com/earendil-works/pi/pull/10039) 由 [@christianklotz](https://github.com/christianklotz) 贡献）。
+- 修复粘贴 Finder 中复制的文件时插入文件图标图片而不是文件路径的问题；bash 模式下路径会加引号（[#9999](https://github.com/earendil-works/pi/issues/9999)、[#10136](https://github.com/earendil-works/pi/pull/10136) 由 [@christianklotz](https://github.com/christianklotz) 贡献）。
+- 修复主题切换后启动 header、已加载资源和聊天通知仍保留旧颜色的问题。
+- 修复 Fireworks 默认模型指向已移除的 Kimi K2.6；现在默认使用 Kimi K3。
+- 修复 OpenCode Go 默认模型指向已移除的 Kimi K2.6；现在默认使用 Kimi K3。
+- 修复 Together 默认模型指向已移除的 Kimi K2.6；现在默认使用 Kimi K3。
+- 降低长会话流式输出和预览主题时的 CPU 占用：页脚缓存会话用量合计，折叠的 bash 结果缓存预览，`sanitizeBinaryOutput()` 不再把输出拆成逐字符数组。
+- 修复通过 `ctx.executeTool()` 调用的工具（例如来自 codemode 脚本）用量从会话费用中丢失的问题；现在会加到调用方工具的结果用量上。
+- 修复已加载 Skill 名称不含 `skill` 中字母时 `/skill` 自动补全显示为空的问题（来自 `@earendil-works/pi-tui`）（[#9944](https://github.com/earendil-works/pi/issues/9944)）。
+- 修复在 `(`、`[`、`{`、`<` 或反引号等开括号后路径和 `@` 自动补全不工作的问题（来自 `@earendil-works/pi-tui`）。
+- 修复使用 Kitty 图形协议的终端中图片被拉伸的问题（来自 `@earendil-works/pi-tui`）（[#8938](https://github.com/earendil-works/pi/issues/8938)、[#9957](https://github.com/earendil-works/pi/pull/9957) 由 [@rwachtler](https://github.com/rwachtler) 贡献）。
+- 修复扩展在关闭时关闭 overlay 后，退出时 shell 光标仍保持隐藏的问题（来自 `@earendil-works/pi-tui`）（[#10026](https://github.com/earendil-works/pi/issues/10026)）。
+- 修复在 `/settings` 子菜单中鼠标点击关闭后键盘输入丢失的问题（来自 `@earendil-works/pi-tui`）。
+- 修复通过 Vercel AI Gateway 的 1 小时 Anthropic 缓存写入按 5 分钟费率计价的问题（来自 `@earendil-works/pi-ai`）（[#9210](https://github.com/earendil-works/pi/issues/9210)）。
+- 修复直接对 OpenAI 兼容 API 调用 `stream()`/`complete()` 时丢弃模型级 `samplingParams` 的问题（来自 `@earendil-works/pi-ai`）（[#9506](https://github.com/earendil-works/pi/issues/9506)）。
+- 修复 Mistral GLM 请求在空内容 delta 后因 "Expected at most one leading ThinkChunk" 失败的问题（来自 `@earendil-works/pi-ai`）（[#9674](https://github.com/earendil-works/pi/issues/9674)）。
+- 修复 OpenAI Fast 模式请求按标准费率计价的问题（来自 `@earendil-works/pi-ai`）（[#10034](https://github.com/earendil-works/pi/issues/10034)）。
+- 修复 Mistral reasoning 模型忽略请求的 thinking 级别的问题（来自 `@earendil-works/pi-ai`）（[#9678](https://github.com/earendil-works/pi/issues/9678)）。
+- 修复 OpenCode Zen 和 OpenCode Go 的 `qwen3.8-flash` thinking 在后续轮次被重放为纯文本的问题（来自 `@earendil-works/pi-ai`）（[#10047](https://github.com/earendil-works/pi/issues/10047)）。
+- 修复省略 `output_index` 的服务器（例如 llama.cpp）上 OpenAI Responses 流运行错乱工具调用的问题；此类流现在以错误结束（来自 `@earendil-works/pi-ai`）（[#9974](https://github.com/earendil-works/pi/issues/9974)）。
+- 修复 Anthropic 和 OpenAI Codex 浏览器登录在 Provider 以授权错误重定向后无限等待，以及 Anthropic 登录在回调端口被占用时失败的问题（来自 `@earendil-works/pi-ai`）。
+- 修复上游模型元数据不完整时 GitHub Copilot Claude Opus 5.5 提供不支持的 thinking 级别的问题（来自 `@earendil-works/pi-ai`）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+不兼容变更
+
+- 把图片模型并入常规 `Provider`/`Models` 表面。独立的 `ImagesModels` 集合已移除：`createImagesModels()`、`createImagesProvider()`、`ImagesProvider`、`openrouterImagesProvider()`、`builtinImagesProviders()` 和 `builtinImagesModels()` 不再存在。改用 `builtinModels()`、`models.getModelOfType("image", ...)`、`models.generateImages()` 和 `createProvider({ models, images })`。现有的无限定读取仍只返回 chat 模型。
+- 图片模型现在是带必需 `type: "image"` 的 `ImageModel`，并与 chat 模型共享 `BaseModel`。旧的复数图片类型名（`ImagesModel`、`ImagesApi`、`KnownImagesApi`、`KnownImagesProvider` 和 `ImagesProviderId`）已移除。`generateImages()` 只接受图片模型。输出模态（`output`）仍只存在于图片模型上。
+- 生成的模型数据 schema 现在是版本 6：每条条目带 `type`，按操作划分的目录包含 chat、image 和 classifier 模型，同一个上游 ID 可以按类型有独立条目。OpenRouter 图片模型位于 `openrouter.json` 的 `openrouter-images` api 组；`image-models.generated.ts` 和 `scripts/generate-image-models.ts` 已移除。运行 `npm run hydrate:model-data`。
+
+新增
+
+- 添加 `Models.generateImages()`（带 Provider 解析的认证）、`Provider.generateImages?`，以及按 `model.api` 索引的 `createProvider({ images })`。`createProvider()` 的 `models` 和 `fetchModels` 接受所有类型的模型；给定 `images` 或 `classifiers` 时 `api` 可选。
+- 添加可选的模型 `type`（`"chat"`、`"image"` 或 `"classifier"`）。Chat 模型可以省略它，因此现有 chat 模型、Provider 和 store 无需改动。用新的 `isModelType()` 守卫收窄混合列表，或用 `getModelType()` 读取有效类型。
+- 在 `Models` 上添加 `getModelsOfType()`、`getModelOfType()`、`getAvailableOfType()`、`getAllModels()` 和 `getAllAvailable()`；可选的 `Provider.getAllModels()` 和 `Provider.filterAllModels()`；对应的生成目录访问器；以及 `AnyModel` 和 `ModelTypeMap` 类型。`hasApi()`、`calculateCost()` 和 `modelsAreEqual()` 接受 `AnyModel`。
+- 在 `ModelsStoreEntry.models` 中支持所有类型的模型。存储和拉取的未知类型模型会被丢弃，而不是让刷新失败。
+- 添加 classifier 模型和 `Models.classify()`，采用与 Provider 无关的 JEV 风格 `choice`/`score`/`bool` 约定。内置 TypeSafe Provider 通过 System One API 暴露 models.dev 的 `jev-latest`，并把公开的 `bool` 问题翻译成 TypeSafe 的 `noul` 线格式。
+- 通过 TypeSafe 兼容的 System One 端点，在 OpenRouter 上添加 Jev classifier 模型（`typesafe/jev-1.13`、`~typesafe/jev-latest`），并在 Cloudflare Workers AI 上通过新的 `cloudflare-workers-ai-system-one` classifier API 添加 `typesafe/jev`。
+- 通过 TypeSafe 兼容的 System One 端点，在 Vercel AI Gateway 上添加 Jev classifier 模型（`typesafe-ai/jev`，从其评估模型目录生成）和 OpenCode Zen（`jev-1.13`、`jev-1.13-free`）。
+- 为 `ClassifierResult` 添加 `usage`：System One 分类会报告 Token 数，按模型目录像 chat 用量一样计价。
+- 为 `Models` 流式入口添加运行时 chat 模型检查，非 chat 模型会以明确的 `ModelsError` 失败，而不是缺失 api 的流错误。
+- 为生成和发布的 JSON 目录添加基于数组的 `models.all.json` 和 `providers/{id}.all.json` 变体，允许同一个上游 ID 每种模型类型出现一次；现有的键值形式 `models.json` 和 `providers/{id}.json` 对已发布客户端仍只含 chat。
+- 添加 `onProviderStreamEvent`，用于在规范化之前观察已解析的 Provider 流事件，包括 assistant 消息中未保留的 Provider 特定字段（[#9784](https://github.com/earendil-works/pi/issues/9784)、[#9901](https://github.com/earendil-works/pi/pull/9901) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 把 Claude Sonnet 5.5 加入内置 Anthropic 模型目录，带自适应 thinking、对话中途 effort、1M 上下文和官方定价元数据。
+- 为 `openai` Provider 添加用 ChatGPT 登录：通过 OAuth 用 ChatGPT 订阅使用 OpenAI API。`Models.login()` 接受带 `getDeviceId()` 的 `LoginOptions`，为需要稳定安装 ID 的登录流程提供该 ID。订阅用量限制错误不会重试，并链接到 ChatGPT 用量页面；临时用量错误会重试。
+- 添加 `llama-cpp-classify` classifier API，根据 llama-server 对单 token 答案标签的 next-token 概率回答 classifier 问题。
+- 添加可选的 `AssistantMessage.thinkingLevel`，记录 agent loop 为该响应请求的 thinking 级别。
+
+变更
+
+- 把 OpenAI Codex Provider 改名为 "OpenAI Codex (legacy)"；`openai` Provider 上的用 ChatGPT 登录取代它。
+- 把 Anthropic、OpenAI Codex、OpenRouter 和 Radius 的浏览器登录回调服务器统一为同一套实现和相同的浏览器页面。OAuth 页面辅助函数现在可通过 `@earendil-works/pi-ai/utils/oauth-page` 使用。
+- Radius 浏览器登录改为在显示浏览器页面之前交换授权码，以便在浏览器中显示 token 交换失败。
+
+修复
+
+- 修复 Vercel AI Gateway 在流式 delta 中报告的 1 小时 Anthropic 缓存写入按 5 分钟费率计价的问题（[#9210](https://github.com/earendil-works/pi/issues/9210)）。
+- 修复直接对 OpenAI 兼容 API 调用 `stream()`/`complete()` 时丢弃模型级 `samplingParams` 的问题（[#9506](https://github.com/earendil-works/pi/issues/9506)）。
+- 修复 Mistral GLM 模型因空内容 delta 产生空文本块和拆分 thinking 块，导致后续请求以 "Expected at most one leading ThinkChunk" 失败的问题（[#9674](https://github.com/earendil-works/pi/issues/9674)）。
+- 修复 OpenAI Fast 模式请求在响应报告 `service_tier: "fast"`（GPT-6 模型会这样）时按标准费率计价的问题（[#10034](https://github.com/earendil-works/pi/issues/10034)）。
+- 修复 Mistral reasoning 模型忽略请求的 thinking 级别的问题：GLM 5.3 现在使用 `reasoning_effort` 而不是 `prompt_mode`，GLM 5.2 接受 `max`，Mistral 模型只提供 API 支持的 effort 级别（[#9678](https://github.com/earendil-works/pi/issues/9678)）。
+- 修复 OpenCode Zen 和 OpenCode Go 的 `qwen3.8-flash` thinking 因端点返回空 thinking 签名而在后续轮次被重放为纯文本的问题（[#10047](https://github.com/earendil-works/pi/issues/10047)）。
+- 修复 OpenAI Responses 流把未完成的工具调用返回为可运行，导致省略 `output_index` 的服务器（例如 llama.cpp）运行错乱命令的问题；此类流现在以错误结束（[#9974](https://github.com/earendil-works/pi/issues/9974)）。
+- 修复 Anthropic 和 OpenAI Codex 浏览器登录在 Provider 以授权错误重定向后无限等待的问题；现在会以 Provider 的错误描述失败。
+- 修复 Anthropic 浏览器登录在回调端口被占用时失败的问题；现在会回退到粘贴重定向 URL。
+- 修复上游模型元数据不完整时 GitHub Copilot Claude Opus 5.5 提供不支持的 thinking 级别的问题；现在提供 low 到 max。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+新增
+
+- 添加 `onProviderStreamEvent` agent 选项，会传给 Provider 流，用于在规范化之前观察已解析的 Provider 事件（[#9784](https://github.com/earendil-works/pi/issues/9784)、[#9901](https://github.com/earendil-works/pi/pull/9901) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- agent loop 现在把请求的 thinking 级别记录为每条 assistant 消息上的 `thinkingLevel`。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+不兼容变更
+
+- 用 `TUI.queryTerminalColors()` 替换 `TUI.queryTerminalColorScheme()` 和 `TUI.queryTerminalBackgroundColor()`，一次往返查询默认前景色、背景色和 16 色 ANSI（OSC 10、11 和 4），返回 `TerminalColors`。移除 `parseOsc11BackgroundColor()`。
+
+新增
+
+- 为 `TuiAltScreenOptions.wheelScrollLines` 添加 `"auto"`，在每次刻度发送一个事件的终端上加速快速滚轮，并添加 `TuiAltScreen.setWheelScrollLines()` 用于运行时更新（[#9758](https://github.com/earendil-works/pi/issues/9758)）。
+- 添加颜色值和样式：`Color` 类型（索引 ANSI、sRGB 或 OKLCH），`parseColor()` 解析 `#rgb`、`#rrggbb`、`oklch()` 和 `okhsl()` 值，以及 `indexedColor()`、`rgbColor()`、`oklchColor()`、`okhslColor()`、`mixColors()`、`colorToHex()`、`colorToRgb()`、`colorToOklch()`、`colorToOkhsl()`、`styleText()`、`getTerminalColorMode()` 和相关辅助函数。
+- 添加 `NativeClipboard.getFilePaths()`，从 macOS 剪贴板读取文件 URL（[#9999](https://github.com/earendil-works/pi/issues/9999)、[#10136](https://github.com/earendil-works/pi/pull/10136) 由 [@christianklotz](https://github.com/christianklotz) 贡献）。
+
+变更
+
+- `TERM=*-direct` 的终端现在检测为 truecolor。
+
+修复
+
+- 修复已加载 Skill 名称不含 `skill` 中字母时 `/skill` 自动补全显示为空的问题（[#9944](https://github.com/earendil-works/pi/issues/9944)）。
+- 修复在 `(`、`[`、`{`、`<` 或反引号等开括号后路径和 `@` 自动补全不工作的问题，例如 `(~/Dev<Tab>`。
+- 降低使用 Kitty 图形协议的终端中图片被拉伸的程度（[#8938](https://github.com/earendil-works/pi/issues/8938)、[#9957](https://github.com/earendil-works/pi/pull/9957) 由 [@rwachtler](https://github.com/rwachtler) 贡献）。
+- 修复把鼠标事件转发给子组件的组件（例如打开了子菜单的 `SettingsList`）移除该子组件后键盘输入丢失的问题。
+- 修复扩展在关闭时关闭 overlay 后，退出时 shell 光标仍保持隐藏的问题（[#10026](https://github.com/earendil-works/pi/issues/10026)）。
+- 提升带样式文本的渲染性能：`visibleWidth()` 对带 ANSI 样式的 ASCII 不再做 grapheme 分段，`Box` 检查渲染缓存时不再给每行重新 padding，`Markdown` 在主题和宽度变化时复用已解析的 token。
+
+</details>
+
 ## v0.87.1（2026-09-22）
 
 <details>

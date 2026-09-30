@@ -44,6 +44,8 @@ Pi 按以下顺序解析 Bash：
 }
 ```
 
+`["-bash", "+powershell"]` 效果相同，同时保留你配置的其他默认工具。
+
 重启 Pi，然后让它运行一条无害的 PowerShell 命令。`!` 和 `!!` 编辑器命令仍然使用 Bash。`powershell` 工具只在 Pi 作为原生 Windows 进程运行时可用。
 
 其他工具组合见[设置](settings.md#tools)。

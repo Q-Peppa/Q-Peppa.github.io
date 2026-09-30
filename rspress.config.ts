@@ -133,6 +133,7 @@ export default defineConfig({
             { text: 'Skills', link: '/docs/latest/skills' },
             { text: '主题', link: '/docs/latest/themes' },
             { text: 'Pi Packages', link: '/docs/latest/packages' },
+            { text: '连接 MCP 服务器', link: '/docs/latest/mcp', tag: 'new' },
           ],
         },
         {

@@ -87,6 +87,7 @@ Pi 使用 `jiti`，所以本地 TypeScript 扩展不需要单独的编译步骤�
 | 持久化非上下文会话数据              | `pi.appendEntry()`                               |
 | 改变活动工具、模型或 thinking level | `pi` 上的会话控制方法                            |
 | 添加模型 Provider                   | `pi.registerProvider()`                          |
+| 添加 MCP 服务器                     | `pi.registerMcpServer()`                         |
 | 把每次请求路由到一个模型            | [`pi.registerVirtualModel()`](virtual-models.md) |
 | 添加终端渲染                        | 渲染器注册和 `ctx.ui`                            |
 | 与其他扩展通信                      | `pi.events`                                      |
@@ -159,13 +160,64 @@ Pi 使用 `jiti`，所以本地 TypeScript 扩展不需要单独的编译步骤�
 
 请截断过大的面向模型的结果，并告诉模型去哪里读取完整输出。
 
+当结果是数据时，声明 `outputSchema` 并返回匹配的 `structuredContent`。模型仍会收到 `content`；codemode 脚本等程序化调用方收到 `structuredContent` 而不是文本。没有 `outputSchema` 的工具以文本内容传给脚本。要报告仍带数据的失败，返回带 `isError: true` 的结果而不是抛出：模型看到错误，脚本仍收到 `structuredContent`。
+
+工具可以用 `ctx.executeTool(name, args, { signal, onUpdate })` 运行其他工具。嵌套调用会像模型发出的调用一样经过参数校验以及 `tool_call` 和 `tool_result` 处理器，并发出 `tool_execution_start`、`tool_execution_update` 和 `tool_execution_end`；这些事件都带 `parentToolCallId`，它们的 `toolCallId` 由 pi 赋为 `<parent id>/<n>`。这些 id 不会作为 tool call 或工具结果出现在转录中。嵌套调用不添加转录条目：结果只到达调用方工具，由它自己报告，例如通过 `onUpdate` 和 `details`。会话保留它们的有界记录（名称、参数、状态、时长、错误；从不包含结果）作为调用方工具结果消息上的 `nestedCalls`。它用于压缩文件列表，并显示在 HTML 导出中。每个调用超过 8 KiB 或每个工具结果超过 32 KiB 的参数会被省略，最多保留 256 次调用，`complete: false` 标记丢失了任何内容的记录。任意深度的嵌套结果 `usage` 会加到调用方工具的结果 `usage` 上，因此一个工具只报告自己的用量，不包括它调用的工具。`ctx.tools` 列出 `ctx.executeTool()` 能调用的工具。改写 `content` 的 `tool_result` 处理器也应替换 `structuredContent`；只替换 `content` 会丢掉它。
+
 示例见 [`hello.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/extensions/hello.ts)、[`todo.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/extensions/todo.ts)、[`dynamic-tools.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/extensions/dynamic-tools.ts) 和 [`truncated-tool.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/extensions/truncated-tool.ts)。
+
+<a id="tool-exposure"></a>
+
+### 工具暴露
+
+`exposure` 控制模型如何到达一个工具。"可调用"指可以通过 `ctx.executeTool()`（`ctx.tools`）从其他工具调用，`codemode` 工具的脚本就是这样做的：
+
+- `direct`（默认）：激活时向模型声明，激活时可调用。
+- `model-only`：激活时向模型声明，永不可调用。用于编排其他工具或询问用户的工具。
+- `codemode`：只要已注册就可调用，并由 `codemode` 工具列出。除非显式激活，否则不向模型声明。
+- `deferred`：类似 `codemode`，但 codemode 工具不列出它；`tool_search` 可以查找并激活它。
+- `hidden`：已注册但不可达。用 `exposure: "hidden"` 重新注册一个工具来撤回它，因为工具无法注销。
+
+`namespace: { name, description }` 把相关工具分组，MCP 服务器就是这样做的。codemode 工具把一个 namespace 列在同一个标题下。
+
+注册 `direct` 或 `model-only` 工具会激活它；其他 exposure 在注册时不激活。活动集（`pi.getActiveTools()`、`pi.setActiveTools()`）是向模型声明的工具集。`pi.getAllTools()` 报告每个工具的 `exposure`、`namespace` 和 `annotations`。
+
+`annotations` 是关于工具做什么的提示，含义与 MCP 工具 annotations 相同：`readOnlyHint`、`destructiveHint`、`idempotentHint` 和 `openWorldHint`。MCP 工具携带服务器声明的提示。缺失的提示取 MCP 默认值：工具不是只读的，可能有破坏性并到达开放世界。这些提示未经验证，但权限扩展可以用它们决定确认哪些调用。下面会确认 Codex 要求批准的调用：
+
+```typescript
+pi.on('tool_call', async (event, ctx) => {
+  const hints = pi.getAllTools().find((tool) => tool.name === event.toolName)?.annotations;
+  const needsApproval =
+    hints?.destructiveHint === true ||
+    (!hints?.readOnlyHint && ((hints?.destructiveHint ?? true) || (hints?.openWorldHint ?? true)));
+  if (needsApproval && !(await ctx.ui.confirm('Allow tool call?', event.toolName))) {
+    return { block: true, reason: `${event.toolName} was not approved` };
+  }
+});
+```
+
+编排其他工具的工具可以用 `prepareLoadout(loadout)` 在自己激活时调整模型看到的内容。它在活动工具变更时运行，收到已声明的工具、可调用的工具，以及每个已注册工具及其 exposure 和 namespace。它返回已声明工具（包括自己）的替换 `descriptions`，以及 `hiddenDeclarations`：请求中省略声明、但仍保持活动且可调用的活动工具。`codemode` 和 `tool_search` 只用这个 hook、`exposure` 和 `ctx.executeTool()`，因此另一个工具可以用不同名称实现相同行为。
 
 ### 动态激活工具
 
 先注册所有工具，让可选工具保持不活动，再从某个加载器工具调用 `pi.setActiveTools()` 选择想要的活动工具。名称必须已经注册；未知名称会被忽略。
 
 Pi 在转录的第一条系统消息中记录初始 Prompt 和工具集，然后在下次模型请求之前追加工具和 Prompt 的改动。无法表示这种转换的 Provider 会收到一份完整的转录检查点，这可能让缓存的 prefix 失效。
+
+<a id="mcp-servers"></a>
+
+### MCP 服务器
+
+`pi.registerMcpServer(name, config)` 为当前会话添加一个 MCP 服务器。`config` 的形状与 [`mcp.json`](mcp.md) 中的 `mcpServers` 条目相同：stdio 服务器用 `command`、`args`、`env` 和 `cwd`，HTTP 服务器用 `url`、`headers` 和 `oauth`，另外还有 `exposure`、`toolExposure`、`enabled` 和 `timeout`。
+
+```typescript
+pi.registerMcpServer('jira', { url: 'https://mcp.example.com/jira', exposure: 'codemode' });
+pi.unregisterMcpServer('jira');
+```
+
+扩展加载时注册的服务器会在会话启动时与 `mcp.json` 中的服务器一起连接；之后注册的服务器立即连接，`pi.unregisterMcpServer()` 关闭连接并使该服务器的工具不可达。注册不会保存：每次加载都要重新注册，例如根据扩展自己的设置。`mcp.json` 中的同名服务器优先，`/mcp` 会显示覆盖。再次注册同一名称会替换该扩展先前的注册；其他扩展已注册的名称、无效名称和无效配置会抛出。
+
+内置 MCP 支持会连接已注册的服务器。当没有东西连接时（因为另一个扩展替换了它，见 [MCP](mcp.md#other-mcp-extensions)），每次注册都会报告为扩展错误。其他 MCP 扩展也可以连接已注册的服务器：在 `session_start` 上用 `pi.getMcpServers()` 读取它们，并处理 `mcp_servers_change` 事件以应对后续变更。
 
 <a id="extensioncontext"></a>
 <a id="extensioncommandcontext"></a>

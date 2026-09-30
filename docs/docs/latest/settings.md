@@ -35,13 +35,29 @@
 | `treeFilterMode`      | `"default" \| "no-tools" \| "user-only" \| "labeled-only" \| "all"` | `"default"`                          | `/tree` 使用的初始过滤器。                            |
 | `defaultProjectTrust` | `"ask" \| "always" \| "never"`                                      | `"ask"`                              | 回退的项目信任行为。**只能在 agent 目录设置中设置。** |
 
+<a id="tools"></a>
+
 ## 工具
 
-| 设置           | 类型       | 默认值                          | 说明                                                                        |
-| -------------- | ---------- | ------------------------------- | --------------------------------------------------------------------------- |
-| `defaultTools` | `string[]` | `read`、`bash`、`edit`、`write` | 启动时启用的内置工具。空数组会禁用所有内置工具，但不会禁用扩展或 SDK 工具。 |
+| 设置                    | 类型               | 默认值                          | 说明                                                                                                                                                                                                                                                                |
+| ----------------------- | ------------------ | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `defaultTools`          | `string[]`         | `read`、`bash`、`edit`、`write` | 启动时启用的工具。普通名称会替换默认列表；`+name` 添加一个工具，`-name` 移除一个。空数组会禁用所有内置工具，但不会禁用扩展或 SDK 工具。                                                                                                                             |
+| `codemode.mode`         | `"on"` \| `"only"` | `"on"`                          | `codemode` 工具在激活时如何呈现工具。`on`：已声明的工具会把 `codemode` 声明追加到描述，`codemode` 只列出未声明的工具（MCP 的 `codemode` exposure）。`only`：`codemode` 列出脚本能调用的每个工具，活动的内置和扩展工具对模型隐藏，因此模型通过 `codemode` 到达它们。 |
+| `codemode.inlineBudget` | number             | `3000`                          | `codemode` 工具描述可用于工具声明的估计 Token（字符数 / 4）。放不下的工具会被省略，用 `searchTools()` 查找。`0` 只列出 namespace。                                                                                                                                  |
 
-可用的内置工具是 `read`、`bash`、`powershell`、`edit`、`write`、`grep`、`find` 和 `ls`。CLI 工具选项会为单次调用覆盖该设置。见[命令行](cli.md#tools)。
+可用的内置工具是 `read`、`bash`、`powershell`、`edit`、`write`、`grep`、`find` 和 `ls`。`defaultTools` 也可以写出 `codemode` 和 `tool_search`（内置扩展以未激活状态注册它们），以及其他以未激活状态注册的扩展工具。
+
+只含 `+name` 和 `-name` 的列表会改动继承的选择，而不是替换它。例如，这样会在默认工具旁边启用 `codemode`：
+
+```json
+{
+  "defaultTools": ["+codemode"]
+}
+```
+
+这会把 `bash` 换成 `powershell` 并启用 `grep`：`["-bash", "+powershell", "+grep"]`。项目设置叠加在用户设置之上：只含 `+name` 和 `-name` 的项目列表会改动用户的选择；含普通名称的项目列表会替换它。在同一个列表中，普通名称构成选择，然后按顺序应用 `+name` 和 `-name`。
+
+CLI 工具选项会为单次调用覆盖该设置；`--tools` 不接受 `+name` 或 `-name`。见[命令行](cli.md#tools)。
 
 ## 会话与上下文
 
@@ -73,29 +89,30 @@
 
 ## 终端与显示
 
-| 设置                            | 类型                                     | 默认值         | 说明                                                |
-| ------------------------------- | ---------------------------------------- | -------------- | --------------------------------------------------- |
-| `theme`                         | string                                   | `"system"`     | 内置或自定义主题名。`system` 从终端主题派生颜色。   |
-| `quietStartup`                  | boolean                                  | `false`        | 隐藏启动头部。                                      |
-| `tuiMode`                       | `"regular" \| "fullscreen"`              | `"regular"`    | 交互式终端 UI 模式。                                |
-| `fullscreenExitOutput`          | `"transcript" \| "resume-hint"`          | `"transcript"` | 全屏模式退出时打印的输出。                          |
-| `fullscreenScrollbar`           | `"auto" \| "always" \| "hidden"`         | `"auto"`       | 全屏转录滚动条行为。                                |
-| `fullscreenCopyOnSelect`        | boolean                                  | `true`         | 全屏模式下自动复制选中的文本。                      |
-| `editorPaddingX`                | number                                   | `0`            | 编辑器水平内边距，从 0 到 3 个单元格。              |
-| `outputPad`                     | `0 \| 1`                                 | `1`            | 转录的水平内边距。                                  |
-| `autocompleteMaxVisible`        | number                                   | `5`            | 可见的自动补全条目数，从 3 到 20。                  |
-| `showHardwareCursor`            | boolean                                  | `false`        | Pi 为输入法定位光标时显示终端光标。                 |
-| `terminal.showImages`           | boolean                                  | `true`         | 受支持时显示内联图片。                              |
-| `terminal.imageWidthCells`      | number                                   | `60`           | 内联图片首选的宽度（终端单元格）。                  |
-| `terminal.clearOnShrink`        | boolean                                  | `false`        | 渲染内容收缩时清空空行。                            |
-| `terminal.showTerminalProgress` | boolean                                  | `false`        | 在终端标签页显示 OSC 9;4 进度。                     |
-| `terminal.hyperlinks`           | `boolean \| "auto"`                      | `"auto"`       | 覆盖 OSC 8 超链接检测。                             |
-| `terminal.images`               | `"kitty" \| "iterm2" \| "auto" \| false` | `"auto"`       | 覆盖内联图片协议检测。                              |
-| `terminal.trueColor`            | `boolean \| "auto"`                      | `"auto"`       | 覆盖 true-color 检测。                              |
-| `images.autoResize`             | boolean                                  | `true`         | 发送给模型之前把图片缩放到不超过 2000 × 2000 像素。 |
-| `images.blockImages`            | boolean                                  | `false`        | 阻止图片发送给模型。                                |
-| `markdown.codeBlockIndent`      | string                                   | `"  "`         | 用于缩进渲染代码块的前缀。                          |
-| `markdown.mermaid`              | `"off" \| "final" \| "streaming"`        | `"streaming"`  | Mermaid 渲染模式。                                  |
+| 设置                            | 类型                                     | 默认值         | 说明                                                                                                                                                                                                                  |
+| ------------------------------- | ---------------------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `theme`                         | string                                   | `"system"`     | 内置或自定义主题名。`system` 从终端主题派生颜色。                                                                                                                                                                     |
+| `quietStartup`                  | boolean                                  | `false`        | 隐藏启动头部。                                                                                                                                                                                                        |
+| `tuiMode`                       | `"regular" \| "fullscreen"`              | `"regular"`    | 交互式终端 UI 模式。                                                                                                                                                                                                  |
+| `fullscreenExitOutput`          | `"transcript" \| "resume-hint"`          | `"transcript"` | 全屏模式退出时打印的输出。                                                                                                                                                                                            |
+| `fullscreenScrollbar`           | `"auto" \| "always" \| "hidden"`         | `"auto"`       | 全屏转录滚动条行为。                                                                                                                                                                                                  |
+| `fullscreenCopyOnSelect`        | boolean                                  | `true`         | 全屏模式下自动复制选中的文本。                                                                                                                                                                                        |
+| `fullscreenWheelScrollLines`    | `"auto"` \| number                       | `"auto"`       | 全屏模式下每次鼠标滚轮事件滚动的行数，从 1 到 100。`"auto"` 在本地 macOS 终端每次事件滚动一行（这些终端已经会加速滚轮和触控板输入）；其他地方以及 SSH 上，会把快速滚轮加速到每次事件最多 6 行。Alt+滚轮移动五倍距离。 |
+| `editorPaddingX`                | number                                   | `0`            | 编辑器水平内边距，从 0 到 3 个单元格。                                                                                                                                                                                |
+| `outputPad`                     | `0 \| 1`                                 | `1`            | 转录的水平内边距。                                                                                                                                                                                                    |
+| `autocompleteMaxVisible`        | number                                   | `5`            | 可见的自动补全条目数，从 3 到 20。                                                                                                                                                                                    |
+| `showHardwareCursor`            | boolean                                  | `false`        | Pi 为输入法定位光标时显示终端光标。                                                                                                                                                                                   |
+| `terminal.showImages`           | boolean                                  | `true`         | 受支持时显示内联图片。                                                                                                                                                                                                |
+| `terminal.imageWidthCells`      | number                                   | `60`           | 内联图片首选的宽度（终端单元格）。                                                                                                                                                                                    |
+| `terminal.clearOnShrink`        | boolean                                  | `false`        | 渲染内容收缩时清空空行。                                                                                                                                                                                              |
+| `terminal.showTerminalProgress` | boolean                                  | `false`        | 在终端标签页显示 OSC 9;4 进度。                                                                                                                                                                                       |
+| `terminal.hyperlinks`           | `boolean \| "auto"`                      | `"auto"`       | 覆盖 OSC 8 超链接检测。                                                                                                                                                                                               |
+| `terminal.images`               | `"kitty" \| "iterm2" \| "auto" \| false` | `"auto"`       | 覆盖内联图片协议检测。                                                                                                                                                                                                |
+| `terminal.trueColor`            | `boolean \| "auto"`                      | `"auto"`       | 覆盖 true-color 检测。                                                                                                                                                                                                |
+| `images.autoResize`             | boolean                                  | `true`         | 发送给模型之前把图片缩放到不超过 2000 × 2000 像素。                                                                                                                                                                   |
+| `images.blockImages`            | boolean                                  | `false`        | 阻止图片发送给模型。                                                                                                                                                                                                  |
+| `markdown.codeBlockIndent`      | string                                   | `"  "`         | 用于缩进渲染代码块的前缀。                                                                                                                                                                                            |
+| `markdown.mermaid`              | `"off" \| "final" \| "streaming"`        | `"streaming"`  | Mermaid 渲染模式。                                                                                                                                                                                                    |
 
 格式和平台细节见[主题](themes.md)和[终端设置](terminal-setup.md)。
 
@@ -127,6 +144,8 @@
 
 Shell 设置见 [Shell 别名](shell-aliases.md)，包管理器行为见 [Pi 包](packages.md)。
 
+<a id="resources"></a>
+
 ## 资源
 
 用户设置中的资源路径从 agent 目录解析。项目设置中的路径从项目 `.pi` 目录解析。支持绝对路径和 `~`。
@@ -141,6 +160,8 @@ Shell 设置见 [Shell 别名](shell-aliases.md)，包管理器行为见 [Pi 包
 | `enableSkillCommands` | boolean    | `true` | 把 Skill 注册为 `/skill:name` 命令。                 |
 
 资源数组支持用 `!pattern` 做 glob 排除，用 `+path` 精确包含，用 `-path` 精确排除。Pi 会加载用户级和项目设置中列出的资源。
+
+内置扩展在 `extensions` 中名为 `builtin:mcp`、`builtin:llama.cpp`、`builtin:codemode` 和 `builtin:tool-search`。它们默认加载；`-builtin:mcp` 禁用其中一个。项目设置中的 `+builtin:<name>` 或 `-builtin:<name>` 条目会覆盖用户设置。`pi config` 把它们列在 Built-in 下。`--no-extensions` 也会禁用它们，`-e builtin:<name>` 显式加载其中一个。
 
 ## 更新、遥测与警告
 
