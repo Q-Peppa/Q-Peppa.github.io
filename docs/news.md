@@ -2,6 +2,67 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v0.99.2（2026-09-30）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **MCP 服务器不再挡路** – 默认 `codemode` 暴露的服务器不再出现在 `codemode` 描述中，也不再阻塞第一次 Prompt。它们出现在一段简短的系统 Prompt 分区里，脚本通过 `searchTools()` 和 `describeNamespace()` 查找工具。详见 [控制工具暴露](/docs/latest/mcp#control-tool-exposure)。
+- **更多 MCP 认证选项** – `oauth.clientName` 用于只接受已知 OAuth 客户端的服务器；`"auth": { "provider": "<provider>" }` 用 Provider 的 `/login` Token 认证 HTTP 服务器。详见 [用 OAuth 认证](/docs/latest/mcp#authenticate-with-oauth)。
+- **Anthropic 工作负载身份联合** – 从 Anthropic SDK 环境变量读取。详见 [从环境读取 API key](/docs/latest/providers#use-an-api-key-from-the-environment)。
+- **`/reload` 启用新加入的工具** – 会启用 `defaultTools` 设置里新加入的工具。详见 [工具](/docs/latest/settings#tools)。
+
+新增
+
+- 为 MCP 服务器添加 `description` 字段（`pi mcp add --description`），随服务器出现在系统 Prompt 中，并用于 tool search 的工具排序；同时添加 `describeNamespace(name)` codemode 辅助函数，返回命名空间的说明和工具名。`describeNamespace()` 和 `searchTools()` 接受 `mcp__dev-radius`、`mcp__dev_radius`、`dev-radius` 或 `dev_radius` 作为命名空间。
+- 为 MCP 服务器添加 `oauth.clientName` 设置（`pi mcp add --oauth-client-name`），用于在 OAuth 客户端注册时发送的客户端名称，面向只接受已知客户端的服务器（[#10226](https://github.com/earendil-works/pi/issues/10226)）。
+- 为 HTTP MCP 服务器添加 `"auth": { "provider": "<provider>" }`，把 Provider 当前的 `/login` Token 作为 bearer Token 发送，而不走 MCP OAuth。每次请求都会读取 Token，因此 Provider 刷新会生效。仅允许出现在全局 `mcp.json` 和扩展中，除回环主机外必须使用 https。
+- 从 `ANTHROPIC_FEDERATION_RULE_ID`、`ANTHROPIC_ORGANIZATION_ID` 和 `ANTHROPIC_IDENTITY_TOKEN_FILE` 环境变量添加 Anthropic 工作负载身份联合（见 [Provider](/docs/latest/providers)）（[#10177](https://github.com/earendil-works/pi/issues/10177)、[#10242](https://github.com/earendil-works/pi/pull/10242) 由 [@philfreo](https://github.com/philfreo) 贡献）。
+- `/reload` 现在会启用 `defaultTools` 设置里新加入的工具。从中移除的工具保持启用，会话中关掉的工具除非新加入否则保持关闭，`--tools`、`--no-tools` 和 `--no-builtin-tools` 仍然覆盖该设置（[#10245](https://github.com/earendil-works/pi/issues/10245)）。
+
+变更
+
+- 默认 `codemode` 暴露的 MCP 服务器不再出现在 `codemode` 描述中；脚本通过 `searchTools()` 查找它们。`codemode-deferred` 现在是 `codemode` 的别名。需要模型不经搜索就能看到的工具，请用 `direct` 暴露（[#10212](https://github.com/earendil-works/pi/issues/10212)）。
+- `codemode` 描述不再包含 deferred 工具、工具数量或 MCP 服务器说明，因此 MCP 服务器连接或工具变化时描述不会变。`tool_search` 描述同样不再列出它能加载工具的服务器。服务器改为出现在 `mcp_servers` 系统 Prompt 分区，带一行摘要，每次 Prompt 开始时更新；分区有变化时会追加到对话。脚本通过 `describeNamespace()` 读取服务器说明（[#10212](https://github.com/earendil-works/pi/issues/10212)）。
+- 第一次 Prompt 不再等待没有 `direct` 工具的 MCP 服务器。它们在后台连接，当 codemode 脚本点名它们、脚本搜索工具，或 `tool_search` 运行时再等待（[#10212](https://github.com/earendil-works/pi/issues/10212)）。
+
+修复
+
+- 修复新会话间歇性忽略已保存的默认模型，或在该模型属于带已存储凭证的扩展注册原生 Provider 时警告没有可用模型的问题（[#9962](https://github.com/earendil-works/pi/issues/9962)、[#10190](https://github.com/earendil-works/pi/pull/10190) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 修复 `/mcp` 登录 URL 换行时无法点击的问题：改为像 `/login` 一样发出终端超链接，并附带 `Cmd/Ctrl+click to open` 一行（[#10186](https://github.com/earendil-works/pi/issues/10186)）。
+- 修复 codemode `image()` 接受畸形 base64 数据或不支持的图片类型，导致无效图片块被持久化、之后每次 Provider 请求都 HTTP 400 失败的问题（[#10215](https://github.com/earendil-works/pi/issues/10215)）。
+- 修复独立 Windows 可执行文件中 codemode 无法启动脚本 worker 的问题（[#10204](https://github.com/earendil-works/pi/issues/10204)）。
+- 修复 Prompt 提交随会话变长而变慢的问题：解析会话模型选择时，曾对每条 assistant 消息查找一次模型目录（[#10198](https://github.com/earendil-works/pi/issues/10198)）。
+- 修复带已刷新 pi.dev 目录的 Provider 模型查找变慢的问题：合并远程目录模型曾是二次时间。
+- 修复 `built-in-tool-renderer.ts` 和 `minimal-mode.ts` 扩展示例从系统 Prompt 移除内置工具摘要和指南的问题（[#10072](https://github.com/earendil-works/pi/issues/10072)、[#10193](https://github.com/earendil-works/pi/pull/10193) 由 [@christianklotz](https://github.com/christianklotz) 贡献）。
+- 修复 Z.AI 国内端点 `Prompt exceeds max length` 错误的上下文溢出检测（[#10208](https://github.com/earendil-works/pi/issues/10208)）。
+- 修复工具 schema 使用 Anthropic strict tool use 拒绝的关键字（如 `minimum`/`maximum`）时 Anthropic 请求失败的问题；这类工具现在以非 strict 方式发送（[#9953](https://github.com/earendil-works/pi/issues/9953)）。
+- 修复 `Retry-After` 头包含无法解析的日期时 Provider 重试立即触发的问题；现在改用指数退避（[#9571](https://github.com/earendil-works/pi/issues/9571)）。
+- 修复扩展命令未注册字符串名称或 handler 时，输入 `/` 会让 pi 崩溃的问题；现在扩展会加载失败并报错（[#10054](https://github.com/earendil-works/pi/issues/10054)）。
+- 修复折叠的 `codemode` 和 MCP 工具结果在输出是一行很长（例如压缩 JSON）时占满屏幕的问题。预览现在像 bash 输出一样按换行后的行数限制，而不是按逻辑行。
+- 修复 `codemode.mode: "only"` 在系统 Prompt 的工具列表中列出 `read`、`bash`、`edit` 和 `write`，但请求只声明 `codemode` 的问题（[#10192](https://github.com/earendil-works/pi/issues/10192)）。
+- 修复两个 MCP 工具名仅 `-` 和 `_` 不同时（如 `read-file` 和 `read_file`），codemode 脚本会调用错误工具的问题。与 Codex 一样，MCP 工具和命名空间名现在把 `-` 替换为 `_`（`mcp__my-server__x` 变为 `mcp__my_server__x`），同一服务器冲突的工具都会加哈希后缀，仅 `-` 和 `_` 不同的服务器名会被拒绝（[#10239](https://github.com/earendil-works/pi/issues/10239)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 添加轻量入口 `@earendil-works/pi-ai/models`，用于模型集合和 Provider 构造，不加载 TypeBox、内置目录或 Provider SDK。
+- 从 Anthropic SDK 环境变量 `ANTHROPIC_FEDERATION_RULE_ID`、`ANTHROPIC_ORGANIZATION_ID` 和 `ANTHROPIC_IDENTITY_TOKEN_FILE`（以及可选的 `ANTHROPIC_SERVICE_ACCOUNT_ID` 和 `ANTHROPIC_WORKSPACE_ID`）添加 Anthropic 工作负载身份联合。API key 和 `ANTHROPIC_AUTH_TOKEN` 优先（[#10177](https://github.com/earendil-works/pi/issues/10177)、[#10242](https://github.com/earendil-works/pi/pull/10242) 由 [@philfreo](https://github.com/philfreo) 贡献）。
+
+修复
+
+- 修复 Z.AI 国内端点 `Prompt exceeds max length` 错误的上下文溢出检测（[#10208](https://github.com/earendil-works/pi/issues/10208)）。
+- 修复 `strict: "prefer"` 工具 schema 使用 Anthropic strict tool use 拒绝的关键字（如 `minimum`/`maximum`）时 Anthropic 请求失败的问题；这类工具现在以非 strict 方式发送（[#9953](https://github.com/earendil-works/pi/issues/9953)）。
+- 修复 `Retry-After` 头包含无法解析的日期时 Provider 重试立即触发的问题；现在改用指数退避（[#9571](https://github.com/earendil-works/pi/issues/9571)）。
+
+</details>
+
 ## v0.99.1（2026-09-29）
 
 <details>

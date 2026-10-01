@@ -115,7 +115,7 @@ try {
 
 <a id="codemode-mcp"></a>
 
-CLI 把 `codemode`、`tool_search` 和 MCP 作为内置扩展加载。SDK 会话不会；把 `createCodemodeExtension()`、`createToolSearchExtension()` 和 `createMcpExtension()` 加到 `DefaultResourceLoader` 的 `extensionFactories`。`codemode` 和 `tool_search` 以未激活状态注册：通过 `defaultTools` 设置启用它们（`["+codemode", "+tool_search"]` 会保留其他默认工具），或让 MCP 扩展激活它们：对 `codemode` 或 `codemode-deferred` exposure 的服务器激活 `codemode`，对 `deferred` exposure 的服务器激活 `tool_search`。MCP 扩展在 `session_start` 时连接服务器，所以要调用 `session.bindExtensions()`。见 [Codemode 与 MCP](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/14-codemode-mcp.ts)。
+CLI 把 `codemode`、`tool_search` 和 MCP 作为内置扩展加载。SDK 会话不会；把 `createCodemodeExtension()`、`createToolSearchExtension()` 和 `createMcpExtension()` 加到 `DefaultResourceLoader` 的 `extensionFactories`。`codemode` 和 `tool_search` 以未激活状态注册：通过 `defaultTools` 设置启用它们（`["+codemode", "+tool_search"]` 会保留其他默认工具），或让 MCP 扩展激活它们：对 `codemode` exposure 的服务器激活 `codemode`，对 `deferred` exposure 的服务器激活 `tool_search`。MCP 扩展在 `session_start` 时连接服务器，所以要调用 `session.bindExtensions()`。见 [Codemode 与 MCP](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/14-codemode-mcp.ts)。
 
 聚焦的示例见[模型](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/02-custom-model.ts)、[工具](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/05-tools.ts)、[扩展](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/06-extensions.ts)和[完全控制](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/sdk/12-full-control.ts)。
 

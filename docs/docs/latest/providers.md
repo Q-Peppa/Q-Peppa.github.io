@@ -21,6 +21,8 @@
 
 Radius 认证使用它的网关目录，并缓存刷新后的模型元数据以便之后离线启动。在 `models.json` 中配置的自定义 Radius 网关使用它自己的目录，而不会继承公开的 `radius.pi.dev` 目录。
 
+<a id="use-an-api-key-from-the-environment"></a>
+
 ## 使用环境变量中的 API Key
 
 环境变量在 CI 以及任何不希望 Pi 保存 Key 的场景都很有用。启动 Pi 之前设置该变量：
@@ -69,6 +71,8 @@ pi
 | Xiaomi MiMo Token Plan（新加坡）                          | `XIAOMI_TOKEN_PLAN_SGP_API_KEY` |
 
 Anthropic 也把 `ANTHROPIC_OAUTH_TOKEN` 识别为 API 凭证，把 `ANTHROPIC_AUTH_TOKEN` 识别为 bearer 认证。
+
+没有设置 key 或 token 时，若设置了 `ANTHROPIC_FEDERATION_RULE_ID`、`ANTHROPIC_ORGANIZATION_ID` 和 `ANTHROPIC_IDENTITY_TOKEN_FILE`，Anthropic 会使用工作负载身份联合：Anthropic SDK 把 identity token 换成短时 access token，并自行刷新（会重新读取 identity token 文件，因此长会话要保持该文件是新的）。设置了 `ANTHROPIC_SERVICE_ACCOUNT_ID` 和 `ANTHROPIC_WORKSPACE_ID` 时会原样传递。
 
 ## 从命令加载 API Key
 

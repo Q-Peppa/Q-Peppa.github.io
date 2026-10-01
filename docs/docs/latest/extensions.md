@@ -178,7 +178,7 @@ Pi 使用 `jiti`，所以本地 TypeScript 扩展不需要单独的编译步骤�
 - `deferred`：类似 `codemode`，但 codemode 工具不列出它；`tool_search` 可以查找并激活它。
 - `hidden`：已注册但不可达。用 `exposure: "hidden"` 重新注册一个工具来撤回它，因为工具无法注销。
 
-`namespace: { name, description }` 把相关工具分组，MCP 服务器就是这样做的。codemode 工具把一个 namespace 列在同一个标题下。
+`namespace: { name, description, instructions }` 把相关工具分组，MCP 服务器就是这样做的。codemode 工具把一个 namespace 列在同一个标题下，并带上它的 `description`。`instructions` 存放更长的用法说明；它不会列出，codemode 脚本用 `describeNamespace(name)` 读取。
 
 注册 `direct` 或 `model-only` 工具会激活它；其他 exposure 在注册时不激活。活动集（`pi.getActiveTools()`、`pi.setActiveTools()`）是向模型声明的工具集。`pi.getAllTools()` 报告每个工具的 `exposure`、`namespace` 和 `annotations`。
 
@@ -196,7 +196,7 @@ pi.on('tool_call', async (event, ctx) => {
 });
 ```
 
-编排其他工具的工具可以用 `prepareLoadout(loadout)` 在自己激活时调整模型看到的内容。它在活动工具变更时运行，收到已声明的工具、可调用的工具，以及每个已注册工具及其 exposure 和 namespace。它返回已声明工具（包括自己）的替换 `descriptions`，以及 `hiddenDeclarations`：请求中省略声明、但仍保持活动且可调用的活动工具。`codemode` 和 `tool_search` 只用这个 hook、`exposure` 和 `ctx.executeTool()`，因此另一个工具可以用不同名称实现相同行为。
+编排其他工具的工具可以用 `prepareLoadout(loadout)` 在自己激活时调整模型看到的内容。它在活动工具变更时运行，收到已声明的工具、可调用的工具，以及每个已注册工具及其 exposure 和 namespace。它返回已声明工具（包括自己）的替换 `descriptions`，以及 `hiddenDeclarations`：请求中省略声明、但仍保持活动且可调用的活动工具。`codemode` 只用这个 hook、`exposure` 和 `ctx.executeTool()`，因此另一个工具可以用不同名称实现相同行为。
 
 ### 动态激活工具
 
@@ -208,7 +208,7 @@ Pi 在转录的第一条系统消息中记录初始 Prompt 和工具集，然后
 
 ### MCP 服务器
 
-`pi.registerMcpServer(name, config)` 为当前会话添加一个 MCP 服务器。`config` 的形状与 [`mcp.json`](mcp.md) 中的 `mcpServers` 条目相同：stdio 服务器用 `command`、`args`、`env` 和 `cwd`，HTTP 服务器用 `url`、`headers` 和 `oauth`，另外还有 `exposure`、`toolExposure`、`enabled` 和 `timeout`。
+`pi.registerMcpServer(name, config)` 为当前会话添加一个 MCP 服务器。`config` 的形状与 [`mcp.json`](mcp.md) 中的 `mcpServers` 条目相同：stdio 服务器用 `command`、`args`、`env` 和 `cwd`，HTTP 服务器用 `url`、`headers` 和 `oauth`，另外还有 `exposure`、`toolExposure`、`description`、`enabled` 和 `timeout`。
 
 ```typescript
 pi.registerMcpServer('jira', { url: 'https://mcp.example.com/jira', exposure: 'codemode' });
