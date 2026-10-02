@@ -60,7 +60,7 @@ RPC 模式拒绝 `@file` 参数。JSON 和 RPC 模式把 stdout 保留给协议�
 pi --model sonnet:high
 ```
 
-模型选择见[选择模型](models.md)，凭证见 [Provider 认证](providers.md)。
+模型选择见[选择模型](models.md)，凭证见 [Providers](providers.md)。
 
 - `--provider <name>`<br>
   把 `--model` 的查找限制在一个 Provider 内。它需要 `--model`。
@@ -166,23 +166,13 @@ pi --tools read,grep,find,ls --print "Review this project"
 pi --tools read,bash,edit,write,codemode
 ```
 
-没有 MCP 时，codemode 仍然有用：脚本可以并行运行多个 tool call、在输出到达模型前过滤大量输出，并通过 `models.classify()` 调用 TypeSafe 的 Jev 等分类器模型（见[分类器模型](models.md#use-classifier-models)）。
+没有 MCP 时，codemode 仍然有用：脚本可以并行运行多个 tool call、在输出到达模型前过滤大量输出，通过 `models.classify()` 调用 TypeSafe 的 Jev 等分类器模型（见[分类器模型](models.md#use-classifier-models)），并通过 `models.generateImages()` 生成图片（见[图片模型](models.md#use-image-models)）。
 
 <a id="how-codemode-works"></a>
 
 ### codemode 如何工作
 
-codemode 脚本在 QuickJS 沙箱中运行，只能通过 `tools.<name>(args)` 到达其他工具；`ALL_TOOLS` 列出它们。输出通过 `text(value)`、`image(dataUrlOrImageContent)`、`console.*` 以及顶层 `return value` 产生；`exit()` 提前结束脚本。结果以 `Script completed` 或 `Script failed` 开头，然后是墙钟时间和输出；失败的脚本保留部分输出，后面是 `Script error:` 和错误。
-
-脚本可以以选项行开头，例如 `// @options: {"max_output_tokens": 2000, "timeout_ms": 60000}`。`max_output_tokens`（默认 10000）限制输出：更长的输出保留首尾，完整文本写入临时文件，路径包含在结果中。`timeout_ms` 是硬截止时间，默认未设置。
-
-`codemode` 激活时，[设置](settings.md#tools)中的 `codemode.mode` 决定其他工具如何呈现。`on`（默认）时，已声明的工具继续声明，描述中说明如何从脚本调用它们。`only` 时，它们对模型隐藏，改列在 `codemode` 描述中，因此模型通过脚本调用它们。
-
-`codemode` 描述用 TypeScript 声明列出可调用的工具，按 namespace 分组（例如一个 MCP 服务器）。`deferred` exposure 的工具（包括默认 `codemode` exposure 的 MCP 工具）不列出，也不影响描述，因此 MCP 服务器连接时描述保持不变。声明共享 3000 估计 Token 的预算（[设置](settings.md#tools)中的 `codemode.inlineBudget`）。脚本用 `await searchTools(query, { limit, namespace })`（用 BM25 给工具排序）和 `await describeTool(name)` 查找其余工具，或过滤 `ALL_TOOLS`。`await describeNamespace(name)` 返回 namespace 的描述、instructions（对 MCP 服务器即服务器 instructions）以及它的工具名。
-
-带 output schema 的工具解析为结构化值：`bash` 为 `{ output, truncated, full_output_path?, exit_code, wall_time_seconds }`（非零退出码也如此），MCP 工具为它们的 `CallToolResult`。其他工具解析为文本输出。`bash` 的 `output` 不受模型看到的 2000 行或 50KB 限制：最多保留 1 MiB，更长的输出在省略标记两侧保留首尾各 512 KiB，并设置 `truncated`，完整输出在 `full_output_path`。
-
-`store(key, value)` 和 `load(key)` 在 `codemode` 调用之间保存 JSON 值：每个成功存储值的脚本会向会话追加一条 `codemode-store` 自定义条目，因此恢复的会话保留这些值，每个分支只看到自己路径上写入的值。脚本也可以使用 `models`：`getModelsOfType`、`getAvailableOfType` 和 `getModelOfType` 列出模型目录，`classify(model, context)` 用会话凭证运行分类器模型，每个脚本最多同时四个。
+脚本在 QuickJS 沙箱中运行，通过 `tools.<name>(args)` 到达其他工具。[Codemode](codemode.md) 描述脚本 API、工具如何列出和查找、`store()` 和 `models` 全局变量，以及限制。
 
 ### 工具搜索
 
@@ -236,7 +226,7 @@ pi --append-system-prompt ./instructions.md
 - `--append-system-prompt <text|path>`<br>
   把文本或已有文件追加到系统提示，可重复。
 - `--tui-mode <mode>`<br>
-  使用 `regular` 或 `fullscreen` 终端模式。
+  使用 `fullscreen`（默认）或 `regular` 终端模式。
 - `--verbose`<br>
   显示详细的交互式启动信息，覆盖 `quietStartup`。
 - `-a`、`--approve`<br>
@@ -299,7 +289,7 @@ pi install npm:@scope/package
 pi auth check --provider openai --json
 ```
 
-认证命令需要 `--provider <provider>` 或 `--model <model>`。受支持的方式见 [Provider 认证](providers.md)。
+认证命令需要 `--provider <provider>` 或 `--model <model>`。受支持的方式见 [Providers](providers.md)。
 
 | 命令                         | 说明                                                                    |
 | ---------------------------- | ----------------------------------------------------------------------- |

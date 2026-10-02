@@ -2,6 +2,98 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v1.0.0（2026-10-01）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **默认全屏** – TUI 现在默认全屏运行。将 `tuiMode` 设为 `"regular"` 可保留终端的正常回滚。详见 [终端与显示](/docs/latest/settings#terminal-and-display)。
+- **更精简的 codemode** – Prompt Token 大约减少 40%，错误信息会告诉模型如何恢复。详见 [Codemode](/docs/latest/codemode)。
+- **codemode 中生成图片** – 脚本用会话凭证调用 `models.generateImages()`。详见 [生成图片](/docs/latest/codemode#generate-images) 和 [使用图片模型](/docs/latest/models#use-image-models)。
+- **`/login` 支持 Radius** – 用 Radius 登录，并一步配置其 MCP 服务器。详见 [Radius](/docs/latest/providers#radius)。
+- **Anthropic 复制验证码登录** – 浏览器在另一台机器上时也能登录。详见 [交互式认证](/docs/latest/providers#authenticate-interactively)。
+- **MCP OAuth 加固** – `oauth.authServerMetadataUrl`、RFC 9207 `iss` 校验、按服务器存储凭证，以及保留已授权 scope 的升级登录。详见 [用 OAuth 认证](/docs/latest/mcp#authenticate-with-oauth)。
+- **只保留页头的安静启动** – `quietStartup: "header"` 保留版本和快捷键提示，隐藏其余内容。详见 [终端与显示](/docs/latest/settings#terminal-and-display)。
+
+新增
+
+- 为声明了错误 OAuth 授权服务器或未声明授权服务器的 MCP 服务器添加 `oauth.authServerMetadataUrl` 设置。Pi 使用配置的 metadata 文档，而不走发现（[#10172](https://github.com/earendil-works/pi/issues/10172)）。
+- 添加 `quietStartup: "header"`，保留带版本和快捷键提示的启动页头，但隐藏模型范围行和已加载资源列表。
+- 为 codemode 脚本添加 `models.generateImages()`。它用会话凭证运行 OpenRouter 等图片模型，返回 `image()` 可附加到结果的 base64 图片块；用量像 `models.classify()` 一样计入会话费用。扩展可调用 `ctx.modelRegistry.generateImages()`。详见 [使用图片模型](/docs/latest/models#use-image-models)。
+- 为 Anthropic `/login` 添加复制验证码登录方式，适用于浏览器在另一台机器上的无头环境（[#10194](https://github.com/earendil-works/pi/pull/10194) 由 [@lucasmeijer](https://github.com/lucasmeijer) 贡献）。
+
+变更
+
+- 将默认 TUI 模式改为全屏。将 `tuiMode` 设为 `"regular"` 或传入 `--tui-mode regular` 可保留终端的正常回滚。
+- `/login` 现在在顶级菜单末尾提供「用 Radius 登录」，并显示状态。Radius 登录后，`/login` 会提议在全局 `mcp.json` 中配置 Radius MCP 服务器（`"auth": { "provider": "radius" }`）并重新加载。取消登录会回到启动它的菜单。
+- Provider 文档页更名为 [Providers](/docs/latest/providers)，「Cloud Providers」一节改为「Provider Specific Config」，并首先介绍 Radius。
+- MCP OAuth 凭证现在按服务器名和 URL 存储，同一 URL 的 MCP 服务器可以用不同账号登录。仅按 URL 存储的凭证会迁移到第一个使用它们的服务器（[#10252](https://github.com/earendil-works/pi/issues/10252)）。
+- Codemode 消耗的 Prompt Token 大幅减少：默认工具且 codemode 开启时，一次 GPT-5.6 请求从大约 5,300 Token 降到 3,300。`codemode` 描述用一行列出每个脚本全局变量，并指向新的 [Codemode](/docs/latest/codemode) 参考文档中的 `models` API，模型需要时再去读。已声明工具用一行说明脚本如何调用、调用解析成什么，而不再重复完整声明；系统 Prompt 中的 codemode 指南和 MCP 服务器分区也更短。
+- Codemode 错误现在会说明如何恢复：读取不存在的工具或 `models` 成员时会给出相近匹配（`tools.Bash` 会建议 `tools.bash`）；`models.classify()` 和 `models.generateImages()` 会拒绝畸形参数并给出期望形状；未知模型会指向 `models.getAvailableOfType()`；过大的 `store()` 值会解释 store 的用途；生成了图片却没展示的脚本会收到提示。用 `typeof tools.name` 探测工具的脚本必须改用 `"name" in tools`。
+- `/login` 和 `/logout` 现在把没有凭证的 Provider 标为 "not configured"，而不再是 "unconfigured"。
+- OAuth 浏览器页面现在显示彩色 Pi logo。
+
+修复
+
+- 修复 MCP OAuth 登录会接受 `iss` 参数指向另一授权服务器的授权响应；现在在兑换前就会拒绝该 code（RFC 9207）。
+- 修复 Token 响应包含 `"scope": ""` 时 MCP OAuth 登录失败并报 `Invalid scope`，以及其他空或 `null` 可选 OAuth 字段的类似失败（[#10266](https://github.com/earendil-works/pi/issues/10266)）。
+- 修复 `/mcp login` 打印的登录 URL 换行时无法点击的问题（[#10186](https://github.com/earendil-works/pi/issues/10186)）。
+- 修复只传 `--provider` 不传 `--model` 时被静默忽略、改用另一 Provider 默认模型的问题；现在会报错退出（[#10236](https://github.com/earendil-works/pi/issues/10236)）。
+- 修复请求更多 scope（`insufficient_scope`）的 MCP 服务器反复要求登录的问题。新登录只请求缺失的 scope，导致新 Token 丢失旧 Token 已有的权限；现在会保留已授权的 scope。
+- 修复 transcript 中用户消息为每行渲染结果保留两份全宽副本的问题；现在只保留一份，输出相同。
+- 修复 `/login` 和 `/logout` 把包括 Radius 在内的所有 OAuth 登录都标成 subscription；只有订阅制 Provider 才写 "subscription"，其他 OAuth 登录写 "account"。
+- 修复启动页头 logo 在 Apple Terminal 中出现空隙的问题；现在显示带版本号的彩色 "Pi"。
+- 修复 `tool_search` 加载的 deferred MCP 工具在 resume 和 `/reload` 时被丢掉的问题，即使服务器在下一次 Prompt 前已重连；原因是会话在 MCP 服务器重连前就恢复了工具。
+- 修复系统主题让 Catppuccin Frappe 等粉彩色板变得过艳；色板颜色现在保留原有色度（[#10255](https://github.com/earendil-works/pi/issues/10255)、[#10293](https://github.com/earendil-works/pi/pull/10293) 由 [@dgtlntv](https://github.com/dgtlntv) 贡献）。
+- 修复输入以空白开头时斜杠命令自动补全不触发的问题（[#10218](https://github.com/earendil-works/pi/pull/10218) 由 [@haoqixu](https://github.com/haoqixu) 贡献）。
+- 修复全屏模式下，带样式的 Token 刚好结束在高亮边界时，颜色会渗出鼠标选区和搜索高亮的问题（[#10169](https://github.com/earendil-works/pi/issues/10169)）。
+- 修复 transcript 中每条已渲染消息占用的内存；一条长 assistant 消息现在大约只保留原来五分之一的堆。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 为 Anthropic OAuth 添加复制验证码登录。登录时询问浏览器登录（默认）或复制验证码登录：Anthropic 页面会显示授权码，粘贴到 pi 即可，适用于浏览器在另一台机器上的场景（[#10194](https://github.com/earendil-works/pi/pull/10194) 由 [@lucasmeijer](https://github.com/lucasmeijer) 贡献）。
+
+变更
+
+- OAuth 浏览器页面改用彩色 Pi logo。
+
+修复
+
+- 修复从另一 Provider 或 Radius 等网关重放 grammar 工具调用（如 `codemode`）时，OpenAI Responses 请求失败并报 `Expected an ID that begins with 'ctc'` 的问题。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+不兼容变更
+
+- 从 `@earendil-works/pi-agent-core` 移除实验性 harness：`AgentHarness`、会话和会话存储、durable runtime、pico3、harness 工具、压缩、Skill、Prompt 模板、系统 Prompt 辅助函数、telemetry schema、search service 类型，以及 `uuidv7` 和 pi-telemetry 的再导出。`./node`、`./harness/*` 和 `./experimental/pico3` 子路径导出已移除。该包现在只包含 `Agent`、agent loop、proxy stream 及其类型。持久会话请使用 `@earendil-works/pi-durable`。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+新增
+
+- 添加 `TuiAltScreen.getScreenLines()`，返回上一帧已渲染的行。
+
+修复
+
+- 修复全屏模式下，带样式的 Token 刚好结束在高亮边界时，颜色会渗出鼠标选区和搜索高亮的问题（[#10169](https://github.com/earendil-works/pi/issues/10169)）。
+- 修复每条已渲染消息占用的内存：`Markdown` 弱引用已解析 Token，`Markdown`、`Text` 和 `Box` 展平缓存行。一条长 assistant 消息现在大约只保留原来五分之一的堆。
+- 修复输入以空白开头时斜杠命令自动补全不触发的问题（[#10218](https://github.com/earendil-works/pi/pull/10218) 由 [@haoqixu](https://github.com/haoqixu) 贡献）。
+
+</details>
+
 ## v0.99.2（2026-09-30）
 
 <details>

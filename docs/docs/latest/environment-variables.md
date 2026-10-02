@@ -8,7 +8,7 @@ Pi 以三种方式使用环境变量：
 - Pi 设置进程标记，让子进程能识别 Pi 是启动它的 Agent。
 - LLM 可调用的 Shell 工具所运行的命令会收到描述当前会话的 `PI_*` 变量。
 
-Provider API Key 变量在 [Provider 认证](providers.md#use-an-api-key-from-the-environment)中单独记录。
+Provider API Key 变量在 [Providers](providers.md#use-an-api-key-from-the-environment)中单独记录。
 
 ## 进程标记
 
@@ -97,7 +97,7 @@ const powershellTool = createPowerShellTool(cwd, {
 | `VISUAL`、`EDITOR`            | `externalEditor` 未设置时的外部编辑器回退                                                                                      |
 | `HTTP_PROXY`、`HTTPS_PROXY`   | 出站 HTTP 请求的代理                                                                                                           |
 
-`ANTHROPIC_API_KEY`、`OPENAI_API_KEY` 等 Provider 凭证和云 Provider 配置列在 [Provider 认证](providers.md#use-an-api-key-from-the-environment)中。
+`ANTHROPIC_API_KEY`、`OPENAI_API_KEY` 等 Provider 凭证和 Provider 特定配置列在 [Providers](providers.md#use-an-api-key-from-the-environment)中。
 
 ---
 

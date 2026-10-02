@@ -20,7 +20,7 @@
 
 运行 `/login` 并选择一个 Provider。Pi 把凭证存储在 [`auth.json`](configuration.md#agent-directory) 中。运行 `/logout` 可以删除某个 Provider 的已存凭证。
 
-你也可以通过 Provider 的环境变量提供 API Key。这在 CI 等不希望 Pi 写入凭证的环境中很有用。[Provider 认证](providers.md)列出了这些变量和云 Provider 的设置方式。
+你也可以通过 Provider 的环境变量提供 API Key。这在 CI 等不希望 Pi 写入凭证的环境中很有用。[Providers](providers.md)列出了这些变量和 Provider 特定设置。
 
 配置了多个凭证来源时，Pi 的优先顺序是：运行时 `--api-key`、已存的 `auth.json` 凭证、`models.json` 中的 `apiKey`，最后才是 Provider 的环境变量或环境中的云凭证。Provider 扩展可以定义自己的认证行为。
 
@@ -133,9 +133,32 @@ const result = await models.classify(jev, {
 return result.answers;
 ```
 
+[Codemode](codemode.md#classify) 描述了问题和答案的类型。
+
 当服务报告 Token 数时（所有 System One 服务都会），`result.usage` 会带上它们及其费用。Pi 把脚本的分类器调用用量加到 `codemode` 工具结果上，因此会计入页脚和 `/session` 的会话费用。费用使用模型目录中的价格；没有价格的模型（例如 TypeSafe 直接的 `jev-latest`）报告 Token 但不计费。
 
 扩展通过 `ctx.modelRegistry.classify()` 调用分类器，不经过 codemode。[虚拟模型](virtual-models.md#route-requests)可以用它们来路由请求；见 `jev-router.ts` 示例。
+
+<a id="use-image-models"></a>
+
+## 使用图片模型
+
+图片模型根据 Prompt 和可选的输入图片生成图片。Pi 把 OpenRouter 的图片模型（例如 `google/gemini-2.5-flash-image` 和 `black-forest-labs/flux.2-pro`）列在 `openrouter` Provider 下；它们使用与聊天模型相同的 `OPENROUTER_API_KEY` 或 `/login` 凭证。
+
+和分类器模型一样，图片模型不会出现在 `/model` 中。模型通过 [`codemode`](cli.md#enable-codemode) 工具到达它们。脚本用 `models.getAvailableOfType("image")` 列出它们，并调用 `models.generateImages(model, { input })`。结果的 `output` 保存 base64 图片块，`image()` 把它们附加到 `codemode` 结果上，模型就能看到：
+
+```js
+const painter = await models.getModelOfType('image', 'openrouter', 'google/gemini-2.5-flash-image');
+const result = await models.generateImages(painter, {
+  input: [{ type: 'text', text: 'A red fox in the snow, watercolor' }],
+});
+if (result.stopReason !== 'stop') return result.errorMessage;
+for (const block of result.output) if (block.type === 'image') image(block);
+```
+
+`input` 也可以包含 `{ type: "image", data, mimeType }` 块，用于编辑或作为参考。Pi 把脚本的图片调用用量加到 `codemode` 工具结果上，和分类器调用一样。生成的图片不会保存到磁盘。[Codemode](codemode.md#generate-images) 描述完整 API。
+
+扩展通过 `ctx.modelRegistry.generateImages()` 生成图片，不经过 codemode。
 
 ## 添加自定义 Provider
 

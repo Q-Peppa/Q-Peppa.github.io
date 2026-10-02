@@ -151,6 +151,7 @@ export default defineConfig({
           text: '参考',
           items: [
             { text: '命令行', link: '/docs/latest/cli', tag: 'new' },
+            { text: 'Codemode', link: '/docs/latest/codemode', tag: 'new' },
             { text: '斜杠命令', link: '/docs/latest/slash-commands', tag: 'new' },
             { text: '设置', link: '/docs/latest/settings' },
             { text: '环境变量', link: '/docs/latest/environment-variables' },

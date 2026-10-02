@@ -142,7 +142,7 @@ CLI 把 `codemode`、`tool_search` 和 MCP 作为内置扩展加载。SDK 会话
 
 ## 资源
 
-- [选择模型](models.md)覆盖模型选择和兼容端点；[Provider 认证](providers.md)覆盖凭证和云 Provider 设置。
+- [选择模型](models.md)覆盖模型选择和兼容端点；[Providers](providers.md)覆盖凭证和 Provider 特定设置。
 - [配置](configuration.md)说明常规发现和设置；[设置](settings.md)列出每一项设置。
 - [会话与上下文](sessions.md)说明会话行为；[会话格式](session-format.md)定义持久化条目；[消息类型](message-types.md)定义共享的转录取值。
 - [扩展](extensions.md)、[Skill](skills.md)和 [Prompt 模板](prompt-templates.md)记录通过 `ResourceLoader` 提供的资源。

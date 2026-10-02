@@ -1,4 +1,4 @@
-# Provider 认证
+# Providers
 
 > 本页面是 [Pi 官方文档](https://pi.dev/docs/latest/providers) 的中文翻译。仅供学习参考。
 
@@ -19,8 +19,6 @@
 
 `auth.json` 可能包含 API Key 和 OAuth Token。请对它保密，不要提交它。
 
-Radius 认证使用它的网关目录，并缓存刷新后的模型元数据以便之后离线启动。在 `models.json` 中配置的自定义 Radius 网关使用它自己的目录，而不会继承公开的 `radius.pi.dev` 目录。
-
 <a id="use-an-api-key-from-the-environment"></a>
 
 ## 使用环境变量中的 API Key
@@ -32,7 +30,7 @@ export ANTHROPIC_API_KEY=sk-ant-...
 pi
 ```
 
-下表覆盖只有一个主要 API Key 变量的 Provider。需要额外配置或支持环境凭证的 Provider 在[云 Provider](#cloud-providers) 中介绍。
+下表覆盖只有一个主要 API Key 变量的 Provider。需要额外配置或支持环境凭证的 Provider 在 [Provider 特定配置](#provider-specific-config) 中介绍。
 
 | Provider                                                  | 环境变量                        |
 | --------------------------------------------------------- | ------------------------------- |
@@ -89,9 +87,11 @@ Anthropic 也把 `ANTHROPIC_OAUTH_TOKEN` 识别为 API 凭证，把 `ANTHROPIC_A
 
 Pi 在第一次需要该 Key 时运行命令，并在进程存活期间缓存它的标准输出。输出为空、超时或非零退出会让该 Key 保持未解析，直到 Pi 重启。
 
-## 云 Provider
+<a id="provider-specific-config"></a>
 
-下面的 Provider 需要额外设置，或可以使用其云平台提供的凭证。
+## Provider 特定配置
+
+下面的 Provider 有额外的准备步骤、需要额外设置，或可以使用其平台提供的凭证。
 
 已存的 API Key 凭证可以包含一个 `env` 对象。它的值对该 Provider 优先于进程环境：
 
@@ -106,6 +106,20 @@ Pi 在第一次需要该 Key 时运行命令，并在进程存活期间缓存它
   }
 }
 ```
+
+<a id="radius"></a>
+
+### Radius
+
+Radius 是 Pi 的开发者 Earendil Works 为 Pi 打造的服务。它提供可定制的 AI 网关，内置组织级控制和数据分析，以及用于分享你用 Pi 创作内容的 artifacts。
+
+开始使用：在 Pi 中运行 `/login radius`。这会把 Radius 加为 Provider，它的模型会像其他 Provider 一样出现在 `/model` 中。
+
+Radius 也有 MCP 服务器，因此 Pi 可以替你管理 Radius。
+
+Radius 目前处于早期 alpha，变化很快。更多信息见 [radius.earendil.com](https://radius.earendil.com)。
+
+Radius 认证使用它的网关目录，并缓存刷新后的模型元数据以便之后离线启动。在 `models.json` 中配置的自定义 Radius 网关使用它自己的目录，而不会继承公开的 `radius.pi.dev` 目录。
 
 ### Azure OpenAI
 
