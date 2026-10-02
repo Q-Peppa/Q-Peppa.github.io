@@ -104,15 +104,15 @@ Pi 直接集成 llama.cpp router。Router 会发现 GGUF 文件并按需加载�
 
 ## 使用分类器模型
 
-分类器模型不用于对话。它们回答关于 JSON 状态的带类型问题：从若干选项中选一个、回答是否，或给出分数，每项都带概率。Pi 通过这些 Provider 提供 TypeSafe 的 Jev 模型：
+分类器模型不用于对话。它们回答关于 JSON 状态的带类型问题：从若干选项中选一个、回答是否，或给出分数，每项都带概率。Pi 通过这些 Provider 提供 TypeSafe 的 Jev 模型，并通过 Workers AI 提供 Cloudflare 的 Clef 和 Clef Flash 模型：
 
-| Provider                | 模型 ID                                     | 认证                                            |
-| ----------------------- | ------------------------------------------- | ----------------------------------------------- |
-| `typesafe`              | `jev-latest`                                | `TYPESAFE_API_KEY`                              |
-| `openrouter`            | `typesafe/jev-1.13`、`~typesafe/jev-latest` | `OPENROUTER_API_KEY` 或 `/login`                |
-| `cloudflare-workers-ai` | `typesafe/jev`                              | `CLOUDFLARE_API_KEY` 和 `CLOUDFLARE_ACCOUNT_ID` |
-| `vercel-ai-gateway`     | `typesafe-ai/jev`                           | `AI_GATEWAY_API_KEY`                            |
-| `opencode`              | `jev-1.13`、`jev-1.13-free`                 | `OPENCODE_API_KEY`                              |
+| Provider                | 模型 ID                                                            | 认证                                            |
+| ----------------------- | ------------------------------------------------------------------ | ----------------------------------------------- |
+| `typesafe`              | `jev-latest`                                                       | `TYPESAFE_API_KEY`                              |
+| `openrouter`            | `typesafe/jev-1.13`、`~typesafe/jev-latest`                        | `OPENROUTER_API_KEY` 或 `/login`                |
+| `cloudflare-workers-ai` | `typesafe/jev`、`@cf/cloudflare/clef`、`@cf/cloudflare/clef-flash` | `CLOUDFLARE_API_KEY` 和 `CLOUDFLARE_ACCOUNT_ID` |
+| `vercel-ai-gateway`     | `typesafe-ai/jev`                                                  | `AI_GATEWAY_API_KEY`                            |
+| `opencode`              | `jev-1.13`、`jev-1.13-free`                                        | `OPENCODE_API_KEY`                              |
 
 [llama.cpp router](llama-cpp.md#classification) 上的 chat 模型也会列为分类器模型。
 

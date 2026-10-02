@@ -37,6 +37,16 @@ pi mcp add -l tools --env API_KEY='${TOOLS_KEY}' -- uvx tools-mcp
 
 Pi 从 `~/.pi/agent/mcp.json` 读取用户级服务器，从 `.pi/mcp.json` 读取项目服务器。项目配置只在授予[项目信任](security.md#understand-project-trust)后读取。同名的项目条目会替换用户级条目。
 
+没有 `command`、`url` 或 `type` 的项目条目只会覆盖同名用户级服务器的 `enabled`、`exposure` 和 `toolExposure`，其余配置（包括 `env`、`headers` 和 `auth`）保持不变。例如，在某个项目中关闭一个用户级服务器：
+
+```json
+{
+  "mcpServers": {
+    "internal-tools": { "enabled": false }
+  }
+}
+```
+
 格式与其他 MCP 客户端一致：
 
 ```json
@@ -83,7 +93,7 @@ HTTP 服务器使用 `url`、`headers` 和 `oauth`（见 [用 OAuth 认证](#aut
 
 `/mcp` 列出已配置服务器的状态、工具数、exposure 和配置来源。需要处理的服务器排在前面。选中一个服务器可以查看它的工具和连接详情、重连、登录或登出、更改 exposure，或启用和禁用它。
 
-exposure 和启用状态的更改会保存到定义该服务器的文件，不替换无关内容。禁用的服务器仍会列出。在交互式 TUI 之外，`/mcp` 打印服务器状态；`/mcp login <server>`、`/mcp logout <server>` 和 `/mcp reconnect <server>` 直接执行这些操作。
+exposure 和启用状态的更改会保存到定义该服务器的文件，不替换无关内容。在受信任项目中，「在本项目启用」和「在本项目禁用」会为用户级服务器添加项目覆盖；之后对该服务器的更改会保存到覆盖中。禁用的服务器仍会列出。在交互式 TUI 之外，`/mcp` 打印服务器状态；`/mcp login <server>`、`/mcp logout <server>` 和 `/mcp reconnect <server>` 直接执行这些操作。
 
 shell 命令不需要会话：`pi mcp add`、`pi mcp remove`、`pi mcp list`、`pi mcp login` 和 `pi mcp logout`。shell 命令不加载扩展。
 
@@ -157,6 +167,18 @@ Pi 注册时使用名称 `pi`。有些服务器只接受已知客户端的注册
 ```
 
 该名称只在 Pi 注册客户端时发送。要在新名称下重新注册，先登出。
+
+有些授权服务器按 Client ID Metadata Document URL 识别客户端，而不是让它们注册。把 `clientRegistration` 设为 `cimd`，即可用 pi.dev 上 Pi 的文档标识自己，而不是注册：
+
+```json
+{
+  "mcpServers": {
+    "example": { "url": "https://mcp.example.com/mcp", "oauth": { "clientRegistration": "cimd" } }
+  }
+}
+```
+
+客户端 ID 是 `https://pi.dev/oauth/client.json`，重定向 URI 是 `http://127.0.0.1:<port>/callback`。如果授权服务器在授权响应中不发送 `iss` 参数（RFC 9207），Pi 会改用针对该 MCP 服务器的文档和重定向路径：`https://pi.dev/oauth/<id>/client.json` 与 `http://127.0.0.1:<port>/callback/<id>`。授权服务器必须公布对 Client ID Metadata Document 和公共客户端的支持，否则登录会失败。`cimd` 不能与 `clientId` 或 `clientName` 同时使用，且 `callbackUrl` 必须使用 `localhost` 或 `127.0.0.1`，路径为 `/callback`。
 
 Pi 通过服务器的受保护资源元数据（RFC 9728）查找授权服务器，并检查授权服务器元数据是否写出预期的 issuer（RFC 8414）。有些服务器公布了错误的授权服务器，或什么都不公布，登录就会打开一个不存在的页面。把 `authServerMetadataUrl` 设为正确授权服务器的元数据文档：
 

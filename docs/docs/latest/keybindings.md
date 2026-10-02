@@ -160,12 +160,12 @@ Pi 暴露具名动作，例如 `app.session.new`，可以为它们分配快捷�
 
 ### 显示与消息队列
 
-| 快捷键 id              | 默认值                                    | 说明                                                                                                                          |
-| ---------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `app.tools.expand`     | `ctrl+o`                                  | 折叠或展开工具输出                                                                                                            |
-| `app.message.copy`     | `ctrl+x`                                  | 在 `/tree` 中复制选中的消息；全屏模式下当 `fullscreenCopyOnSelect` 为 `false` 时复制活动选区；否则复制最后一条 assistant 消息 |
-| `app.message.followUp` | `alt+enter`（Windows 和 WSL 为 `ctrl+q`） | 排队 follow-up 消息                                                                                                           |
-| `app.message.dequeue`  | `alt+up`（Windows 和 WSL 为 `alt+q`）     | 把排队消息恢复到编辑器                                                                                                        |
+| 快捷键 id              | 默认值                                    | 说明                                                                                                                                                           |
+| ---------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app.tools.expand`     | `ctrl+o`                                  | 折叠或展开工具输出                                                                                                                                             |
+| `app.message.copy`     | `ctrl+x`                                  | 在 `/tree` 中复制选中的消息；全屏模式下当 `fullscreenCopyOnSelect` 为 `false` 时复制活动选区；否则复制最后一条 assistant 消息。在 OAuth 登录界面，复制登录 URL |
+| `app.message.followUp` | `alt+enter`（Windows 和 WSL 为 `ctrl+q`） | 排队 follow-up 消息                                                                                                                                            |
+| `app.message.dequeue`  | `alt+up`（Windows 和 WSL 为 `alt+q`）     | 把排队消息恢复到编辑器                                                                                                                                         |
 
 ### 树导航
 

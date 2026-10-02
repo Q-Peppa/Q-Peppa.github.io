@@ -275,6 +275,8 @@ pi install npm:@scope/package
 
 当所选的更新包含 Pi 时，加上 `--force` 可以重新安装 Pi。
 
+`pi update` 无法更新由其他包管理器提供的 Pi（例如 Nix）。请用该包管理器更新 Pi，例如 `nix profile upgrade pi`。包和模型目录更新仍然可用。
+
 ### 别名和命令选项
 
 - `pi uninstall <source>` 是 `pi remove <source>` 的别名。

@@ -14,13 +14,21 @@ Pi 在你的终端里运行，操作你机器上的文件。要使用它，你�
 curl -fsSL https://pi.dev/install.sh | sh
 ```
 
-也可以从 npm 安装 Pi。这需要 Node.js 22.19 或更高版本：
+安装器会固定所有依赖，并用 `pi update` 更新 Pi。也可以从 npm 安装 Pi，但不会固定传递依赖。这需要 Node.js 22.19 或更高版本：
 
 ```bash
 npm install -g --ignore-scripts @earendil-works/pi-coding-agent
 ```
 
 正常的 npm 安装不需要依赖生命周期脚本。
+
+在 macOS 或 Linux 上使用 Nix 时，可以从 Pi 的 flake 安装最新发布版。Nix 会从源码构建 Pi：
+
+```bash
+nix profile add github:earendil-works/pi/stable
+```
+
+较旧的 Nix 版本改用 `nix profile install`。用 `nix profile upgrade pi` 更新；`pi update` 无法更新 Nix 安装。要固定某个发布版，使用类似 `github:earendil-works/pi/v1.0.0` 的标签。
 
 验证安装：
 
@@ -123,7 +131,13 @@ npm uninstall -g @earendil-works/pi-coding-agent
 curl -fsSL https://pi.dev/install.sh | sh
 ```
 
-两种方法都不会从 `~/.pi/agent/` 删除配置、凭证、会话或已安装的 Pi 包。
+如果用 Nix 安装了 Pi，运行：
+
+```bash
+nix profile remove pi
+```
+
+这些方法都不会从 `~/.pi/agent/` 删除配置、凭证、会话或已安装的 Pi 包。
 
 ---
 
