@@ -33,7 +33,7 @@
 
 新功能
 
-- **Nix flake** – `nix run github:earendil-works/pi/stable` 运行最新发布版，`nix profile add github:earendil-works/pi/stable` 安装它。详见 [安装 Pi](/docs/latest/quickstart#1-install-pi)。
+- **Nix flake** – `nix run github:earendil-works/pi/stable` 运行最新发布版，`nix profile add github:earendil-works/pi/stable` 安装它。详见 [安装 Pi](/docs/latest/quickstart#1-安装-pi)。
 - **MCP 服务器的项目级覆盖** – `.pi/mcp.json` 和 `/mcp` 可以为单个项目启用、禁用或修改用户级服务器的暴露方式。详见 [配置服务器](/docs/latest/mcp#configure-servers)。
 - **MCP Client ID Metadata Documents** – `oauth.clientRegistration: "cimd"` 让授权服务器按文档 URL 识别 pi，而不走动态注册。详见 [用 OAuth 认证](/docs/latest/mcp#authenticate-with-oauth)。
 - **任意工具的渲染器** – `pi.registerToolRenderer()` 可以绘制尚未注册工具的调用，例如恢复会话中的 MCP 工具。详见 [工具渲染](/docs/latest/extensions#tool-rendering)。
@@ -46,7 +46,7 @@
 - 为用户级 MCP 服务器添加项目级覆盖：`.pi/mcp.json` 中不带 `command` 或 `url` 的条目只设置用户级服务器的 `enabled`、`exposure` 和 `toolExposure`，`/mcp` 可以为当前项目启用或禁用某个服务器（[#10277](https://github.com/earendil-works/pi/issues/10277)）。
 - 在 `cloudflare-workers-ai` 中添加 Cloudflare 的 Clef 和 Clef Flash 分类器模型，可在 codemode 脚本和扩展中使用（[#10316](https://github.com/earendil-works/pi/pull/10316) 由 [@ndisidore](https://github.com/ndisidore) 贡献、[#10322](https://github.com/earendil-works/pi/pull/10322) 由 [@RealAlexandreAI](https://github.com/RealAlexandreAI) 贡献）。
 - 添加 `pi.registerToolRenderer()`，用于决定工具的调用如何绘制，包括尚未注册的工具（[#10285](https://github.com/earendil-works/pi/issues/10285)）。
-- 为 macOS 和 Linux 添加 Nix flake：`nix run github:earendil-works/pi/stable` 运行最新发布版，`nix profile add github:earendil-works/pi/stable` 安装它。详见 [安装 Pi](/docs/latest/quickstart#1-install-pi)（[#9137](https://github.com/earendil-works/pi/pull/9137)）。
+- 为 macOS 和 Linux 添加 Nix flake：`nix run github:earendil-works/pi/stable` 运行最新发布版，`nix profile add github:earendil-works/pi/stable` 安装它。详见 [安装 Pi](/docs/latest/quickstart#1-安装-pi)（[#9137](https://github.com/earendil-works/pi/pull/9137)）。
 
 变更
 
