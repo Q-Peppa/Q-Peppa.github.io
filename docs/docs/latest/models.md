@@ -98,6 +98,34 @@ Pi 直接集成 llama.cpp router。Router 会发现 GGUF 文件并按需加载�
 
 在公布的区间中选择保守的一端。当前层级没有时长数据的模型不具备缓存预热资格。`modelOverrides` 条目可以为内置或扩展模型设置 `inputLimits` 或 `promptCache`，包括通过已验证代理访问的模型。见 [`cacheWarming`](settings.md#model-and-thinking)。
 
+<a id="configure-sampling-by-thinking-level"></a>
+
+### 按 thinking 层级配置采样
+
+OpenAI 兼容 API 支持自由形式的 `samplingParams` 模型默认值，以及 `samplingParamsByThinkingLevel` 覆盖。后者使用 Pi 的 thinking level 键（`off`、`minimal`、`low`、`medium`、`high`、`xhigh` 和 `max`），而不是 `thinkingLevelMap` 中的 Provider 取值：
+
+```json
+{
+  "id": "qwen-thinking-model",
+  "reasoning": true,
+  "samplingParams": {
+    "temperature": 1.0,
+    "top_p": 0.95
+  },
+  "samplingParamsByThinkingLevel": {
+    "off": {
+      "temperature": 0.7,
+      "top_p": 0.8
+    },
+    "high": {
+      "top_k": 20
+    }
+  }
+}
+```
+
+Pi 先对不支持的 thinking level 做钳制，然后按此顺序合并模型 `samplingParams`、生效层级的覆盖，以及请求级的 `samplingParams`。后面的值按键覆盖前面的。缺失的层级沿用模型默认值。`modelOverrides` 按 key 把逐层条目与基础模型合并。这些字段只对 `openai-completions`、`openai-responses` 和 `azure-openai-responses` 生效；其他 API 会忽略它们。
+
 兼容性设置应当描述端点请求或响应行为中已验证的差异。不要仅因为某个端点宣称兼容 OpenAI 或 Anthropic 就开启这些设置。
 
 <a id="use-classifier-models"></a>

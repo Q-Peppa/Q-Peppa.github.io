@@ -2,6 +2,116 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v1.0.2（2026-10-04）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **按 thinking 层级设置采样参数** – `models.json` 中的 `samplingParamsByThinkingLevel` 可以为 OpenAI 兼容 API 的每个 thinking level 设置 `temperature`、`top_p` 等采样参数。详见 [按 thinking 层级配置采样](/docs/latest/models#configure-sampling-by-thinking-level)。
+
+新增
+
+- 为 `models.json` 添加 `samplingParamsByThinkingLevel`，用于在 OpenAI 兼容 API 上按 thinking level 覆盖采样参数。详见 [按 thinking 层级配置采样](/docs/latest/models#configure-sampling-by-thinking-level)（[#9776](https://github.com/earendil-works/pi/pull/9776) 由 [@mrexodia](https://github.com/mrexodia) 贡献）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 为 `openai-completions`、`openai-responses` 和 `azure-openai-responses` 请求添加按 thinking level 覆盖采样参数（`samplingParamsByThinkingLevel`）（[#9776](https://github.com/earendil-works/pi/pull/9776) 由 [@mrexodia](https://github.com/mrexodia) 贡献）。
+
+</details>
+
+## v1.0.1（2026-10-03）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **Nix flake** – `nix run github:earendil-works/pi/stable` 运行最新发布版，`nix profile add github:earendil-works/pi/stable` 安装它。详见 [安装 Pi](/docs/latest/quickstart#1-install-pi)。
+- **MCP 服务器的项目级覆盖** – `.pi/mcp.json` 和 `/mcp` 可以为单个项目启用、禁用或修改用户级服务器的暴露方式。详见 [配置服务器](/docs/latest/mcp#configure-servers)。
+- **MCP Client ID Metadata Documents** – `oauth.clientRegistration: "cimd"` 让授权服务器按文档 URL 识别 pi，而不走动态注册。详见 [用 OAuth 认证](/docs/latest/mcp#authenticate-with-oauth)。
+- **任意工具的渲染器** – `pi.registerToolRenderer()` 可以绘制尚未注册工具的调用，例如恢复会话中的 MCP 工具。详见 [工具渲染](/docs/latest/extensions#tool-rendering)。
+- **Cloudflare Clef 分类器** – `@cf/cloudflare/clef` 和 `@cf/cloudflare/clef-flash` 可以在 codemode 脚本和扩展中使用。详见 [使用分类器模型](/docs/latest/models#use-classifier-models)。
+
+新增
+
+- 为 `/login`、`/mcp` 和 `/mcp login` 的 OAuth 登录界面添加复制快捷键（`app.message.copy`，默认 `ctrl+x`）：浏览器打不开，或换行后的链接无法选中时，用它复制登录 URL。
+- 为 MCP 服务器添加 `oauth.clientRegistration: "cimd"`，它在 pi.dev 上用 Client ID Metadata Document 标识 pi，而不走动态客户端注册，这样授权服务器可以按 URL 允许 pi（[#10302](https://github.com/earendil-works/pi/issues/10302)）。
+- 为用户级 MCP 服务器添加项目级覆盖：`.pi/mcp.json` 中不带 `command` 或 `url` 的条目只设置用户级服务器的 `enabled`、`exposure` 和 `toolExposure`，`/mcp` 可以为当前项目启用或禁用某个服务器（[#10277](https://github.com/earendil-works/pi/issues/10277)）。
+- 在 `cloudflare-workers-ai` 中添加 Cloudflare 的 Clef 和 Clef Flash 分类器模型，可在 codemode 脚本和扩展中使用（[#10316](https://github.com/earendil-works/pi/pull/10316) 由 [@ndisidore](https://github.com/ndisidore) 贡献、[#10322](https://github.com/earendil-works/pi/pull/10322) 由 [@RealAlexandreAI](https://github.com/RealAlexandreAI) 贡献）。
+- 添加 `pi.registerToolRenderer()`，用于决定工具的调用如何绘制，包括尚未注册的工具（[#10285](https://github.com/earendil-works/pi/issues/10285)）。
+- 为 macOS 和 Linux 添加 Nix flake：`nix run github:earendil-works/pi/stable` 运行最新发布版，`nix profile add github:earendil-works/pi/stable` 安装它。详见 [安装 Pi](/docs/latest/quickstart#1-install-pi)（[#9137](https://github.com/earendil-works/pi/pull/9137)）。
+
+变更
+
+- 全局 npm 安装下的 `pi update` 现在建议迁移到 pi.dev 安装器的托管安装，它固定所有依赖。
+- Anthropic 工具在对话中途新增或重新定义时，现在内联定义在对话中，因此用同名重新定义工具会保留 Prompt 缓存，而不再重发完整工具列表。
+
+修复
+
+- 修复安装解析到有漏洞的 `brace-expansion` 5.0.9 的问题，把 `brace-expansion` 5.0.12 固定为直接依赖（GHSA-q2hr-2g5m-vwhr、GHSA-qhr7-859c-m2p7、GHSA-6j4f-fj2g-mc7p）（[#10288](https://github.com/earendil-works/pi/issues/10288)）。
+- 修复 `--models` 中的尾随逗号会向模型循环多加一个模型的问题（[#10334](https://github.com/earendil-works/pi/issues/10334)）。
+- 修复 codemode 脚本在循环中打印导致 pi 内存耗尽而崩溃的问题：脚本输出超过 16 Mi 字符或 100000 项后会失败（[#10283](https://github.com/earendil-works/pi/issues/10283)）。
+- 修复扩展通过 `Image` 渲染的 JPEG、GIF 和 WebP 图片在 Kitty、Ghostty、WezTerm 和 Warp 中不显示的问题（[#10292](https://github.com/earendil-works/pi/issues/10292)）。
+- 修复恢复的会话和 HTML 导出中的 MCP tool call 在服务器连接前一直完全展开，或服务器始终未连接时永久展开的问题（[#10285](https://github.com/earendil-works/pi/issues/10285)）。
+- 修复全屏 Kitty 图片在 WezTerm 中滚动后缩成一行条带的问题（[#10319](https://github.com/earendil-works/pi/issues/10319)）。
+- 修复 "Selected model is at capacity" Provider 错误直接结束回合而不重试的问题（[#10278](https://github.com/earendil-works/pi/issues/10278)）。
+- 修复 Cloudflare AI Gateway 的 Claude 模型因使用带点的模型 ID 而返回 404 的问题；现在改用带连字符的模型 ID（`claude-opus-5-5` 而不是 `claude-opus-5.5`）。
+- 修复 Sign in with ChatGPT 在回调端口被另一个登录占用时仍然继续、导致浏览器显示 "OAuth state mismatch" 的问题；现在会以端口占用错误失败（[#10265](https://github.com/earendil-works/pi/issues/10265)）。
+- 修复 Amazon Bedrock OpenAI 模型把超过 272k 输入 Token 的请求按短上下文费率计费的问题；Bedrock 模型现在包含 models.dev 列出的定价层级（[#10326](https://github.com/earendil-works/pi/issues/10326)）。
+- 修复系统 Prompt 或工具变更后 Amazon Bedrock Claude 请求失败并报 "Invalid `signature` in `thinking` block" 的问题（[#10324](https://github.com/earendil-works/pi/issues/10324)）。
+- 修复 Together DeepSeek V4 Pro 在 Together 将其更名为 `deepseek-ai/DeepSeek-V4-Pro-0813` 后丢失 thinking level 控制的问题（[#10336](https://github.com/earendil-works/pi/pull/10336) 由 [@cv](https://github.com/cv) 贡献）。
+- 修复默认 NVIDIA 模型指向 NVIDIA 已不再提供的 `nvidia/nemotron-3-super-120b-a12b` 的问题；默认模型现在是 `nvidia/nemotron-3-ultra-550b-a55b`。
+
+移除
+
+- 从发布的包中移除 `npm-shrinkwrap.json`。npm 安装不再固定传递依赖，库使用者现在可以覆盖它们。需要固定安装请使用 pi.dev 安装器（[#5653](https://github.com/earendil-works/pi/issues/5653)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 在 `cloudflare-workers-ai` Provider 中添加 Cloudflare 的 Clef 和 Clef Flash 分类器模型（`@cf/cloudflare/clef`、`@cf/cloudflare/clef-flash`）（[#10316](https://github.com/earendil-works/pi/pull/10316) 由 [@ndisidore](https://github.com/ndisidore) 贡献、[#10322](https://github.com/earendil-works/pi/pull/10322) 由 [@RealAlexandreAI](https://github.com/RealAlexandreAI) 贡献）。
+
+变更
+
+- 带原生对话中途工具变更的 Anthropic 模型现在使用 `inline-tools-2026-09-15` beta：后续工具在 `tool_addition` 块中按值定义，而不再追加到顶层工具列表；用同名重新定义工具也不再回退为重发完整工具列表，因此 Prompt 缓存得以保留。将 `@anthropic-ai/sdk` 升级到 0.129.0。
+- 弃用 `hasToolRedefinitions()`；已没有内置传输层需要它。
+
+修复
+
+- 修复 "Selected model is at capacity" Provider 错误直接结束回合而不重试的问题（[#10278](https://github.com/earendil-works/pi/issues/10278)）。
+- 修复 Cloudflare AI Gateway 的 Claude 模型因使用带点的模型 ID 而返回 404 的问题，Anthropic 要求带连字符（`claude-opus-5-5` 而不是 `claude-opus-5.5`）。
+- 修复 Sign in with ChatGPT 在回调端口被另一个登录占用时仍然继续、导致浏览器显示 "OAuth state mismatch" 的问题；现在会以端口占用错误失败（[#10265](https://github.com/earendil-works/pi/issues/10265)）。
+- 修复 Amazon Bedrock OpenAI 模型把超过 272k 输入 Token 的请求按短上下文费率计费的问题；Bedrock 模型现在包含 models.dev 列出的定价层级（[#10326](https://github.com/earendil-works/pi/issues/10326)）。
+- 修复系统 Prompt 或工具变更后 Amazon Bedrock Claude 请求失败并报 "Invalid `signature` in `thinking` block" 的问题；Claude Opus 4.7+、Sonnet 5+ 和 Fable 5 现在会像 Anthropic Provider 一样丢弃过期的 thinking 块（[#10324](https://github.com/earendil-works/pi/issues/10324)）。
+- 修复 Together DeepSeek V4 Pro 在 Together 将其更名为 `deepseek-ai/DeepSeek-V4-Pro-0813` 后丢失 thinking level 控制的问题（[#10336](https://github.com/earendil-works/pi/pull/10336) 由 [@cv](https://github.com/cv) 贡献）。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+新增
+
+- 添加 `setImageTranscoder()`，让 `Image` 可以为 Kitty 图形协议把 JPEG、GIF 和 WebP 图片转成 PNG（[#10292](https://github.com/earendil-works/pi/issues/10292)）。
+
+修复
+
+- 修复非 PNG 图片在 Kitty 协议终端上渲染为空白的问题：没有注册转码器或转换失败时，`Image` 现在显示文本回退（[#10292](https://github.com/earendil-works/pi/issues/10292)）。
+- 修复全屏 Kitty 图片在 WezTerm 中滚动后缩成一行条带的问题（[#10319](https://github.com/earendil-works/pi/issues/10319)）。
+
+</details>
+
 ## v1.0.0（2026-10-01）
 
 <details>

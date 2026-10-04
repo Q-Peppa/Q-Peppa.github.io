@@ -204,6 +204,12 @@ pi.on('tool_call', async (event, ctx) => {
 
 Pi 在转录的第一条系统消息中记录初始 Prompt 和工具集，然后在下次模型请求之前追加工具和 Prompt 的改动。无法表示这种转换的 Provider 会收到一份完整的转录检查点，这可能让缓存的 prefix 失效。
 
+<a id="tool-rendering"></a>
+
+### 工具渲染
+
+工具的 `renderCall` 和 `renderResult` 负责在交互式转录和 HTML 导出中绘制工具的调用。`pi.registerToolRenderer((toolName, next) => renderers)` 可以为任意工具的调用挑选渲染器，包括尚未注册的工具，例如恢复的会话中服务器还没连上的 MCP 工具。`next()` 返回其余解析器（按扩展加载顺序）以及已注册工具会用的结果，所以 `next() ?? mine` 只做补充。
+
 <a id="mcp-servers"></a>
 
 ### MCP 服务器
