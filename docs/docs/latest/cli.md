@@ -120,7 +120,7 @@ pi --tools read,grep,find,ls --print "Review this project"
 配置默认工具选择见[设置](settings.md#tools)。
 
 - `-t`、`--tools <list>`<br>
-  用逗号分隔的内置、扩展或自定义工具允许列表替换默认选择。条目是工具名或模式，其中 `*` 匹配任意字符。除非某个条目以 `mcp__` 开头，否则保留 MCP 工具（见 [MCP 工具](#mcp-tools)）。
+  用逗号分隔的内置、扩展或自定义工具允许列表替换默认选择。条目是工具名或模式，其中 `*` 匹配任意字符。除非某个条目以 `mcp__` 开头，否则保留 MCP 工具（见 [MCP 工具](#mcp-tools)）。只含 `+name` 和 `-name` 的列表不是允许列表；它会改动默认选择。
 - `-xt`、`--exclude-tools <list>`<br>
   在所有其他选择选项之后禁用逗号分隔的工具名或模式，包括 MCP 工具。
 - `-nbt`、`--no-builtin-tools`<br>
@@ -128,7 +128,7 @@ pi --tools read,grep,find,ls --print "Review this project"
 - `-nt`、`--no-tools`<br>
   启动时禁用所有内置、扩展、自定义和 MCP 工具。
 
-默认启用的工具是 `read`、`bash`、`edit` 和 `write`，除非 `defaultTools` 改变了它们。`--tools` 会替换整个选择，所以要写出你想要的每个工具；`defaultTools` 还接受 `+name` 和 `-name` 来改动默认列表，而不是替换。
+默认启用的工具是 `read`、`bash`、`edit` 和 `write`，除非 `defaultTools` 改变了它们。用普通名称时，`--tools` 会替换整个选择，所以要写出你想要的每个工具。与 `defaultTools` 一样，它也接受只含 `+name` 和 `-name` 的列表，这会从默认选择中添加或移除工具：`pi --tools +codemode,-write` 保留其他默认工具、启用 `codemode` 并禁用 `write`。这些条目只接受精确的工具名，不接受 `*` 模式；要按模式禁用工具，用 `--exclude-tools`。普通名称和 `+name`/`-name` 条目不能混用。`/reload` 会启用新加入 `defaultTools` 的工具，但用 `-name` 移除的工具会保持移除。
 
 <a id="mcp-tools"></a>
 
@@ -170,10 +170,10 @@ MCP 资源工具（`list_mcp_resources`、`list_mcp_resource_templates`、`read_
 }
 ```
 
-这会保留 `read`、`bash`、`edit` 和 `write`，并加上 `codemode`。单次调用要列出每个工具，因为 `--tools` 会替换选择：
+这会保留 `read`、`bash`、`edit` 和 `write`，并加上 `codemode`。单次调用可用 `--tools` 加上它：
 
 ```sh
-pi --tools read,bash,edit,write,codemode
+pi --tools +codemode
 ```
 
 没有 MCP 时，codemode 仍然有用：脚本可以并行运行多个 tool call、在输出到达模型前过滤大量输出，通过 `models.classify()` 调用 TypeSafe 的 Jev 等分类器模型（见[分类器模型](models.md#use-classifier-models)），并通过 `models.generateImages()` 生成图片（见[图片模型](models.md#use-image-models)）。

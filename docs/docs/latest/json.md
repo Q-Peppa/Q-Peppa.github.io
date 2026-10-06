@@ -113,11 +113,11 @@ RPC 模式不输出这条记录。它的当前会话 ID 和文件请用 [`get_st
 
 ## 工具执行事件
 
-| 事件                    | 字段                                              | 含义                 |
-| ----------------------- | ------------------------------------------------- | -------------------- |
-| `tool_execution_start`  | `toolCallId`、`toolName`、`args`                  | 工具执行开始。       |
-| `tool_execution_update` | `toolCallId`、`toolName`、`args`、`partialResult` | 工具报告了部分结果。 |
-| `tool_execution_end`    | `toolCallId`、`toolName`、`result`、`isError`     | 工具执行结束。       |
+| 事件                    | 字段                                                        | 含义                                                                                       |
+| ----------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `tool_execution_start`  | `toolCallId`、`toolName`、`args`                            | 工具执行开始。                                                                             |
+| `tool_execution_update` | `toolCallId`、`toolName`、`args`、`partialResult`           | 工具报告了部分结果。                                                                       |
+| `tool_execution_end`    | `toolCallId`、`toolName`、`result`、`isError`、`durationMs` | 工具执行结束。`durationMs` 是工具 `execute()` 的耗时，用单调时钟测量；工具未运行时不存在。 |
 
 用 `toolCallId` 关联整个生命周期。`partialResult` 是工具提供的最新部分结果。它替换还是扩展先前的更新取决于该工具的结果契约。
 

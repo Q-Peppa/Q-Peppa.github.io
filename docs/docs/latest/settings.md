@@ -57,9 +57,9 @@
 
 这会把 `bash` 换成 `powershell` 并启用 `grep`：`["-bash", "+powershell", "+grep"]`。项目设置叠加在用户设置之上：只含 `+name` 和 `-name` 的项目列表会改动用户的选择；含普通名称的项目列表会替换它。在同一个列表中，普通名称构成选择，然后按顺序应用 `+name` 和 `-name`。
 
-`/reload` 会启用 `defaultTools` 中新加入的工具。它不会禁用从中移除的工具，也不会重新启用你关掉且未改动的工具。`--tools`、`--no-tools` 和 `--no-builtin-tools` 覆盖 `defaultTools`，reload 时也是如此。
+`/reload` 会启用 `defaultTools` 中新加入的工具。它不会禁用从中移除的工具，也不会重新启用你关掉且未改动的工具。用普通名称的 `--tools`、`--no-tools` 和 `--no-builtin-tools` 覆盖 `defaultTools`，reload 时也是如此。
 
-CLI 工具选项会为单次调用覆盖该设置；`--tools` 不接受 `+name` 或 `-name`。见[命令行](cli.md#tools)。
+CLI 工具选项会为单次调用覆盖该设置。只含 `+name` 和 `-name` 条目的 `--tools` 则改动解析后的 `defaultTools` 选择，例如 `pi --tools +codemode`。在 `/reload` 时，这些条目也会作用于重新加载后的设置，因此用 `-name` 移除的工具会保持移除。见[命令行](cli.md#tools)。
 
 ## 会话与上下文
 
@@ -101,7 +101,7 @@ CLI 工具选项会为单次调用覆盖该设置；`--tools` 不接受 `+name` 
 | `fullscreenCopyOnSelect`        | boolean                                  | `true`         | 全屏模式下自动复制选中的文本。                                                                                                                                                                                        |
 | `fullscreenWheelScrollLines`    | `"auto"` \| number                       | `"auto"`       | 全屏模式下每次鼠标滚轮事件滚动的行数，从 1 到 100。`"auto"` 在本地 macOS 终端每次事件滚动一行（这些终端已经会加速滚轮和触控板输入）；其他地方以及 SSH 上，会把快速滚轮加速到每次事件最多 6 行。Alt+滚轮移动五倍距离。 |
 | `editorPaddingX`                | number                                   | `0`            | 编辑器水平内边距，从 0 到 3 个单元格。                                                                                                                                                                                |
-| `outputPad`                     | `0 \| 1`                                 | `1`            | 转录的水平内边距。                                                                                                                                                                                                    |
+| `outputPad`                     | `0 \| 1`                                 | `1`            | 转录的水平内边距，适用于消息、工具输出、`!` 命令输出和摘要块。                                                                                                                                                        |
 | `autocompleteMaxVisible`        | number                                   | `5`            | 可见的自动补全条目数，从 3 到 20。                                                                                                                                                                                    |
 | `showHardwareCursor`            | boolean                                  | `false`        | Pi 为输入法定位光标时显示终端光标。                                                                                                                                                                                   |
 | `terminal.showImages`           | boolean                                  | `true`         | 受支持时显示内联图片。                                                                                                                                                                                                |

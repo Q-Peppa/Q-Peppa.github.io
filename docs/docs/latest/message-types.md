@@ -102,12 +102,11 @@ interface SystemMessage {
   sections?: Record<string, string | null>;
   toolsAdded?: Tool[];
   toolsRemoved?: ToolReference[];
-  replace?: boolean;
   timestamp: number;
 }
 ```
 
-开头的系统消息声明初始 Prompt 和工具。之后的系统消息可以追加指令、替换或移除具名的 Prompt 分段，以及添加或移除工具。按顺序回放它们即可得到当前状态。带 `replace: true` 的消息会丢弃先前的状态并建立完整的新基线。
+开头的系统消息声明初始 Prompt 和工具。之后的系统消息可以追加指令、替换或移除具名的 Prompt 分段，以及添加或移除工具。按顺序回放它们即可得到当前状态。
 
 ### UserMessage
 
@@ -131,6 +130,7 @@ interface AssistantMessage {
   responseModel?: string;
   responseId?: string;
   providerThinkingLevel?: string;
+  thinkingLevel?: ModelThinkingLevel;
   diagnostics?: AssistantMessageDiagnostic[];
   usage: Usage;
   stopReason: 'pending' | 'stop' | 'length' | 'toolUse' | 'error' | 'aborted' | 'deferred';
@@ -142,7 +142,7 @@ interface AssistantMessage {
 }
 ```
 
-当具体的 Provider 响应模型与请求的模型不同时，`responseModel` 记录它。`responseId`、`providerThinkingLevel`、`diagnostics` 和 `rawStopReason` 保留 Provider 或 runtime 细节。
+当具体的 Provider 响应模型与请求的模型不同时，`responseModel` 记录它。`responseId`、`providerThinkingLevel`、`thinkingLevel`、`diagnostics` 和 `rawStopReason` 保留 Provider 或 runtime 细节。
 
 `"pending"` 用于流式过程中的部分 assistant 消息。`message_end` 中已完成的消息具有终止性的 stop reason，Pi 不会把 `"pending"` 的 assistant 消息持久化到会话 JSONL 中。
 
@@ -170,12 +170,30 @@ interface ToolResultMessage<TDetails = any> {
   content: (TextContent | ImageContent)[];
   details?: TDetails;
   usage?: Usage;
+  nestedCalls?: NestedToolCalls;
   isError: boolean;
   timestamp: number;
 }
 ```
 
-`details` 是工具特定的。可选的 `usage` 报告该工具执行的嵌套模型工作，并计入完整会话统计，但它不属于主模型调用的用量。
+`details` 是工具特定的。可选的 `usage` 报告该工具执行的嵌套模型工作，并计入完整会话统计，但它不属于主模型调用的用量。`nestedCalls` 记录该工具对其他工具发出的调用，这些元数据有上限：
+
+```typescript
+interface NestedToolCalls {
+  calls: NestedToolCallRecord[];
+  complete: boolean;
+}
+
+interface NestedToolCallRecord {
+  id: string;
+  name: string;
+  arguments?: JsonObject;
+  argumentsBytes?: number;
+  status: 'ok' | 'error' | 'unfinished';
+  durationMs?: number;
+  error?: string;
+}
+```
 
 ## Coding-agent 消息
 
