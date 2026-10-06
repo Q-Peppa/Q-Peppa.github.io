@@ -120,15 +120,25 @@ pi --tools read,grep,find,ls --print "Review this project"
 配置默认工具选择见[设置](settings.md#tools)。
 
 - `-t`、`--tools <list>`<br>
-  用逗号分隔的内置、扩展或自定义工具允许列表替换默认选择。
+  用逗号分隔的内置、扩展或自定义工具允许列表替换默认选择。条目是工具名或模式，其中 `*` 匹配任意字符。除非某个条目以 `mcp__` 开头，否则保留 MCP 工具（见 [MCP 工具](#mcp-tools)）。
 - `-xt`、`--exclude-tools <list>`<br>
-  在所有其他选择选项之后禁用逗号分隔的工具名。
+  在所有其他选择选项之后禁用逗号分隔的工具名或模式，包括 MCP 工具。
 - `-nbt`、`--no-builtin-tools`<br>
   禁用默认内置工具，同时保留扩展和自定义工具。
 - `-nt`、`--no-tools`<br>
-  启动时禁用所有内置、扩展和自定义工具。
+  启动时禁用所有内置、扩展、自定义和 MCP 工具。
 
 默认启用的工具是 `read`、`bash`、`edit` 和 `write`，除非 `defaultTools` 改变了它们。`--tools` 会替换整个选择，所以要写出你想要的每个工具；`defaultTools` 还接受 `+name` 和 `-name` 来改动默认列表，而不是替换。
+
+<a id="mcp-tools"></a>
+
+`--tools` 选择声明给模型的工具。它不移除 MCP 工具，后者的可及范围由它们的 [exposure](mcp.md#control-tool-exposure) 决定：`pi --tools read,codemode` 会保留所有可从 codemode 脚本调用的 MCP 工具。没有任何条目点名或匹配的 MCP 工具永远不会被直接声明，无论它的 exposure 是什么；只有 `tool_search`（如果列出）能加载它。一旦某个条目以 `mcp__` 开头，`--tools` 也会过滤 MCP 工具，因此下面只保留 `radius` 服务器的工具：
+
+```sh
+pi --tools read,bash,codemode,'mcp__radius__*'
+```
+
+MCP 资源工具（`list_mcp_resources`、`list_mcp_resource_templates`、`read_mcp_resource`）算作 MCP 工具。要移除 MCP 工具，用 `--exclude-tools 'mcp__*'` 或 [`--no-mcp`](#resource-options)。
 
 | 内置工具     | 作用                              |
 | ------------ | --------------------------------- |
@@ -192,6 +202,8 @@ pi --extension ./review.ts
   加载一个扩展文件或目录，或内置扩展（例如 `builtin:mcp`），可重复。
 - `-ne`、`--no-extensions`<br>
   禁用已发现、已配置和内置的扩展。显式的 `-e` 路径仍会加载，所以 `pi -ne -e builtin:mcp` 只保留内置 MCP 支持。
+- `--no-mcp`<br>
+  为本次运行禁用内置 MCP 支持：不连接任何服务器，没有 MCP 工具，也没有 `/mcp`。它不影响替代内置 MCP 支持的扩展。
 - `--skill <path>`<br>
   加载一个 Skill 文件或目录，可重复。
 - `-ns`、`--no-skills`<br>

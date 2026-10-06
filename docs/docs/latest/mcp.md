@@ -237,6 +237,8 @@ Pi 用该文档代替发现，并按配置信任它，所以只指向你信任�
 
 带 `codemode` 或 `deferred` exposure 的工具可以通过这两种间接机制到达：codemode 脚本可以调用它们，`tool_search` 可以加载它们。codemode 调用不依赖活动工具集，所以在 `/tree`、恢复和 fork 之后仍可用。`tool_search` 加载的工具会记入转录，并在该分支上保持声明。
 
+`--tools` 不会移除 MCP 工具，除非它的某个条目以 `mcp__` 开头；`pi --tools read,codemode,'mcp__radius__*'` 只保留 `radius` 的工具。`--exclude-tools` 接受相同的模式，`--no-mcp` 为单次运行禁用 MCP（见 [工具](cli.md#mcp-tools)）。
+
 即使没有 MCP 服务器也要保持 `codemode` 激活，把 `"defaultTools": ["+codemode"]` 加到[设置](settings.md#tools)。若要阻止自动激活 codemode，在 `mcpServers` 旁边设置 `"autoEnableCodemode": false`。项目值会覆盖用户级值。`codemode` 和 `tool_search` 都未激活、非 direct 工具无法被调用时，Pi 会警告一次。
 
 超过 20 KB 的文本结果到达模型时会切掉中间，夹着 `…N chars truncated…` 标记。完整文本保存到结果中写出的临时文件。codemode 脚本收到完整结果，可以在返回给模型之前再压缩。
@@ -279,7 +281,7 @@ MCP Apps 的资源（`ui://` URI 或 `text/html;profile=mcp-app`）会省略，�
 
 ### 替换内置 MCP 支持
 
-已安装的扩展如果注册了 `/mcp`（例如 `pi-mcp-adapter`），会替换会话中的内置 MCP 支持。Pi 之后既不读取 `mcp.json`，也不在会话中连接它的服务器，`/mcp` 属于该扩展。移除扩展即可恢复内置行为。不安装替代就关掉内置 MCP 支持，在 `pi config` 的 Built-in 下禁用 `mcp`，或在[设置](settings.md#resources)中设 `"extensions": ["-builtin:mcp"]`。
+已安装的扩展如果注册了 `/mcp`（例如 `pi-mcp-adapter`），会替换会话中的内置 MCP 支持。Pi 之后既不读取 `mcp.json`，也不在会话中连接它的服务器，`/mcp` 属于该扩展。移除扩展即可恢复内置行为。不安装替代就关掉内置 MCP 支持，在 `pi config` 的 Built-in 下禁用 `mcp`，或在[设置](settings.md#resources)中设 `"extensions": ["-builtin:mcp"]`。`--no-mcp` 为单次运行禁用它。
 
 注册 `codemode` 或 `tool_search` 的扩展同样会替换该名称的内置工具。shell 级 `pi mcp` 命令始终使用内置实现。
 

@@ -92,7 +92,14 @@ Hugging Face 搜索会依次使用 `HF_TOKEN`（如果已设置）、`$HF_TOKEN_
 
 ## 分类
 
-每个出现在 chat 列表中的模型，也会以相同 ID 和 `llama-cpp-classify` API 列为分类器模型。分类器模型回答关于 JSON 状态的带类型 `choice`、`bool` 和 `score` 问题，类似 TypeSafe 的 Jev 模型。模型通过 [`codemode`](cli.md#enable-codemode) 脚本以及扩展的 `ctx.modelRegistry.classify()` 到达它们；见[分类器模型](models.md#use-classifier-models)。
+分类器模型回答关于 JSON 状态的带类型 `choice`、`bool` 和 `score` 问题，类似 TypeSafe 的 Jev 模型。模型通过 [`codemode`](cli.md#enable-codemode) 脚本以及扩展的 `ctx.modelRegistry.classify()` 到达它们；见[分类器模型](models.md#use-classifier-models)。Pi 以两种方式把 llama.cpp 模型列为分类器：
+
+- **决策模型**，例如 [Julia-1、Laya、Kev、lev 和 OpenJev](https://huggingface.co/collections/ggml-org/decision-models-6abf80cca3c83f127060a769)，通过 llama.cpp 的 `/v1/systemone` 端点原生作答。它们只作为分类器出现，API 为 `typesafe-system-one`，不出现在 `/model` 中。
+- **聊天模型**也会以相同 ID 和 `llama-cpp-classify` API 列为分类器，该 API 按下文所述从下一个 Token 的概率读取答案。
+
+llama.cpp 0.6.0 及之后版本会在 router 的模型列表中报告决策模型：它们的 `architecture.output_modalities` 包含 `decisions`。router 从 GGUF 元数据读取这一信息，无需加载模型，因此 Pi 也能识别未加载和休眠的决策模型。更早的 llama.cpp 构建不会报告它，Pi 会把它们的决策模型列为聊天模型。
+
+### 聊天模型作为分类器
 
 模型并不生成答案。每个问题变成一条 chat Prompt：状态、该请求的全部问题、状态再出现一次，然后是该问题及其答案（用单 Token 标签）。choice 的标签是字母（最多 62 个选项），bool 是 `Yes`/`No`，score 是数字（最多 10 级）。第二份状态是在已看到问题的情况下读取的，这在 JevBench 上提高了小模型的准确率。Pi 读取这些标签作为下一个 Token 的概率并做归一化。choice 返回每个选项的概率，以及置信度 `(n * peak - 1) / (n - 1)`；score 返回期望等级。
 

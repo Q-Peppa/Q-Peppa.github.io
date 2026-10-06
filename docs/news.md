@@ -2,6 +2,101 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v1.0.4（2026-10-05）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **工具模式与 `--no-mcp`** – `--tools` 和 `--exclude-tools` 接受 `*` 模式，例如 `--tools read,codemode,'mcp__radius__*'` 只保留一个 MCP 服务器的工具。`--tools` 现在保留 MCP 工具，除非某个条目以 `mcp__` 开头；`--no-mcp` 可以为单次运行关闭 MCP。详见 [工具](/docs/latest/cli#tools) 和 [MCP 工具](/docs/latest/cli#mcp-tools)。
+- **Codemode 保留图片** – 对图片文件调用 `tools.read()` 现在返回 `image()` 能展示的图片块。详见 [调用工具](/docs/latest/codemode#call-tools)。
+
+新增
+
+- 为 `--tools` 和 `--exclude-tools` 添加 `*` 模式，例如 `--tools read,codemode,'mcp__radius__*'`。
+- 添加 `--no-mcp`，为单次运行禁用内置 MCP 支持。
+
+修复
+
+- 修复语法高亮在围栏代码块中，多行字符串和注释的第一行之后丢失颜色的问题（[#10143](https://github.com/earendil-works/pi/issues/10143)）。
+- 修复 codemode 脚本收不到来自 `read` 的图片：`tools.read()` 现在对图片文件解析为图片块，`image()` 可以展示它（[#10251](https://github.com/earendil-works/pi/issues/10251)）。
+- 修复 MCP OAuth 登录在 OpenID Connect 客户端注册的服务器（例如 `mcp.modem.dev`）上以 `invalid_redirect_uri` 失败的问题：pi 现在注册为原生客户端（[#10493](https://github.com/earendil-works/pi/issues/10493)）。
+- 修复 `--tools` 移除 MCP 工具，导致 `pi --tools codemode` 没有任何 MCP 服务器的问题。`--tools` 现在保留 MCP 工具，除非某个条目以 `mcp__` 开头。
+- 修复 MCP 会话关闭在服务器仍在连接时就返回，导致其传输保持打开，直到服务器应答或超时的问题（[#10249](https://github.com/earendil-works/pi/issues/10249)）。
+- 修复系统 Prompt 规则和 skills 提示点名了被 `prepareLoadout` 隐藏的工具的问题。隐藏的工具会从规则中排除，文件读取工具被隐藏时 skills 提示不提任何工具，`codemode` 会在声明旁显示每个工具的 Prompt 指南；`ToolLoadout` 新增 `getPromptGuidelines()`（[#10343](https://github.com/earendil-works/pi/issues/10343)）。
+- 修复停滞的 HTTP/2 连接之后以 `The pending stream has been canceled` 失败的 Bedrock 请求不会被自动重试的问题（[#10379](https://github.com/earendil-works/pi/issues/10379)）。
+- 修复修改内置对象（例如 `Array.prototype.toJSON = ...`）的 codemode 脚本让 pi 崩溃、留下未结束的 tool call 的问题。现在会在脚本运行前冻结内置对象，因此这类修改不生效（[#10444](https://github.com/earendil-works/pi/issues/10444)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+修复
+
+- 修复停滞的 HTTP/2 连接之后以 `The pending stream has been canceled` 失败的 Bedrock 请求不会被自动重试的问题（[#10379](https://github.com/earendil-works/pi/issues/10379)）。
+
+</details>
+
+## v1.0.3（2026-10-05）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **Azure Foundry Chat Completions** – `azure` Provider（由 `azure-openai-responses` 更名而来）现在还提供 Foundry Chat Completions 部署，从 `azure/deepseek-v4-pro` 开始。详见 [Azure OpenAI](/docs/latest/providers#azure-openai)。
+- **Codemode 图片保存到文件** – `image()` 还会把每张图片写入临时文件，并在结果中给出路径，因此之后的轮次可以复制或移动生成的图片。详见 [生成图片](/docs/latest/codemode#generate-images)。
+
+不兼容变更
+
+- Azure Provider 由 `azure-openai-responses` 更名为 `azure`。请重命名 `auth.json`（或重新运行 `/login`）、`models.json` 和 `settings.json` 中的 Provider key（`defaultProvider`、`enabledModels` 模式和 `modelThinkingLevels` 键）。使用旧 Provider 的会话在恢复时回退到其他模型，且不会复用其 Prompt 缓存。`AZURE_OPENAI_*` 环境变量不变（[#9714](https://github.com/earendil-works/pi/pull/9714) 由 [@jsanter27](https://github.com/jsanter27) 贡献）。
+
+新增
+
+- 添加 Azure Foundry Chat Completions 部署，从 `azure/deepseek-v4-pro` 开始（[#9645](https://github.com/earendil-works/pi/issues/9645)、[#9714](https://github.com/earendil-works/pi/pull/9714) 由 [@jsanter27](https://github.com/jsanter27) 贡献）。
+
+变更
+
+- Codemode 的 `image()` 现在还会把每张图片保存到临时文件，并在结果中给出路径，因此之后的轮次可以复制或移动生成的图片（[#10310](https://github.com/earendil-works/pi/issues/10310)）。
+- 输出文件（截断工具输出的完整文本、二进制 MCP 资源、codemode 图片）现在只有用户可读。
+- `Home`/`End` 现在总是把编辑器光标移到行首/行尾；全屏转录的顶部/底部移到 `Ctrl+Home`/`Ctrl+End`，它们不再移动编辑器光标（[#10314](https://github.com/earendil-works/pi/issues/10314)）。
+
+修复
+
+- 修复在 OAuth Token 刷新期间请求被取消后，Sign in with ChatGPT 等订阅登录以 `refresh_token_invalidated` 失败的问题。
+- 修复 pnpm 全局更新删除正在运行的安装后，codemode 在会话剩余时间内失败的问题，并在 pi 于磁盘上被更新或删除后出错时添加重启提示（[#10439](https://github.com/earendil-works/pi/issues/10439)）。
+- 修复终端消失（例如关闭窗口，或在已关闭的终端中恢复挂起的 pi）时，交互式会话报告 `read EIO` 或 `setRawMode EIO` 崩溃（并提示运行 /bug）的问题。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+不兼容变更
+
+- Azure Provider 由 `azure-openai-responses` 更名为 `azure`，因为它现在还提供 Chat Completions 以及 Responses API。使用 `getModel("azure", ...)`，并从 `@earendil-works/pi-ai/providers/azure` 导入 `azureProvider` 和 `AZURE_MODELS`，而不是从 `providers/azure-openai-responses` 导入 `azureOpenAIResponsesProvider` 和 `AZURE_OPENAI_RESPONSES_MODELS`。`azure-openai-responses` 的 API id 和 `AZURE_OPENAI_*` 环境变量不变（[#9714](https://github.com/earendil-works/pi/pull/9714) 由 [@jsanter27](https://github.com/jsanter27) 贡献）。
+
+新增
+
+- 为 Azure Provider 添加对 Foundry 部署的 Chat Completions 支持，内置目录中包含 DeepSeek V4 Pro。其他 Foundry 模型可以用 `api: "openai-completions"` 加到 `azure` Provider 下，`AZURE_OPENAI_DEPLOYMENT_NAME_MAP` 和 `azureDeploymentName` 对两个 API 都适用（[#9645](https://github.com/earendil-works/pi/issues/9645)、[#9714](https://github.com/earendil-works/pi/pull/9714) 由 [@jsanter27](https://github.com/jsanter27) 贡献）。
+
+修复
+
+- 修复在 Token 刷新期间请求或模型刷新被取消或被取代时 OAuth 凭证失效的问题：已开始的 Token 刷新现在会完成并持久化轮换后的 refresh token。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+变更
+
+- `Home`/`End` 现在总是把编辑器光标移到行首/行尾；全屏转录的顶部/底部移到 `Ctrl+Home`/`Ctrl+End`，它们不再移动编辑器光标（[#10314](https://github.com/earendil-works/pi/issues/10314)）。
+
+</details>
+
 ## v1.0.2（2026-10-04）
 
 <details>

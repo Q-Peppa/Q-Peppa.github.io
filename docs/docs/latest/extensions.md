@@ -196,7 +196,7 @@ pi.on('tool_call', async (event, ctx) => {
 });
 ```
 
-编排其他工具的工具可以用 `prepareLoadout(loadout)` 在自己激活时调整模型看到的内容。它在活动工具变更时运行，收到已声明的工具、可调用的工具，以及每个已注册工具及其 exposure 和 namespace。它返回已声明工具（包括自己）的替换 `descriptions`，以及 `hiddenDeclarations`：请求中省略声明、但仍保持活动且可调用的活动工具。`codemode` 只用这个 hook、`exposure` 和 `ctx.executeTool()`，因此另一个工具可以用不同名称实现相同行为。
+编排其他工具的工具可以用 `prepareLoadout(loadout)` 在自己激活时调整模型看到的内容。它在活动工具变更时运行，收到已声明的工具、可调用的工具，以及每个已注册工具及其 exposure、namespace 和 prompt guidelines。它返回已声明工具（包括自己）的替换 `descriptions`，以及 `hiddenDeclarations`：请求中省略声明、但仍保持活动且可调用的活动工具。默认系统 prompt 会把隐藏的工具排除在工具列表和规则之外；当文件读取工具被隐藏时，skills 提示也不提任何工具，所以编排工具应自行呈现它们的 guidelines。`codemode` 只用这个 hook、`exposure` 和 `ctx.executeTool()`，因此另一个工具可以用不同名称实现相同行为。
 
 ### 动态激活工具
 

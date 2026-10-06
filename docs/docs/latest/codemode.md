@@ -25,20 +25,20 @@
 
 ## 全局变量
 
-| 全局变量                                     | 用途                                                                                                                                                                                                        |
-| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tools.<name>(args)`                         | 调用一个工具。见[调用工具](#call-tools)。                                                                                                                                                                   |
-| `text(value)`                                | 向输出添加文本项。字符串原样添加，其他值转为 JSON。                                                                                                                                                         |
-| `image(value)`                               | 向输出添加图片：base64 `data:` URL、`{ image_url }` 对象，或 `{ type: "image", data, mimeType }` 图片块（MCP 工具和 `models.generateImages()` 会返回这种块）。不支持远程 URL。接受 PNG、JPEG、GIF 和 WebP。 |
-| `console.log(...)`                           | 与 `text()` 相同；`info`、`warn`、`error` 和 `debug` 也一样。                                                                                                                                               |
-| `return value`                               | 顶层 `return` 像 `text()` 一样添加该值。                                                                                                                                                                    |
-| `exit()`                                     | 成功结束脚本。                                                                                                                                                                                              |
-| `store(key, value)` / `load(key)`            | 在 `codemode` 调用之间保存小的 JSON 值。见[存储值](#store-values)。                                                                                                                                         |
-| `ALL_TOOLS`                                  | 每个可调用工具，形式为 `{ name, description }`，包括描述中未列出的工具。                                                                                                                                    |
-| `searchTools(query, { limit?, namespace? })` | 按相关度给可调用工具排序（BM25，默认 limit 8）。解析为 `{ name, description }[]`。                                                                                                                          |
-| `describeTool(name)`                         | 解析为工具的描述和 TypeScript 声明，或 `undefined`。                                                                                                                                                        |
-| `describeNamespace(name)`                    | 解析为某个 namespace（例如一个 MCP 服务器）的 `{ name, description?, instructions?, tools }`，或 `undefined`。                                                                                              |
-| `models`                                     | 列出并运行非 LLM 模型。见[模型](#models)。                                                                                                                                                                  |
+| 全局变量                                     | 用途                                                                                                                                                                                                                                                                |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tools.<name>(args)`                         | 调用一个工具。见[调用工具](#call-tools)。                                                                                                                                                                                                                           |
+| `text(value)`                                | 向输出添加文本项。字符串原样添加，其他值转为 JSON。                                                                                                                                                                                                                 |
+| `image(value)`                               | 向输出添加图片：base64 `data:` URL、`{ image_url }` 对象，或 `{ type: "image", data, mimeType }` 图片块（MCP 工具和 `models.generateImages()` 会返回这种块）。不支持远程 URL。接受 PNG、JPEG、GIF 和 WebP。每张图片也会保存到临时文件，结果会在图片之前给出该路径。 |
+| `console.log(...)`                           | 与 `text()` 相同；`info`、`warn`、`error` 和 `debug` 也一样。                                                                                                                                                                                                       |
+| `return value`                               | 顶层 `return` 像 `text()` 一样添加该值。                                                                                                                                                                                                                            |
+| `exit()`                                     | 成功结束脚本。                                                                                                                                                                                                                                                      |
+| `store(key, value)` / `load(key)`            | 在 `codemode` 调用之间保存小的 JSON 值。见[存储值](#store-values)。                                                                                                                                                                                                 |
+| `ALL_TOOLS`                                  | 每个可调用工具，形式为 `{ name, description }`，包括描述中未列出的工具。                                                                                                                                                                                            |
+| `searchTools(query, { limit?, namespace? })` | 按相关度给可调用工具排序（BM25，默认 limit 8）。解析为 `{ name, description }[]`。                                                                                                                                                                                  |
+| `describeTool(name)`                         | 解析为工具的描述和 TypeScript 声明，或 `undefined`。                                                                                                                                                                                                                |
+| `describeNamespace(name)`                    | 解析为某个 namespace（例如一个 MCP 服务器）的 `{ name, description?, instructions?, tools }`，或 `undefined`。                                                                                                                                                      |
+| `models`                                     | 列出并运行非 LLM 模型。见[模型](#models)。                                                                                                                                                                                                                          |
 
 <a id="call-tools"></a>
 
@@ -50,13 +50,14 @@
 
 - 带 output schema 的工具解析为结构化值。`bash` 解析为 `{ output, truncated, full_output_path?, exit_code, wall_time_seconds }`，非零退出码也如此。它的 `output` 不受模型看到的 2000 行或 50KB 限制：最多保留 1 MiB，更长的输出在省略标记两侧保留首尾各 512 KiB，并设置 `truncated`，完整输出在 `full_output_path`。
 - MCP 工具解析为它们的 `CallToolResult`，包括 `isError` 和 `structuredContent`。
-- 其他工具（例如 `read`、`edit` 和 `write`）解析为文本输出。
+- `read` 解析为文件的文本；对图片则解析为 `image()` 能展示的图片块 `{ type: "image", data, mimeType, note }`。`data` 是模型会看到的 base64 图片，`note` 是随附的文本，例如缩放提示。
+- 其他工具（例如 `edit` 和 `write`）解析为文本输出。
 
 调用失败、被拦截或参数无效时，会以携带工具错误文本的 `Error` reject。用 `Promise.allSettled()` 可以保留成功调用的结果。
 
 `codemode` 描述用 TypeScript 声明列出工具，按 namespace 分组（例如一个 MCP 服务器）。`deferred` exposure 的工具（包括默认 `codemode` exposure 的 MCP 工具）不列出，因此 MCP 服务器连接时描述保持不变。列出的声明共享 3000 估计 Token 的预算（[设置](settings.md#tools)中的 `codemode.inlineBudget`）。脚本用 `searchTools()`、`describeTool()`、`describeNamespace()` 查找其余工具，或过滤 `ALL_TOOLS`。
 
-`codemode` 激活时，[设置](settings.md#tools)中的 `codemode.mode` 决定其他工具如何呈现。`on`（默认）时，已声明的工具继续声明，描述中说明如何从脚本调用它们。`only` 时，它们对模型隐藏，改列在 `codemode` 描述中，因此模型通过脚本调用它们。
+`codemode` 激活时，[设置](settings.md#tools)中的 `codemode.mode` 决定其他工具如何呈现。`on`（默认）时，已声明的工具继续声明，描述中说明如何从脚本调用它们。`only` 时，它们对模型隐藏，改列在 `codemode` 描述中，因此模型通过脚本调用它们。`codemode` 描述中的工具声明、`describeTool()` 和 `ALL_TOOLS` 会带上工具的 prompt guidelines，因为系统 prompt 规则只覆盖已声明的工具。
 
 <a id="store-values"></a>
 
@@ -64,7 +65,7 @@
 
 `store(key, value)` 把 JSON 值保存在字符串 key 下，供之后的 `codemode` 调用使用；存 `undefined` 会删除该 key。`load(key)` 返回该值，或 `undefined`。只有脚本成功时才会保留写入：每个成功存储值的脚本会向会话追加一条 `codemode-store` 自定义条目，因此恢复的会话保留这些值，每个分支只看到自己路径上写入的值。
 
-store 用于 ID、游标或摘要这类小状态。单个值的 JSON 最多 262144 个字符，全部值合计最多 1048576。不要存图片数据；用 `image()` 展示图片，或用工具写入文件。
+store 用于 ID、游标或摘要这类小状态。单个值的 JSON 最多 262144 个字符，全部值合计最多 1048576。不要存图片数据；用 `image()` 展示图片，它也会把图片保存到临时文件。
 
 <a id="models"></a>
 
@@ -201,7 +202,7 @@ type TextBlock = { type: 'text'; text: string };
 type ImageBlock = { type: 'image'; data: string; mimeType: string };
 ```
 
-用 `image(block)` 展示生成的图片。不要用 `text()`、`console` 或 `return` 打印 `data`：它很大，模型也无法当文本读。生成的图片不会保存到磁盘；要保留，用工具写入文件。
+用 `image(block)` 展示生成的图片。不要用 `text()`、`console` 或 `return` 打印 `data`：它很大，模型也无法当文本读。`image()` 还会把每张图片保存到临时文件，并把路径放进结果，所以之后的轮次可以复制或移动该文件。
 
 ```js
 // @options: {"timeout_ms": 300000}

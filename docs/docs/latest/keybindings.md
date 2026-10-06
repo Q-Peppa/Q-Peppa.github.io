@@ -59,8 +59,8 @@ Pi 暴露具名动作，例如 `app.session.new`，可以为它们分配快捷�
 | `tui.editor.cursorRight`     | `right`、`ctrl+f`                  | 右移光标                       |
 | `tui.editor.cursorWordLeft`  | `alt+left`、`ctrl+left`、`alt+b`   | 光标左移一个词                 |
 | `tui.editor.cursorWordRight` | `alt+right`、`ctrl+right`、`alt+f` | 光标右移一个词                 |
-| `tui.editor.cursorLineStart` | `home`、`ctrl+home`、`ctrl+a`      | 移到行首                       |
-| `tui.editor.cursorLineEnd`   | `end`、`ctrl+end`、`ctrl+e`        | 移到行尾                       |
+| `tui.editor.cursorLineStart` | `home`、`ctrl+a`                   | 移到行首                       |
+| `tui.editor.cursorLineEnd`   | `end`、`ctrl+e`                    | 移到行尾                       |
 | `tui.editor.jumpForward`     | `ctrl+]`                           | 向前跳到某个字符               |
 | `tui.editor.jumpBackward`    | `ctrl+alt+]`                       | 向后跳到某个字符               |
 | `tui.editor.pageUp`          | `pageUp`、`ctrl+pageUp`            | 向上翻页                       |
@@ -115,8 +115,8 @@ Pi 暴露具名动作，例如 `app.session.new`，可以为它们分配快捷�
 | `tui.altScreen.searchNext`     | `enter`、`ctrl+g`                                                 | 搜索时选择下一个匹配项     |
 | `tui.altScreen.searchPrevious` | `shift+enter`、`ctrl+shift+g`                                     | 搜索时选择上一个匹配项     |
 | `tui.altScreen.searchClose`    | `escape`                                                          | 关闭转录搜索               |
-| `tui.altScreen.top`            | `home`                                                            | 滚动到转录开头             |
-| `tui.altScreen.bottom`         | `end`                                                             | 滚动到转录末尾并跟随新输出 |
+| `tui.altScreen.top`            | `ctrl+home`                                                       | 滚动到转录开头             |
+| `tui.altScreen.bottom`         | `ctrl+end`                                                        | 滚动到转录末尾并跟随新输出 |
 
 ### 应用
 
