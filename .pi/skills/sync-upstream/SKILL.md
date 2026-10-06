@@ -229,7 +229,7 @@ for pkg in coding-agent ai agent tui; do
     # 提取增量 diff 中新增的「## [x.y.z] - YYYY-MM-DD」行（diff 的 + 行）
     # 跳过 [Unreleased]（无日期）和无日期的版本标题
     new_releases=$(git diff "${LAST_SYNC_SHA}".."${CURRENT_HEAD}" -- "$file" \
-      | awk '
+      | awk -v pkg="$pkg" '
         /^\+## \[[0-9]+\.[0-9]+\.[0-9]+\] - [0-9]{4}-[0-9]{2}-[0-9]{2}/ {
           line = $0
           sub(/^\+## \[/, "", line)
@@ -238,7 +238,7 @@ for pkg in coding-agent ai agent tui; do
           date = parts[2]
           printf "  %s: %s (%s)\n", pkg, ver, date
         }
-      ' pkg="$pkg" || true)
+      ' || true)
     if [ -n "$new_releases" ]; then
       NEW_VERSIONS="${NEW_VERSIONS}${new_releases}\n"
       echo "$new_releases"
