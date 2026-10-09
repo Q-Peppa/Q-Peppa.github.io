@@ -19,7 +19,7 @@
 - `max_output_tokens`（默认 10000）限制输出。更长的输出保留首尾，完整文本写入临时文件，路径包含在结果中。当输出超过 16777216 个字符的文本与 base64 图片数据，或超过 100000 次 `text()`、`image()` 和 `console` 调用时，脚本会失败；请改用工具把大数据写入文件。
 - `timeout_ms` 是整个脚本的硬截止时间。默认未设置。生成图片可能需要几分钟，因此生成图片的脚本不要设太短的截止时间。
 
-结果以 `Script completed` 或 `Script failed` 开头，然后是墙钟时间和输出。失败的脚本保留部分输出，后面是 `Script error:` 和错误。工具调用是真实的：失败前已发出的调用不会撤销。脚本结束时仍在运行的调用会被取消，未 await 的 promise 会被丢弃。
+结果以 `Script completed` 或 `Script failed` 开头，然后是墙钟时间和输出。文本项和图片项按顺序出现，各占一行。当输出有多个文本项（来自 `text()` 或 `return`）时，每项以一行 `==> text N/M <==` 开头。`console` 调用跟随其后，放在一个 `<console_output>` 块中，每次调用一行。失败的脚本保留部分输出，后面是 `Script error:` 和错误。工具调用是真实的：失败前已发出的调用不会撤销。脚本结束时仍在运行的调用会被取消，未 await 的 promise 会被丢弃。
 
 <a id="globals"></a>
 
@@ -30,7 +30,7 @@
 | `tools.<name>(args)`                         | 调用一个工具。见[调用工具](#call-tools)。                                                                                                                                                                                                                           |
 | `text(value)`                                | 向输出添加文本项。字符串原样添加，其他值转为 JSON。                                                                                                                                                                                                                 |
 | `image(value)`                               | 向输出添加图片：base64 `data:` URL、`{ image_url }` 对象，或 `{ type: "image", data, mimeType }` 图片块（MCP 工具和 `models.generateImages()` 会返回这种块）。不支持远程 URL。接受 PNG、JPEG、GIF 和 WebP。每张图片也会保存到临时文件，结果会在图片之前给出该路径。 |
-| `console.log(...)`                           | 与 `text()` 相同；`info`、`warn`、`error` 和 `debug` 也一样。                                                                                                                                                                                                       |
+| `console.log(...)`                           | 向其他输出之后的 `<console_output>` 块添加一行。参数用空格连接；`info`、`warn`、`error` 和 `debug` 也一样。                                                                                                                                                         |
 | `return value`                               | 顶层 `return` 像 `text()` 一样添加该值。                                                                                                                                                                                                                            |
 | `exit()`                                     | 成功结束脚本。                                                                                                                                                                                                                                                      |
 | `store(key, value)` / `load(key)`            | 在 `codemode` 调用之间保存小的 JSON 值。见[存储值](#store-values)。                                                                                                                                                                                                 |
@@ -71,7 +71,7 @@ store 用于 ID、游标或摘要这类小状态。单个值的 JSON 最多 2621
 
 ## 模型
 
-`models` 访问模型目录，并用会话凭证运行非 LLM 模型：分类器（针对 JSON 状态回答带类型的问题）和图片模型（生成图片）。聊天模型会被列出，但不能从脚本运行。有哪些分类器和图片模型，见[使用分类器模型](models.md#use-classifier-models) 和 [使用图片模型](models.md#use-image-models)。
+`models` 访问模型目录，并用会话凭证运行非 LLM 模型：分类器（针对 JSON 状态回答带类型的问题，某些模型还能处理图片）和图片模型（生成图片）。聊天模型会被列出，但不能从脚本运行。有哪些分类器和图片模型，见[使用分类器模型](models.md#use-classifier-models) 和 [使用图片模型](models.md#use-image-models)。
 
 ```ts
 type ModelType = 'chat' | 'image' | 'classifier';
@@ -114,6 +114,8 @@ declare const models: {
 interface ClassifierContext {
   /** The data to classify. */
   state: Record<string, unknown>;
+  /** Images judged together with `state`. Only models whose `input` includes "image" accept them. */
+  images?: { type: 'image'; data: string; mimeType: string }[];
   /** Questions by ID. One call answers all of them. */
   questions: Record<string, ClassifierQuestion>;
 }
@@ -175,6 +177,24 @@ return results.map((result, i) =>
     ? { message: messages[i], sentiment: result.answers.sentiment.choice, urgency: result.answers.urgency.score }
     : { message: messages[i], error: result.errorMessage },
 );
+```
+
+`input` 包含 `"image"` 的分类器也能判断图片。`tools.read()` 会把图片文件返回为图片块，`images` 接受这种块。当 `images` 非空时，其他分类器会返回错误结果。
+
+```js
+const luna = await models.getModelOfType('classifier', 'openai', 'gpt-6-luna');
+const photo = await tools.read({ path: 'screenshot.png' });
+const result = await models.classify(luna, {
+  state: { task: 'Settings page redesign' },
+  images: [photo],
+  questions: {
+    broken: {
+      type: 'bool',
+      instructions: 'Does the screenshot show a broken layout?',
+      criteria: { true: 'Overlapping, cut-off, or misaligned elements', false: 'Clean layout' },
+    },
+  },
+});
 ```
 
 <a id="generate-images"></a>

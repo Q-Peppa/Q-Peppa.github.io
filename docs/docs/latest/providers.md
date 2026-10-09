@@ -123,6 +123,10 @@ Radius 认证使用它的网关目录，并缓存刷新后的模型元数据以�
 
 ### Azure OpenAI
 
+Provider ID 是 `azure`（原名 `azure-openai-responses`）。在 `auth.json`、`models.json` 和 `settings.json` 中用这个 key，模型引用也一样，例如 `--model azure/gpt-5.4`。
+
+`azure` Provider 通过 Responses API 提供 OpenAI 模型，通过 Chat Completions 提供 Microsoft Foundry 模型，例如 `azure/deepseek-v4-pro`。
+
 设置 API Key，以及 base URL 或资源名：
 
 ```bash
@@ -133,6 +137,26 @@ export AZURE_OPENAI_RESOURCE_NAME=your-resource
 ```
 
 `ai.azure.com`、`cognitiveservices.azure.com` 和 `openai.azure.com` 下的资源根 URL 会被规范化为 OpenAI API 路径。
+Pi 把模型 ID 作为部署名发送。如果部署名不同，用 `AZURE_OPENAI_DEPLOYMENT_NAME_MAP` 映射：
+
+```bash
+export AZURE_OPENAI_DEPLOYMENT_NAME_MAP=gpt-5.4=my-gpt-deployment,deepseek-v4-pro=my-deepseek
+```
+
+`AZURE_OPENAI_API_VERSION` 覆盖 OpenAI 模型的 API 版本（默认 `v1`）。
+
+要使用 Pi 未内置的 Foundry 模型，在 [`models.json`](models.md#configure-a-compatible-endpoint) 的 `azure` 下添加它，并设置 `api: "openai-completions"`。自定义模型需要 `baseUrl`；设置后 `AZURE_OPENAI_BASE_URL` 和 `AZURE_OPENAI_RESOURCE_NAME` 优先于它：
+
+```json
+{
+  "providers": {
+    "azure": {
+      "baseUrl": "https://your-resource.services.ai.azure.com",
+      "models": [{ "id": "your-deployment", "api": "openai-completions" }]
+    }
+  }
+}
+```
 
 ### Amazon Bedrock
 

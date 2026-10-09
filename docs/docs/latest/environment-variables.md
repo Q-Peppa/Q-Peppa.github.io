@@ -78,24 +78,25 @@ const powershellTool = createPowerShellTool(cwd, {
 
 这些变量由 Pi 自己读取：
 
-| 变量                          | 说明                                                                                                                           |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `PI_CODING_AGENT_DIR`         | 覆盖配置目录；默认是 `~/.pi/agent`                                                                                             |
-| `PI_CODING_AGENT_SESSION_DIR` | 覆盖会话存储；会被 `--session-dir` 覆盖                                                                                        |
-| `PI_PACKAGE_DIR`              | 覆盖包目录，对 Nix/Guix store 路径有用                                                                                         |
-| `PI_OFFLINE`                  | 禁用自动网络活动，包括模型目录刷新                                                                                             |
-| `PI_SKIP_VERSION_CHECK`       | 禁用向 `pi.dev` 请求最新版本                                                                                                   |
-| `PI_TELEMETRY`                | 覆盖安装/更新遥测和 Provider 归属 header：`1`/`true`/`yes` 或 `0`/`false`/`no`                                                 |
-| `PI_CACHE_RETENTION`          | 设为 `long`，在受支持处启用延长的 Provider Prompt 缓存                                                                         |
-| `PI_SHARE_VIEWER_URL`         | 覆盖 `/share` 使用的基础 URL                                                                                                   |
-| `PI_RADIUS_GATEWAY`           | 覆盖 `/bug` 上传和 Radius relay 连接使用的 Radius 网关源                                                                       |
-| `PI_HARDWARE_CURSOR`          | 设为 `1` 显示硬件光标；见[终端设置](terminal-setup.md)                                                                         |
-| `PI_HYPERLINKS`               | 用 `1`、`0` 或 `auto` 覆盖 OSC 8 超链接检测                                                                                    |
-| `PI_IMAGE_PROTOCOL`           | 用 `kitty`、`iterm2`、`none` 或 `auto` 覆盖内联图片检测                                                                        |
-| `PI_TRUE_COLOR`               | 用 `1`、`0` 或 `auto` 覆盖 truecolor 检测                                                                                      |
-| `PI_TUI_ESC_TIMEOUT`          | 单独的 ESC 被当作 Escape 之前的等待时长（毫秒）；SSH 下默认为 `100`，其他情况为 `10`。如果 Alt 键输入被误读为 Escape，请增大它 |
-| `VISUAL`、`EDITOR`            | `externalEditor` 未设置时的外部编辑器回退                                                                                      |
-| `HTTP_PROXY`、`HTTPS_PROXY`   | 出站 HTTP 请求的代理                                                                                                           |
+| 变量                          | 说明                                                                                                                                   |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `PI_CODING_AGENT_DIR`         | 覆盖配置目录；默认是 `~/.pi/agent`                                                                                                     |
+| `PI_CODING_AGENT_SESSION_DIR` | 覆盖会话存储；会被 `--session-dir` 覆盖                                                                                                |
+| `PI_PACKAGE_DIR`              | 覆盖包目录，对 Nix/Guix store 路径有用                                                                                                 |
+| `PI_OFFLINE`                  | 禁用自动网络活动，包括模型目录刷新                                                                                                     |
+| `PI_SKIP_VERSION_CHECK`       | 禁用向 `pi.dev` 请求最新版本                                                                                                           |
+| `PI_TELEMETRY`                | 覆盖安装/更新遥测和 Provider 归属 header：`1`/`true`/`yes` 或 `0`/`false`/`no`                                                         |
+| `PI_CACHE_RETENTION`          | 设为 `long`，在受支持处启用延长的 Provider Prompt 缓存                                                                                 |
+| `PI_SHARE_VIEWER_URL`         | 覆盖 `/share` 使用的基础 URL                                                                                                           |
+| `PI_RADIUS_GATEWAY`           | 覆盖 `/bug` 上传和 Radius relay 连接使用的 Radius 网关源                                                                               |
+| `PI_HARDWARE_CURSOR`          | 设为 `1` 显示硬件光标；见[终端设置](terminal-setup.md)                                                                                 |
+| `PI_HYPERLINKS`               | 用 `1`、`0` 或 `auto` 覆盖 OSC 8 超链接检测                                                                                            |
+| `PI_PROGRAM_STATUS`           | 覆盖 OSC 7501 程序状态检测：`1` 总是上报，`0` 从不上报；否则 Pi 只在终端确认支持后上报。见[终端设置](terminal-setup.md#program-status) |
+| `PI_IMAGE_PROTOCOL`           | 用 `kitty`、`iterm2`、`none` 或 `auto` 覆盖内联图片检测                                                                                |
+| `PI_TRUE_COLOR`               | 用 `1`、`0` 或 `auto` 覆盖 truecolor 检测                                                                                              |
+| `PI_TUI_ESC_TIMEOUT`          | 单独的 ESC 被当作 Escape 之前的等待时长（毫秒）；SSH 下默认为 `100`，其他情况为 `10`。如果 Alt 键输入被误读为 Escape，请增大它         |
+| `VISUAL`、`EDITOR`            | `externalEditor` 未设置时的外部编辑器回退                                                                                              |
+| `HTTP_PROXY`、`HTTPS_PROXY`   | 出站 HTTP 请求的代理                                                                                                                   |
 
 `ANTHROPIC_API_KEY`、`OPENAI_API_KEY` 等 Provider 凭证和 Provider 特定配置列在 [Providers](providers.md#use-an-api-key-from-the-environment)中。
 

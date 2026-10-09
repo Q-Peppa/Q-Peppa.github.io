@@ -132,7 +132,7 @@ Pi 先对不支持的 thinking level 做钳制，然后按此顺序合并模型 
 
 ## 使用分类器模型
 
-分类器模型不用于对话。它们回答关于 JSON 状态的带类型问题：从若干选项中选一个、回答是否，或给出分数，每项都带概率。Pi 通过这些 Provider 提供 TypeSafe 的 Jev 模型，并通过 Workers AI 提供 Cloudflare 的 Clef 和 Clef Flash 模型：
+分类器模型不用于对话。它们回答关于 JSON 状态的带类型问题：从若干选项中选一个、回答是否，或给出分数，每项都带概率。Pi 通过这些 Provider 提供 TypeSafe 的 Jev 模型，通过 Workers AI 提供 Cloudflare 的 Clef 和 Clef Flash 模型，并通过 [Decisions API](https://developers.openai.com/api/docs/guides/decisions) 提供 OpenAI 的 GPT-6 Luna：
 
 | Provider                | 模型 ID                                                            | 认证                                            |
 | ----------------------- | ------------------------------------------------------------------ | ----------------------------------------------- |
@@ -141,8 +141,11 @@ Pi 先对不支持的 thinking level 做钳制，然后按此顺序合并模型 
 | `cloudflare-workers-ai` | `typesafe/jev`、`@cf/cloudflare/clef`、`@cf/cloudflare/clef-flash` | `CLOUDFLARE_API_KEY` 和 `CLOUDFLARE_ACCOUNT_ID` |
 | `vercel-ai-gateway`     | `typesafe-ai/jev`                                                  | `AI_GATEWAY_API_KEY`                            |
 | `opencode`              | `jev-1.13`、`jev-1.13-free`                                        | `OPENCODE_API_KEY`                              |
+| `openai`                | `gpt-6-luna`                                                       | `OPENAI_API_KEY`                                |
 
 [llama.cpp router](llama-cpp.md#classification) 上的 chat 模型也会列为分类器模型。
+
+OpenAI 的 Decisions API 需要 API key。Sign in with ChatGPT 凭证对它无效，所以当 `openai` 通过 `/login` 登录时，即使设置了 `OPENAI_API_KEY`，`gpt-6-luna` 也不会被列为可用；请先登出 `openai` 再使用该 key。GPT-6 Luna 还会判断通过 `images` 传入的图片（见 [Codemode](codemode.md#classify)）；其他分类器模型对它们返回错误。该 API 拒绝超过 922K Token 的输入，但运行时间超过约五秒的请求（目前大致超过 600K 输入 Token）会以网关超时失败。
 
 分类器模型不会出现在 `/model` 中。模型通过 [`codemode`](cli.md#enable-codemode) 工具到达它们；除非某个 MCP 服务器打开了它，否则它是关闭的。在[设置](settings.md#tools)中用 `"defaultTools": ["+codemode"]` 启用。脚本随后用 `models.getAvailableOfType("classifier")` 列出分类器模型，并调用 `models.classify(model, { state, questions })`：
 

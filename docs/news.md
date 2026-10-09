@@ -2,6 +2,130 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v1.1.0（2026-10-07）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **程序状态上报** – 支持 OSC 7501 的终端和 agent 仪表盘可以看到 Pi 正在工作、被对话框或登录阻塞、已完成还是失败。详见 [程序状态](/docs/latest/terminal-setup#program-status)。
+- **Claude Haiku 5.5** – `anthropic/claude-haiku-5-5`，支持最高 `xhigh`/`max` effort 的自适应 thinking。
+- **用 `+name`/`-name` 调整默认工具** – `--tools` 条目如 `pi -t +codemode,-write` 会调整默认选择，而不是替换它。详见 [工具](/docs/latest/cli#tools)。
+- **GPT-6 Luna 与图片分类** – OpenAI 的 GPT-6 Luna 可通过 Decisions API 作为分类器模型使用，codemode 的 `models.classify()` 接受图片（前提是分类器支持）。详见 [使用分类器模型](/docs/latest/models#use-classifier-models)。
+- **原生 llama.cpp 决策模型** – 由 llama.cpp 0.6.0 或更高版本提供的 Julia-1、Laya、Kev、lev 和 OpenJev 通过 `/v1/systemone` 原生作为分类器运行。详见 [分类](/docs/latest/llama-cpp#classification)。
+
+新增
+
+- 为 `--tools` 添加 `+name` 和 `-name` 条目，它们会调整默认工具选择而不是替换它，例如 `pi -t +codemode`。
+- 为工具渲染上下文和 `tool_execution_end` 扩展事件添加 `durationMs`：最终工具结果的记录执行时间（[#10549](https://github.com/earendil-works/pi/issues/10549)）。
+- 为工具渲染上下文添加 `outputPad`（[#10557](https://github.com/earendil-works/pi/pull/10557) 由 [@rwachtler](https://github.com/rwachtler) 贡献）。
+- 添加 OpenAI 的 GPT-6 Luna 作为通过 Decisions API 使用的分类器模型，需要 `OPENAI_API_KEY`（详见 [使用分类器模型](/docs/latest/models#use-classifier-models)）。
+- 为 codemode 的 `models.classify()` 上下文添加 `images`，因此接受图片的分类器（如 GPT-6 Luna）可以判断图片。
+- 添加 OSC 7501 程序状态上报：支持它的终端和 agent 仪表盘可以看到 Pi 正在工作、被对话框或登录阻塞、已完成还是失败。`PI_PROGRAM_STATUS=1|0` 可覆盖检测（详见 [终端设置](/docs/latest/terminal-setup#program-status)）（[#10607](https://github.com/earendil-works/pi/issues/10607)）。
+- 为 `agent_settled` 会话、扩展和 JSON 事件添加 `aborted`，因此集成可以区分被取消的运行和已完成的运行（[#10607](https://github.com/earendil-works/pi/issues/10607)）。
+- 添加 Claude Haiku 5.5（`anthropic/claude-haiku-5-5`），支持最高 `xhigh`/`max` effort 的自适应 thinking，以及在 Bedrock 上的 Prompt 缓存。
+- 添加原生 llama.cpp 决策模型：由 llama.cpp 0.6.0 或更高版本提供的 Julia-1、Laya、Kev、lev 和 OpenJev 只作为分类器通过 `/v1/systemone` 列出，而不再作为聊天模型（详见 [分类](/docs/latest/llama-cpp#classification)）（[#10382](https://github.com/earendil-works/pi/pull/10382)）。
+
+变更
+
+- `outputPad` 现在也适用于 `!` 命令输出、工具输出和摘要块（[#9946](https://github.com/earendil-works/pi/issues/9946)、[#10557](https://github.com/earendil-works/pi/pull/10557) 由 [@rwachtler](https://github.com/rwachtler) 贡献）。
+- `pi mcp login --timeout` 现在限制整个登录过程（包括对授权服务器的请求），而不只是等待浏览器（[#10565](https://github.com/earendil-works/pi/issues/10565)）。
+
+修复
+
+- 修复重新加载会话后 bash 和 PowerShell 结果丢失 `Took`，以及实时 `Took` 包含墙钟步骤的问题；两者现在都显示记录的执行时间（[#10549](https://github.com/earendil-works/pi/issues/10549)）。
+- 修复托管安装保留每个旧版本的问题；`pi update` 现在只保留新版本和它所更新的那个版本（[#10392](https://github.com/earendil-works/pi/issues/10392)、[#10511](https://github.com/earendil-works/pi/pull/10511) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 修复独立二进制文件从启动目录加载 `.env`、`.env.local` 和 `.env.development` 到 Pi 环境的问题（[#10473](https://github.com/earendil-works/pi/issues/10473)）。
+- 修复 `!!` 命令标题在有输出后丢失暗色的问题（[#10557](https://github.com/earendil-works/pi/pull/10557) 由 [@rwachtler](https://github.com/rwachtler) 贡献）。
+- 修复 codemode 描述没有把 `searchTools()`、`describeTool()` 和 `describeNamespace()` 标记为 async，导致模型把未 await 的 promise 序列化为 `{}` 的问题（[#10555](https://github.com/earendil-works/pi/issues/10555)）。
+- 修复 codemode 输出项连在一起，导致模型无法分辨一个 `text()` 或 `console.log()` 输出的结束和下一个的开始的问题。有多个文本项时，每项现在以一行 `==> text N/M <==` 开头，`console` 调用跟随其他输出放在一个 `<console_output>` 块中，每次调用一行。
+- 修复 `/mcp` 在打开前等待所有服务器连接的问题；管理器现在实时更新，在启用、重连或禁用服务器期间保持可用（[#10562](https://github.com/earendil-works/pi/issues/10562)）。
+- 修复在 Node 24.19+ 和 26.x 上使用 `node --watch` 运行时，图片因 "could not be resized" 被丢弃的问题：此时 Node 会在图片缩放 worker 通道上发布自己的消息（[#10527](https://github.com/earendil-works/pi/issues/10527)）。
+- 修复在 Termux 中剪贴板粘贴无反应，以及那里复制失败时缺少 Termux:API 安装提示的问题（[#10391](https://github.com/earendil-works/pi/issues/10391)）。
+- 修复当颜色码被拆分到不同输出块时，`!` 和 RPC `bash` 输出残留颜色码片段（例如一个孤立的 `m`）的问题（[#10504](https://github.com/earendil-works/pi/issues/10504)）。
+- 修复 MCP OAuth 登录在等待授权服务器时无法取消，并在会话结束后继续运行的问题。登录界面现在每一步都可以用 Esc 取消，会话关闭会中止正在进行的登录，每个对授权服务器的请求在 15 秒后超时（[#10565](https://github.com/earendil-works/pi/issues/10565)）。
+- 修复关闭时最多等待 15 秒去刷新即将过期的 MCP OAuth Token，结果只是关闭服务器的会话的问题（[#10565](https://github.com/earendil-works/pi/issues/10565)）。
+- 修复全屏文本选择在切换会话和其他转录重建后仍然保留，从而在新转录中高亮无关文本的问题（[#9311](https://github.com/earendil-works/pi/issues/9311)、[#10567](https://github.com/earendil-works/pi/pull/10567) 由 [@christianklotz](https://github.com/christianklotz) 贡献）。
+- 修复 Bedrock 上的 OpenAI 模型忽略 thinking 级别、总是以 Bedrock 默认推理 effort 运行的问题（[#9331](https://github.com/earendil-works/pi/issues/9331)、[#10142](https://github.com/earendil-works/pi/pull/10142) 由 [@jsanter27](https://github.com/jsanter27) 贡献）。
+- 修复 `models.json` 中的模型 `headers` 不能覆盖 Codex 请求的 `originator` 和 `User-Agent` 头的问题（[#10429](https://github.com/earendil-works/pi/pull/10429) 由 [@lucasmeijer](https://github.com/lucasmeijer) 贡献）。
+- 修复 `server_busy` 和 `servers are currently busy` Provider 错误结束回合而不是被重试的问题（[#10543](https://github.com/earendil-works/pi/issues/10543)）。
+- 修复以 `finish_reason: "error"` 结束的 Mistral 响应不被重试的问题（[#10487](https://github.com/earendil-works/pi/issues/10487)）。
+- 通过按每 Token 3.5 个字符（而不是 4 个）估算输入来计算输出限制，减少上下文限制导致的请求失败（[#10497](https://github.com/earendil-works/pi/issues/10497)）。
+- 修复被组织所有者禁用的 Radius 模型仍被列出的问题。
+- 修复端口 53692 被保留或占用（例如 Windows 上 Hyper-V/WSL 的端口排除）时，Anthropic 浏览器登录报 "localhost refused to connect" 的问题：登录现在会回退到一个空闲的本地回环端口（[#10571](https://github.com/earendil-works/pi/issues/10571)）。
+- 修复会话成本对具有 Prompt 长度定价档位的模型（如 Claude Haiku 5.5、Gemini 3.1 Pro 和 GPT-5.4）在长 Prompt 上少计的问题，涉及 OpenCode、OpenCode Go、OpenRouter、Vercel AI Gateway、Google、MiniMax 和其他 Provider。
+- 修复 Markdown 链接在 Herdr 中不可点击的问题（[#10573](https://github.com/earendil-works/pi/issues/10573)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+不兼容变更
+
+- stream 函数必须返回 `AssistantMessageEventStream`，例如来自 `createAssistantMessageEventStream()`；手写的 `EventStream<AssistantMessageEvent, AssistantMessage>` 子类不再能作为替代通过类型检查。
+
+新增
+
+- 为 `AssistantMessage` 添加 `durationMs`：`AssistantMessageEventStream` 对每个响应使用单调时钟测量从请求开始到最终消息的时间，适用于每个 API 实现，包括直接调用。稍后获取的延迟结果不计时（[#10549](https://github.com/earendil-works/pi/issues/10549)）。
+- 为 `ToolResultMessage` 添加可选的 `durationMs`，表示工具的执行时间（[#10549](https://github.com/earendil-works/pi/issues/10549)）。
+- 添加用于 OpenAI Decisions API 的 `openai-decisions` 分类器 API，`gpt-6-luna` 作为 `openai` Provider 的分类器模型。它需要 API key，因此当 `openai` 使用 Sign in with ChatGPT 时不会被列为可用。
+- 为 `anthropic` Provider 添加 Claude Haiku 5.5（`claude-haiku-5-5`），包含其 Prompt 长度定价档位、支持 `xhigh`/`max` effort 的自适应 thinking、每消息 effort，以及对话中途的系统消息和工具变更。Haiku 5.5 的 Bedrock 请求使用自适应 thinking、原生 `xhigh` 和 Prompt 缓存。
+- 添加 `LoginOptions.agentName`，用于替换 pi 在 Sign in with ChatGPT agent name 提示中的名称和 Codex 浏览器登录的 originator（[#10433](https://github.com/earendil-works/pi/pull/10433) 由 [@lucasmeijer](https://github.com/lucasmeijer) 贡献）。
+- 为 `ClassifierContext` 添加可选的 `images`。`input` 包含 `"image"` 的模型会结合状态判断图片；`classify()` 对其他模型和无法发送图片的 API 返回错误结果。
+
+变更
+
+- faux Provider 的 Prompt 缓存用量估算现在逐消息比较上一个和当前的 Prompt 消息，并只从第一条不同的消息开始比较字符；用量数字不变。
+
+修复
+
+- 修复 `server_busy` 和 `servers are currently busy` Provider 错误结束回合而不是被重试的问题（[#10543](https://github.com/earendil-works/pi/issues/10543)）。
+- 修复失败的惰性 API 设置（例如模块加载或认证失败）的错误消息使用其失败时间而不是请求开始时间作为 `timestamp` 的问题。
+- 通过按每 Token 3.5 个字符（而不是 4 个）估算输入来计算输出限制，减少上下文限制导致的请求失败（[#10497](https://github.com/earendil-works/pi/issues/10497)）。
+- 修复被组织所有者禁用的 Radius 模型仍被列出的问题：现在获取或缓存的 Radius 目录会替换内置的默认目录，而不是合并进去。
+- 修复 `openai` Provider 在缓存目录不含分类器模型时的类型检查。
+- 修复端口 53692 被保留或占用（例如 Windows 上 Hyper-V/WSL 的端口排除）时，Anthropic 浏览器登录报 "localhost refused to connect" 的问题：登录现在会回退到一个空闲的本地回环端口（[#10571](https://github.com/earendil-works/pi/issues/10571)）。
+- 修复内置模型成本缺少 OpenCode、OpenCode Go、OpenRouter、Vercel AI Gateway、Google、MiniMax 和其他 models.dev Provider 的 Prompt 长度定价档位，导致 Claude Haiku 5.5、Gemini 3.1 Pro 和 GPT-5.4 等模型的长 Prompt 成本少计的问题。OpenRouter 的分时定价未建模。
+- 修复以 `finish_reason: "error"` 结束的 Mistral 响应不被重试的问题（[#10487](https://github.com/earendil-works/pi/issues/10487)）。
+- 修复 Bedrock Converse 不向 OpenAI 模型发送推理 effort 的问题：gpt-oss 的 `reasoning_effort` 被限制为 low/medium/high，其他 GPT 模型使用 `reasoning.effort`，其中 `minimal` 以 `low` 发送（[#9331](https://github.com/earendil-works/pi/issues/9331)、[#10142](https://github.com/earendil-works/pi/pull/10142) 由 [@jsanter27](https://github.com/jsanter27) 贡献）。
+- 修复模型和调用方 headers 不能覆盖 `openai-codex-responses` 请求的 `originator` 和 `User-Agent` 头的问题（[#10429](https://github.com/earendil-works/pi/pull/10429) 由 [@lucasmeijer](https://github.com/lucasmeijer) 贡献）。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+新增
+
+- 为工具结果消息、`AgentToolCallOutcome` 和 `tool_execution_end` 事件添加 `durationMs`：`execute()` 花费的时间，用单调时钟测量并排除 hooks。未运行的调用没有该值（[#10549](https://github.com/earendil-works/pi/issues/10549)）。
+
+变更
+
+- `streamProxy()` 返回 `AssistantMessageEventStream`，因此代理的响应像直接响应一样获得 `durationMs`。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+不兼容变更
+
+- `Terminal` 实现必须提供 `setProgramStatus(status)`；不支持 OSC 7501 的终端可以将其实现为空操作（[#10607](https://github.com/earendil-works/pi/issues/10607)）。
+
+新增
+
+- 添加 `Box.setPaddingX(...)` 和 `Text.setPaddingX(...)`（[#10557](https://github.com/earendil-works/pi/pull/10557) 由 [@rwachtler](https://github.com/rwachtler) 贡献）。
+- 添加 `Terminal.setProgramStatus()` 和 `formatProgramStatus()` 用于程序状态协议（OSC 7501）。`ProcessTerminal` 在启动时询问终端是否支持，只在它应答时发送报告；`PI_PROGRAM_STATUS=1|0` 可覆盖检测（[#10607](https://github.com/earendil-works/pi/issues/10607)）。
+- 添加 `TuiAltScreen.resetTextSelection()`，用于丢弃文本选择和多击状态，例如在宿主替换转录之前（[#9311](https://github.com/earendil-works/pi/issues/9311)、[#10567](https://github.com/earendil-works/pi/pull/10567) 由 [@christianklotz](https://github.com/christianklotz) 贡献）。
+
+修复
+
+- 修复 Markdown 链接在 Herdr 中不可点击的问题：现在把 `TERM_PROGRAM=herdr` 检测为支持 OSC 8 超链接（[#10573](https://github.com/earendil-works/pi/issues/10573)）。
+
+</details>
+
 ## v1.0.4（2026-10-05）
 
 <details>

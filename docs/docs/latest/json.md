@@ -44,20 +44,20 @@ RPC 模式不输出这条记录。它的当前会话 ID 和文件请用 [`get_st
 {"type":"message_end","message":{"role":"assistant","...":"..."}}
 {"type":"turn_end","message":{"role":"assistant","...":"..."},"toolResults":[]}
 {"type":"agent_end","messages":[{"...":"..."}],"willRetry":false}
-{"type":"agent_settled"}
+{"type":"agent_settled","aborted":false}
 ```
 
 `agent_end` 结束一次底层 Agent 运行。自动重试、溢出恢复、压缩重试、steering 或 follow-up 工作仍可能继续。`agent_settled` 表示 Pi 在该会话级运行中已没有剩余的自动工作。
 
 ## Agent 与 turn 事件
 
-| 事件            | 字段                     | 含义                                                |
-| --------------- | ------------------------ | --------------------------------------------------- |
-| `agent_start`   | 无                       | 一次底层 Agent 运行开始。                           |
-| `agent_end`     | `messages`、`willRetry`  | 该底层运行结束。`messages` 包含该次运行生成的消息。 |
-| `agent_settled` | 无                       | Pi 不会通过重试、压缩恢复或排队消息自动继续。       |
-| `turn_start`    | 无                       | 一个 assistant turn 开始。                          |
-| `turn_end`      | `message`、`toolResults` | 一条 assistant 响应及其产生的 tool call 完成。      |
+| 事件            | 字段                     | 含义                                                                                     |
+| --------------- | ------------------------ | ---------------------------------------------------------------------------------------- |
+| `agent_start`   | 无                       | 一次底层 Agent 运行开始。                                                                |
+| `agent_end`     | `messages`、`willRetry`  | 该底层运行结束。`messages` 包含该次运行生成的消息。                                      |
+| `agent_settled` | `aborted`                | Pi 不会通过重试、压缩恢复或排队消息自动继续。运行因被中止而结束时，`aborted` 为 `true`。 |
+| `turn_start`    | 无                       | 一个 assistant turn 开始。                                                               |
+| `turn_end`      | `message`、`toolResults` | 一条 assistant 响应及其产生的 tool call 完成。                                           |
 
 一个 turn 是一条 assistant 响应加上该响应产生的所有 tool call 和工具结果。
 

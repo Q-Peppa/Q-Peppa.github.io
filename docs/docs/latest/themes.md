@@ -60,7 +60,7 @@ pi --use-theme light/dark
 
 ## 创建自定义主题
 
-复制一个[内置主题](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/src/modes/interactive/theme)，或按照[ schema](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/modes/interactive/theme/theme-schema.json) 新建一个 JSON 文件。内置主题使用 OKHSL 颜色，并用变量表示多个角色共用的颜色，所以你可以直接调整色相、饱和度或明度。
+复制一个[内置主题](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/src/modes/interactive/theme)，或按照[ schema](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/schemas/theme.schema.json) 新建一个 JSON 文件。内置主题使用 OKHSL 颜色，并用变量表示多个角色共用的颜色，所以你可以直接调整色相、饱和度或明度。
 
 1. 把文件保存为 `<agent-dir>/themes/my-theme.json`。agent 目录默认为 `~/.pi/agent`。
 2. 把它的 `name` 设为 `my-theme`。
@@ -71,14 +71,15 @@ pi --use-theme light/dark
 
 ## 了解主题文件
 
-| 属性         | 必填 | 作用                                                                    |
-| ------------ | ---- | ----------------------------------------------------------------------- |
-| `$schema`    | 否   | 按 Pi 发布的 schema 启用编辑器校验和补全。                              |
-| `name`       | 是   | 在选择器和设置中标识该主题。必须唯一，不能包含 `/`，也不能是 `system`。 |
-| `appearance` | 否   | `"dark"` 或 `"light"`：该主题设计面向的背景。省略时 Pi 从主题颜色检测。 |
-| `vars`       | 否   | 定义可复用的颜色值。变量可以引用其他变量。                              |
-| `colors`     | 是   | 把颜色分配给终端 UI 的角色。schema 标明了必需和可选的色名。             |
-| `export`     | 否   | 覆盖 HTML 导出中的页面和面板背景。                                      |
+| 属性                                                                                                                                                              | 必填 | 作用                                                                    |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- | ----------------------------------------------------------------------- |
+| `$schema`                                                                                                                                                         | 否   | 按 Pi 发布的 schema 启用编辑器校验和补全。                              |
+| `name`                                                                                                                                                            | 是   | 在选择器和设置中标识该主题。必须唯一，不能包含 `/`，也不能是 `system`。 |
+| `appearance`                                                                                                                                                      | 否   | `"dark"` 或 `"light"`：该主题设计面向的背景。省略时 Pi 从主题颜色检测。 |
+| `vars`                                                                                                                                                            | 否   | 定义可复用的颜色值。变量可以引用其他变量。                              |
+| `colors`                                                                                                                                                          | 是   | 把颜色分配给终端 UI 的角色。schema 标明了必需和可选的色名。             |
+| `export`                                                                                                                                                          | 否   | 覆盖 HTML 导出中的页面和面板背景。                                      |
+| 主题对象是严格的：只接受已文档化的顶层字段和颜色 Token。可复用的自定义颜色定义在 `vars` 下；`colors` 或 `export` 下的自定义 key，以及额外的顶层元数据都会被拒绝。 |
 
 颜色可以写成六种形式：
 
@@ -95,7 +96,7 @@ pi --use-theme light/dark
 
 Pi 会解析链式变量引用。缺失的变量或循环引用会让主题无效。Pi 在可用时使用 truecolor，把 OKLCH 色域映射到 sRGB，并为 256 色终端做近似。HTML 导出把 OKHSL 值转为十六进制，因为 CSS 不支持它们。如果颜色与源值不同，请检查终端的 truecolor 检测和对比度设置。见[配置终端](terminal-setup.md#override-detected-capabilities)。
 
-确切的属性、必需的色名和可接受的取值类型见[主题 JSON schema](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/modes/interactive/theme/theme-schema.json)。
+确切的属性、必需的色名和可接受的取值类型见[主题 JSON schema](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/schemas/theme.schema.json)。
 
 Pi 在启动和 `/reload` 时报告无效的主题文件。
 

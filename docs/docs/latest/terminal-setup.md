@@ -220,6 +220,22 @@ Pi 会自动检测 OSC 8 超链接、内联图片协议和 truecolor 支持。�
 
 只强制启用整条终端链路都支持的能力。不受支持的转义序列会破坏渲染。规范的取值定义见[环境变量](environment-variables.md#pi-process-configuration)和[设置](settings.md)。
 
+<a id="program-status"></a>
+
+## 程序状态
+
+Pi 用[程序状态协议（OSC 7501）](https://www.superlogical.com/rex/docs/build/program-status)报告自己的状态，因此终端和 agent 仪表盘可以显示它是在工作中、在等你、已完成还是失败：
+
+| 状态      | 何时                                               |
+| --------- | -------------------------------------------------- |
+| `working` | 一次 agent 运行或压缩正在进行。消息是会话名。      |
+| `blocked` | 某个扩展对话框或登录在等你。消息是对话框标题。     |
+| `done`    | 一次运行完成。消息是会话名。                       |
+| `error`   | 一次运行以不再重试的错误结束。消息是错误的第一行。 |
+| `idle`    | Pi 已启动，或者你取消了运行。                      |
+
+报告从不包含 Prompt 或模型输出。Pi 只在终端回应协议的支持查询后才发送它们；tmux 和 screen 不会转发它们。设置 `PI_PROGRAM_STATUS=1` 可跳过询问直接发送报告，设置 `PI_PROGRAM_STATUS=0` 可关闭它们。
+
 ---
 
 > **法律声明**：本页面是 pi.dev 官方文档的中文翻译版本，仅供学习参考。本网站与 [pi.dev](https://pi.dev/) 及 Earendil Inc. 无任何法律关系。

@@ -47,7 +47,7 @@
 
 终端键盘输入请使用 `matchesKey()` 和 `Key`。解析器会考虑受支持的终端协议和按键修饰键。扩展组件应当使用注入的 `KeybindingsManager` 处理可配置的应用动作。
 
-显示文本光标的组件应当实现 `Focusable`，并紧挨它的可视光标放置 `CURSOR_MARKER`。TUI 用该标记为输入法定位硬件光标。
+显示文本光标的组件应当实现 `Focusable`，并紧挨它的可视光标放置 `CURSOR_MARKER`。用 `renderFakeCursor()` 包裹光标格子，这样 TUI 会把它绘制成反色，或者在显示硬件光标时于 `CURSOR_MARKER` 之后隐藏它。TUI 用该标记为输入法定位硬件光标。
 
 包裹 `Input` 或 `Editor` 的容器必须把它的 `focused` 状态传播给该子组件。没有传播时，中文、日文、韩文等输入法的候选窗口可能出现在错误的屏幕位置。
 
