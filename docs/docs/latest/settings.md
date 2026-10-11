@@ -4,6 +4,8 @@
 
 本参考列出用户可配置的设置项、它们的类型、默认值和用途。项目设置覆盖 agent 目录设置。资源列表会合并。文件位置和信任行为见[配置](configuration.md)。
 
+在 `settings.json` 中添加 `"$schema": "https://pi.dev/schemas/settings.schema.json"`，即可获得编辑器校验和补全。
+
 ## 模型与 thinking
 
 <a id="model-cycling"></a>

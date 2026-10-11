@@ -293,13 +293,14 @@ path/to/changed.ts
 
 ```
 [User]: What they said
-[Assistant thinking]: Internal reasoning
 [Assistant]: Response text
 [Assistant tool calls]: read(path="foo.ts"); edit(path="bar.ts", ...)
 [Tool result]: Output from tool
 ```
 
 这防止模型把它当作一段需要继续的对话。
+
+思考块会被省略。Provider 返回的是真实推理的摘要，而且回放的思考内容往往并不在模型的实时上下文中，包含它们可能会让摘要请求比它所摘要的上下文还大。
 
 序列化期间工具结果会被截断到 2000 个字符。超出该限制的内容会被替换为一个标记，说明截断了多少字符。这让摘要请求保持在合理的 Token 预算内，因为工具结果（尤其是来自 `read` 和 `bash` 的）通常是上下文大小的最大贡献者。
 
@@ -358,7 +359,6 @@ pi.on('session_before_compact', async (event, ctx) => {
   const conversationText = serializeConversation(convertToLlm(preparation.messagesToSummarize));
   // 返回：
   // [User]: message text
-  // [Assistant thinking]: thinking content
   // [Assistant]: response text
   // [Assistant tool calls]: read(path="..."); bash(command="...")
   // [Tool result]: output text

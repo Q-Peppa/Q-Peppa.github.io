@@ -50,6 +50,7 @@ Pi 直接集成 llama.cpp router。Router 会发现 GGUF 文件并按需加载�
 
 ```json
 {
+  "$schema": "https://pi.dev/schemas/models.schema.json",
   "providers": {
     "ollama": {
       "baseUrl": "http://localhost:11434/v1",

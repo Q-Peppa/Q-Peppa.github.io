@@ -14,6 +14,7 @@ Pi 暴露具名动作，例如 `app.session.new`，可以为它们分配快捷�
 
 ```json
 {
+  "$schema": "https://pi.dev/schemas/keybindings.schema.json",
   "app.session.new": "ctrl+shift+n",
   "app.session.tree": ["ctrl+shift+t", "alt+shift+t"]
 }
