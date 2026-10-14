@@ -29,7 +29,7 @@ pi --print "Summarize the changes in this repository"
 
 只在需要最终文本时使用 print 模式，包括命令替换、管道和一次性任务。中间事件不会暴露。
 
-Print 模式把错误写到 stderr。最终 assistant 回复的 stop reason 为 `error` 或 `aborted` 时，会产生非零退出状态。
+Print 模式把错误写到 stderr。最终 assistant 回复的 stop reason 为 `error` 或 `aborted` 时，会产生非零退出状态。因模型输出 Token 上限被截断的回复（stop reason 为 `length`）仍会把部分文本打印到 stdout、向 stderr 写入警告，并产生非零退出状态。
 
 没有显式选择模式时，非 TTY 的 stdin 或 stdout 也会选择 print 模式。这样无需添加 `--print` 就能使用管道输入输出。
 

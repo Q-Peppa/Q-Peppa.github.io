@@ -64,6 +64,7 @@ Pi 使用 `jiti`，所以本地 TypeScript 扩展不需要单独的编译步骤�
 从幂等的 `session_shutdown` 处理器中关闭会话级资源。
 
 一次运行的流程是：从输入和 `before_agent_start`，经过模型、消息和工具事件，到 `agent_end`。
+Pi 在运行启动期间计为忙，包括压缩检查和 `before_agent_start`，因此在此期间发送的消息会进入启动中的运行。
 
 自动重试、恢复、压缩或排队工作可能在此后继续。
 
@@ -109,7 +110,7 @@ Pi 使用 `jiti`，所以本地 TypeScript 扩展不需要单独的编译步骤�
 
 事件覆盖资源发现、会话、Agent 与消息生命周期、Provider、工具和原始输入。
 
-`before_agent_start` 同时暴露当前 Prompt 和它的结构化 `systemPromptOptions`。请优先修改 Prompt 的分段、选中的工具或准则，让 Pi 能够追加转录增量。返回 `systemPrompt` 或设置 `forceSystemPrompt` 会为该次运行替换整个 Prompt，而转录会继续记录结构化分段。Provider 把强制的文本作为其开头的系统提示收到。
+`before_agent_start` 同时暴露当前 Prompt 和它的结构化 `systemPromptOptions`。`event.messageType` 说明是什么启动了本次运行：`"user"` 表示 Prompt 或 `pi.sendUserMessage()`，携带 `prompt` 和 `images`；`"custom"` 表示 `pi.sendMessage(..., { triggerTurn: true })`，携带起始的 `message` 且没有 `prompt`。返回的 `message` 会加入两种运行；检查 `messageType` 可以跳过由自定义消息启动的运行。请优先修改 Prompt 的分段、选中的工具或准则，让 Pi 能够追加转录增量。返回 `systemPrompt` 或设置 `forceSystemPrompt` 会为该次运行替换整个 Prompt，而转录会继续记录结构化分段。Provider 把强制的文本作为其开头的系统提示收到。
 
 `message_end` 可以在保留角色不变的情况下替换已定稿的消息。`tool_call` 可以修改输入或阻止执行。`tool_result` 处理器会叠加，每个处理器都能看到之前的改动。
 
@@ -178,9 +179,9 @@ Pi 使用 `jiti`，所以本地 TypeScript 扩展不需要单独的编译步骤�
 - `deferred`：类似 `codemode`，但 codemode 工具不列出它；`tool_search` 可以查找并激活它。
 - `hidden`：已注册但不可达。用 `exposure: "hidden"` 重新注册一个工具来撤回它，因为工具无法注销。
 
-`namespace: { name, description, instructions }` 把相关工具分组，MCP 服务器就是这样做的。codemode 工具把一个 namespace 列在同一个标题下，并带上它的 `description`。`instructions` 存放更长的用法说明；它不会列出，codemode 脚本用 `describeNamespace(name)` 读取。
+`namespace: { name, aliases, description, instructions }` 把相关工具分组，MCP 服务器就是这样做的。codemode 工具把一个 namespace 列在同一个标题下，并带上它的 `description`。`instructions` 存放更长的用法说明；它不会列出，codemode 脚本用 `describeNamespace(name)` 读取。`aliases` 是脚本可以用来查找该 namespace 的其他名称，例如 `mcp__docs` 的服务器名 `docs`；一个名称与它作为脚本标识符的写法（`my-docs`、`my_docs`）匹配方式相同。
 
-注册 `direct` 或 `model-only` 工具会激活它；其他 exposure 在注册时不激活。活动集（`pi.getActiveTools()`、`pi.setActiveTools()`）是向模型声明的工具集。`pi.getAllTools()` 报告每个工具的 `exposure`、`namespace` 和 `annotations`。
+注册 `direct` 或 `model-only` 工具会激活它；其他 exposure 在注册时不激活。活动集（`pi.getActiveTools()`、`pi.setActiveTools()`）是向模型声明的工具集。`pi.getAllTools()` 报告每个工具的 `exposure`、`namespace`、`annotations` 和 `reachesTools`。
 
 `annotations` 是关于工具做什么的提示，含义与 MCP 工具 annotations 相同：`readOnlyHint`、`destructiveHint`、`idempotentHint` 和 `openWorldHint`。MCP 工具携带服务器声明的提示。缺失的提示取 MCP 默认值：工具不是只读的，可能有破坏性并到达开放世界。这些提示未经验证，但权限扩展可以用它们决定确认哪些调用。下面会确认 Codex 要求批准的调用：
 
@@ -196,7 +197,9 @@ pi.on('tool_call', async (event, ctx) => {
 });
 ```
 
-编排其他工具的工具可以用 `prepareLoadout(loadout)` 在自己激活时调整模型看到的内容。它在活动工具变更时运行，收到已声明的工具、可调用的工具，以及每个已注册工具及其 exposure、namespace 和 prompt guidelines。它返回已声明工具（包括自己）的替换 `descriptions`，以及 `hiddenDeclarations`：请求中省略声明、但仍保持活动且可调用的活动工具。默认系统 prompt 会把隐藏的工具排除在工具列表和规则之外；当文件读取工具被隐藏时，skills 提示也不提任何工具，所以编排工具应自行呈现它们的 guidelines。`codemode` 只用这个 hook、`exposure` 和 `ctx.executeTool()`，因此另一个工具可以用不同名称实现相同行为。
+编排其他工具的工具可以用 `prepareLoadout(loadout)` 在自己激活时调整模型看到的内容。它在活动工具变更时运行，收到已声明的工具、可调用的工具，以及每个已注册工具及其 exposure、namespace 和 prompt guidelines。它返回已声明工具（包括自己）的替换 `descriptions`，以及 `hiddenDeclarations`：请求中省略声明、但仍保持活动且可调用的活动工具。默认系统 prompt 会把隐藏的工具排除在工具列表和规则之外；当文件读取工具被隐藏时，skills 提示也不提任何工具，所以编排工具应自行呈现它们的 guidelines。`codemode` 只用这个 hook、`exposure`、`reachesTools` 和 `ctx.executeTool()`，因此另一个工具可以用不同名称实现相同行为。
+
+能触及其他工具的工具用 `reachesTools(input)` 声明一次调用可能触达哪些工具：`"all"`，或者输入中可能命名它们的词，其中每个词指向名称包含它的每个工具或 namespace。对于搜索或列出工具的脚本，`codemode` 返回 `"all"`，否则返回脚本中的词；`tool_search` 始终返回 `"all"`。较晚注册工具的扩展在它们的 `tool_call` 处理器中使用它，在调用运行前完成注册该调用所需的工具，MCP 扩展对仍在连接的服务器就是这样做的。只有当同名工具声明了 `reachesTools` 时，MCP 扩展才会为 MCP 工具激活 `codemode` 或 `tool_search`。
 
 ### 动态激活工具
 

@@ -283,7 +283,7 @@ MCP Apps 的资源（`ui://` URI 或 `text/html;profile=mcp-app`）会省略，�
 
 已安装的扩展如果注册了 `/mcp`（例如 `pi-mcp-adapter`），会替换会话中的内置 MCP 支持。Pi 之后既不读取 `mcp.json`，也不在会话中连接它的服务器，`/mcp` 属于该扩展。移除扩展即可恢复内置行为。不安装替代就关掉内置 MCP 支持，在 `pi config` 的 Built-in 下禁用 `mcp`，或在[设置](settings.md#resources)中设 `"extensions": ["-builtin:mcp"]`。`--no-mcp` 为单次运行禁用它。
 
-注册 `codemode` 或 `tool_search` 的扩展同样会替换该名称的内置工具。shell 级 `pi mcp` 命令始终使用内置实现。
+注册 `codemode` 或 `tool_search` 的扩展同样会替换该名称的内置工具。只有当它声明 [`reachesTools`](extensions.md#tool-exposure) 时，Pi 才会为 MCP 服务器激活该替换工具，并等待它的调用所需的服务器。shell 级 `pi mcp` 命令始终使用内置实现。
 
 ### 从 SDK 使用 MCP
 

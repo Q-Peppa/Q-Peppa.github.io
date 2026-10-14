@@ -81,7 +81,7 @@ Prompt 模板、Skill 和扩展可以向同一个菜单添加更多命令。见[
 
 按 `Ctrl+X` 或运行 `/copy` 复制最后一条 assistant 回复。用 `/export` 把会话保存为 HTML 或 JSONL。
 
-用 `/share` 上传会话并获得查看链接。使用 Radius 认证时，产物对你的 Radius 组织可见。否则 Pi 通过 GitHub CLI 创建一个私有 GitHub gist。请先审阅会话，因为它可能包含对话期间暴露的 Prompt、工具输出、文件内容和凭证。
+用 `/share` 上传会话并获得查看链接。默认情况下，使用 Radius 认证会使产物对你的 Radius 组织可见；否则 Pi 通过 GitHub CLI 创建一个私有 GitHub gist。[`sessionShareDestination`](settings.md#sessions-and-context) 设置可以强制使用其中任一目标。请先审阅会话，因为它可能包含对话期间暴露的 Prompt、工具输出、文件内容和凭证。
 
 ## 调整终端
 

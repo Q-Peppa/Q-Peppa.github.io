@@ -57,7 +57,7 @@ Pi 把条目存为树，所以回到更早的点不会抹掉你离开的分支�
 
 ## 导出或分享会话
 
-用 `/export` 把当前会话写成 HTML 或 JSONL。用 `/share` 上传并获得查看链接。配置了 Radius 认证时 Pi 使用 Radius 产物；否则使用私有 GitHub gist。
+用 `/export` 把当前会话写成 HTML 或 JSONL。用 `/share` 上传并获得查看链接。默认情况下，配置了 Radius 认证时 Pi 使用 Radius 产物；否则使用私有 GitHub gist。把 [`sessionShareDestination`](settings.md#sessions-and-context) 设为 `gist` 或 `radius` 可以强制使用其中一个目标。
 
 请先审阅要导出或分享的会话。它们可能包含 Prompt、模型响应、工具参数、命令输出、文件内容和扩展消息。
 

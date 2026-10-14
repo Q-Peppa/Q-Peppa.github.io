@@ -43,7 +43,9 @@ llama-server \
     └── large-model-Q4_K_M-00003-of-00003.gguf
 ```
 
-手动添加文件后重启 router。按模型设置上下文大小和其他选项，请使用 [llama.cpp 模型预设](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md#model-presets)。
+手动添加文件后重启 router。按模型设置上下文大小和其他选项，请使用 [llama.cpp 模型预设](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md#model-presets)。针对特定 NVIDIA GPU 和模型调优的设置，见 [用 NVIDIA RTX 和 llama.cpp 运行 Pi](nvidia-rtx-llama-cpp.md)。
+
+<a id="configure-pi"></a>
 
 ## 配置 Pi
 
@@ -107,6 +109,8 @@ llama.cpp 0.6.0 及之后版本会在 router 的模型列表中报告决策模�
 - 问题依次运行。最后一问之前的内容对同一次请求的所有问题都相同，所以服务器的 Prompt 缓存只评估一次。状态出现两次，因此需要两倍大小的上下文。
 - 小模型可能遵循写在状态内部的指令。Prompt 告诉模型把状态当作数据来判断，但这不是保证。
 - 像 Qwen3.5 这样的混合模型，没有上下文检查点就无法回退部分缓存的 Prompt。如果每个问题都会重新处理整个状态，启动 router 时加上 `--ctx-checkpoints 32 --checkpoint-min-step 0`。
+
+<a id="troubleshooting"></a>
 
 ## 排查问题
 

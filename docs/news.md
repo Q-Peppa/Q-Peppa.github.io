@@ -2,6 +2,117 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v1.2.0（2026-10-12）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **按 key 的 OpenRouter 模型列表** – 使用 OpenRouter key 时，Pi 只列出该 key 可用的模型，附带该 key 的上下文大小、最大输出和价格，包括 `models.json` 中设置的区域端点。详见 [OpenRouter](/docs/latest/providers#openrouter)。
+- **发布的配置 schema** – 在 `settings.json`、`models.json`、快捷键和主题中添加 `$schema`，用于编辑器校验和补全。详见 [设置](/docs/latest/settings)、[模型](/docs/latest/models)、[快捷键](/docs/latest/keybindings) 和 [主题](/docs/latest/themes)。
+- **剪贴板跨远程会话复制** – `PI_CLIPBOARD_OSC52=1` 在 Pi 无法检测到远程会话（例如从另一台机器接入的多路复用器）时，把复制的文本发送到远程客户端的剪贴板。详见 [Pi 进程配置](/docs/latest/environment-variables#pi-process-configuration)。
+- **codemode 改进** – 工具声明显示输入约束，例如 integer、minimum/maximum 和 default，codemode 行显示已用时间和总时间。详见 [Codemode](/docs/latest/codemode)。
+- **为扩展触发的运行提供 `before_agent_start`** – 由 `pi.sendMessage(..., { triggerTurn: true })` 启动的运行经历与 Prompt 相同的设置。详见 [事件与并发](/docs/latest/extensions#events-and-concurrency)。
+
+不兼容变更
+
+- 在 `https://pi.dev/schemas/*.schema.json` 发布模型、设置、快捷键和主题的生成配置 schema。主题 schema 移到 `https://pi.dev/schemas/theme.schema.json`；启动时加载的主题现在与之后的重新加载接受相同的 schema 校验。请更新主题的 `$schema` 引用，在 `vars` 下定义可复用颜色，并移除不支持的元数据（[#9880](https://github.com/earendil-works/pi/pull/9880)、[#10751](https://github.com/earendil-works/pi/pull/10751) 由 [@christianklotz](https://github.com/christianklotz) 贡献）。
+- `before_agent_start` 现在也会在空闲时对由 `pi.sendMessage(..., { triggerTurn: true })` 启动的运行触发。`BeforeAgentStartEvent` 现在是基于 `messageType` 的联合类型：`"user"` 事件携带 `prompt` 和 `images`，`"custom"` 事件携带起始的 `message` 且没有 `prompt`。处理程序返回的消息会加入两种运行，待处理的 `deliverAs: "nextTurn"` 消息随自定义消息运行一起投递。只应对用户 Prompt 生效的处理程序必须检查 `event.messageType === "user"`（[#10267](https://github.com/earendil-works/pi/issues/10267)、[#5581](https://github.com/earendil-works/pi/issues/5581)、[#10739](https://github.com/earendil-works/pi/pull/10739) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 会话在运行启动期间（包括 `before_agent_start` 处理程序执行期间）计为忙：`ctx.isIdle()` 为 false，`pi.sendMessage()` 排队到启动中的运行，而不是启动第二个以 "Agent is already processing" 失败的新运行，`pi.sendUserMessage()` 需要 `deliverAs`，在此期间请求的中止会在运行启动后中止它（[#10739](https://github.com/earendil-works/pi/pull/10739) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- `pi mcp list --json` 现在对提供资源的服务器报告 `resources: true`，而不是 `resources` 和 `resourceTemplates` 计数；Pi 在连接时不再列出资源（[#10526](https://github.com/earendil-works/pi/issues/10526)）。
+
+新增
+
+- 添加 `sessionShareDestination` 设置，用于为 `/share` 选择自动、GitHub gist 或 Radius 上传（[#10870](https://github.com/earendil-works/pi/issues/10870)）。
+- 为工具定义添加 `reachesTools`，让能触及其他工具的工具（如 `codemode` 和 `tool_search`）声明一次调用可能触达哪些工具；MCP 扩展用它等待调用所需的服务器，并判断替换的 `codemode` 或 `tool_search` 工具能否触达 MCP 工具。
+- 为工具命名空间添加 `aliases`；codemode 的 `describeNamespace()` 和 `searchTools()` 的 `namespace` 选项会匹配它们，MCP 命名空间使用服务器名称。
+- 添加按 key 的 OpenRouter 模型列表：使用 OpenRouter key 时，Pi 只列出该 key 可用的聊天模型，附带该 key 的上下文大小、最大输出和价格，包括在 `models.json` 中作为基础 URL 设置的 guardrails 和区域端点。列表会被保存并离线使用（[#10353](https://github.com/earendil-works/pi/issues/10353)、[#10672](https://github.com/earendil-works/pi/pull/10672) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 添加 `PI_CLIPBOARD_OSC52=1`，在写入本地剪贴板后通过 OSC 52 把复制的文本发送到终端，因此在 Pi 无法检测到远程会话时（例如从另一台机器接入的多路复用器或远程 IDE 守护进程），复制能到达远程客户端的剪贴板（[#10826](https://github.com/earendil-works/pi/issues/10826)、[#10835](https://github.com/earendil-works/pi/issues/10835)、[#10114](https://github.com/earendil-works/pi/issues/10114)）。
+- 为 codemode 工具行添加脚本运行期间的已用时间和完成后的总时间，与 bash 行类似（[#10708](https://github.com/earendil-works/pi/issues/10708)）。
+
+变更
+
+- `showHardwareCursor` 设置改为只使用终端光标，不再同时绘制 Pi 的反色光标。
+- codemode 工具声明改为在属性注释上用 `@` 标签显示输入约束，例如 integer、minimum/maximum、length、pattern 和 default，让脚本无需工具在描述中重复也能看到它们（[#10707](https://github.com/earendil-works/pi/issues/10707)）。
+- codemode 对 MCP 工具的声明改为写出结果类型（`content`、`structuredContent`、`isError`），而不是引用 `CallToolResult<T>`——`describeTool()`、`searchTools()` 和 `ALL_TOOLS` 展示它时并未定义它；codemode 描述不再包含共享的 MCP 类型。
+- `serializeConversation()`（压缩、分支摘要、bug 报告）改为省略 thinking 块；重放的 thinking 通常不在实时上下文中，所以包含它可能让摘要请求比它所摘要的上下文更大并失败。
+
+修复
+
+- 修复 codemode 忽略不是脚本第一行的 `// @options:` 行，从而在没有请求的 `timeout_ms` 下运行脚本的问题；调用现在会在脚本运行前报错失败（[#10631](https://github.com/earendil-works/pi/issues/10631)）。
+- 修复 Mistral 流在请求超时后于生成中途（例如长 thinking 期间）被中止的问题；超时现在只适用于等待响应头（[#10609](https://github.com/earendil-works/pi/issues/10609)）。
+- 修复嵌套在主仓库内的 git worktree 中符号链接的 `AGENTS.md` 导致不加载任何项目上下文文件的问题（[#10681](https://github.com/earendil-works/pi/issues/10681)）。
+- 修复 code mode 工具描述声称每个失败的工具调用都会被 reject 的问题；声明了输出模式的工具在失败时也会以其值 resolve（例如非零退出的 `bash`）。
+- 修复由 `pi.sendMessage(..., { triggerTurn: true })` 启动的运行在第一次工具调用后移除 `before_agent_start` 中添加的系统 Prompt 段，从而在运行中途改变 Prompt 并每次运行两次破坏 Provider Prompt 缓存的问题（[#10267](https://github.com/earendil-works/pi/issues/10267)、[#10739](https://github.com/earendil-works/pi/pull/10739) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 修复 codemode 在有许多 `text()` 调用的脚本后阻塞进程数秒到数分钟的问题；连接输出项是二次复杂度（[#10678](https://github.com/earendil-works/pi/issues/10678)）。
+- 修复打印模式（`-p`）在最终响应因模型输出 Token 上限被截断时以 0 退出且没有警告的问题；它现在打印部分文本、向 stderr 写入警告并以 1 退出（[#10799](https://github.com/earendil-works/pi/issues/10799)）。
+- 修复 `pi mcp login --help` 和 CLI 文档把 `--timeout` 描述为只等待浏览器的问题；它限制整个登录过程（[#10636](https://github.com/earendil-works/pi/issues/10636)）。
+- 修复 `extensions`、`skills`、`prompts` 和 `themes` 设置的 `!pattern`、`+path` 和 `-path` 条目中 `~` 不展开，导致 `!~/skills/pdf` 之类的条目匹配不到任何内容的问题（[#10765](https://github.com/earendil-works/pi/issues/10765)）。
+- 修复带有资源的 MCP 服务器在列出所有资源前不注册任何工具的问题；Pi 连接时不再列出资源，因此 `/mcp` 和 `pi mcp list` 显示服务器提供资源，而不是计数（[#10526](https://github.com/earendil-works/pi/issues/10526)）。
+- 修复当服务器返回非对象的结构化内容（数组、`null` 或基元，MCP 2026-07-28 允许）时 MCP 工具调用失败的问题；没有输出模式的 MCP 工具的 codemode 声明现在把 `structuredContent` 类型标为 `unknown` 而不是对象（[#10416](https://github.com/earendil-works/pi/issues/10416)）。
+- 修复在 Windows 上上一个锁文件夹仍在删除时读写 `auth.json` 报 `EPERM` 的问题；Pi 现在会短暂重试后再报告错误（[#10801](https://github.com/earendil-works/pi/issues/10801)）。
+- 修复像 `openrouter/auto` 这样的 OpenRouter 路由模型显示每 1M Token -$1,000,000 成本的问题；OpenRouter 的负数占位价格现在为 0（[#10672](https://github.com/earendil-works/pi/pull/10672) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 修复当 Provider 因语法大小、工具数量或联合限制拒绝严格工具集时 Anthropic 请求失败的问题；Pi 现在用非严格的首选工具重试一次（[#10409](https://github.com/earendil-works/pi/issues/10409)）。
+- 修复 "The upstream provider returned an error" 不被作为瞬时 Provider 错误重试的问题（[#10842](https://github.com/earendil-works/pi/issues/10842)）。
+- 修复获得焦点的全屏浮层阻塞转录的鼠标滚轮滚动的问题（[#10769](https://github.com/earendil-works/pi/issues/10769)）。
+- 修复碎片化的终端颜色回复把十六进制值泄漏到 Prompt 并打开外部编辑器的问题（相关报告：[#10256](https://github.com/earendil-works/pi/issues/10256)、[#10657](https://github.com/earendil-works/pi/issues/10657)）。
+- 修复内联图片自 1.1.0 起在 Herdr 中不渲染的问题（[#10774](https://github.com/earendil-works/pi/pull/10774) 由 [@ogulcancelik](https://github.com/ogulcancelik) 贡献）。
+- 修复命名移位符号的快捷键（如 `+` 或 `ctrl++`）在 Kitty 键盘协议或 modifyOtherKeys 下不匹配的问题（[#9880](https://github.com/earendil-works/pi/pull/9880) 由 [@christianklotz](https://github.com/christianklotz) 贡献）。
+- 修复自定义编辑器中的压缩状态指示器使用默认弱化颜色，而不是编辑器边框或 thinking 级别颜色的问题，工作指示器则不然（[#10809](https://github.com/earendil-works/pi/issues/10809)、[#10810](https://github.com/earendil-works/pi/pull/10810) 由 [@Jay-Madden](https://github.com/Jay-Madden) 贡献）。
+- 修复在等待 OAuth 刷新时被取消或超时的 MCP 工具调用在刷新完成后仍被发送到服务器的问题（[#10598](https://github.com/earendil-works/pi/issues/10598)）。
+- 修复 MCP OAuth 登录接受带有无法校验的 `iss` 参数的授权响应的问题（因为没有发现授权服务器元数据）；登录现在以 issuer 不匹配失败。由 [@AizenvoltPrime](https://github.com/AizenvoltPrime) 报告。
+- 修复 Pi 在 Node 24 或 26 上运行于 `node --watch` 时 codemode 报 broken bridge 错误的问题（[#10725](https://github.com/earendil-works/pi/issues/10725)）。
+
+移除
+
+- 移除未发布的实验性服务器、客户端和插件栈（`src/experimental`、`src/cli/experimental`）及其仅供源码使用的 `./client` 和 `./experimental/plugin` 导出；它们都不属于已发布的包。它使用的 `@earendil-works/pi-client`、`@earendil-works/pi-protocol` 和 `@earendil-works/pi-server` 包已移除，不再发布。
+- 移除对 `@earendil-works/chord` 的依赖。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 添加 `personalizeOpenRouterCatalog()`（`@earendil-works/pi-ai/providers/openrouter`），它把 OpenRouter 目录收窄到该 key 可用的聊天模型，并带上来自 `GET /models/user` 的该 key 的上下文大小、最大输出和价格（[#10353](https://github.com/earendil-works/pi/issues/10353)、[#10672](https://github.com/earendil-works/pi/pull/10672) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 添加 `RefreshModelsContext.baseUrl`，即注册 Provider 的基础 URL（包括包装器应用过的配置覆盖），让动态目录可以跟随 `models.json` 中设置的基础 URL（[#10353](https://github.com/earendil-works/pi/issues/10353)、[#10672](https://github.com/earendil-works/pi/pull/10672) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+
+修复
+
+- 修复 Mistral 流在请求超时后于生成中途（例如长 thinking 期间）被中止的问题；超时现在只适用于等待响应头（[#10609](https://github.com/earendil-works/pi/issues/10609)）。
+- 修复像 `openrouter/auto` 这样的 OpenRouter 路由模型显示每 1M Token -$1,000,000 成本的问题；OpenRouter 的负数占位价格现在为 0（[#10672](https://github.com/earendil-works/pi/pull/10672) 由 [@davidbrai](https://github.com/davidbrai) 贡献）。
+- 修复当 Provider 因语法大小、工具数量或联合限制拒绝严格工具集时 Anthropic `strict: "prefer"` 工具失败的问题；请求现在会用非严格的首选工具重试一次，同时保持 `strict: "require"` 工具严格（[#10409](https://github.com/earendil-works/pi/issues/10409)）。
+- 修复 "The upstream provider returned an error" 不被作为瞬时 Provider 错误重试的问题（[#10842](https://github.com/earendil-works/pi/issues/10842)）。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+不兼容变更
+
+- `Editor.render()` 和 `Input.render()` 现在把绘制的光标包在零宽 APC 标记中，而不是直接发出 `\x1b[7m`。TUI 渲染器会解析它们；在 TUI 之外渲染这些组件的代码必须移除它们，例如用 `stripTerminalSequences()`。
+
+新增
+
+- 添加 `renderFakeCursor()`。组件用它包裹绘制的光标，TUI 以反色渲染它，或者在启用 `showHardwareCursor` 时在 `CURSOR_MARKER` 之后省略它。
+
+变更
+
+- `showHardwareCursor` 改为只显示终端光标：启用时，获得焦点的 `Editor` 和 `Input` 组件不再绘制反色光标。这避免了把边缘单元颜色扩展到窗口内边距的终端在首列或末列拉伸绘制的光标。
+
+修复
+
+- 修复浮层合成在浮层紧挨光标左侧结束时丢弃 `CURSOR_MARKER`，从而丢失硬件光标位置的问题。
+- 修复获得焦点的全屏浮层阻塞转录的鼠标滚轮滚动的问题。没有组件处理的滚轮事件现在滚动转录，而不是作为原始输入送到获得焦点的浮层的 `handleInput`；用滚轮滚动的浮层必须实现 `handleMouse`（[#10769](https://github.com/earendil-works/pi/issues/10769)）。
+- 修复碎片化的终端颜色回复把十六进制值泄漏到 Prompt 并通过其 BEL 终止符触发外部编辑器的问题（相关报告：[#10256](https://github.com/earendil-works/pi/issues/10256)、[#10657](https://github.com/earendil-works/pi/issues/10657)）。
+- 修复内联图片自 1.1.0 起在 Herdr 中不渲染的问题；Herdr 现在使用 Kitty 图形协议（[#10774](https://github.com/earendil-works/pi/pull/10774) 由 [@ogulcancelik](https://github.com/ogulcancelik) 贡献）。
+- 修复命名移位符号的快捷键（如 `+` 或 `ctrl++`）在 Kitty 键盘协议或 modifyOtherKeys 把该键报告为 Shift 加未移位键时不匹配的问题。`parseKey()` 现在返回产生的符号（`+` 而不是 `shift+=`）；物理 `shift+=` 拼写仍然匹配，`ctrl++` 等 key id 也能正确解析（[#9880](https://github.com/earendil-works/pi/pull/9880) 由 [@christianklotz](https://github.com/christianklotz) 贡献）。
+
+</details>
+
 ## v1.1.0（2026-10-07）
 
 <details>

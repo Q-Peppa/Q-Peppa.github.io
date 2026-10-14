@@ -121,6 +121,26 @@ Radius 目前处于早期 alpha，变化很快。更多信息见 [radius.earendi
 
 Radius 认证使用它的网关目录，并缓存刷新后的模型元数据以便之后离线启动。在 `models.json` 中配置的自定义 Radius 网关使用它自己的目录，而不会继承公开的 `radius.pi.dev` 目录。
 
+### OpenRouter
+
+用 `/login openrouter` 或 `OPENROUTER_API_KEY` 认证。
+
+配置 key 后，Pi 只列出该 key 可使用的 OpenRouter 聊天模型，附带该 key 的上下文大小、最大输出和价格。这些数据来自 OpenRouter 的 `/models/user` 端点，反映在 OpenRouter 中设置的 guardrails 和 Provider 限制。图片和分类器模型不会被过滤。
+
+Pi 在交互模式下启动时、`/model` 打开时、`/login` 之后，以及 `pi update --models` 时在后台刷新该列表。最后的列表会被保存，并在离线、`pi -p` 和 RPC 模式下使用。在 `/login` 之外切换 key 后，前一个 key 的列表会保留到下次刷新。
+
+区域端点会把模型过滤到它们的区域。要使用区域端点，在 [`models.json`](models.md#configure-a-compatible-endpoint) 中设置基础 URL：
+
+```json
+{
+  "providers": {
+    "openrouter": { "baseUrl": "https://us.openrouter.ai/api/v1" }
+  }
+}
+```
+
+如果基础 URL 在 `/models/user` 处拒绝该 key，或者没有该端点（例如把代理配置为 OpenRouter 基础 URL），Pi 会列出所有 OpenRouter 模型。
+
 ### Azure OpenAI
 
 Provider ID 是 `azure`（原名 `azure-openai-responses`）。在 `auth.json`、`models.json` 和 `settings.json` 中用这个 key，模型引用也一样，例如 `--model azure/gpt-5.4`。

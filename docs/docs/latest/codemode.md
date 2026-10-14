@@ -10,7 +10,7 @@
 
 工具输入是原始 JavaScript 源码，不是 JSON，也不是 markdown 代码围栏。它作为 async 函数体在 QuickJS 沙箱中运行，因此顶层 `await` 和 `return` 可用。沙箱没有 Node API、文件系统、网络或定时器；脚本只能通过工具和 `models` 接触外部世界。
 
-脚本可以以选项行开头：
+脚本可以以选项行开头。它必须是第一行；出现在其他位置的选项行会在脚本运行前让调用失败：
 
 ```js
 // @options: {"max_output_tokens": 2000, "timeout_ms": 60000}
@@ -242,6 +242,8 @@ for (const block of result.output) {
 ## 限制
 
 - 脚本的 VM 有 256 MB 内存。用尽会抛出 `InternalError: out of memory`；过滤或聚合大数据，不要一直累积。
+- 在 Bun 上，停止脚本或到达截止时间会及时结束调用，但不轮询 QuickJS 中断处理程序的内置工具可能在返回之前一直在其 worker 中计算。
+- 在一个 pi 进程中，所有会话合计最多可以有两个存活的 codemode worker。被取消的 worker 在退出前一直占用它的槽位。达到上限时，新脚本会立即失败，不会启动另一个 worker；等已有 worker 退出后重试。
 - 脚本等待一个永远无法 settle 的 promise（没有待处理的工具调用）会立即失败，因为没有定时器。
 - 脚本不能启动其他 `codemode` 脚本。
 

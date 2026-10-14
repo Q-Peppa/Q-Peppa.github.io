@@ -118,6 +118,7 @@ export default defineConfig({
             { text: '安全', link: '/docs/latest/security' },
             { text: '隔离运行', link: '/docs/latest/containerization', tag: 'updated' },
             { text: '本地模型', link: '/docs/latest/llama-cpp' },
+            { text: 'NVIDIA RTX 本地模型', link: '/docs/latest/nvidia-rtx-llama-cpp', tag: 'new' },
             { text: '终端设置', link: '/docs/latest/terminal-setup' },
             { text: 'Shell 别名', link: '/docs/latest/shell-aliases' },
             { text: 'tmux', link: '/docs/latest/tmux' },
