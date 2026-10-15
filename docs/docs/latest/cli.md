@@ -65,13 +65,13 @@ pi --model sonnet:high
 - `--provider <name>`<br>
   把 `--model` 的查找限制在一个 Provider 内。它需要 `--model`。
 - `--model <pattern>`<br>
-  通过精确 ID 或模糊的 ID/名称匹配选择。它接受 `provider/id` 和可选的 `:<thinking>` 后缀。
+  通过精确 ID 或模糊的 ID/名称匹配选择。它接受 `provider/id` 和可选的 `:<thinking>` 后缀。如果有多个 Provider 匹配，Pi 优先选择有凭证的那个，否则会要求指定 `--provider`。
 - `--api-key <key>`<br>
-  使用非持久的 API Key 覆盖。它需要通过 `--model` 或 `--models` 选择一个模型。
+  使用非持久的 API Key 覆盖。它需要通过 `--model` 或 `--models` 选择一个模型。它不会在提供同一模型的多个 Provider 之间做选择。
 - `--thinking <level>`<br>
   设置 `off`、`minimal`、`low`、`medium`、`high`、`xhigh` 或 `max`。它覆盖 `--model` 的后缀，并会被限制到模型的能力范围内。
 - `--models <patterns>`<br>
-  为启动和循环设置逗号分隔的范围。它接受精确 ID、模糊匹配、大小写不敏感的 glob 和可选的 `:<thinking>` 后缀。
+  为启动和循环设置逗号分隔的范围。它接受精确 ID、模糊匹配、大小写不敏感的 glob 和可选的 `:<thinking>` 后缀。由多个 Provider 提供的模型会为每个 Provider 各添加一个，并给出警告。
 - `--list-models [search]`<br>
   列出可用模型，可选地按模糊搜索过滤，然后退出。
 
