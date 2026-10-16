@@ -63,6 +63,8 @@
 
 CLI 工具选项会为单次调用覆盖该设置。只含 `+name` 和 `-name` 条目的 `--tools` 则改动解析后的 `defaultTools` 选择，例如 `pi --tools +codemode`。在 `/reload` 时，这些条目也会作用于重新加载后的设置，因此用 `-name` 移除的工具会保持移除。见[命令行](cli.md#tools)。
 
+<a id="sessions-and-context"></a>
+
 ## 会话与上下文
 
 | 设置                      | 类型                           | 默认值         | 说明                                                                                                                                          |
@@ -75,7 +77,7 @@ CLI 工具选项会为单次调用覆盖该设置。只含 `+name` 和 `-name` �
 | 设置                          | 类型    | 默认值  | 说明                                                 |
 | ----------------------------- | ------- | ------- | ---------------------------------------------------- |
 | `compaction.enabled`          | boolean | `true`  | 启用自动压缩。                                       |
-| `compaction.reserveTokens`    | number  | `16384` | 为模型响应保留的 Token。                             |
+| `compaction.reserveTokens`    | number  | `16384` | 低于该空闲上下文 Token 数时启动自动压缩。            |
 | `compaction.keepRecentTokens` | number  | `20000` | 不摘要而保留的近期 Token。                           |
 | `compaction.modelOverrides`   | object  | 无      | 按模型设置 Token 值，键为精确的 `provider/modelId`。 |
 

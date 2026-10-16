@@ -2,6 +2,91 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v1.3.0（2026-10-15）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **选择 `/share` 的上传位置** – `sessionShareDestination` 可选 `auto`、`gist` 或 `radius`。详见 [会话与上下文](/docs/latest/settings#sessions-and-context) 和 [导出或分享会话](/docs/latest/sessions#export-or-share-a-session)。
+- **在 OpenAI GPT-6 上保留缓存的 thinking 级别切换** – 使用 API key 时，会话中途切换 thinking 级别会保留 Prompt 缓存。
+- **通过 Chat Completions 使用 Kimi Code** – 会话中途添加的工具不再使 Prompt 缓存失效。`models.json` 的基础 URL 覆盖现在必须包含 `/v1`。详见 [Provider](/docs/latest/providers)。
+- **干净的模型切换** – 前一个模型的 thinking 会被丢弃，而不是作为文本展示给新模型。
+- **恢复的会话保留其活动工具** – `--tools +name`/`-name` 在它们之上生效。详见 [工具](/docs/latest/settings#tools)。
+
+新增
+
+- 在 OpenAI GPT-6 模型（API key）上会话中途切换 thinking 级别现在会保留 Prompt 缓存（[#10853](https://github.com/earendil-works/pi/issues/10853)）。
+- 添加 `sessionShareDestination` 设置，用于为 `/share` 选择自动、GitHub gist 或 Radius 上传（[#10870](https://github.com/earendil-works/pi/issues/10870) 由 [@vegarsti](https://github.com/vegarsti) 贡献）。
+
+变更
+
+- `kimi-coding` Provider 改为在 `https://api.kimi.com/coding/v1` 使用 OpenAI Chat Completions，即官方 Kimi Code 客户端所用的协议。K3、K3-256K 和 Kimi For Coding 现在接受会话中途添加的工具，而不使 Prompt 缓存失效。`models.json` 中对 `kimi-coding` 基础 URL 的覆盖现在必须包含 `/v1`（[#10720](https://github.com/earendil-works/pi/issues/10720)）。
+- 模型切换改为丢弃来自不同模型的较早 assistant 消息中的 thinking 块，而不是把它们作为纯文本发送。新模型此前会把旧模型的推理当作其回复的一部分，并可能开始把自己的推理写进可见答案（[#10995](https://github.com/earendil-works/pi/issues/10995)）。
+
+修复
+
+- 把内部 Pi 依赖固定到确切的发布版本，避免全新安装混合不兼容的包（[#10865](https://github.com/earendil-works/pi/issues/10865)）。
+- 修复恢复的会话丢弃会话期间激活的工具的问题。现在恢复会还原会话的活动工具，并对其应用 `--tools +name`/`-name` 条目，除非 `--tools` 指定了工具名、`--no-tools` 或 `--no-builtin-tools` 显式选择工具（[#10785](https://github.com/earendil-works/pi/issues/10785)）。
+- 修复在 Bun 上停止 codemode 脚本或到达其期限时，等待不可中断的内置工具返回的问题（[#10748](https://github.com/earendil-works/pi/issues/10748)）。
+- 修复重复的 codemode 超时或中止累积残留 worker 的问题；准入现在把跨会话的存活 worker 限制为两个，取消的 worker 计入其中直到真正退出（[#10748](https://github.com/earendil-works/pi/issues/10748)）。
+- 修复当多个 Provider 都提供匹配项时 `--model` 按目录顺序选择 Provider 的问题；Pi 现在优先选择有凭据的 Provider，否则报告歧义。`--models` 和 `enabledModels` 会为每个提供该模型的 Provider 添加它，并提示歧义（[#10160](https://github.com/earendil-works/pi/issues/10160)）。
+- 修复 TUI、会话树、HTML 导出和示例中数字字符串或 null 参数的 `read` 行范围标签（[#9887](https://github.com/earendil-works/pi/issues/9887)）。
+- 修复 Provider 切换 API 时 Nix flake 构建失败的问题：当模型目录的模型 API 分组不同时，现在会从最新发布的目录刷新锁定，并且发布会在打 tag 前锁定最新目录并用它构建（[#10985](https://github.com/earendil-works/pi/issues/10985)）。
+- 修复 Nix 包把它的 Node.js 放在 `PATH` 最前，导致 bash 工具 shell 使用 Pi 的 Node 而不是用户的 `node`/`npm` 的问题。Pi 的 Node 现在只是回退项（[#10519](https://github.com/earendil-works/pi/issues/10519)）。
+- 修复 Prompt 模板丢弃空的引号参数（`""` 或 `''`）的问题，这曾使之后的位置参数偏移，并让位置默认值无法生效（[#10867](https://github.com/earendil-works/pi/issues/10867)）。
+- 修复 Nix 包在安装检查中失败的问题，因为它仍预期 chord 和 esbuild，而 Pi 已不再依赖它们。
+- 修复当字符串含有无效 `\\u` 转义（如 `\\usepackage`）时 tool call 参数解析丢字段的问题（[#10868](https://github.com/earendil-works/pi/issues/10868)）。
+- 修复错误 tool result 含图片时 Anthropic 和 Bedrock Claude 请求以 400 失败的问题；图片现在在该轮的 tool result 之后发送，因此模型仍能看到它们（[#10794](https://github.com/earendil-works/pi/issues/10794)）。
+- 修复 OpenCode Go Gemini 模型因把 OpenCode Zen 和 OpenCode Go 迁移到 `opencode.ai/inference` 端点而报 404 的问题，并为 OpenCode Go Provider 添加 Google Generative AI 支持。
+- 修复 OpenCode Go MiniMax M2.7 改用 Anthropic Messages API 后报 "Model does not support this protocol" 的问题。
+- 修复网关 `Unable to forward upstream stream` 错误不触发自动重试的问题（[#10920](https://github.com/earendil-works/pi/issues/10920)）。
+- 修复 `The service is temporarily unavailable` 错误不触发自动重试的问题，这也曾让压缩在第一次尝试时就失败（[#10965](https://github.com/earendil-works/pi/issues/10965)）。
+- 修复当代理（如 LiteLLM）在同一流分块中发送推理和内容时，OpenAI 兼容响应在答案之后显示 thinking 的问题（[#10926](https://github.com/earendil-works/pi/issues/10926)）。
+- 修复 Google Vertex 上 Gemini 4 Argon 请求报 "Thinking budget is not supported"、以及其 thinking 级别在 Gemini API 上被忽略的问题（[#10890](https://github.com/earendil-works/pi/issues/10890)）。
+- 修复小米 MiMo 模型在 `minimal` thinking 级别报 400 的问题；它们现在只暴露 `off` 和 `high` 级别（[#10818](https://github.com/earendil-works/pi/issues/10818)）。
+- 修复 `openai-codex/gpt-6.1-sol` 使用 272K 上下文窗口而不是 Codex 现在提供的 500K 窗口的问题（[#10840](https://github.com/earendil-works/pi/issues/10840)）。
+- 修复最后参数是畸形 JSON 的 tool call 只带着错误前解析出的字段静默运行的问题；它们现在校验失败，并把模型发送的原始参数展示给模型（[#10897](https://github.com/earendil-works/pi/issues/10897)）。
+- 修复 Claude Haiku 5.5 和 Claude Opus 5 不支持 `off` thinking 级别的问题（[#10753](https://github.com/earendil-works/pi/issues/10753)）。
+- 修复扩展的 `ctx.ui.custom({ overlay: true })` 的 `done()` 关闭最顶层浮层而不是它自己的浮层的问题，这曾让已完成的浮层留在屏幕上，另一个扩展的对话框也无法 resolve（[#10648](https://github.com/earendil-works/pi/issues/10648)、[#10999](https://github.com/earendil-works/pi/pull/10999) 由 [@masonc15](https://github.com/masonc15) 贡献）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+不兼容变更
+
+- 移除 `AssistantMessageFrame`、`AssistantMessageFrameEncoder` 和 `reduceAssistantMessageFrames()`。它们只被已移除的实验性 agent harness 使用。
+
+新增
+
+- 为 openai Provider 上的 GPT-6 模型添加保留缓存的 thinking 级别切换：使用 API key 时，级别作为 `configuration_update` 输入项发送，而不是改变 `reasoning.effort`，由 `compat.supportsMidConvoEffort` 控制（[#10853](https://github.com/earendil-works/pi/issues/10853)）。
+
+变更
+
+- `kimi-coding` Provider 改为在 `https://api.kimi.com/coding/v1` 使用 OpenAI Chat Completions，即官方 Kimi Code 客户端所用的协议。K3、K3-256K 和 Kimi For Coding 现在接受会话中途添加的工具，而不使 Prompt 缓存失效。`models.json` 中对 `kimi-coding` 基础 URL 的覆盖现在必须包含 `/v1`（[#10720](https://github.com/earendil-works/pi/issues/10720)）。
+- 模型切换改为丢弃来自不同模型的较早 assistant 消息中的 thinking 块，而不是把它们作为纯文本发送。新模型此前会把旧模型的推理当作其回复的一部分，并可能开始把自己的推理写进可见答案（[#10995](https://github.com/earendil-works/pi/issues/10995)）。
+
+修复
+
+- 修复当字符串含有无效 `\\u` 转义（如 `\\usepackage`）时 tool call 参数解析丢字段的问题（[#10868](https://github.com/earendil-works/pi/issues/10868)）。
+- 修复错误 tool result 含图片时 Anthropic 和 Bedrock Claude 请求以 400 失败的问题；图片现在在该轮的 tool result 之后发送，因此模型仍能看到它们（[#10794](https://github.com/earendil-works/pi/issues/10794)）。
+- 修复 OpenCode Go Gemini 模型因把 OpenCode Zen 和 OpenCode Go 迁移到 `opencode.ai/inference` 端点而报 404 的问题，并为 OpenCode Go Provider 添加 Google Generative AI 支持。
+- 修复 OpenCode Go MiniMax M2.7 改用 Anthropic Messages API 后报 "Model does not support this protocol" 的问题。
+- 修复网关 `Unable to forward upstream stream` 错误不触发自动重试的问题（[#10920](https://github.com/earendil-works/pi/issues/10920)）。
+- 修复 `The service is temporarily unavailable` 错误不触发自动重试的问题，这也曾让压缩在第一次尝试时就失败（[#10965](https://github.com/earendil-works/pi/issues/10965)）。
+- 修复 Google Vertex OAuth Token 刷新因瞬时网络错误（如 `request to https://oauth2.googleapis.com/token failed, reason:`）失败时不触发自动重试的问题（[#10996](https://github.com/earendil-works/pi/issues/10996)）。
+- 修复当代理（如 LiteLLM）在同一流分块中发送推理和内容时，OpenAI 兼容响应在答案之后显示 thinking 的问题（[#10926](https://github.com/earendil-works/pi/issues/10926)）。
+- 修复 Google Vertex 上 Gemini 4 Argon 请求报 "Thinking budget is not supported"、以及其 thinking 级别在 Gemini API 上被忽略的问题，做法是对 Gemini 4 及之后的模型发送 `thinkingLevel`（[#10890](https://github.com/earendil-works/pi/issues/10890)）。
+- 修复小米 MiMo 模型在 `minimal` thinking 级别报 400 的问题，做法是只发送文档化的 thinking 开关，并只暴露 `off` 和 `high` 级别（[#10818](https://github.com/earendil-works/pi/issues/10818)）。
+- 修复 `openai-codex/gpt-6.1-sol` 使用 272K 上下文窗口而不是 Codex 现在提供的 500K 窗口的问题（[#10840](https://github.com/earendil-works/pi/issues/10840)）。
+- 修复最后参数是畸形 JSON 的 tool call 只带着错误前解析出的字段静默运行的问题；这类调用现在带有 `argumentsError`，并带着原始参数文本校验失败，因此模型能看到它发送了什么（[#10897](https://github.com/earendil-works/pi/issues/10897)）。
+- 修复 Claude Haiku 5.5 和 Claude Opus 5 不支持 `off` thinking 级别的问题；`off` 现在发送 `thinking: {type: "disabled"}` 而不带 effort 设置（[#10753](https://github.com/earendil-works/pi/issues/10753)）。
+
+</details>
+
 ## v1.2.0（2026-10-12）
 
 <details>

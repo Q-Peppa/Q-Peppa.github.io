@@ -55,6 +55,8 @@ Pi 把条目存为树，所以回到更早的点不会抹掉你离开的分支�
 
 当你已经知道会话路径或 ID 时，使用 `--session`。用 `--fork` 在交互模式启动前从已有会话创建新会话。
 
+<a id="export-or-share-a-session"></a>
+
 ## 导出或分享会话
 
 用 `/export` 把当前会话写成 HTML 或 JSONL。用 `/share` 上传并获得查看链接。默认情况下，配置了 Radius 认证时 Pi 使用 Radius 产物；否则使用私有 GitHub gist。把 [`sessionShareDestination`](settings.md#sessions-and-context) 设为 `gist` 或 `radius` 可以强制使用其中一个目标。

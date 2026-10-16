@@ -35,7 +35,7 @@ Pi 有两种摘要机制：
 contextTokens > contextWindow - reserveTokens
 ```
 
-默认情况下 `reserveTokens` 是 16384 个 Token（可在 `~/.pi/agent/settings.json` 或 `<project-dir>/.pi/settings.json` 中配置）。这为 LLM 的响应留出空间。
+默认情况下 `reserveTokens` 是 16384 个 Token（可在 `~/.pi/agent/settings.json` 或 `<project-dir>/.pi/settings.json` 中配置）。它只决定压缩何时开始。摘要请求使用模型的输出上限，必要时会调低，使输入和输出都能放进上下文窗口。
 
 在多 turn 的 Agent 运行中，工具结束且其结果被追加之后、开始下一次 assistant 响应之前，Pi 会检查规范投影后的上下文。如果越过阈值，Pi 在 `prepareNextTurn` 中压缩，然后在 `turn_start` 之前执行已有的追赶 steering 轮询。当已完成的工具批次终止该次运行、且没有排队消息需要另一次响应时，Pi 会跳过这次 turn 之间的检查。Pi 也会在新用户 Prompt 之前检查，并在底层运行结束之后做最终尝试的溢出恢复。
 
@@ -443,7 +443,7 @@ pi.on('session_before_tree', async (event, ctx) => {
 | 设置               | 默认值  | 说明                       |
 | ------------------ | ------- | -------------------------- |
 | `enabled`          | `true`  | 启用自动压缩               |
-| `reserveTokens`    | `16384` | 为 LLM 响应保留的 Token    |
+| `reserveTokens`    | `16384` | 触发压缩的空闲上下文 Token |
 | `keepRecentTokens` | `20000` | 保留（不摘要）的近期 Token |
 
 用 `"enabled": false` 禁用自动压缩。你仍然可以用 `/compact` 手动压缩。
@@ -466,7 +466,7 @@ pi.on('session_before_tree', async (event, ctx) => {
 }
 ```
 
-对于拥有 1M 上下文窗口的模型，这个覆盖会在超过 600K Token 时触发压缩，并保留普通的 20000 个近期 Token。其他模型保持普通的 16384 Token 保留量。`reserveTokens` 也会影响摘要的输出上限，并会被模型的最大输出 Token 封顶；它不只是一个触发阈值。
+对于拥有 1M 上下文窗口的模型，这个覆盖会在超过 600K Token 时触发压缩，并保留普通的 20000 个近期 Token。其他模型保持普通的 16384 Token 保留量。
 
 键是精确、区分大小写的 `provider/modelId` 值，包括模型 ID 内的任何斜杠。每个 `reserveTokens` 和 `keepRecentTokens` 值独立回退：从模型覆盖到普通设置，再到内置默认值。值必须是非负安全整数。匹配的模型覆盖中的无效值在读取时会报错；只有省略的字段才回退到普通设置。模型覆盖条目必须是对象。即使当前模型有有效的覆盖，无效的普通 Token 设置在读取时也会报错。只有被省略的普通值才使用内置默认值。`enabled` 仍然是全局的，不按模型区分。
 
