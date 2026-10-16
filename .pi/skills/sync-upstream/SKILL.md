@@ -417,11 +417,12 @@ CHANGELOG 里的 `inherited` / `Added inherited X` / `Fixed inherited X` 表示*
 | `https://github.com/earendil-works/pi/issues/1234`    | 原样保留                                                     | Issue 链接          |
 | `https://github.com/earendil-works/pi-mono/pull/1234` | 原样保留                                                     | ⚠️ 保留 `pi-mono`   |
 
-**最容易出错的 3 个点：**
+**最容易出错的 4 个点：**
 
 1. 带锚点的相对链接 → **文件名 + 锚点都要保留**（最常见的丢失）
 2. 旧仓库 `pi-mono` 链接 → 保留 `pi-mono`，不要改成 `pi`
 3. `../README.md` → 必须是 GitHub URL，不能变成 `/docs/latest/README`
+4. 英文锚点指向的翻译站中文标题 → 锚点必须显式存在。Rspress 从中文标题生成中文锚点，所以翻译站对应标题前要有 `<a id="英文锚点"></a>` + 空行。缺锚点时在翻译站对应标题前补锚点（与源站锚点同名），不要改 news.md 里的链接。`pnpm build` 不校验锚点，需人工核对源站新增链接的锚点
 
 ---
 
