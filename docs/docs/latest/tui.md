@@ -67,6 +67,78 @@
 
 `ctx.ui.custom()` 临时把交互区域的控制权交给一个组件，并在该组件调用提供的完成回调时兑现。
 
+<a id="build-a-minimal-custom-screen"></a>
+
+### 构建一个最小的自定义界面
+
+下面这个完整扩展展示了自定义组件的生命周期：在给定宽度内渲染、使用注入的快捷键、状态变化后使缓存输出失效、请求渲染，并通过 `done()` 结束。
+
+```typescript
+import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
+import { truncateToWidth } from '@earendil-works/pi-tui';
+
+export default function (pi: ExtensionAPI) {
+  pi.registerCommand('pick-target', {
+    description: 'Pick a deployment target',
+    handler: async (_args, ctx) => {
+      if (ctx.mode !== 'tui') {
+        ctx.ui.notify('pick-target requires interactive mode', 'error');
+        return;
+      }
+
+      const choices = ['development', 'staging', 'production'];
+      const selected = await ctx.ui.custom<string | undefined>((tui, theme, keybindings, done) => {
+        let selectedIndex = 0;
+        let cachedWidth: number | undefined;
+        let cachedLines: string[] | undefined;
+
+        const invalidate = () => {
+          cachedWidth = undefined;
+          cachedLines = undefined;
+        };
+
+        return {
+          render(width: number): string[] {
+            if (cachedLines && cachedWidth === width) return cachedLines;
+
+            cachedWidth = width;
+            cachedLines = [
+              theme.fg('accent', 'Choose a deployment target'),
+              ...choices.map((choice, index) => `${index === selectedIndex ? '> ' : '  '}${choice}`),
+              theme.fg('dim', 'up/down move, enter selects, escape cancels'),
+            ].map((line) => truncateToWidth(line, width));
+            return cachedLines;
+          },
+          handleInput(data: string): void {
+            if (keybindings.matches(data, 'tui.select.up')) {
+              selectedIndex = (selectedIndex - 1 + choices.length) % choices.length;
+            } else if (keybindings.matches(data, 'tui.select.down')) {
+              selectedIndex = (selectedIndex + 1) % choices.length;
+            } else if (keybindings.matches(data, 'tui.select.confirm')) {
+              done(choices[selectedIndex]);
+              return;
+            } else if (keybindings.matches(data, 'tui.select.cancel')) {
+              done(undefined);
+              return;
+            } else {
+              return;
+            }
+
+            invalidate();
+            tui.requestRender();
+          },
+          invalidate,
+        };
+      });
+
+      if (selected) ctx.ui.notify(`Selected ${selected}`, 'info');
+    },
+  });
+}
+```
+
+这个组件不显示文本光标，因此不需要 `Focusable`。包含 `Input` 或 `Editor` 的组件必须实现 `Focusable`，并把 `focused` 值传给该子组件。
+
 传入 `overlay: true` 会在已有内容之上绘制。Overlay 选项控制尺寸、锚点、偏移、边距和响应式可见性。交互仍在进行时，overlay 句柄可以通过 `setHidden()` 改变焦点，或临时隐藏和显示 overlay。
 
 有焦点的 overlay 在普通渲染之间保持输入所有权。如果另一个组件应当在 overlay 仍然可见时接收输入，请通过句柄显式释放或重定向焦点。

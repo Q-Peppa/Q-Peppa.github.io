@@ -17,7 +17,7 @@
 ```
 
 - `max_output_tokens`（默认 10000）限制输出。更长的输出保留首尾，完整文本写入临时文件，路径包含在结果中。当输出超过 16777216 个字符的文本与 base64 图片数据，或超过 100000 次 `text()`、`image()` 和 `console` 调用时，脚本会失败；请改用工具把大数据写入文件。
-- `timeout_ms` 是整个脚本的硬截止时间。默认未设置。生成图片可能需要几分钟，因此生成图片的脚本不要设太短的截止时间。
+- `timeout_ms` 是整个脚本的硬截止时间，包括等待空闲 worker 的时间。默认未设置。生成图片可能需要几分钟，因此生成图片的脚本不要设太短的截止时间。
 
 结果以 `Script completed` 或 `Script failed` 开头，然后是墙钟时间和输出。文本项和图片项按顺序出现，各占一行。当输出有多个文本项（来自 `text()` 或 `return`）时，每项以一行 `==> text N/M <==` 开头。`console` 调用跟随其后，放在一个 `<console_output>` 块中，每次调用一行。失败的脚本保留部分输出，后面是 `Script error:` 和错误。工具调用是真实的：失败前已发出的调用不会撤销。脚本结束时仍在运行的调用会被取消，未 await 的 promise 会被丢弃。
 
@@ -243,7 +243,7 @@ for (const block of result.output) {
 
 - 脚本的 VM 有 256 MB 内存。用尽会抛出 `InternalError: out of memory`；过滤或聚合大数据，不要一直累积。
 - 在 Bun 上，停止脚本或到达截止时间会及时结束调用，但不轮询 QuickJS 中断处理程序的内置工具可能在返回之前一直在其 worker 中计算。
-- 在一个 pi 进程中，所有会话合计最多可以有两个存活的 codemode worker。被取消的 worker 在退出前一直占用它的槽位。达到上限时，新脚本会立即失败，不会启动另一个 worker；等已有 worker 退出后重试。
+- 在一个 pi 进程中，所有会话合计最多可以有两个存活的 codemode worker；`PI_CODEMODE_MAX_WORKERS` 可改变这个上限。被取消的 worker 在退出前一直占用它的槽位。达到上限时，新脚本按到达顺序等待空闲 worker。60 秒内或在其 `timeout_ms` 之前没有拿到 worker 的脚本会失败，且不会运行。
 - 脚本等待一个永远无法 settle 的 promise（没有待处理的工具调用）会立即失败，因为没有定时器。
 - 脚本不能启动其他 `codemode` 脚本。
 

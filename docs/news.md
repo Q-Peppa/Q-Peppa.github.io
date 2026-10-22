@@ -2,6 +2,132 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v1.4.0（2026-10-21）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **分类器的图片输入** – codemode 的 `models.classify()` 接受 `images`，用于 `typesafe`、`cloudflare-workers-ai` 和 OpenRouter 上 TypeSafe 的 Jev 与 Cloudflare 的 Clef 模型。详见 [使用分类器模型](/docs/latest/models#use-classifier-models) 和 [Codemode](/docs/latest/codemode#models)。
+- **模型配置参考** – 列出 `models.json` 的每个 Provider、模型、模型覆盖和兼容性字段，由 schema 生成。详见 [模型配置](/docs/latest/models-configuration)。
+- **摘要不再使用固定输出上限** – 压缩和分支摘要使用模型的输出上限，长推理不再导致失败。详见 [压缩](/docs/latest/compaction#compaction)。
+- **Codemode 等待空闲 worker** – 并行脚本和进程内子代理会排队而不是失败，`PI_CODEMODE_MAX_WORKERS` 可提高上限。详见 [Codemode 限制](/docs/latest/codemode#limits)。
+- **Rex 终端支持** – OSC 8 超链接、truecolor 和内联图片。
+
+新增
+
+- 添加由 `models.json` schema 生成的模型配置参考，列出所有 Provider、模型、模型覆盖和兼容性字段（[#10790](https://github.com/earendil-works/pi/issues/10790)）。
+- Codemode 的 `models.classify()` 现在接受 `images`，用于 `typesafe`、`cloudflare-workers-ai` 和 OpenRouter 上 TypeSafe 的 Jev 与 Cloudflare 的 Clef 模型，并在 Workers AI 上列出 Clef Omni 和 Jev 1.14。
+- `models.json` 中 Provider 级的 `compat` 现在也适用于分类器模型，System One 字段 `imageInput` 和 `sendImageOptInHeader` 用于代理其他服务分类器的场景。扩展的分类器模型也接受 `compat`。
+- 为 `minimax` 和 `minimax-cn` Provider 添加 `MiniMax-M3.1-Flash`，thinking 级别从 low 到 max（[#11121](https://github.com/earendil-works/pi/issues/11121)）。
+- 添加 Rex 终端支持：OSC 8 超链接、truecolor 和内联图片（[#11131](https://github.com/earendil-works/pi/issues/11131)、[#11150](https://github.com/earendil-works/pi/pull/11150) 由 [@petrroll](https://github.com/petrroll) 贡献、[#11183](https://github.com/earendil-works/pi/pull/11183) 由 [@nihaals](https://github.com/nihaals) 贡献）。
+
+变更
+
+- Provider 归属请求头现在来自 pi-ai 的客户端身份。扩展的 `before_provider_headers` 处理器不再看到 OpenRouter、NVIDIA NIM 和 OpenCode 的归属请求头；对其中一个返回 `null` 仍会移除它。Cloudflare 请求发送 Pi 的详细 `User-Agent`，而不是 `pi-coding-agent`，工具下载的 GitHub release 检查也是如此。只要启用了归属，OpenCode 请求就会发送 `x-opencode-client`，而不只是在有会话时。
+- `generateSummary()` 和 `generateSummaryWithUsage()` 现在忽略 `reserveTokens` 参数。摘要请求改用模型的输出上限。
+- GitHub Copilot 默认模型从已退役的 `gpt-5.4` 改为 `gpt-6.1-sol`。
+- NVIDIA 默认模型改为 `nvidia/nemotron-3.5-super-vl-120b-a12b`（[#10910](https://github.com/earendil-works/pi/pull/10910) 由 [@cv](https://github.com/cv) 贡献）。
+- `xiaomi` 和 Xiaomi Token Plan Provider 的默认模型改为 `mimo-v2.6-pro`，因为 `mimo-v2.5-pro` 已离开目录。
+- `xai` Provider 上的 Grok 4.3 和 Grok 4.5 现在提供 `xhigh` thinking 级别。
+- 使用 ChatGPT 登录：ChatGPT Business 工作区用量上限错误不再重试，并告诉用户去让工作区管理员提高上限。
+
+修复
+
+- 修复推理占满固定摘要输出上限时，压缩和分支摘要以 "generation hit the token cap" 失败的问题。摘要现在使用模型的输出上限，`compaction.reserveTokens` 只控制压缩何时开始（[#9512](https://github.com/earendil-works/pi/issues/9512)、[#9075](https://github.com/earendil-works/pi/issues/9075)）。
+- 修复 `models.schema.json` 缺少 Provider 和模型字段的描述，导致编辑器不显示提示的问题（[#10790](https://github.com/earendil-works/pi/issues/10790)）。
+- 修复 `managed-install.json` 以 UTF-8 BOM 开头时 `pi update` 报 "Managed install marker is missing or invalid" 的问题。Windows PowerShell 5.1 重写该文件时会加上 BOM。
+- 修复 HTML 导出里，紧挨 CJK 标点的 Markdown 粗体和斜体显示成字面星号的问题（[#3353](https://github.com/earendil-works/pi/issues/3353)、[#10154](https://github.com/earendil-works/pi/issues/10154)）。
+- 修复 Pi 未经正常终端清理就退出时，终端停留在鼠标跟踪、焦点上报、Kitty 键盘和备用屏幕模式，导致 shell 提示符被转义序列淹没的问题（[#11170](https://github.com/earendil-works/pi/issues/11170)）。
+- 修复交互模式下并发的扩展 `select`/`confirm`/`input`/`editor` 对话框和内联 `custom()` 组件：第二个对话框会替换第一个，且第一个 Promise 永不 settle；关闭可见对话框现在会再次显示上一个（[#11166](https://github.com/earendil-works/pi/issues/11166)、[#9909](https://github.com/earendil-works/pi/issues/9909)）。
+- 修复在 Linux 上于 Pi 中复制文本后用 Ctrl+Z 挂起，再在 shell 中粘贴会卡住的问题：保持剪贴板服务的后台 `wl-copy`/`xclip`/`xsel` 进程被一起挂起了（[#11179](https://github.com/earendil-works/pi/issues/11179)）。
+- 修复两个 codemode worker 都忙时脚本立即失败的问题，例如并行 codemode 调用或进程内子代理。脚本现在最多等待 60 秒以获得空闲 worker，`PI_CODEMODE_MAX_WORKERS` 可提高两个 worker 的上限（[#11184](https://github.com/earendil-works/pi/issues/11184)）。
+- 修复扩展导入 `@earendil-works/pi-ai/models`（例如为了 `clampThinkingLevel`）时加载失败的问题，扩展加载器别名和虚拟模块现在暴露该子路径（[#11156](https://github.com/earendil-works/pi/issues/11156)）。
+- 修复以 UTF-8 BOM 开头的 `mcp.json` 无法解析的问题，这会跳过其中全部 MCP 服务器，并使 `pi mcp add`/`pi mcp remove` 失败（[#11191](https://github.com/earendil-works/pi/issues/11191)）。
+- 修复 `/compact <instructions>` 在摘要被压缩拆开的轮次开头时忽略指令的问题。当被拆开的轮次是上次压缩以来唯一的新内容时，指令会被完全忽略（[#11058](https://github.com/earendil-works/pi/issues/11058)）。
+- 修复恢复的会话和 `/tree` 导航在分支记录工具早于注册时，把扩展工具留在非活动状态的问题，例如会话开始后才安装的扩展所提供的工具。分支从未添加或移除的扩展工具现在是活动的，除非注册时设置了 `defaultActive: false`（[#11062](https://github.com/earendil-works/pi/issues/11062)、[#11075](https://github.com/earendil-works/pi/issues/11075)）。
+- 修复从输出上限截断的响应中恢复后会话损坏的问题：被截断的 tool call 被省略，但其工具结果被保留，于是 Provider 拒绝之后的每个请求（[#11227](https://github.com/earendil-works/pi/issues/11227)、[#11233](https://github.com/earendil-works/pi/pull/11233) 由 [@petrroll](https://github.com/petrroll) 贡献）。
+- 修复 `grep` 工具遵循 `RIPGREP_CONFIG_PATH` 的问题，其中 `--fixed-strings` 等选项会把正则搜索静默改成字面搜索。该工具现在运行 `rg --no-config`（[#11203](https://github.com/earendil-works/pi/issues/11203)、[#11230](https://github.com/earendil-works/pi/pull/11230) 由 [@petrroll](https://github.com/petrroll) 贡献）。
+- 修复 Windows shell 检测拒绝可运行的 Microsoft Store shell 别名的问题（[#9504](https://github.com/earendil-works/pi/pull/9504) 由 [@petrroll](https://github.com/petrroll) 贡献）。
+- 修复 Windows shell 检测漏掉 `PATH` 之外的 PowerShell，以及 Windows 未安装在 `C:\Windows` 时的旧版 WSL `bash.exe` 启动器的问题。Pi 现在会检查 `%ProgramFiles%\PowerShell\7`、`%SystemRoot%\System32\WindowsPowerShell\v1.0` 和 `%SystemRoot%`（[#9501](https://github.com/earendil-works/pi/pull/9501) 由 [@petrroll](https://github.com/petrroll) 贡献）。
+- 修复请求体很大的 GitHub Copilot 会话（例如含很多图片）以 HTTP 413 `failed to parse request` 失败，而不是压缩后重试的问题（[#11016](https://github.com/earendil-works/pi/pull/11016) 由 [@petrroll](https://github.com/petrroll) 贡献）。
+- 修复 `openai-codex` Provider 提供总会对 ChatGPT 账号失败的 `gpt-5.5` 和 `gpt-5.3-codex-spark` 的问题（[#11173](https://github.com/earendil-works/pi/pull/11173) 由 [@lucasmeijer](https://github.com/lucasmeijer) 贡献）。
+- 修复仅含空白的工具输出（例如 bash 返回的单独 `\r\n`）使 OpenAI Completions、OpenAI Responses 和 Google 请求以 400 失败的问题（[#8720](https://github.com/earendil-works/pi/issues/8720)）。
+- 修复更多网关上游失败、Codex CLI 代理转发的 `stream disconnected before completion` 错误，以及短暂的 Google Vertex OAuth Token 刷新失败不触发自动重试的问题，并修复因请求 ID 或字节数中的数字而重试错误的问题（[#10920](https://github.com/earendil-works/pi/issues/10920)、[#11057](https://github.com/earendil-works/pi/issues/11057)、[#10996](https://github.com/earendil-works/pi/issues/10996)）。
+- 修复 OpenAI Responses 模型在移除工具后，每次延迟加载工具都会丢失 Prompt 缓存的问题（[#10940](https://github.com/earendil-works/pi/issues/10940)）。
+- 修复 Cloudflare Workers AI 分类器定价：Clef Flash 为每百万输入 Token $0.038，Jev 为 $0.042，而不是把 Jev 列为免费。
+- 修复未闭合的 `$$` 显示数学块吞掉或破坏它之后每个 Markdown 表格的问题（[#11159](https://github.com/earendil-works/pi/issues/11159)）。
+- 修复紧挨 CJK 标点的 Markdown 粗体和斜体不渲染的问题（[#10730](https://github.com/earendil-works/pi/pull/10730) 由 [@theBucky](https://github.com/theBucky) 贡献）。
+- 修复 `@` 文件自动补全对含 `[` 或 `(` 等正则元字符的查询不返回结果的问题（[#10972](https://github.com/earendil-works/pi/issues/10972)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+不兼容变更
+
+- Provider 请求选项 `telemetryContext` 重命名为 `telemetry?: TelemetrySpan`，没有兼容别名。传入父 span，而不是 adapter。
+- 默认 `User-Agent` 现在是 `pi/<version> (<platform>; <runtime>; <arch>)`，不再是 `pi (<platform> <release>; <arch>)`。`@earendil-works/pi-ai/utils/pi-user-agent`（`getPiUserAgent()`）已移除；改用 `formatUserAgent()`。
+- `resolveTranscriptTools()` 现在接受 `TranscriptToolSupport`（`"none"`、`"additions"` 或 `"changes"`），而不是布尔值。`TranscriptTools.anchorsAdditions` 替换为 `foldedSystemMessages`，即折入 `requestTools` 的前导系统消息数量（[#10940](https://github.com/earendil-works/pi/issues/10940)）。
+
+新增
+
+- 添加客户端身份配置：请求选项 `identity` 和 `createModels({ identity })` 的默认值用来选择 `User-Agent`（带版本的 `"detailed"`、`"short"` 或自定义），以及 OpenRouter、NVIDIA NIM 和 OpenCode 的 Provider 归属请求头，来源是 `attribution: { name, url, categories? }`。`withClientIdentity()` 把身份应用到库从宿主收到的 `Models` 或 `MutableModels`。导出 `formatUserAgent()`、`getIdentityHeaders()`、`getOpenCodeSessionHeaders()`、`mergeClientIdentity()`、`PI_ATTRIBUTION` 和 `PI_AI_VERSION`。
+- Bedrock、OpenRouter 图片生成、pi-messages 和分类器请求现在也发送 Pi 的 `User-Agent`。
+- 带 `sessionId`、且自定义 Provider 指向 OpenCode（`opencode.ai`）的 `Models` 请求现在也发送 `x-opencode-session` 头，与内置 OpenCode Provider 一样。
+- 添加 `AI_TELEMETRY_SCHEMA`，以及围绕 Models 请求的可选 `pi.ai.request`/`pi.ai.poll` 追踪，带不含内容的首事件、块大小和最终用量属性，并通过 `telemetry.metrics` 提供时长、Token 和美元费用指标。
+- 失败的模型请求 span 以 `provider_error` 状态上报，错误信息最多 500 个字符；取消的请求保持 `ok` 状态，并带 `stop: "aborted"`。
+- 为 `minimax` 和 `minimax-cn` Provider 添加 `MiniMax-M3.1-Flash`，thinking 级别从 low 到 max，以 `output_config.effort` 发送。该模型不能关闭 thinking。来自 models.dev 的新 MiniMax 模型现在无需手动加入允许列表就会出现；只有较旧的 M2、M2.1、M2.5 和 M2.5-highspeed 仍被隐藏（[#11121](https://github.com/earendil-works/pi/issues/11121)）。
+- 使用 ChatGPT 登录：ChatGPT Business 工作区用量上限错误不再重试，并告诉用户去让工作区管理员提高上限。
+- 为 System One 分类器添加图片输入：`ClassifierContext.images` 现在可用于 `typesafe` 上的 Jev（在那里是实验性的，需用 `TypeSafe-Danger-Zone-Images` 头选择加入）和 `cloudflare-workers-ai`，可用于 `cloudflare-workers-ai` 上的 Clef，也可用于目录列出图片输入的 OpenRouter 决策模型。每个服务有自己的线上格式：TypeSafe 的 `assets`、Clef 的 `images` data URL，或 OpenRouter 在 state 中的 `image_url` 部分。
+- 为 System One 分类器模型添加 `compat`（`SystemOneCompat`，含 `imageInput` 和 `sendImageOptInHeader`）。内置目录条目会显式设置它；没有它的模型根据 Provider、`baseUrl` 和模型 ID 检测格式。
+- 为 `cloudflare-workers-ai` 添加 `@cf/cloudflare/clef-omni` 和 `typesafe/jev-1.14.0` 分类器模型。
+
+变更
+
+- `xai` Provider 上的 Grok 4.3 和 Grok 4.5 现在提供 `xhigh` thinking 级别，与 xAI 为这些模型支持的推理力度一致。
+
+修复
+
+- 修复 Cloudflare Workers AI 分类器目录数据：Clef Flash 现在是每百万输入 Token $0.038，上下文窗口 24,576 Token；Jev 是每百万输入 Token $0.042，而不是被列为免费。
+- 修复仅含空白的工具输出（例如 bash 返回的单独 `\r\n`）被原样发给 OpenAI Completions、OpenAI Responses 和 Google Provider 的问题；现在与空输出使用相同的占位符，因为有些 Provider 会以 400 拒绝仅含空白的工具内容（[#8720](https://github.com/earendil-works/pi/issues/8720)）。
+- 修复 `upstream_error: Upstream request failed`、`upstream_stream_read_error` 和 `Upstream HTTP/2 stream failed` 等网关上游失败不触发自动重试的问题（[#10920](https://github.com/earendil-works/pi/issues/10920)）。
+- 修复 Google Vertex OAuth Token 刷新因短暂网络错误失败时不触发自动重试的问题，例如 `request to https://oauth2.googleapis.com/token failed, reason:`（[#10996](https://github.com/earendil-works/pi/issues/10996)）。
+- 修复包装 Codex CLI 的代理转发的 `stream disconnected before completion` 错误不触发自动重试的问题（[#11057](https://github.com/earendil-works/pi/issues/11057)）。
+- 修复自动重试把请求 ID 或其他数字中的数字（例如 `req_011CU503xyz` 或 `5242880 bytes`）当成可重试 HTTP 状态码的问题（[#11057](https://github.com/earendil-works/pi/issues/11057)）。
+- 修复 OpenAI Responses 延迟工具加载在移除工具后的每次加载都改写顶层工具列表并丢失 Prompt 缓存的问题。带 `additional_tools` 的模型现在把全部工具声明在 `additional_tools` 项中，并从输入开头的一项开始，因此移除（以文本宣布）和重新定义不再改写前缀。工具搜索和 Kimi 工具消息在每次移除或重新声明时改写一次顶层工具，并让之后的加载保持锚定（[#10940](https://github.com/earendil-works/pi/issues/10940)）。
+- 修复请求体超过 Copilot 大小上限的 GitHub Copilot 请求（HTTP 413 `failed to parse request`，例如含很多大图片的会话）失败，而不是被检测为上下文溢出的问题。任何 HTTP 413 现在都算上下文溢出，调用方可以压缩后重试（[#11016](https://github.com/earendil-works/pi/pull/11016) 由 [@petrroll](https://github.com/petrroll) 贡献）。
+- 修复 `openai-codex` Provider 列出 Codex 后端会对 ChatGPT 账号拒绝的 `gpt-5.5` 和 `gpt-5.3-codex-spark` 的问题。两个模型都已移除（[#11173](https://github.com/earendil-works/pi/pull/11173) 由 [@lucasmeijer](https://github.com/lucasmeijer) 贡献）。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+新增
+
+- 添加 `AgentOptions.identity` 和 `Agent.identity`（pi-ai 的 `ClientIdentity`），用于设置 agent loop 请求的 `User-Agent` 和 Provider 归属。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+新增
+
+- 添加 Rex 终端检测（`TERM_PROGRAM=rex`），支持 OSC 8 超链接、truecolor 和 Kitty 图片。链接此前会回退到 `text (url)` 格式（[#11131](https://github.com/earendil-works/pi/issues/11131)、[#11150](https://github.com/earendil-works/pi/pull/11150) 由 [@petrroll](https://github.com/petrroll) 贡献、[#11183](https://github.com/earendil-works/pi/pull/11183) 由 [@nihaals](https://github.com/nihaals) 贡献）。
+
+修复
+
+- 修复未闭合的 `$$` 显示数学块吞掉或破坏它之后每个 Markdown 表格的问题。块级数学 Token 不再跨越 GFM 表格，流式待定数学的回退也不再把后面的表格当成待定数学（[#11159](https://github.com/earendil-works/pi/issues/11159)）。
+- 修复紧挨 CJK 标点的 Markdown 粗体和斜体不渲染的问题（[#10730](https://github.com/earendil-works/pi/pull/10730) 由 [@theBucky](https://github.com/theBucky) 贡献）。
+- 修复进程未调用 `stop()` 就退出时，终端模式（鼠标跟踪、焦点上报、Kitty 键盘协议、括号粘贴、备用屏幕）保持开启的问题。进程 `exit` 处理器现在会同步恢复它们（[#11170](https://github.com/earendil-works/pi/issues/11170)）。
+- 修复 `@` 文件自动补全对含 `[` 或 `(` 等正则元字符的查询不返回结果的问题（[#10972](https://github.com/earendil-works/pi/issues/10972)）。
+
+</details>
+
 ## v1.3.0（2026-10-15）
 
 <details>

@@ -53,7 +53,7 @@ Pi 使用 `jiti`，所以本地 TypeScript 扩展不需要单独的编译步骤�
 
 <a id="understand-the-lifecycle"></a>
 
-## 遵循 runtime 生命周期
+## 理解 runtime 生命周期
 
 工厂函数可以是同步或异步的。Pi 会等待异步工厂函数完成后再继续启动，这使它能够获取配置或注册启动期间需要的 Provider。
 
@@ -63,16 +63,114 @@ Pi 使用 `jiti`，所以本地 TypeScript 扩展不需要单独的编译步骤�
 
 从幂等的 `session_shutdown` 处理器中关闭会话级资源。
 
-一次运行的流程是：从输入和 `before_agent_start`，经过模型、消息和工具事件，到 `agent_end`。
-Pi 在运行启动期间计为忙，包括压缩检查和 `before_agent_start`，因此在此期间发送的消息会进入启动中的运行。
+一次正常的 Prompt 会启动一次运行。这次运行重复多个 turn，然后检查是否还有更多工作会启动另一次底层 agent 运行：
 
-自动重试、恢复、压缩或排队工作可能在此后继续。
+```mermaid
+flowchart TD
+    Input["input"] --> Before["before_agent_start"]
+    Before --> AgentStart["agent_start"]
+    AgentStart --> Turns[["turns"]]
+    Turns --> AgentEnd["agent_end"]
+    AgentEnd --> MoreRuns{"More work?"}
+    MoreRuns -->|yes| AgentStart
+    MoreRuns -->|no| BeforeSettle["agent_before_settle"]
+    BeforeSettle --> Continue{"Continuation requested?"}
+    Continue -->|yes| AgentStart
+    Continue -->|no| Settled["agent_settled"]
+```
+
+更多工作指重试、恢复、压缩重试或排队工作。
+
+每个 turn 发送一次模型请求，并执行 assistant 响应中的 tool call：
+
+```mermaid
+flowchart TD
+    TurnStart["turn_start"] --> Request[["model request"]]
+    Request --> ToolDecision{"Tool calls?"}
+    ToolDecision -->|yes| Tools[["tool execution"]]
+    Tools --> TurnEnd["turn_end"]
+    ToolDecision -->|no| TurnEnd
+    TurnEnd --> MoreTurns{"Another turn?"}
+    MoreTurns -->|yes| TurnStart
+    MoreTurns -->|no| AgentEnd(["agent_end"])
+```
+
+模型请求按以下顺序运行这些钩子：
+
+1. `context`
+2. `context_with_system`
+3. `before_provider_headers`
+4. `before_provider_request`
+5. `after_provider_response`
+6. `provider_stream_event` 和 assistant 消息事件
+
+每次 tool call 的工具执行按以下顺序运行这些钩子：
+
+1. `tool_execution_start`
+2. `tool_call`
+3. 工具执行期间的 `tool_execution_update`
+4. `tool_result`
+5. `tool_execution_end`
+
+生命周期涉及这些事件组：
+
+| 范围          | 事件                                                                                                     |
+| ------------- | -------------------------------------------------------------------------------------------------------- |
+| 输入准备      | `input`、`before_agent_start`                                                                            |
+| Agent 运行    | `agent_start`、`agent_end`                                                                               |
+| 模型 turn     | `turn_start`、`context`、`context_with_system`、`turn_end`                                               |
+| Provider 调用 | `before_provider_headers`、`before_provider_request`、`after_provider_response`、`provider_stream_event` |
+| 消息生命周期  | `message_start`、`message_update`、`message_end`                                                         |
+| 工具执行      | `tool_execution_start`、`tool_call`、`tool_execution_update`、`tool_result`、`tool_execution_end`        |
+| 收尾          | `agent_before_settle`、`agent_settled`                                                                   |
+
+Pi 在运行启动期间计为忙，包括压缩检查和 `before_agent_start`，因此在此期间发送的消息会进入启动中的运行。消息生命周期事件也覆盖用户消息和工具结果消息；模型请求列表只把 assistant 流放在它于每个 turn 中发生的位置。
+
+工具钩子对每次 tool call 运行，一次 assistant 响应可以通过返回 tool call 启动另一个 turn。Provider 钩子只在该传输暴露对应阶段时运行。确切的事件载荷和结果类型见 [`extensions/types.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/extensions/types.ts) 中导出的声明。
+
+会话启动和替换遵循另一条生命周期：
+
+```mermaid
+flowchart TD
+    Startup["Process startup"] --> Trust["project_trust when needed"]
+    Trust --> SessionStart["session_start"]
+    Switch["/new or /resume"] --> BeforeSwitch["session_before_switch"]
+    Fork["/fork or /clone"] --> BeforeFork["session_before_fork"]
+    BeforeSwitch --> Shutdown["session_shutdown"]
+    BeforeFork --> Shutdown
+    Reload["reload"] --> Shutdown
+    Shutdown --> Replacing{"Replacing the runtime?"}
+    Replacing -->|yes| Replacement["load replacement extension runtime"]
+    Replacement --> SessionStart
+    Replacing -->|no| Stop["process exits"]
+    SessionStart --> Discover["resources_discover"]
+```
+
+`project_trust` 在受信任的项目资源加载之前运行，会话替换进入新的工作目录时也可能再次运行。重试、恢复、压缩和排队消息可以在 `agent_end` 之后启动另一次 agent 运行，所以 `agent_end` 不是最终空闲信号。重新加载和会话替换会使旧 runtime 失效。`await ctx.reload()` 之后的代码仍属于旧 runtime，不得复用它绑定会话的状态。
+
+<a id="choose-an-event-by-intent"></a>
+
+### 按意图选择事件
+
+| 目标                                             | 事件                                                 |
+| ------------------------------------------------ | ---------------------------------------------------- |
+| 检查、转换或消费原始用户输入                     | `input`                                              |
+| 在运行前修改 Prompt 分段、活动工具，或追加上下文 | `before_agent_start`                                 |
+| 观察一次底层 agent 运行                          | `agent_start`、`agent_end`                           |
+| 在一次模型响应及其 tool call 之后行动            | `turn_end`                                           |
+| 为一次 Provider 请求过滤对话消息                 | `context`                                            |
+| 转换完整转录，包括系统消息                       | `context_with_system`                                |
+| 修改请求头或序列化后的 Provider 载荷             | `before_provider_headers`、`before_provider_request` |
+| 观察 Provider 响应元数据或已解析的流事件         | `after_provider_response`、`provider_stream_event`   |
+| 授权或修改一次 tool call                         | `tool_call`                                          |
+| 脱敏、标注或替换工具结果                         | `tool_result`                                        |
+| 追加最终条目，或请求最后一次继续                 | `agent_before_settle`                                |
+| 在自动处理停止后做通知工作                       | `agent_settled`                                      |
+| 初始化或释放会话级资源                           | `session_start`、`session_shutdown`                  |
 
 <a id="agent_start--agent_end--agent_before_settle--agent_settled"></a>
 
-`agent_before_settle` 是最后一个可操作的边界：它可以追加条目并请求一次继续。
-
-`agent_settled` 是最终的、仅通知的边界；当某个集成需要知道 Pi 不会自动继续时使用它。
+当扩展必须追加条目或请求最后一次继续时，使用 `agent_before_settle`。`agent_settled` 用于仅通知的工作，应在 Pi 不再有自动继续时运行。
 
 <a id="extensionapi-methods"></a>
 
@@ -109,6 +207,21 @@ Pi 在运行启动期间计为忙，包括压缩检查和 `before_agent_start`�
 请使用每个事件声明的结果类型，不要假定任何返回值都有作用。
 
 事件覆盖资源发现、会话、Agent 与消息生命周期、Provider、工具和原始输入。
+
+<a id="understand-handler-composition"></a>
+
+#### 理解处理器组合
+
+| 模式       | 行为                                                                                                                                         |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 通知       | 返回值被忽略。该事件只用于观察。                                                                                                             |
+| 原地修改   | 后面的处理器能看到对 `before_provider_headers.headers`、`before_agent_start.systemPromptOptions` 和 `tool_call.input` 等值的修改。           |
+| 链式转换   | 后面的处理器收到前面的 `input`、`context`、`context_with_system`、`message_end`、`tool_result` 和 `before_provider_request` 处理器返回的值。 |
+| 门控       | 已处理的输入、被阻止的 tool call、被取消的会话操作，或已处理的 `user_bash` 命令，会停止该操作的正常回退路径。                                |
+| 可操作边界 | 每个 `turn_end` 或 `agent_before_settle` 处理器都能看到到目前为止提议的条目和继续决定。                                                      |
+| 最后覆盖   | 最后一个返回动作的 `cache_warming_decision` 处理器胜出。                                                                                     |
+
+通知处理器不应在流式事件上做慢工作。转换处理器应保留它们并不有意拥有的字段。门控处理器在无法做出安全决定时应当失败关闭。
 
 `before_agent_start` 同时暴露当前 Prompt 和它的结构化 `systemPromptOptions`。`event.messageType` 说明是什么启动了本次运行：`"user"` 表示 Prompt 或 `pi.sendUserMessage()`，携带 `prompt` 和 `images`；`"custom"` 表示 `pi.sendMessage(..., { triggerTurn: true })`，携带起始的 `message` 且没有 `prompt`。返回的 `message` 会加入两种运行；检查 `messageType` 可以跳过由自定义消息启动的运行。请优先修改 Prompt 的分段、选中的工具或准则，让 Pi 能够追加转录增量。返回 `systemPrompt` 或设置 `forceSystemPrompt` 会为该次运行替换整个 Prompt，而转录会继续记录结构化分段。Provider 把强制的文本作为其开头的系统提示收到。
 
@@ -305,11 +418,21 @@ Pi 会报告处理器错误，并尽可能继续。`tool_call` 处理器失败�
 
 ## 示例与参考
 
-已检入的[扩展示例](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/)覆盖工具、生命周期事件、命令、标志、快捷键、状态、渲染、Provider、OAuth、远程执行和终端组件。
+已检入的[扩展示例](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/)是实现参考。请从与所需行为匹配的最小示例开始：
 
-请从与你的集成点匹配的最小示例开始。
+| 目标                                  | 从这里开始                                                                                                                                            | 原因                                                   |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| 确认或阻止 tool call                  | [`permission-gate.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/extensions/permission-gate.ts)                   | 结合 `tool_call`、感知模式的 UI 和失败关闭行为。       |
+| 为一次运行修改 Prompt 分段            | [`prompt-customizer.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/extensions/prompt-customizer.ts)               | 使用结构化 Prompt 选项，而不是替换完整 Prompt。        |
+| 保持分支感知的工具状态                | [`todo.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/extensions/todo.ts)                                         | 从持久化条目重建状态，并在 TUI 中渲染。                |
+| 启动后注册工具                        | [`dynamic-tools.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/extensions/dynamic-tools.ts)                       | 在生命周期处理器和命令处理器之间共享注册逻辑。         |
+| 从命令运行可取消的模型工作            | [`qna.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/extensions/qna.ts)                                           | 结合嵌套模型调用、取消和自定义 UI。                    |
+| 替换主编辑器                          | [`modal-editor.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/extensions/modal-editor.ts)                         | 扩展 `CustomEditor`，同时保留应用控制。                |
+| 在关闭时做收尾                        | [`auto-commit-on-exit.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/extensions/auto-commit-on-exit.ts)           | 用会话关闭钩子做收尾工作。                             |
+| 把内置工具路由到另一台机器            | [`ssh.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/extensions/ssh.ts)                                           | 复用工具操作接口，而不是重新实现工具契约。             |
+| 添加 OAuth 和 Provider 特定的流式处理 | [`custom-provider-gitlab-duo/`](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/custom-provider-gitlab-duo/) | 展示完整的 Provider 集成，同时把受支持的协议委托出去。 |
 
-模型服务集成见[自定义 Provider](custom-provider.md)，自定义组件见[终端 UI](tui.md)，安装或与其他资源一起分发扩展见 [Pi 包](packages.md)。
+模型服务集成见[自定义 Provider](custom-provider.md)，自定义组件见[终端 UI](tui.md)，安装或与其他资源一起分发扩展见 [Pi Packages](packages.md)。确切的签名、载荷和结果 schema 请用导出的声明；本指南关注生命周期选择、组合方式和可长期维护的实现模式。
 
 ---
 

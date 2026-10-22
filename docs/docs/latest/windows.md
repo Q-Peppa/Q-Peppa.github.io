@@ -21,8 +21,9 @@ Pi 可以原生运行在 Windows 进程中，也可以运行在 Windows Subsyste
 Pi 按以下顺序解析 Bash：
 
 1. `~/.pi/agent/settings.json` 中的 `shellPath`
-2. `Program Files` 或 `Program Files (x86)` 下的 Git Bash
-3. `PATH` 上的 `bash.exe`，包括 Cygwin、MSYS2 或旧的 WSL Bash
+2. `%ProgramFiles%\Git\bin\bash.exe` 处的 Git Bash
+3. `%ProgramFiles(x86)%\Git\bin\bash.exe` 处的 Git Bash
+4. `PATH` 上的 `bash.exe`，包括 Cygwin、MSYS2 或旧的 WSL Bash
 
 启动 Pi 并输入下面的命令来验证 Shell：
 
@@ -35,6 +36,13 @@ Pi 按以下顺序解析 Bash：
 ## 让模型使用 PowerShell
 
 可选的 `powershell` 工具在有 `pwsh.exe` 时通过它运行命令，否则回退到 Windows PowerShell。它以 `-NoProfile -NonInteractive -ExecutionPolicy Bypass` 启动 PowerShell。管理员强制执行的执行策略仍可能优先。
+
+PowerShell 发现按以下顺序检查这些位置：
+
+1. `PATH` 上的 `pwsh.exe`
+2. `%ProgramFiles%\PowerShell\7\pwsh.exe`
+3. `PATH` 上的 `powershell.exe`
+4. `%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe`
 
 要把面向模型的 `bash` 工具替换为 `powershell`，把下面的内容加入 `~/.pi/agent/settings.json`：
 
@@ -49,6 +57,14 @@ Pi 按以下顺序解析 Bash：
 重启 Pi，然后让它运行一条无害的 PowerShell 命令。`!` 和 `!!` 编辑器命令仍然使用 Bash。`powershell` 工具只在 Pi 作为原生 Windows 进程运行时可用。
 
 其他工具组合见[设置](settings.md#tools)。
+
+<a id="wsl"></a>
+
+## WSL
+
+Windows 上的 WSL 路径转换，以及 WSL 中额外的 Git 分支轮询，识别的是 `/mnt/<drive>`，不是自定义挂载根。
+
+从 Windows 使用旧版 WSL `bash.exe` 启动器时，Pi 通过 stdin 发送命令，以避免命令行引号问题。
 
 ## 使用自定义 Bash 可执行文件
 

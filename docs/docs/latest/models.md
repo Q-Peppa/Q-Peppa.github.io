@@ -44,6 +44,8 @@ Pi 直接集成 llama.cpp router。Router 会发现 GGUF 文件并按需加载�
 
 对于 Ollama、LM Studio、vLLM、SGLang 和其他兼容服务器，请在 `models.json` 中[配置兼容端点](#configure-a-compatible-endpoint)。
 
+<a id="configure-a-compatible-endpoint"></a>
+
 ## 配置兼容端点
 
 当某个端点使用 Pi 已支持的 API 时，使用 [`models.json`](configuration.md#agent-directory)。这包括大多数 Ollama、LM Studio、vLLM、SGLang 和代理部署。
@@ -62,9 +64,23 @@ Pi 直接集成 llama.cpp router。Router 会发现 GGUF 文件并按需加载�
 }
 ```
 
-这个占位 Key 让模型对 Pi 可用；Ollama 会忽略它。对于需要认证的端点，`apiKey` 和 header 值可以使用 `$NAME` 或 `${NAME}` 环境变量插值、字面量，或以 `!command` 开头。`models.json` 中的命令在请求时运行，Pi 不会缓存结果。
+这个占位 Key 让模型对 Pi 可用；Ollama 会忽略它。对于需要认证的端点，`apiKey` 和 header 值可以使用 `$NAME` 或 `${NAME}` 环境变量插值、字面量，或以 `!command` 开头。`$$` 和 `$!` 会生成字面的 `$` 和 `!`。`models.json` 中的命令在请求时运行，Pi 不会缓存结果。
 
 打开 `/model` 会重新加载该文件。`models` 条目会添加或替换该 Provider 上同 ID 的模型。用 `modelOverrides` 修改已有内置或扩展提供的模型的元数据，而不替换该 Provider 的模型列表。未知的 override ID 会被忽略。
+
+要把内置 Provider 转到代理，只设置它的 `baseUrl`。它的模型和认证保持不变：
+
+```json
+{
+  "providers": {
+    "anthropic": { "baseUrl": "https://proxy.example.com/v1" }
+  }
+}
+```
+
+[模型配置](models-configuration.md) 列出了每个字段。
+
+<a id="describe-model-input-and-caching"></a>
 
 ### 描述模型输入和缓存
 
@@ -133,20 +149,20 @@ Pi 先对不支持的 thinking level 做钳制，然后按此顺序合并模型 
 
 ## 使用分类器模型
 
-分类器模型不用于对话。它们回答关于 JSON 状态的带类型问题：从若干选项中选一个、回答是否，或给出分数，每项都带概率。Pi 通过这些 Provider 提供 TypeSafe 的 Jev 模型，通过 Workers AI 提供 Cloudflare 的 Clef 和 Clef Flash 模型，并通过 [Decisions API](https://developers.openai.com/api/docs/guides/decisions) 提供 OpenAI 的 GPT-6 Luna：
+分类器模型不用于对话。它们回答关于 JSON 状态的带类型问题：从若干选项中选一个、回答是否，或给出分数，每项都带概率。Pi 通过这些 Provider 提供 TypeSafe 的 Jev 模型，通过 Workers AI 和 OpenRouter 提供 Cloudflare 的 Clef、Clef Flash 和 Clef Omni 模型，并通过 [Decisions API](https://developers.openai.com/api/docs/guides/decisions) 提供 OpenAI 的 GPT-6 Luna：
 
-| Provider                | 模型 ID                                                            | 认证                                            |
-| ----------------------- | ------------------------------------------------------------------ | ----------------------------------------------- |
-| `typesafe`              | `jev-latest`                                                       | `TYPESAFE_API_KEY`                              |
-| `openrouter`            | `typesafe/jev-1.13`、`~typesafe/jev-latest`                        | `OPENROUTER_API_KEY` 或 `/login`                |
-| `cloudflare-workers-ai` | `typesafe/jev`、`@cf/cloudflare/clef`、`@cf/cloudflare/clef-flash` | `CLOUDFLARE_API_KEY` 和 `CLOUDFLARE_ACCOUNT_ID` |
-| `vercel-ai-gateway`     | `typesafe-ai/jev`                                                  | `AI_GATEWAY_API_KEY`                            |
-| `opencode`              | `jev-1.13`、`jev-1.13-free`                                        | `OPENCODE_API_KEY`                              |
-| `openai`                | `gpt-6-luna`                                                       | `OPENAI_API_KEY`                                |
+| Provider                | 模型 ID                                                                                                                              | 认证                                            |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------- |
+| `typesafe`              | `jev-latest`                                                                                                                         | `TYPESAFE_API_KEY`                              |
+| `openrouter`            | `typesafe/jev-1.13`、`typesafe/jev-1.14`、`~typesafe/jev-latest`、`cloudflare/clef`、`cloudflare/clef-flash`、`cloudflare/clef-omni` | `OPENROUTER_API_KEY` 或 `/login`                |
+| `cloudflare-workers-ai` | `typesafe/jev`、`typesafe/jev-1.14.0`、`@cf/cloudflare/clef`、`@cf/cloudflare/clef-flash`、`@cf/cloudflare/clef-omni`                | `CLOUDFLARE_API_KEY` 和 `CLOUDFLARE_ACCOUNT_ID` |
+| `vercel-ai-gateway`     | `typesafe-ai/jev`                                                                                                                    | `AI_GATEWAY_API_KEY`                            |
+| `opencode`              | `jev-1.13`、`jev-1.13-free`                                                                                                          | `OPENCODE_API_KEY`                              |
+| `openai`                | `gpt-6-luna`                                                                                                                         | `OPENAI_API_KEY`                                |
 
 [llama.cpp router](llama-cpp.md#classification) 上的 chat 模型也会列为分类器模型。
 
-OpenAI 的 Decisions API 需要 API key。Sign in with ChatGPT 凭证对它无效，所以当 `openai` 通过 `/login` 登录时，即使设置了 `OPENAI_API_KEY`，`gpt-6-luna` 也不会被列为可用；请先登出 `openai` 再使用该 key。GPT-6 Luna 还会判断通过 `images` 传入的图片（见 [Codemode](codemode.md#classify)）；其他分类器模型对它们返回错误。该 API 拒绝超过 922K Token 的输入，但运行时间超过约五秒的请求（目前大致超过 600K 输入 Token）会以网关超时失败。
+OpenAI 的 Decisions API 需要 API key。Sign in with ChatGPT 凭证对它无效，所以当 `openai` 通过 `/login` 登录时，即使设置了 `OPENAI_API_KEY`，`gpt-6-luna` 也不会被列为可用；请先登出 `openai` 再使用该 key。该 API 拒绝超过 922K Token 的输入，但运行时间超过约五秒的请求（目前大致超过 600K 输入 Token）会以网关超时失败。
 
 分类器模型不会出现在 `/model` 中。模型通过 [`codemode`](cli.md#enable-codemode) 工具到达它们；除非某个 MCP 服务器打开了它，否则它是关闭的。在[设置](settings.md#tools)中用 `"defaultTools": ["+codemode"]` 启用。脚本随后用 `models.getAvailableOfType("classifier")` 列出分类器模型，并调用 `models.classify(model, { state, questions })`：
 
@@ -166,6 +182,10 @@ return result.answers;
 ```
 
 [Codemode](codemode.md#classify) 描述了问题和答案的类型。
+
+`input` 包含 `"image"` 的分类器模型还会判断通过 `images` 传入的图片；其他分类器模型对它们返回错误。图片输入可用于 GPT-6 Luna、来自 `typesafe` 和 `cloudflare-workers-ai` 的 Jev、来自 `cloudflare-workers-ai` 的 Clef，以及目录列出图片输入的 OpenRouter 模型。Jev 接受 PNG 和 JPEG，TypeSafe 自己的 API 上图片输入是实验性的。Clef 接受 PNG、JPEG 和 WebP，每次请求最多四张。来自 `vercel-ai-gateway` 和 `opencode` 的 Jev 只接受文本。
+
+每个 System One 服务用自己的请求格式接收图片，由模型的 `compat.imageInput` 设置。内置模型会设置它，因此覆盖 Provider 的 `baseUrl` 会保留它。代理其他服务分类器的自定义 Provider 在 `models.json` 的 Provider 级 `compat` 中设置它（见 [System One 兼容性](models-configuration.md#typesafe-system-one)）。OpenRouter 尤其会以 TypeSafe 的格式应答且不报错，但会丢掉图片。
 
 当服务报告 Token 数时（所有 System One 服务都会），`result.usage` 会带上它们及其费用。Pi 把脚本的分类器调用用量加到 `codemode` 工具结果上，因此会计入页脚和 `/session` 的会话费用。费用使用模型目录中的价格；没有价格的模型（例如 TypeSafe 直接的 `jev-latest`）报告 Token 但不计费。
 

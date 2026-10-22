@@ -31,7 +31,65 @@ Provider 扩展是一种[扩展](extensions.md)，所以它遵循相同的加载
 
 只为已有 Provider 注册 `baseUrl` 或 `headers` 会保留它的内置模型。在旧式形式中提供 `models` 会替换该 Provider 在 chat、图片和分类器操作上的模型。省略 `type` 表示 `"chat"`；图片和分类器模型需要显式判别，并通过 `images` 和 `classifiers` 字段、按其 `api` 值提供实现。
 
-例如，混合操作的 Provider 可以同时注册非 chat 模型及其实现：
+<a id="redirect-an-existing-provider"></a>
+
+### 重定向已有 Provider
+
+只注册应当改变的字段。这会保留该 Provider 的内置目录、认证、API 实现和兼容性设置：
+
+```typescript
+import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
+
+export default function (pi: ExtensionAPI) {
+  pi.registerProvider('anthropic', {
+    baseUrl: 'https://gateway.example.com/anthropic',
+    headers: {
+      'X-Gateway-Key': '$GATEWAY_API_KEY',
+    },
+  });
+}
+```
+
+代理或网关若保留上游协议，使用这种形式。不要把内置模型列表复制进扩展，否则一个很小的端点覆盖会变成可能漂移的目录替换。
+
+<a id="register-a-compatible-endpoint"></a>
+
+### 注册兼容端点
+
+当服务实现了受支持的协议，但有自己的模型目录时，注册该端点，并且只注册服务实际暴露的模型：
+
+```typescript
+import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
+
+export default function (pi: ExtensionAPI) {
+  pi.registerProvider('acme', {
+    name: 'Acme AI',
+    baseUrl: 'https://api.acme.example/v1',
+    apiKey: '$ACME_API_KEY',
+    api: 'openai-completions',
+    models: [
+      {
+        type: 'chat',
+        id: 'acme-chat',
+        name: 'Acme Chat',
+        reasoning: false,
+        input: ['text'],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 128000,
+        maxTokens: 8192,
+      },
+    ],
+  });
+}
+```
+
+不需要可执行的扩展行为时，这种情况优先用 `models.json`。注册依赖运行时发现、自定义认证，或与其他扩展功能共享的代码时，再用扩展。
+
+<a id="register-mixed-operation-models"></a>
+
+### 注册混合操作模型
+
+混合操作的 Provider 可以同时注册非 chat 模型及其实现：
 
 ```typescript
 pi.registerProvider('media-tools', {

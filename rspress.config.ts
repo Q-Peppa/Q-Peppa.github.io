@@ -155,6 +155,7 @@ export default defineConfig({
             { text: 'Codemode', link: '/docs/latest/codemode', tag: 'new' },
             { text: '斜杠命令', link: '/docs/latest/slash-commands', tag: 'new' },
             { text: '设置', link: '/docs/latest/settings' },
+            { text: '模型配置', link: '/docs/latest/models-configuration', tag: 'new' },
             { text: '环境变量', link: '/docs/latest/environment-variables' },
             { text: '快捷键', link: '/docs/latest/keybindings' },
             { text: 'Providers', link: '/docs/latest/providers' },
