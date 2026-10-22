@@ -26,5 +26,6 @@
   },
   "lint-staged": {
     "*": "oxfmt --no-error-on-unmatched-pattern"
-  }
+  },
+  "packageManager": "pnpm@11.15.1"
 }
