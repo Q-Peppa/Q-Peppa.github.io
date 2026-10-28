@@ -146,6 +146,8 @@ OAuth Provider 提供显示名、登录流程、Token 刷新和访问 Token 解�
 
 OAuth 回调与 UI 无关。它们可以打开授权 URL、显示设备码、报告进度、请求输入，或让用户选择登录方式。网络请求期间请响应取消和传入的 abort signal。
 
+按 Enter（`tui.select.confirm`）会打开设备登录 URL 并复制验证码，也可以手动登录。Provider 可以在 `onDeviceCode` 或原生 `AuthEvent` 通知里用 `openBrowserOnConfirm: false` 或 `copyCodeOnConfirm: false` 关掉其中任一动作。
+
 绝不要把访问 Token、刷新 Token、Authorization header 或完整的 Provider 响应写入普通日志。
 
 ## 提供并刷新模型

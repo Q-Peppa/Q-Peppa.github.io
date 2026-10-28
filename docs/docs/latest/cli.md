@@ -15,7 +15,7 @@ pi update [target] [options]
 pi list
 pi config [options]
 pi auth <check|print-api-key|print-bearer-token> [options]
-pi mcp <list|login|logout> [options]
+pi mcp <add|remove|list|login|logout> [options]
 ```
 
 <a id="modes"></a>
@@ -151,7 +151,7 @@ MCP 资源工具（`list_mcp_resources`、`list_mcp_resource_templates`、`read_
 | `find`       | 用 glob 模式查找路径              |
 | `ls`         | 列出目录内容                      |
 
-内置扩展再提供两个工具。它们默认关闭；MCP 扩展在 MCP 服务器需要它们时会打开（见 [MCP](mcp.md#exposure)）。要自己启用，在 `--tools` 或 `defaultTools` 中写出它们。
+内置扩展再提供两个工具。它们默认关闭；MCP 扩展在 MCP 服务器需要它们时会打开（见 [MCP](mcp.md#control-tool-exposure)）。要自己启用，在 `--tools` 或 `defaultTools` 中写出它们。
 
 | 内置扩展      | 作用                                                                                                   |
 | ------------- | ------------------------------------------------------------------------------------------------------ |
@@ -337,7 +337,7 @@ pi auth check --provider openai --json
 | `pi mcp login <server> [--timeout <seconds>]`          | 登录 OAuth 服务器：打开授权页并等待浏览器；终端也可以接受粘贴的重定向 URL。`--timeout` 限制整个登录过程，包括对授权服务器的请求（默认 300 秒）                                                                                                      |
 | `pi mcp logout <server>`                               | 删除服务器已存储的 OAuth 凭证                                                                                                                                                                                                                       |
 
-`add` 和 `remove` 修改 `~/.pi/agent/mcp.json`，加上 `--local`（`-l`）则修改当前目录的 `.pi/mcp.json`。`add` 还接受 `--exposure <mode>`（见 [Exposure](mcp.md#exposure)）和 `--description <text>`，并且不会连接；运行 `pi mcp list` 检查服务器。
+`add` 和 `remove` 修改 `~/.pi/agent/mcp.json`，加上 `--local`（`-l`）则修改当前目录的 `.pi/mcp.json`。`add` 还接受 `--exposure <mode>`（见 [控制工具暴露](mcp.md#control-tool-exposure)）和 `--description <text>`，并且不会连接；运行 `pi mcp list` 检查服务器。
 
 项目 `.pi/mcp.json` 文件只对已经受信任的项目读取。
 

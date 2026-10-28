@@ -142,7 +142,7 @@ interface AssistantMessage {
 }
 ```
 
-当具体的 Provider 响应模型与请求的模型不同时，`responseModel` 记录它。`responseId`、`providerThinkingLevel`、`thinkingLevel`、`diagnostics` 和 `rawStopReason` 保留 Provider 或 runtime 细节。
+`responseModel` 记录 Provider 报告的具体模型（Provider 有报告时）。它可能与请求的模型相同。`responseId`、`providerThinkingLevel`、`thinkingLevel`、`diagnostics` 和 `rawStopReason` 保留 Provider 或 runtime 细节。
 
 `"pending"` 用于流式过程中的部分 assistant 消息。`message_end` 中已完成的消息具有终止性的 stop reason，Pi 不会把 `"pending"` 的 assistant 消息持久化到会话 JSONL 中。
 

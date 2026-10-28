@@ -2,32 +2,43 @@
 
 > 本页面是 [Pi 官方文档](https://pi.dev/docs/latest/llama-cpp) 的中文翻译。仅供学习参考。
 
-Pi 支持 [llama.cpp](https://github.com/ggml-org/llama.cpp) router 服务器。Router 会发现多个 GGUF 模型，并按需加载或卸载它们。
+Pi 支持 [llama.cpp](https://llama.app) router 服务器。Router 会发现多个 GGUF 模型，并按需加载或卸载它们。
 
-请使用支持 router 的较新 llama.cpp 构建。按照[构建说明](https://github.com/ggml-org/llama.cpp/blob/master/docs/build.md)操作，或安装适合你平台的[预构建版本](https://github.com/ggml-org/llama.cpp/releases)。
+## 安装 llama.cpp
+
+用[官方安装器](https://llama.app/docs/installation)安装 llama.cpp：
+
+```bash
+curl -LsSf https://llama.app/install.sh | sh
+```
+
+验证安装：
+
+```bash
+llama cli --version
+```
+
+其他安装方式（包括包管理器和从源码构建）见 [llama.app](https://llama.app)。
 
 ## 启动 router
 
-启动 `llama-server` 时不要传 `--model` 或 `-m`。传入模型会启动单模型模式而不是 router 模式。
+启动 `llama serve` 时不要传 `--model`、`-m` 或 `-hf`。传入模型会启动单模型模式而不是 router 模式。router 配置见 [llama.cpp server 指南](https://llama.app/docs/serve#serving-multiple-models-router-mode)。
 
 ```bash
-llama-server \
-  --models-dir ~/models \
+llama serve \
   --no-models-autoload \
-  --jinja \
   --host 127.0.0.1 \
   --port 8080 \
-  -ngl 999 \
+  -ngl all \
   -c 32768
 ```
 
 重要选项：
 
-- `--models-dir ~/models` 发现本地 GGUF 文件。
 - `--no-models-autoload` 让加载只通过 `/llama` 显式进行。
 - `--jinja` 启用兼容的聊天模板和 tool calling。
-- `-ngl 999` 尽可能多地把层卸载到 GPU。
-- `-c 32768` 设置每个已加载模型的上下文窗口。省略它会使用模型的原生上下文，这可能显著增加内存需求。
+- `-ngl all` 把所有层卸载到 GPU。省略它则使用自动 GPU 卸载。
+- `-c 32768` 以 Token 为单位设置上下文大小。用 `-c 0` 表示模型的完整上下文窗口，这可能显著增加内存需求。上下文在并行的 server slot 之间共享。
 
 单文件模型可以直接放在模型目录中。多模态和分片模型放在单独的子目录里：
 
@@ -43,7 +54,7 @@ llama-server \
     └── large-model-Q4_K_M-00003-of-00003.gguf
 ```
 
-手动添加文件后重启 router。按模型设置上下文大小和其他选项，请使用 [llama.cpp 模型预设](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md#model-presets)。针对特定 NVIDIA GPU 和模型调优的设置，见 [用 NVIDIA RTX 和 llama.cpp 运行 Pi](nvidia-rtx-llama-cpp.md)。
+手动添加文件后重启 router。router 还通过 `--models-preset` 支持缓存模型和预设文件，见 [server 指南](https://llama.app/docs/serve#serving-multiple-models-router-mode)。
 
 <a id="configure-pi"></a>
 
@@ -67,7 +78,7 @@ export LLAMA_API_KEY=optional-secret
 pi
 ```
 
-如果服务器使用 API Key，请用匹配的 `--api-key` 值启动 `llama-server`。只在本机访问时保留 `--host 127.0.0.1`。
+如果服务器使用 API Key，请用匹配的 `--api-key` 值启动 `llama serve`。只在本机访问时保留 `--host 127.0.0.1`。
 
 ## 管理模型
 

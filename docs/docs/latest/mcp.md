@@ -279,6 +279,8 @@ MCP Apps 的资源（`ui://` URI 或 `text/html;profile=mcp-app`）会省略，�
 
 <a id="other-mcp-extensions"></a>
 
+<a id="replace-the-built-in-mcp-support"></a>
+
 ### 替换内置 MCP 支持
 
 已安装的扩展如果注册了 `/mcp`（例如 `pi-mcp-adapter`），会替换会话中的内置 MCP 支持。Pi 之后既不读取 `mcp.json`，也不在会话中连接它的服务器，`/mcp` 属于该扩展。移除扩展即可恢复内置行为。不安装替代就关掉内置 MCP 支持，在 `pi config` 的 Built-in 下禁用 `mcp`，或在[设置](settings.md#resources)中设 `"extensions": ["-builtin:mcp"]`。`--no-mcp` 为单次运行禁用它。

@@ -18,6 +18,8 @@ pi install ./local-package
 
 `pi list` 显示已配置的包。用 `pi remove <source>` 移除一个包，用 `pi update --extensions` 同步包安装。所有包命令和选项见[命令行](cli.md#package-commands)。
 
+如果已配置的包在启动时安装失败，例如 npm 连不上 registry，Pi 会警告、跳过该包的资源并继续运行。下次启动或 `/reload` 时会再次尝试安装。`pi install` 和 `pi update --extensions` 仍会报告失败并以非零状态退出。
+
 个人安装会写入 `~/.pi/agent/settings.json`。加上 `--local` 或 `-l` 会把包声明写入 `.pi/settings.json`。Pi 只在项目信任被授予后才读取该文件中的声明。
 
 项目包只在项目信任确定之后才安装和加载。包可以执行扩展代码，也可以包含指示模型运行程序的 Skill。安装第三方包之前请先审阅其源码。授予项目信任之前请先审阅项目包声明。
@@ -74,6 +76,8 @@ my-pi-package/
 路径相对于包根目录。数组接受 glob 模式和排除项。当通过 glob 遍历无法发现时，请直接列出以点开头或符号链接的资源根。
 
 `pi-package` 关键字让 npm 包可以被 [Pi 包画廊](https://pi.dev/packages)发现。可选的 `pi.image` 和 `pi.video` 字段可以添加画廊预览。
+
+<a id="declare-dependencies"></a>
 
 ## 声明依赖
 

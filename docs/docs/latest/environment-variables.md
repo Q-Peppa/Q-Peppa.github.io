@@ -90,6 +90,7 @@ const powershellTool = createPowerShellTool(cwd, {
 | `PI_CACHE_RETENTION`          | 设为 `long`，在受支持处启用延长的 Provider Prompt 缓存                                                                                                                                                  |
 | `PI_SHARE_VIEWER_URL`         | 覆盖 `/share` 使用的基础 URL                                                                                                                                                                            |
 | `PI_RADIUS_GATEWAY`           | 覆盖 `/bug` 上传使用的 Radius 网关源                                                                                                                                                                    |
+| `PI_CLEAR_ON_SHRINK`          | 设为 `1` 时，渲染内容收缩后清空空行；`terminal.clearOnShrink` 设置优先。见[设置](settings.md)                                                                                                           |
 | `PI_HARDWARE_CURSOR`          | 设为 `1` 显示硬件光标；见[终端设置](terminal-setup.md)                                                                                                                                                  |
 | `PI_CLIPBOARD_OSC52`          | 设为 `1` 时，在写入本地剪贴板后也通过 OSC 52 把复制的文本发送到终端，就像 Pi 经 SSH 时那样。当远程客户端没有 SSH 变量地连接 Pi 时使用它，例如从另一台机器接入的多路复用器或远程 IDE 守护进程            |
 | `PI_HYPERLINKS`               | 用 `1`、`0` 或 `auto` 覆盖 OSC 8 超链接检测                                                                                                                                                             |

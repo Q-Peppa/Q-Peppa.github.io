@@ -139,6 +139,8 @@ export default function (pi: ExtensionAPI) {
 
 这个组件不显示文本光标，因此不需要 `Focusable`。包含 `Input` 或 `Editor` 的组件必须实现 `Focusable`，并把 `focused` 值传给该子组件。
 
+自定义组件不会把 pi 报告为正在等待用户，因为 `ctx.ui.custom()` 也会承载加载指示和其他非阻塞 UI。内联组件在等待回答时，传入 `blocked: { kind: "question", message: "Pick a color" }`，这样支持[程序状态](terminal-setup.md#program-status)的终端会在组件可见期间把 pi 显示为阻塞。`kind` 为 `"question"`、`"permission"` 或 `"auth"`。Overlay 忽略该选项。
+
 传入 `overlay: true` 会在已有内容之上绘制。Overlay 选项控制尺寸、锚点、偏移、边距和响应式可见性。交互仍在进行时，overlay 句柄可以通过 `setHidden()` 改变焦点，或临时隐藏和显示 overlay。
 
 有焦点的 overlay 在普通渲染之间保持输入所有权。如果另一个组件应当在 overlay 仍然可见时接收输入，请通过句柄显式释放或重定向焦点。
@@ -148,6 +150,8 @@ export default function (pi: ExtensionAPI) {
 用传给组件工厂的完成回调结束交互。它会兑现 `ctx.ui.custom()` 的 Promise 并释放该组件。不要对 `ctx.ui.custom()` 创建的 overlay 调用 `OverlayHandle.hide()`。
 
 定位、堆叠、焦点、响应式可见性和动画行为见 [`overlay-qa-tests.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/extensions/overlay-qa-tests.ts)。
+
+<a id="apply-themes-correctly"></a>
 
 ## 正确应用主题
 
