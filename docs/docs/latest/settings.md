@@ -172,12 +172,12 @@ Shell 设置见 [Shell 别名](shell-aliases.md)，包管理器行为见 [Pi 包
 
 ## 更新、遥测与警告
 
-| 设置                           | 类型    | 默认值  | 说明                                                                 |
-| ------------------------------ | ------- | ------- | -------------------------------------------------------------------- |
-| `collapseChangelog`            | boolean | `false` | 更新后显示精简的 changelog。                                         |
-| `enableInstallTelemetry`       | boolean | `true`  | 启用匿名安装/更新上报和选定的 Provider 归属 header。不控制更新检查。 |
-| `enableAnalytics`              | boolean | `false` | 选择加入分析数据共享。目前只由实验性的首次运行设置使用。             |
-| `warnings.anthropicExtraUsage` | boolean | `true`  | 当 Anthropic 订阅认证可能使用付费额外用量时警告。                    |
+| 设置                           | 类型    | 默认值  | 说明                                                                  |
+| ------------------------------ | ------- | ------- | --------------------------------------------------------------------- |
+| `collapseChangelog`            | boolean | `false` | 更新后显示精简的 changelog。也会把扩展包 changelog 精简为每个包一行。 |
+| `enableInstallTelemetry`       | boolean | `true`  | 启用匿名安装/更新上报和选定的 Provider 归属 header。不控制更新检查。  |
+| `enableAnalytics`              | boolean | `false` | 选择加入分析数据共享。目前只由实验性的首次运行设置使用。              |
+| `warnings.anthropicExtraUsage` | boolean | `true`  | 当 Anthropic 订阅认证可能使用付费额外用量时警告。                     |
 
 ---
 

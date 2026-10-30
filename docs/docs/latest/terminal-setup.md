@@ -42,7 +42,7 @@ Kitty 无需额外配置就支持所需的键盘协议。
 
 ## Apple Terminal
 
-可用时 Pi 会启用增强键报告。如果 Terminal.app 对 `Shift+Enter` 仍然发送普通的 Return，Pi 会使用本地 macOS 修饰键回退，并把它当作 `Shift+Enter`。
+可用时 Pi 会启用增强键报告。如果 Terminal.app 对 `Shift+Enter` 仍然发送普通的 Return 或 `ESC` + Return，Pi 会使用本地 macOS 修饰键回退，并把它当作 `Shift+Enter`。未按住 Shift 的 `ESC` + Return 仍是 `Alt+Enter`。
 
 该回退仅在 Pi 与 Terminal.app 运行在同一台 Mac 上时有效。Pi 通过 SSH 运行在另一台机器上时，它无法读取本地修饰键状态。
 
@@ -171,6 +171,8 @@ VS Code 1.109.5 及更新版本默认在内置终端中启用 Kitty 键盘协议
 Windows Terminal 使用 Pi 在 Windows 和 WSL 上的默认快捷键。完整列表见[快捷键](keybindings.md)。
 
 ### 转发 Shift+Enter
+
+Pi 在 Windows 上原生运行时，会检查本地 Shift 键状态。按住 Shift 时，普通 Return 或 `ESC` + Return 会被当作 `Shift+Enter`。这一回退在 WSL 或 SSH 中无效。如果 `Shift+Enter` 仍然提交，就显式转发它。
 
 用 `Ctrl+Shift+,` 或 **Settings > Open JSON file** 打开 Windows Terminal 的 `settings.json`。把下面的对象加入它的 `actions` 数组：
 

@@ -30,6 +30,8 @@ pi install ./local-package
 pi -e npm:@example/pi-tools
 ```
 
+Pi 把 `-e` 包缓存在 `~/.pi/agent/tmp/extensions/`，并在每次启动和 `/reload` 时检查。registry 上出现符合该规格的更新版本时，npm 包会重新安装。固定到精确版本号的规格不会检查，例如 `@1.2.3`。git 包会拉取并重置到远程分支或 ref。已经检出的 commit hash ref 不会再拉取。检查失败或处于离线模式时，Pi 加载缓存副本。
+
 ## 选择来源
 
 | 来源 | 示例                                  | 行为                       |
@@ -76,6 +78,28 @@ my-pi-package/
 路径相对于包根目录。数组接受 glob 模式和排除项。当通过 glob 遍历无法发现时，请直接列出以点开头或符号链接的资源根。
 
 `pi-package` 关键字让 npm 包可以被 [Pi 包画廊](https://pi.dev/packages)发现。可选的 `pi.image` 和 `pi.video` 字段可以添加画廊预览。
+
+<a id="show-a-changelog"></a>
+
+## 显示 changelog
+
+包更新后，Pi 可以显示变更内容。下次全新启动时，Pi 读取包的 changelog，在「Extension Updates」下显示比上次见过的版本更新的条目，显示方式和 Pi 自己的 changelog 一样。Pi 第一次见到某个包时，只记录版本，不显示任何内容。
+
+这只适用于至少加载了一个扩展的包。只提供 Skill、Prompt 模板或主题的包不会显示 changelog。
+
+默认情况下，Pi 从包根目录读取 `CHANGELOG.md`。把 `pi.changelogPath` 指向包内的另一个文件，或设为 `""` 以禁用 changelog：
+
+```json
+{
+  "name": "my-pi-package",
+  "version": "1.2.0",
+  "pi": {
+    "changelogPath": "./docs/CHANGELOG.md"
+  }
+}
+```
+
+版本标题使用与 Pi changelog 相同的格式，例如 `## [1.2.0]` 或 `## 1.2.0 - 2026-01-01`。条目按 `package.json` 的 `version` 字段匹配，所以 git 包只有在该字段增大时才会显示 changelog。`collapseChangelog` 设置会把这一节精简为每个包一行，例如 `Updated my-pi-package to v1.2.0.`。和 Pi 自己的 changelog 不同，`/changelog` 不会显示包的 changelog，详情见包的 changelog 文件或仓库。
 
 <a id="declare-dependencies"></a>
 

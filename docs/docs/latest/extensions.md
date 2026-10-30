@@ -1893,12 +1893,14 @@ if (pi.getFlag('plan')) {
 
 ### pi.exec(command, args, options?)
 
-执行 Shell 命令。
+不经过 Shell 执行命令。
 
 ```typescript
 const result = await pi.exec('git', ['status'], { signal, timeout: 5000 });
-// result.stdout, result.stderr, result.code, result.killed
+// result.stdout, result.stderr, result.code, result.killed, result.truncated
 ```
+
+选项：`signal` 和 `timeout` 会终止命令，`cwd` 设置工作目录，`maxBuffer` 限制 stdout 与 stderr 的合计大小（默认 256 MiB）。输出超过 `maxBuffer` 时，Pi 会终止命令，并返回上限以内的输出，同时带上 `truncated: true`、`killed: true` 和非零 `code`。只要是 Pi 终止了命令，`killed` 就为 true：超时、中止，或触及 `maxBuffer`。忽略 SIGTERM 的命令会在 5 秒后收到 SIGKILL。
 
 ### pi.getActiveTools() / pi.getAllTools() / pi.setActiveTools(names)
 

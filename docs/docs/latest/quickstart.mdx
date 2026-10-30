@@ -8,13 +8,17 @@ Pi 在你的终端里运行，操作你机器上的文件。要使用它，你�
 
 ## 1. 安装 Pi
 
-在 macOS 或 Linux 上，可以使用安装器：
+在 macOS、Linux 或 Windows 上用安装器安装 Pi：
 
-```bash
+```bash title="macOS / Linux"
 curl -fsSL https://pi.dev/install.sh | sh
 ```
 
-安装器会固定所有依赖，并用 `pi update` 更新 Pi。也可以从 npm 安装 Pi，但不会固定传递依赖。这需要 Node.js 22.19 或更高版本：
+```powershell title="Windows"
+powershell -c "irm https://pi.dev/install.ps1 | iex"
+```
+
+两个安装器都会固定所有依赖，并用 `pi update` 更新 Pi。也可以从 npm 安装 Pi，但不会固定传递依赖。这需要 Node.js 22.19 或更高版本：
 
 ```bash
 npm install -g --ignore-scripts @earendil-works/pi-coding-agent
