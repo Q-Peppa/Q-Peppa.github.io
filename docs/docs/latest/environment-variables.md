@@ -85,6 +85,7 @@ const powershellTool = createPowerShellTool(cwd, {
 | `PI_PACKAGE_DIR`              | 覆盖包目录，对 Nix/Guix store 路径有用                                                                                                                                                                  |
 | `PI_OFFLINE`                  | 禁用自动网络活动，包括模型目录刷新                                                                                                                                                                      |
 | `PI_SKIP_VERSION_CHECK`       | 禁用向 `pi.dev` 请求最新版本                                                                                                                                                                            |
+| `PI_SELF_UPDATE_COMMAND`      | `pi update` 用来更新 Pi 自身的命令，按空白拆分，占位符为 `{packageName}`、`{version}` 和 `{installSpec}`。优先级高于 `selfUpdateCommand` 设置。见[自定义更新命令](cli.md#custom-update-command)         |
 | `PI_TELEMETRY`                | 覆盖安装/更新遥测和 Provider 归属 header：`1`/`true`/`yes` 或 `0`/`false`/`no`                                                                                                                          |
 | `PI_CODEMODE_MAX_WORKERS`     | 一个进程内所有会话同时存活的 codemode worker 上限；默认 `2`。每个 worker 的脚本最多可用 256 MB。一个进程跑多个会话（例如进程内子代理）时再提高它。更多脚本会等待空闲 worker。见 [Codemode](codemode.md) |
 | `PI_CACHE_RETENTION`          | 设为 `long`，在受支持处启用延长的 Provider Prompt 缓存                                                                                                                                                  |

@@ -118,6 +118,8 @@ interface UserMessage {
 }
 ```
 
+<a id="assistantmessage"></a>
+
 ### AssistantMessage
 
 ```typescript

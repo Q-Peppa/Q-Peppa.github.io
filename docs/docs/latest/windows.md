@@ -80,9 +80,40 @@ JSON 用反斜杠表示转义序列。写带反斜杠的 Windows 路径时，每
 
 命令前缀、别名和完整的 Shell 解析行为见[配置 Shell 命令](shell-aliases.md)。
 
+<a id="choose-a-terminal"></a>
+
+## 选择终端
+
+Windows 终端通过控制台宿主（conhost）运行 Pi。有的捆绑了最新副本，有的使用 Windows 内置的较旧版本，后者有影响 Pi 的 bug。
+
+推荐 [Windows Terminal](https://aka.ms/terminal)。它始终带最新的 conhost，Pi 也主要用它测试。
+
+最后更新：2026 年 10 月。
+
+| 终端                                                                                                                                          | Conhost                                                                                    | 状态                      |
+| --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------- |
+| [Windows Terminal](https://aka.ms/terminal)                                                                                                   | 捆绑，当前版本                                                                             | 推荐                      |
+| [VS Code](https://code.visualstudio.com)、[Tabby](https://tabby.sh)、[WezTerm](https://wezterm.org) nightly                                   | 捆绑，当前版本                                                                             | 可用                      |
+| [Alacritty](https://alacritty.org)                                                                                                            | 内置，除非 Windows Terminal 的 `conpty.dll` 和 `OpenConsole.exe` 放在 `alacritty.exe` 旁边 | 只有放了这些文件才可用    |
+| WezTerm 20240203 及更旧                                                                                                                       | 捆绑，旧版本                                                                               | [已知问题](#known-issues) |
+| 经典控制台（没有 Windows Terminal 的 `cmd.exe` 或 PowerShell）、mintty（Git Bash）、ConEmu、Cmder、[Hyper](https://hyper.is)、Windows OpenSSH | 内置                                                                                       | [已知问题](#known-issues) |
+
 ## 配置 Windows Terminal
 
 Windows Terminal 会保留或重写一些修饰键。配置 `Shift+Enter` 和 `Alt+Enter` 见 [Windows Terminal](terminal-setup.md#windows-terminal)，Pi 在 Windows 和 WSL 上的默认快捷键见[快捷键](keybindings.md)。
+
+<a id="known-issues"></a>
+
+## 已知问题
+
+这些问题来自 conhost。Microsoft 已在源码中修复，但没有说明内置 conhost 何时会得到这些修复。
+
+| 问题                                                                                                                                                                                             | 影响                                                  | 处理办法                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- | ------------------------------------------------------------ |
+| 从全屏切到常规模式，或在全屏中按 `Ctrl+G`，会话崩溃（[#9186](https://github.com/earendil-works/pi/issues/9186)、[microsoft/terminal#17515](https://github.com/microsoft/terminal/issues/17515)） | 内置 conhost                                          | 使用带当前 conhost 的终端，或用 `--tui-mode regular` 启动 Pi |
+| Prompt 里出现类似 `;0;rgb:0000/0000/0000` 的文本，BEL 会打开外部编辑器（[#10256](https://github.com/earendil-works/pi/issues/10256)）                                                            | 另一个终端后面的内置 conhost：mintty、Windows OpenSSH | 使用带当前 conhost 的终端                                    |
+| Prompt 里出现 `79` 或 `55` 之类的片段（[#10717](https://github.com/earendil-works/pi/issues/10717)）                                                                                             | WezTerm 20240203                                      | 使用 WezTerm nightly                                         |
+| 常规模式下，每次按键都把输入行重绘到新的一行（[#6300](https://github.com/earendil-works/pi/issues/6300)）                                                                                        | 内置 conhost、经典控制台                              | 使用全屏模式（默认），或使用带当前 conhost 的终端            |
 
 ---
 

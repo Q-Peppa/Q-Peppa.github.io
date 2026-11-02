@@ -135,7 +135,7 @@ Pi 在会话启动时在后台连接每个已启用的服务器。服务器的�
 
 当服务器拒绝未认证的连接时，`/mcp` 会显示它需要登录。选择 "Sign in"、运行 `/mcp login sentry`，或运行 `pi mcp login sentry`。Pi 会打开授权页并等待批准。如果浏览器跑在另一台机器上（例如通过 SSH），把重定向后的 URL 粘贴到登录界面。正在运行的会话会在下一轮使用新凭证。
 
-Pi 会向授权服务器注册自己，把 token 存在 `~/.pi/agent/mcp-auth.json`，并在过期或服务器拒绝时刷新 access token。如果服务器后来要求额外的 scope，Pi 会再次要求登录。登出会删除已存储的凭证。
+Pi 用 Client ID Metadata Document 或注册客户端向授权服务器标识自己，把 token 存在 `~/.pi/agent/mcp-auth.json`，并在过期或服务器拒绝时刷新 access token。如果服务器后来要求额外的 scope，Pi 会再次要求登录。登出会删除已存储的凭证。
 
 凭证属于服务器名加 URL。同一 URL 下不同名称的服务器（例如每个账号一个）各自登录；不同 `mcp.json` 文件中同名同 URL 的服务器共用一次登录。
 
@@ -168,17 +168,19 @@ Pi 注册时使用名称 `pi`。有些服务器只接受已知客户端的注册
 
 该名称只在 Pi 注册客户端时发送。要在新名称下重新注册，先登出。
 
-有些授权服务器按 Client ID Metadata Document URL 识别客户端，而不是让它们注册。把 `clientRegistration` 设为 `cimd`，即可用 pi.dev 上 Pi 的文档标识自己，而不是注册：
+没有 `clientId` 时，若授权服务器公布了对文档和公共客户端的支持，Pi 用 pi.dev 上的 Client ID Metadata Document 标识自己。否则它会动态注册客户端。此前注册的客户端在重定向 URI 匹配期间继续使用，直到登出。使用该文档时，客户端 ID 是 `https://pi.dev/oauth/client.json`，重定向 URI 是 `http://127.0.0.1:<port>/callback`。如果授权服务器在授权响应中不发送 `iss` 参数（RFC 9207），Pi 会改用针对该 MCP 服务器的文档和重定向路径：`https://pi.dev/oauth/<id>/client.json` 与 `http://127.0.0.1:<port>/callback/<id>`。
+
+当设置了 `clientName`，或 `callbackUrl` 不是 `localhost` 或 `127.0.0.1` 上的 `/callback` 时，Pi 会注册而不是使用该文档。用 `clientRegistration` 选择方式：`auto`（默认，如上所述）、`dcr`（始终注册）或 `cimd`（始终使用文档）。设为 `cimd` 时，若授权服务器不支持公共客户端的文档，登录会失败。授权页报告客户端无效时，使用 `dcr`：
 
 ```json
 {
   "mcpServers": {
-    "example": { "url": "https://mcp.example.com/mcp", "oauth": { "clientRegistration": "cimd" } }
+    "example": { "url": "https://mcp.example.com/mcp", "oauth": { "clientRegistration": "dcr" } }
   }
 }
 ```
 
-客户端 ID 是 `https://pi.dev/oauth/client.json`，重定向 URI 是 `http://127.0.0.1:<port>/callback`。如果授权服务器在授权响应中不发送 `iss` 参数（RFC 9207），Pi 会改用针对该 MCP 服务器的文档和重定向路径：`https://pi.dev/oauth/<id>/client.json` 与 `http://127.0.0.1:<port>/callback/<id>`。授权服务器必须公布对 Client ID Metadata Document 和公共客户端的支持，否则登录会失败。`cimd` 不能与 `clientId` 或 `clientName` 同时使用，且 `callbackUrl` 必须使用 `localhost` 或 `127.0.0.1`，路径为 `/callback`。
+`pi mcp add --oauth-client-registration <mode>` 在添加服务器时设置它。`cimd` 不能与 `clientId` 或 `clientName` 同时使用，且 `callbackUrl` 必须使用 `localhost` 或 `127.0.0.1`，路径为 `/callback`。
 
 Pi 通过服务器的受保护资源元数据（RFC 9728）查找授权服务器，并检查授权服务器元数据是否写出预期的 issuer（RFC 8414）。有些服务器公布了错误的授权服务器，或什么都不公布，登录就会打开一个不存在的页面。把 `authServerMetadataUrl` 设为正确授权服务器的元数据文档：
 

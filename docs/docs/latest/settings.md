@@ -143,11 +143,12 @@ CLI 工具选项会为单次调用覆盖该设置。只含 `+name` 和 `-name` �
 
 ## Shell
 
-| 设置                 | 类型       | 默认值   | 说明                                          |
-| -------------------- | ---------- | -------- | --------------------------------------------- |
-| `shellPath`          | string     | 平台默认 | 自定义 Shell 可执行文件路径。支持开头的 `~`。 |
-| `shellCommandPrefix` | string     | 无       | 前置到每条 Shell 命令的前缀。                 |
-| `npmCommand`         | `string[]` | `npm`    | 用于 npm 包查找和安装的命令及参数。           |
+| 设置                 | 类型       | 默认值   | 说明                                                                                                                                                                                                                    |
+| -------------------- | ---------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `shellPath`          | string     | 平台默认 | 自定义 Shell 可执行文件路径。支持开头的 `~`。                                                                                                                                                                           |
+| `shellCommandPrefix` | string     | 无       | 前置到每条 Shell 命令的前缀。                                                                                                                                                                                           |
+| `npmCommand`         | `string[]` | `npm`    | 用于 npm 包查找和安装的命令及参数。                                                                                                                                                                                     |
+| `selfUpdateCommand`  | `string[]` | 无       | `pi update` 用来更新 Pi 自身的命令及参数，占位符为 `{packageName}`、`{version}` 和 `{installSpec}`。`PI_SELF_UPDATE_COMMAND` 优先。**只能在 agent 目录设置中配置。** 见[自定义更新命令](cli.md#custom-update-command)。 |
 
 Shell 设置见 [Shell 别名](shell-aliases.md)，包管理器行为见 [Pi 包](packages.md)。
 

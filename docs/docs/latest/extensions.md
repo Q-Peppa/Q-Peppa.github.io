@@ -153,19 +153,33 @@ pi -e ./my-extension.ts
 
 ## 可用导入
 
-| 包                                                                    | 用途                                                           |
-| --------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `@earendil-works/pi-coding-agent`                                     | 扩展类型（`ExtensionAPI`、`ExtensionContext`、事件）和辅助函数 |
-| `@earendil-works/pi-agent-core`                                       | Agent 消息和工具类型                                           |
-| `typebox`、`typebox/compile`、`typebox/value`                         | 工具参数的模式定义                                             |
-| `@earendil-works/pi-ai`                                               | AI 工具（字符串枚举用 `StringEnum`、转录辅助函数、模型类型）   |
-| `@earendil-works/pi-ai/compat`、`/models`、`/oauth`、`/providers/all` | Provider 构造、内置 API 和 OAuth 辅助函数                      |
-| `@earendil-works/pi-tui`                                              | 自定义渲染的 TUI 组件                                          |
+| 包                                                                    | 用途                                                                                                                                                                             |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@earendil-works/pi-coding-agent`                                     | 扩展类型（`ExtensionAPI`、`ExtensionContext`、事件）和辅助函数                                                                                                                   |
+| `@earendil-works/pi-agent-core`                                       | Agent 消息和工具类型                                                                                                                                                             |
+| `typebox`、`typebox/compile`、`typebox/value`                         | 工具参数的模式定义                                                                                                                                                               |
+| `@earendil-works/pi-ai`                                               | AI 工具（字符串枚举用 `StringEnum`、转录辅助函数、模型类型）。在 Pi 内部它还导出 TypeBox 的 `Type`、`Static` 和 `TSchema`，已发布的包不再重新导出它们；新代码请从 `typebox` 导入 |
+| `@earendil-works/pi-ai/compat`、`/models`、`/oauth`、`/providers/all` | Provider 构造、内置 API 和 OAuth 辅助函数                                                                                                                                        |
+| `@earendil-works/pi-tui`                                              | 自定义渲染的 TUI 组件                                                                                                                                                            |
 
 Pi 把这些导入映射到自己的副本，因此扩展共享 Pi 的类和注册表。旧的 `@mariozechner/*` 和 `@sinclair/typebox` 名称映射到相同模块。
 npm 依赖同样可用。在扩展旁边（或父目录中）添加 `package.json`，运行 `npm install`，导入语句会自动从 `node_modules/` 解析。
 
 对于通过 `pi install`（npm 或 git）安装的分发式 Pi 包，运行时依赖必须放在 `dependencies` 中；不会安装 `devDependencies`。不要把上面由宿主提供的包列进 `dependencies`。见[声明依赖](packages.md#declare-dependencies)。
+
+<a id="tool-parameter-schemas-and-typebox"></a>
+
+### 工具参数模式与 TypeBox
+
+Pi 用 `@earendil-works/pi-schema` 把工具参数当作 JSON Schema 校验，与 schema 由谁构建无关；TypeBox schema 就是 JSON Schema，可以原样使用。校验前会强制转换类型宽松的参数：数字字符串转为数字，`"true"` 转为 `true`，单个值转为一元数组，可选属性中的 `null` 会被去掉。JSON Schema 之外的 TypeBox 特性不作用于工具参数：
+
+- 不运行 `Type.Refine()` 的细化约束。这类约束请在 `execute()` 中检查。
+- `Type.BigInt()`、`Type.Undefined()` 和 `Type.Void()` 会拒绝所有参数，因为 JSON 没有这些值。编解码器（`Type.Codec()`）不会解码：`execute()` 收到的是 JSON 值。
+- 用 TypeBox 的 `Format.Set()` 注册的格式不会被检查。标准格式会检查，另外还有 `url` 和 `json-pointer-uri-fragment`。
+- 属性名按名称匹配，而不是按正则表达式，`additionalProperties` 只作用于对象未声明的属性。
+- 指向不存在定义的 `$ref` 只拒绝它所在位置的参数。
+
+模型看到的校验错误使用 pi-schema 的消息，例如 `- path: missing` 或 `- limit: expected number, got string`。
 
 Node.js 内置模块（`node:fs`、`node:path` 等）也可用。
 
@@ -2542,6 +2556,7 @@ pi.registerTool({
 - `lastComponent` - 该插槽先前返回的组件（如果有）
 - `invalidate()` - 请求重新渲染此工具行
 - `toolCallId`、`cwd`、`executionStarted`、`argsComplete`、`isPartial`、`expanded`、`showImages`、`isError`
+- `keyText()`、`keyHint()` - 格式化用户配置的快捷键，见[快捷键提示](#keybinding-hints)
 
 使用 `context.state` 进行跨插槽共享状态。当您希望在多次渲染间重用和修改同一组件实例时，将插槽局部缓存保留在返回的组件实例上。
 
@@ -2590,27 +2605,28 @@ renderResult(result, { expanded, isPartial }, theme, context) {
 
 如果某个插槽有意不显示可见内容，返回一个空的 `Component`，例如空的 `Container`。
 
+<a id="keybinding-hints"></a>
+
 #### 快捷键提示
 
-使用 `keyHint()` 显示尊重活动快捷键配置的快捷键提示：
+使用渲染上下文中的 `keyHint()` 和 `keyText()` 显示尊重用户快捷键配置的提示：
 
 ```typescript
-import { keyHint } from "@earendil-works/pi-coding-agent";
-
 renderResult(result, { expanded }, theme, context) {
   let text = theme.fg("success", "✓ 完成");
   if (!expanded) {
-    text += ` (${keyHint("app.tools.expand", "展开")})`;
+    text += ` (${context.keyHint("app.tools.expand", "展开")})`;
   }
   return new Text(text, 0, 0);
 }
 ```
 
-可用函数：
+消息和条目渲染器里，同样的函数是 `options.keyHint()` / `options.keyText()`：
 
-- `keyHint(keybinding, description)` - 格式化已配置的快捷键 ID，如 `"app.tools.expand"` 或 `"tui.select.confirm"`
-- `keyText(keybinding)` - 返回快捷键 ID 的原始已配置键文本
-- `rawKeyHint(key, description)` - 格式化原始快捷键字符串
+- `keyHint(keybinding, description)` - 格式化已配置的快捷键 ID，如 `"app.tools.expand"` 或 `"tui.select.confirm"`，后面跟上说明
+- `keyText(keybinding)` - 返回快捷键 ID 的原始已配置键文本；该 ID 没有按键时返回 `""`
+
+在渲染器里用这些函数，不要从 `@earendil-works/pi-coding-agent` 导入 `keyHint()` 或 `keyText()`。扩展可能解析到自己的那份包，例如自己的 `node_modules`，那份包看不到 pi 配置的快捷键：`app.*` ID 这时会格式化成 `""`。`rawKeyHint(key, description)` 格式化字面按键字符串，可以安全导入。
 
 使用带命名空间的快捷键 ID：
 
@@ -3178,6 +3194,8 @@ pi.registerMessageRenderer('my-extension', (message, options, theme) => {
 
   if (expanded && message.details) {
     text += '\n' + theme.fg('dim', JSON.stringify(message.details, null, 2));
+  } else if (message.details) {
+    text += ` (${options.keyHint('app.tools.expand', '展开')})`;
   }
 
   return new Text(text, outputPad, 0);
@@ -3328,7 +3346,6 @@ const highlighted = highlightCode(code, lang);
 | **远程和沙箱**                 |                                                                                          |                                                                                                                                |
 | `ssh.ts`                       | SSH 远程执行                                                                             | `registerFlag`、`on("user_bash")`、`on("before_agent_start")`、工具操作                                                        |
 | `interactive-shell.ts`         | 持久 Shell 会话                                                                          | `on("user_bash")`                                                                                                              |
-| `sandbox/`                     | 沙箱化工具执行                                                                           | 工具操作                                                                                                                       |
 | `gondolin/`                    | 将内置工具和 `!` 命令路由到 Gondolin micro-VM                                            | 工具操作、内置工具覆盖、`on("user_bash")`                                                                                      |
 | `subagent/`                    | 生成子 Agent                                                                             | `registerTool`、`exec`                                                                                                         |
 | **游戏**                       |                                                                                          |                                                                                                                                |

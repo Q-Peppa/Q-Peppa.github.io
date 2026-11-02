@@ -54,6 +54,8 @@ RPC 模式拒绝 `@file` 参数。JSON 和 RPC 模式把 stdout 保留给协议�
 
 <a id="model-options"></a>
 
+<a id="models"></a>
+
 ## 模型
 
 ```sh
@@ -86,15 +88,15 @@ pi --continue
 恢复、fork、命名和存储会话见[会话与上下文](sessions.md)。
 
 - `-c`、`--continue`<br>
-  继续当前项目最近的会话。
+  继续当前目录最近的会话。
 - `-r`、`--resume`<br>
-  打开会话选择器。
+  打开会话选择器，并在所选会话的工作目录中恢复它。按 Tab 可以包含其他目录的会话。
 - `--session <path|id>`<br>
-  按文件路径、精确 ID 或部分 ID 打开。Pi 先搜索当前项目，并为跨项目匹配提供 fork。
+  按文件路径或完整/部分 ID 打开会话，并在其工作目录中恢复。如果该 ID 只匹配其他目录下存储的会话，Pi 会提议把它 fork 到当前目录，而不是直接打开。
 - `--session-id <id>`<br>
-  打开精确的项目会话 ID，若不存在则创建它。ID 接受字母、数字、`.`、`_` 和 `-`。
+  打开当前目录中已有的该 ID 会话，否则创建它。ID 接受字母、数字、`.`、`_` 和 `-`。
 - `--fork <path|id>`<br>
-  把已有会话 fork 成当前项目的新会话。
+  按文件路径或完整/部分 ID 选择会话，并 fork 成当前目录中的新会话。
 - `--session-dir <dir>`<br>
   覆盖存储和查找位置。它的优先级高于 `PI_CODING_AGENT_SESSION_DIR` 和 `sessionDir` 设置。
 - `--no-session`<br>
@@ -289,6 +291,18 @@ pi install npm:@scope/package
 
 `pi update` 无法更新由其他包管理器提供的 Pi（例如 Nix）。请用该包管理器更新 Pi，例如 `nix profile upgrade pi`。包和模型目录更新仍然可用。
 
+<a id="custom-update-command"></a>
+
+#### 自定义更新命令
+
+如果 Pi 由包装脚本或其他包管理器提供，设置 `PI_SELF_UPDATE_COMMAND`，让 `pi update` 运行它的更新命令：
+
+```sh
+export PI_SELF_UPDATE_COMMAND="mise use -g npm:{packageName}@{version}"
+```
+
+只有 pi.dev 有更新的发布时，`pi update` 才会运行它，并把 `{packageName}`、`{version}` 和 `{installSpec}`（`{packageName}@{version}`）替换为该发布的值。值按空格拆分。参数含空格时，改用 `~/.pi/agent/settings.json` 里的 `selfUpdateCommand` 设置，它是 argv 数组，例如 `["nix", "profile", "upgrade", "pi"]`。
+
 ### 别名和命令选项
 
 - `pi uninstall <source>` 是 `pi remove <source>` 的别名。
@@ -328,14 +342,14 @@ pi auth check --provider openai --json
 
 这些命令在会话之外工作，因此 agent 可以通过 `bash` 运行它们。见 [MCP 服务器](mcp.md)。
 
-| 命令                                                   | 说明                                                                                                                                                                                                                                                |
-| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pi mcp add <server> [options] -- <command> [args...]` | 在 `mcp.json` 中添加或替换 stdio 服务器；`--env KEY=VALUE`（可重复）和 `--cwd <dir>` 设置环境和工作目录。命令之后的参数会传给它                                                                                                                     |
-| `pi mcp add <server> [options] --url <url>`            | 添加或替换 streamable HTTP 服务器；`--header KEY=VALUE`（可重复）、`--bearer-token-env-var <NAME>`（发送 `Authorization: Bearer ${NAME}`）、`--oauth-client-id`、`--oauth-client-secret`、`--oauth-callback-port` 和 `--oauth-client-name` 配置认证 |
-| `pi mcp remove <server>`                               | 从 `mcp.json` 移除服务器；已存储的 OAuth 凭证会保留                                                                                                                                                                                                 |
-| `pi mcp list [--json]`                                 | 连接每个已启用的服务器并打印状态、工具和错误；配置条目无效或已启用服务器未连接时以 `1` 退出                                                                                                                                                         |
-| `pi mcp login <server> [--timeout <seconds>]`          | 登录 OAuth 服务器：打开授权页并等待浏览器；终端也可以接受粘贴的重定向 URL。`--timeout` 限制整个登录过程，包括对授权服务器的请求（默认 300 秒）                                                                                                      |
-| `pi mcp logout <server>`                               | 删除服务器已存储的 OAuth 凭证                                                                                                                                                                                                                       |
+| 命令                                                   | 说明                                                                                                                                                                                                                                                                                                         |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pi mcp add <server> [options] -- <command> [args...]` | 在 `mcp.json` 中添加或替换 stdio 服务器；`--env KEY=VALUE`（可重复）和 `--cwd <dir>` 设置环境和工作目录。命令之后的参数会传给它                                                                                                                                                                              |
+| `pi mcp add <server> [options] --url <url>`            | 添加或替换 streamable HTTP 服务器；`--header KEY=VALUE`（可重复）、`--bearer-token-env-var <NAME>`（发送 `Authorization: Bearer ${NAME}`）、`--oauth-client-id`、`--oauth-client-secret`、`--oauth-callback-port`、`--oauth-client-name` 和 `--oauth-client-registration`（`auto`、`cimd` 或 `dcr`）配置认证 |
+| `pi mcp remove <server>`                               | 从 `mcp.json` 移除服务器；已存储的 OAuth 凭证会保留                                                                                                                                                                                                                                                          |
+| `pi mcp list [--json]`                                 | 连接每个已启用的服务器并打印状态、工具和错误；配置条目无效或已启用服务器未连接时以 `1` 退出                                                                                                                                                                                                                  |
+| `pi mcp login <server> [-l] [--timeout <seconds>]`     | 登录 OAuth 服务器：打开授权页并等待浏览器；终端也可以接受粘贴的重定向 URL。`--timeout` 限制整个登录过程，包括对授权服务器的请求（默认 300 秒）。`-l` 要求服务器定义在项目的 `.pi/mcp.json` 中                                                                                                                |
+| `pi mcp logout <server> [-l]`                          | 删除服务器已存储的 OAuth 凭证                                                                                                                                                                                                                                                                                |
 
 `add` 和 `remove` 修改 `~/.pi/agent/mcp.json`，加上 `--local`（`-l`）则修改当前目录的 `.pi/mcp.json`。`add` 还接受 `--exposure <mode>`（见 [控制工具暴露](mcp.md#control-tool-exposure)）和 `--description <text>`，并且不会连接；运行 `pi mcp list` 检查服务器。
 

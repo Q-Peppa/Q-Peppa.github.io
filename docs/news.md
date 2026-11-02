@@ -2,6 +2,239 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v1.5.0（2026-11-02）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **扩展更新 changelog** – 已安装扩展包更新后，下次全新启动可以看到变更。包作者可以选择 changelog 路径，`collapseChangelog` 会把通知收成一行。详见 [显示 changelog](/docs/latest/packages#show-a-changelog)。
+- **更快的流式输出** – 大型工具调用改为增量解析，代码较多的回答和工具行会复用高亮和已渲染的 Markdown，而不是每次更新都重做。详见 [保持渲染响应迅速](/docs/latest/tui#keep-rendering-responsive)。
+- **自定义自更新命令** – 用 `PI_SELF_UPDATE_COMMAND` 或 `selfUpdateCommand`，通过包装脚本或其他包管理器更新 pi。详见 [自定义更新命令](/docs/latest/cli#custom-update-command)。
+- **GPT-6.1 Terra** – 可通过 OpenAI、Azure OpenAI Responses 和 OpenAI Codex 使用，支持工具搜索、会话中途切换 thinking 级别，以及 thinking `off`。Codex 提供 500K 上下文窗口。详见 [模型](/docs/latest/cli#models)。
+
+不兼容变更
+
+- 工具参数校验改为在 `@earendil-works/pi-schema` 上运行。JSON Schema 之外的 TypeBox 特性（`Type.Refine()`、`Type.BigInt()`、`Type.Undefined()`、codec、`Format.Set()` 注册的格式）不再作用于工具参数；见 [工具参数模式与 TypeBox](/docs/latest/extensions#tool-parameter-schemas-and-typebox)。普通 JSON Schema 工具（包括 MCP 工具）现在与 TypeBox 工具得到相同的强制转换，例如把数字字符串转成数字、把单个值包进数组。模型看到的校验失败列出 pi-schema 的消息（`- path: missing`、`- limit: expected number, got string`），而不再是 TypeBox 的（`must have required properties path`、`must be number`）。
+
+新增
+
+- 扩展包现在可以在更新后显示 changelog。Pi 从包的 `package.json` 读取 `pi.changelogPath`，或读取包根目录的 `CHANGELOG.md`，并在下次全新启动时于「Extension Updates」下显示比上次见过的版本更新的条目。`collapseChangelog` 设置把它收成每个包一行（[#5958](https://github.com/earendil-works/pi/issues/5958)、[#8790](https://github.com/earendil-works/pi/pull/8790)）。
+- `pi.exec()` 接受 `maxBuffer` 选项，限制 stdout 和 stderr 的合计大小，结果里的 `truncated` 在输出超出上限时为 true（[#11360](https://github.com/earendil-works/pi/issues/11360)）。
+- 设备码登录（例如 GitHub Copilot）现在在按 Enter 时打开验证页并复制验证码。Provider 可以用 `openBrowserOnConfirm: false` 或 `copyCodeOnConfirm: false` 关掉其中一项（[#9282](https://github.com/earendil-works/pi/issues/9282)、[#9301](https://github.com/earendil-works/pi/pull/9301)）。
+- `pi update` 可以通过包装脚本或其他包管理器更新 Pi。设置 `PI_SELF_UPDATE_COMMAND`（例如 `mise use -g npm:{packageName}@{version}`）或全局 `selfUpdateCommand`；pi.dev 报告有更新的发布时，`pi update` 会运行它，并用该发布填充 `{packageName}`、`{version}` 和 `{installSpec}`。见 [自定义更新命令](/docs/latest/cli#custom-update-command)（[#7756](https://github.com/earendil-works/pi/issues/7756)、[#5607](https://github.com/earendil-works/pi/issues/5607)）。
+- 扩展可以用工具渲染上下文，以及消息和条目渲染器选项里的 `keyText()` 和 `keyHint()` 格式化用户配置的快捷键。从 `@earendil-works/pi-coding-agent` 导入这些函数可能解析到扩展自己的那份包，它看不到 pi 的快捷键，因此 `keyHint("app.tools.expand", "to expand")` 这类提示会不带按键。文档现在推荐使用注入的函数（[#4748](https://github.com/earendil-works/pi/issues/4748)）。
+- 为 `MarkdownTransformContext` 添加了持久化会话条目的 `messageId` 和 ISO `timestamp`。渲染已保存条目时可用，实时渲染时为 undefined（[#7952](https://github.com/earendil-works/pi/pull/7952) 由 [@vipentti](https://github.com/vipentti) 贡献）。
+- 为内联 `ctx.ui.custom()` 组件添加 `blocked` 选项，让审批提示和其他自定义对话框可以报告 pi 正在等待用户输入。Overlay 忽略该选项。见 [自定义界面和 overlay](/docs/latest/tui#use-custom-screens-and-overlays)（[#11428](https://github.com/earendil-works/pi/issues/11428)）。
+- 为 SDK 和扩展用量数据添加 `Usage.cost.totalFromProvider`，用来区分账单总额和目录估算；只有每一部分都是 Provider 上报时，合并用量才标为 Provider 上报（[#11178](https://github.com/earendil-works/pi/pull/11178)）。
+- 为来自 pi-messages Provider（如 Radius）的消息添加具体的 `responseModel` 元数据，包括请求的是虚拟模型的情况。见 [AssistantMessage](/docs/latest/message-types#assistantmessage)（[#11265](https://github.com/earendil-works/pi/pull/11265)）。
+- 为 OpenAI、Azure OpenAI Responses 和 OpenAI Codex 添加 GPT-6.1 Terra，支持工具搜索和会话中途切换 thinking 级别。它支持 thinking `off`；Codex 提供 500K 上下文窗口。
+
+变更
+
+- 扩展仍然从 `@earendil-works/pi-ai` 导入 `Type`、`Static` 和 `TSchema`：Pi 把该导入映射到 pi-ai 的兼容入口加上它捆绑的 TypeBox，因为 pi-ai 本身不再重新导出 TypeBox，那里的 `StringEnum` 仍是 TypeBox 的 `TUnsafe<T>`。内置工具工厂（`createReadTool()` 等）返回 `TypeBoxAgentTool<typeof schema>`，因此 `params` 对 TypeBox 保持有类型。
+- 收紧了系统 Prompt。
+- 从 pi.dev 安装器安装的 `pi update` 不再向 `npm ci` 传递 `--min-release-age=0`。发布 lockfile 已经固定每个包，该标志没有作用，而拦截它的安全扫描器会让更新停住（[#11262](https://github.com/earendil-works/pi/issues/11262)）。
+- `/model` 和 `/scoped-models` 现在会在模型名称比 ID 多出词语时，在 ID 旁边显示名称，例如 `models.json` 里改名后的覆盖（[#5916](https://github.com/earendil-works/pi/issues/5916)、[#11347](https://github.com/earendil-works/pi/pull/11347)）。
+- MCP OAuth 登录现在默认使用 pi 的 Client ID Metadata Document（授权服务器对公共客户端支持它时），否则动态注册客户端，与 Codex、Claude Code 和 opencode 一样。此前注册的客户端在重定向 URI 匹配期间继续使用。新的默认值 `oauth.clientRegistration: "auto"` 在设置了 `clientName` 或非默认 `callbackUrl` 时注册；`"dcr"` 始终注册。`pi mcp add --oauth-client-registration` 设置该模式（[#11426](https://github.com/earendil-works/pi/issues/11426)）。
+- 默认 OpenAI 模型从 `gpt-5.5` 改为 `gpt-6.1-sol`，包括 ChatGPT 登录后没有选定模型的情况（[#11442](https://github.com/earendil-works/pi/issues/11442)）。
+- 内置模型目录更新为 models.dev v2。Realtime 和仅图片模型不再作为聊天模型提供；较新的 OpenAI 和 Google 聊天模型已加入。
+
+修复
+
+- 更新了 glob 匹配，防止放大的 glob 模式造成拒绝服务。
+- 修复已保存的「Do not trust」决定在没有需要信任的资源的项目上被忽略的问题，例如只有 `AGENTS.md` 的文件夹。Pi 会自动信任这类项目，因此 `ctx.isProjectTrusted()` 返回 true，包命令也把它们当成已信任。`trust.json` 里已保存的决定现在优先；只有没有保存决定时才自动信任（[#10947](https://github.com/earendil-works/pi/issues/10947)）。
+- 修复 Apple Terminal 发送 `ESC` + Return 时，`Shift+Enter` 把 follow-up 排队而不是插入换行的问题。Pi 现在对该序列检查本地 Shift 键状态，与对普通 Return 的做法一样；没有 Shift 的 `Alt+Enter` 仍然把 follow-up 排队（[#11559](https://github.com/earendil-works/pi/issues/11559)）。
+- 修复常规 TUI 模式下，运行期间工作状态（OSC 7501）在 Rex 和 iTerm2 中消失的问题。渲染出的消息向终端写入了 OSC 133 Prompt 标记，终端把它当成新的 shell Prompt；常规模式不再写入它们（[#11519](https://github.com/earendil-works/pi/issues/11519)）。
+- 修复 SDK 会话中的压缩、分支摘要和 bug 报告摘要把存储的 OAuth token 作为显式 API key 传回模型运行时的问题。把显式 key 和已存储 OAuth 区别对待的 Provider 认证，现在会看到 OAuth 登录，与普通 Prompt 一样（[#11520](https://github.com/earendil-works/pi/issues/11520)）。
+- 修复扩展以不同顺序设置同一组活动工具时出现多余的系统 Prompt 更新（工具、规则）的问题，例如反转的 `pi.setActiveTools()` 列表。仍然活动的工具现在保持顺序，新激活的工具追加在后面（[#11495](https://github.com/earendil-works/pi/issues/11495)）。
+- 修复命令打印的输出超过字符串能容纳的长度时，`pi.exec()` 以 `RangeError: Invalid string length` 让 pi 崩溃的问题。默认输出上限是 256 MiB 和运行时字符串上限中的较小者；超过上限时命令会被终止，结果带 `truncated: true` 和非零退出码（[#11360](https://github.com/earendil-works/pi/issues/11360)）。
+- 修复命令在超时或中止后忽略 SIGTERM 时，`pi.exec()` 永不返回的问题。Pi 现在会在 5 秒后发送 SIGKILL，与原先的意图一致。
+- 修复 agent 目录经符号链接到达时（例如 `~/.pi` 链到 dotfiles 仓库），`pi install` 和 `pi remove` 往 npm `package-lock.json` 里加入越来越深的嵌套条目的问题。Pi 现在把解析后的真实路径传给 npm（[#11358](https://github.com/earendil-works/pi/issues/11358)）。
+- MCP 登录现在拒绝不是 `http:` 或 `https:` 的授权端点和其他 OAuth 元数据 URL。此前，恶意 MCP 服务器可以提供 `file:` 或自定义协议 URL，Pi 会把它交给平台 URL 处理器。
+- 自动下载 `fd` 和 `rg` 不再在 ARM32 和其他没有预构建发布的架构上获取 x86-64 二进制。Pi 现在会警告，并建议用系统包管理器安装该工具（[#11209](https://github.com/earendil-works/pi/issues/11209)）。
+- 修复 `/model` 搜索把散落在条目前部的字母排在真正匹配之上的问题，例如 `opus` 把 `gpt-oss-120b` 和 `claude-sonnet-4.5` 排在 `claude-opus-4.1` 前面（[#11220](https://github.com/earendil-works/pi/issues/11220)、[#11296](https://github.com/earendil-works/pi/pull/11296)）。
+- 修复 `/resume` 搜索匹配会话消息和 ID 中任意位置散落字母的问题，例如 `1024` 匹配进会话 UUID。会话名和工作目录仍然模糊匹配；ID 和消息文本现在只作精确子串匹配（[#11220](https://github.com/earendil-works/pi/issues/11220)、[#11024](https://github.com/earendil-works/pi/issues/11024)、[#11296](https://github.com/earendil-works/pi/pull/11296)）。
+- 修复含数千条条目的会话 HTML 导出显示空白页的问题（[#11225](https://github.com/earendil-works/pi/issues/11225)、[#11293](https://github.com/earendil-works/pi/pull/11293)）。
+- 修复 HTML 导出不显示系统消息的问题：系统 Prompt 和工具，以及之后的段落更新（例如 `/reload` 之后）。`pi --export` 现在也包含系统 Prompt 和工具（[#11261](https://github.com/earendil-works/pi/issues/11261)、[#3464](https://github.com/earendil-works/pi/issues/3464)、[#11290](https://github.com/earendil-works/pi/pull/11290)）。
+- 修复在 macOS 上中止 bash 命令时，有时会运行列表中的下一条命令的问题，例如 `long_step; next_step`。Pi 现在先停止进程组再杀死它（[#11252](https://github.com/earendil-works/pi/issues/11252)、[#11289](https://github.com/earendil-works/pi/pull/11289)）。
+- 修复大型流式工具调用占用过多 CPU 时间和内存的问题，因为每个 delta 都重新解析累积的参数。Provider 和 agent proxy 流现在每个 delta 只解析一次，grammar 工具不再每个 delta 复制全部输入，交互式工具渲染器每帧最多运行一次（[#9265](https://github.com/earendil-works/pi/issues/9265)）。
+- 修复登录对话框打开不是网页 URL 的登录地址，以及从登录、设备码和信息 URL 打印控制字符的问题。这些字符可能结束终端超链接，并向终端发送转义序列。
+- 修复 `tui.select.pageUp` 和 `tui.select.pageDown` 在斜杠命令和文件自动补全、`/settings`，以及模型、作用域模型、登录、fork、`/mcp` 和 llama.cpp 选择器中被忽略的问题。全屏模式下，PageUp/PageDown 现在移动打开的列表或自动补全菜单，而不是滚动记录；绑定到 Ctrl+V 的翻页键会翻动自动补全，而不是粘贴图片（[#7629](https://github.com/earendil-works/pi/issues/7629)，基于 [#7680](https://github.com/earendil-works/pi/pull/7680) 由 [@muyiyr](https://github.com/muyiyr) 贡献）。
+- 修复工具输出和 `!` 命令输出把带 `<`、`=` 或 `>` 前缀的控制序列参数显示成文本的问题，例如鼠标报告 `ESC[<35;59;1M` 中的 `35;59;1M`，或终端应答 `ESC[>0;276;0c` 中的 `0;276;0c`。小键盘模式序列 `ESC=` 和 `ESC>` 之后的文本仍然保留（[#11377](https://github.com/earendil-works/pi/issues/11377)）。
+- 修复 `pi -e npm:<pkg>` 停留在第一次下载的版本的问题。每次启动和 `/reload` 时，若注册表有更新的匹配版本，Pi 现在会重新安装没有精确版本的 `-e` npm 包。`pi -e git:<repo>@<branch>` 同样会停留在第一次检出，现在会 fetch 并重置到该分支；已经检出的 commit hash 引用不会再 fetch。离线模式和检查失败时保留缓存副本（[#11375](https://github.com/earendil-works/pi/issues/11375)、[#11590](https://github.com/earendil-works/pi/pull/11590)）。
+- 修复 Windows 路径按大小写敏感比较的问题。工作目录和主目录只在盘符大小写上不同时（`c:\Users\me` 与 `C:\Users\me`），`~/.agents/skills` 里的 Skill 会作为项目 Skill 和用户 Skill 加载两次，并被报告为名称冲突。同样的不一致还会再次询问已保存的项目信任、让自定义会话目录里的会话从 `--continue` 和 `/resume` 中消失，并让 `pi remove` 匹配不到已配置的本地包（[#10488](https://github.com/earendil-works/pi/issues/10488)）。
+- 修复主目录旁边的路径被显示成损坏的 `~` 前缀的问题，例如主目录是 `/home/me` 时，`/home/me2/project` 显示为 `~2/project`。
+- 修复 `pi mcp login -l` 和 `pi mcp logout -l` 报 `Unknown option --local.` 的问题，尽管 `pi mcp add` 和 `pi mcp remove` 接受 `-l`。加上 `-l` 时，它们现在要求服务器是项目服务器。未知选项现在按输入原样报告，拼错的服务器名会得到建议，例如 `Did you mean "gurker"?`。
+- 修复 `pi update` 把只存在于 `PNPM_HOME` 下的安装说成 pnpm 管理的问题，例如 `$PNPM_HOME/global-nub/` 下的包装脚本。Pi 以前说「not managed by a global pnpm install」；现在只有该包管理器确实拥有这次安装时才点名它（[#7756](https://github.com/earendil-works/pi/issues/7756)）。
+- 修复工作目录很深时，WSL 上图片粘贴、复制和打开浏览器登录静默失败的问题。`powershell.exe` 和 `explorer.exe` 等 Windows 程序无法从 `\\wsl.localhost\...` 路径超过 260 个字符的目录启动；Pi 现在从 `/` 启动这些辅助程序（[#11592](https://github.com/earendil-works/pi/issues/11592)）。
+- 修复外部编辑器静默失败的问题，例如编辑器命令错误，或 Windows 编辑器无法从很深的 WSL 目录启动。Pi 现在显示状态消息，例如 `External editor exited with code 1; prompt unchanged`（[#11592](https://github.com/earendil-works/pi/issues/11592)）。
+- 修复 `tool_search` 和 codemode `searchTools()` 把工具排在只在描述里提到其名称的工具之后的问题，例如 `peekaboo app` 把 `mcp__peekaboo__app` 排在第 14。匹配查询中更多词的工具现在排在匹配更少词的工具之上，工具名中的查询词比描述里任意多次提及得分更高，整个名称都在查询中的工具得到大额加分，服务器的长说明不再压低该服务器工具的分数（[#11331](https://github.com/earendil-works/pi/issues/11331)）。
+- 修复 `tool_search` 和 codemode `searchTools()` 对中文、日文、泰文和其他非 ASCII 查询找不到结果的问题，因为分词器只保留 ASCII 字母和数字。任何文字的词现在都能匹配，`搜索记录` 这类词间没有空格的文本会被拆成词，`café` 和 `cafe\u0301` 这类规范等价文本也能匹配（[#10816](https://github.com/earendil-works/pi/issues/10816)、[#11037](https://github.com/earendil-works/pi/pull/11037) 由 [@haoqixu](https://github.com/haoqixu) 贡献）。
+- 修复另一个 pi 会话打开了 git 扩展的原生模块或可执行文件时，Windows 上 `pi update` 停在 `git clean -fdx failed with code 1` 的问题。Windows 无法删除这类文件，于是更新留下了新代码和旧依赖。Pi 现在会警告，仍然安装依赖，并在下次更新时重试清理（[#11597](https://github.com/earendil-works/pi/issues/11597)）。
+- 修复工具行和流式回答在每次重绘时再次高亮同一段代码的问题。运行中的 codemode 行在每次进度更新和计时器滴答时高亮整个脚本，完成的 `write` 行在每次更新和展开切换时高亮整个文件，流式 `write` 在每个 delta 上高亮前 50 行，流式回答在每个 delta 上高亮之前的每个代码块。行现在复用上次的高亮，直到代码、主题或已加载的 grammar 改变，assistant 消息在流式输出期间保留已渲染的 Markdown 块（[#10971](https://github.com/earendil-works/pi/issues/10971)）。
+- 修复调整尺寸后的照片即使 JPEG 小得多也以数 MB 的 PNG 发送，导致大请求失败或超时的问题。图片缩放现在先尝试更小的编码（[#11551](https://github.com/earendil-works/pi/issues/11551)）。
+- 修复 npm 过期的注册表元数据让包停留在旧版本时，`pi update --extensions` 报告成功且不警告的问题。Pi 现在报告已安装版本和预期版本（[#11536](https://github.com/earendil-works/pi/issues/11536)）。
+- 修复没有名称冲突时，Skill 校验警告仍被标为 `[Skill conflicts]` 的问题。它们现在显示在 `[Skill warnings]` 下（[#11521](https://github.com/earendil-works/pi/issues/11521)）。
+- 修复 codemode 工具描述在每次请求中包含完整的联合类型和多行输出类型的问题。对象联合现在摘要其字段和判别字段；其他多行类型指向 `describeTool()` 以获取完整声明（[#11501](https://github.com/earendil-works/pi/issues/11501)）。
+- 修复退出全屏模式后，模型作用域启动通知留在 shell 里的问题。它现在出现在 pi 的全屏标题内（[#11508](https://github.com/earendil-works/pi/issues/11508)）。
+- 修复从已删除的工作目录启动时，以未捕获的 `uv_cwd` 堆栈跟踪崩溃的问题。Pi 现在请用户切换到存在的目录（[#11509](https://github.com/earendil-works/pi/issues/11509)）。
+- 修复失败的会话写入在内存中留下磁盘上没有的条目，使之后的条目指向缺失的父条目，恢复的会话丢失更早的历史和工具的问题（[#11460](https://github.com/earendil-works/pi/issues/11460)）。
+- 修复 `/tree` 分支摘要忽略会话 thinking 级别，可能让推理模型以不支持的 `none` effort 拒绝摘要请求的问题（[#11444](https://github.com/earendil-works/pi/issues/11444)）。
+- 修复隐藏 thinking 的标签为空时，仍然在回答和工具调用前添加空白行的问题（[#11402](https://github.com/earendil-works/pi/issues/11402)）。
+- 修复包安装和移除打印 npm audit 和 funding 建议的问题，其中包括可能把第二份 pi 安装进包目录的 `npm audit fix` 说明（[#11409](https://github.com/earendil-works/pi/issues/11409)）。
+- 修复对话框打开时替换扩展编辑器会藏起对话框并让它无法回答的问题。新编辑器现在在对话框关闭后出现（[#11431](https://github.com/earendil-works/pi/issues/11431)）。
+- 修复文件含单独的回车时，`grep` 上下文行相对 ripgrep 匹配行号发生偏移的问题（[#11398](https://github.com/earendil-works/pi/issues/11398)）。
+- 修复 `--model <provider>/<id>` 对含斜杠的 Provider ID 失败的问题，例如由 URL 派生的 llama.cpp Provider ID（[#11394](https://github.com/earendil-works/pi/issues/11394)）。
+- 修复在打开文件很贵的文件系统上会话 fork 很慢的问题，改为通过一个文件句柄写入 fork（[#11253](https://github.com/earendil-works/pi/issues/11253)）。
+- 修复 `pi.exec()` 破坏跨 stdout 或 stderr 块拆开的 UTF-8 字符的问题（[#11312](https://github.com/earendil-works/pi/issues/11312)）。
+- 修复命令无法启动时（例如可执行文件缺失）`pi.exec()` 返回空 stderr 的问题。它现在保留启动错误消息（[#11257](https://github.com/earendil-works/pi/pull/11257) 由 [@muyiyr](https://github.com/muyiyr) 贡献）。
+- 修复已配置的包安装失败导致启动崩溃的问题。Pi 现在跳过该包，报告扩展警告，并在下次启动或 `/reload` 时重试；显式的安装和更新命令仍然以非零退出失败（[#11304](https://github.com/earendil-works/pi/pull/11304) 由 [@Lincoln504](https://github.com/Lincoln504) 贡献）。
+- 修复 todo 扩展示例在工具调用参数校验失败时让 TUI 崩溃的问题（[#8057](https://github.com/earendil-works/pi/pull/8057) 由 [@cyzlmh](https://github.com/cyzlmh) 贡献）。
+- 因安全公告将 `undici` 更新到 8.12.3，Gondolin 扩展示例更新到 0.14.0。
+- 修复 OpenRouter 费用总额对 Chat Completions 和 Anthropic Messages 使用目录估算而不是上报账单的问题。BYOK 总额同时包含 OpenRouter 收费和上报的上游成本；分项成本仍是目录估算（[#9980](https://github.com/earendil-works/pi/issues/9980)）。
+- 修复 OpenCode Zen 和 OpenCode Go 请求使用共享端点，而不是各自协议专用的 OpenAI、Anthropic、Google 和 System One 端点的问题（[#11434](https://github.com/earendil-works/pi/pull/11434) 由 [@vimtor](https://github.com/vimtor) 贡献）。
+- 修复 Zhipu/Z.ai 用量上限错误（代码 `1308`）被当成瞬时 HTTP 429，从而自动重试，但在用量上限重置前不可能成功的问题（[#11537](https://github.com/earendil-works/pi/issues/11537)）。
+- 修复 LiteLLM 的 `ContextWindowExceededError` 不被识别为上下文溢出的问题（[#11492](https://github.com/earendil-works/pi/issues/11492)）。
+- 修复 Gemini 工具 schema 发送不支持的 `const` 关键字的问题。它们现在转成单值 `enum` schema，不改写 default、example 或 enum 值里的字面数据，也不丢失名为 `__proto__` 的属性（[#11308](https://github.com/earendil-works/pi/issues/11308)）。
+- 修复 faux Provider 把模拟的 cache-write Token 同时计为输入和 cache write 的问题。
+- 修复 Orca 终端对内联图片回退到文本的问题。Orca 现在被识别为支持 true color 和超链接，并在公布 `ORCA_IMAGE_PROTOCOL=kitty` 时支持 Kitty 图片（[#9329](https://github.com/earendil-works/pi/pull/9329) 由 [@XRX193](https://github.com/XRX193) 贡献）。
+- 修复裸 Markdown URL 吞掉后面的 CJK 标点和文本的问题；显式 Markdown 链接和尖括号自动链接不变（[#10934](https://github.com/earendil-works/pi/pull/10934) 由 [@haoqixu](https://github.com/haoqixu) 贡献）。
+- 修复 Kitty 协议的 F1–F12 快捷键（包括带修饰键的功能键）不被识别，以及 F13+ 和其他功能键把不可见的私用区字符插入编辑器的问题（[#11419](https://github.com/earendil-works/pi/issues/11419)、[#11345](https://github.com/earendil-works/pi/issues/11345)）。
+- 修复带内边距或颜色的盒子里的 Kitty 图片在第一行滚出全屏视口后消失的问题。部分可见的图片现在会被正确裁剪，包括旁边有其他文本时。
+- 修复深层嵌套的 Markdown 引用产生指数级行数，边框耗尽可用宽度后挂起或让渲染崩溃的问题（[#11272](https://github.com/earendil-works/pi/issues/11272)）。
+- 修复系统更新之后跟着空回复或仅含推理的 assistant 回复时，Claude 会话以 `role 'system' must precede an 'assistant' message` 失败的问题（[#11091](https://github.com/earendil-works/pi/issues/11091)）。
+- 修复组织把 effort 上限设在 `high` 以下的账号上，Claude 会话中途切换 thinking 级别以 `Invalid effort level` 失败的问题（[#10063](https://github.com/earendil-works/pi/issues/10063)）。
+- 修复 Kimi Coding、Moonshot 和 OpenCode Go 上的 Kimi K3.1 Pro 模型使用 Kimi K2 请求设置的问题。它们现在发送正确的 reasoning effort，保留更早的 thinking，接受会话中途添加的工具，并使用 K3 系列价格。
+- 修复 OpenCode DeepSeek V4.1 Flash 在长缓存保留发送不支持的 `prompt_cache_retention` 参数时请求失败的问题。
+- 修复从调用过工具的模型切换过来后，GPT-5.4 和 GPT-5.5 以 `Missing namespace for function_call` 失败的问题（[#11415](https://github.com/earendil-works/pi/issues/11415)）。
+- 修复首选严格工具超过 Provider 严格工具限制时，Bedrock Claude 请求失败的问题。请求现在用非严格的首选工具重试一次，同时保持必需的严格工具为严格（[#11416](https://github.com/earendil-works/pi/issues/11416)）。
+- 修复 OpenRouter 的 `~anthropic/claude-*-latest` 别名在工具调用后丢失更早 thinking 的问题，改为使用 Anthropic Messages API（[#9534](https://github.com/earendil-works/pi/issues/9534)）。
+- 修复终端标题中的控制字符可能注入终端转义序列的问题，以及 pi-messages 流接受无效内容块索引的问题。
+- 修复全屏双击选择在 `~`、`.`、`\` 和 `+` 处拆开路径和 Token 的问题；单词字符现在与 iTerm2 的默认值一致（[#10980](https://github.com/earendil-works/pi/issues/10980)）。
+- 修复宽于内容区域的显示数学被换行拆开的问题；现在回退到原始 LaTeX（[#11483](https://github.com/earendil-works/pi/issues/11483)）。
+- 修复带样式的词正好在换行宽度结束时，下一行开头多一个空格，以及删除线漏进换行内边距的问题（[#10925](https://github.com/earendil-works/pi/issues/10925)）。
+- 修复 `/tree` 分支摘要包含失败的 assistant 回复，以及上下文编辑已经隐藏或替换的原始内容的问题。摘要现在遵循与实时请求和压缩相同的上下文编辑（[#11602](https://github.com/earendil-works/pi/issues/11602)）。
+
+移除
+
+- 移除了原生 OS 的 `sandbox/` 扩展示例及其依赖。请改用 [Gondolin 示例](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/gondolin) 或 [容器化指南](/docs/latest/containerization)。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+不兼容变更
+
+- 主入口不再重新导出 TypeBox（`Type`、`Static`、`TSchema`），`typebox` 也不再是依赖。`Tool.parameters` 是任意 JSON Schema 对象（`Tool<TParameters extends object>`）：`@earendil-works/pi-schema` 的 builder（参数类型也来自 pi-schema 的 `Static`）、TypeBox schema，或普通对象。`validateToolCall()` / `validateToolArguments()` 用 pi-schema 校验（`compile(schema, { coerce: true }).parse()`）：每个 schema 都得到相同的强制转换，即 TypeBox 的 `Value.Convert` 规则（以前只作用于 TypeBox 构建的 schema）和 pi-ai 自己的规则的超集。因此普通 JSON Schema 工具（MCP 工具）现在也会得到例如把 `null` 转成必需字符串的 `"null"`、把 `"3.5"` 转成整数 3，以及把单个值包进数组。错误文本列出 pi-schema 的消息（`- edits.0.oldText: missing`、`- limit: expected number, got string`），而不再是 TypeBox 的。`StringEnum()` 返回 JSON 相同的 pi-schema `Schema<T>`（`{ type: "string", enum }`）。模型和兼容 schema（`providers/model-schema`、`providers/compat-schema`）用 pi-schema 构建，JSON Schema 相同，类型来自 pi-schema 的 `Static`；导出 `ProviderCompat`。迁移：
+
+  ```ts
+  // Before
+  import { Type, type Static, StringEnum } from '@earendil-works/pi-ai';
+  const params = Type.Object({ path: Type.String(), mode: StringEnum(['a', 'b']) });
+  type Params = Static<typeof params>;
+
+  // After: pi-schema builders (closed objects; pass { open: true } to allow other properties)
+  import { StringEnum } from '@earendil-works/pi-ai';
+  import { obj, type Static, str } from '@earendil-works/pi-schema';
+  const params = obj({ path: str(), mode: StringEnum(['a', 'b']) });
+  type Params = Static<typeof params>;
+
+  // Or keep TypeBox, imported from typebox itself (its schemas are JSON Schema)
+  import { Type, type Static } from 'typebox';
+  ```
+
+- 工具参数只按 JSON Schema 校验；不再经过 TypeBox 自己的校验器，因此 JSON Schema 之外的 TypeBox 特性不再作用于工具参数：
+  - 不运行 `Type.Refine()` 的细化约束：它们本会拒绝的参数会被接受。
+  - `Type.BigInt()`、`Type.Undefined()` 和 `Type.Void()` 拒绝每一个 JSON 参数（TypeBox 以前会转换到它们）。
+  - Codec（`Type.Codec()`）不解码：工具收到的是编码后的 JSON 值。
+  - 用 TypeBox 的 `Format.Set()` 注册的格式不会被检查；标准格式加上 `url` 和 `json-pointer-uri-fragment` 会检查。
+  - 属性名是名称，不是正则表达式：`"a.b"` 不再同时转换参数 `axb`。
+  - `additionalProperties` 只转换未声明的属性；对象有多于一个属性时，TypeBox 以前也会用它转换已声明的属性。
+- 指向不存在目标的 `$ref`（缺失的定义、外部文档）只拒绝它所在位置的参数（`- t: unresolved reference #/definitions/Missing`），而不再像以前 TypeBox 那样让该工具的每次调用都失败。
+- `appendGrammarToolInputJsonDelta()`（`api/constrained-sampling`）接收输入 delta，而不是到目前为止的全部输入，并且不再关闭输入；用新的 `closeGrammarToolInputJson()` 关闭它（[#9265](https://github.com/earendil-works/pi/issues/9265)）。
+
+新增
+
+- 为 `device_code` 认证事件和 `OAuthDeviceCodeInfo` 添加可选的 `openBrowserOnConfirm` 和 `copyCodeOnConfirm`。两者默认 `true`；设为 `false` 可阻止客户端提供打开验证页或复制验证码（[#9282](https://github.com/earendil-works/pi/issues/9282)、[#9301](https://github.com/earendil-works/pi/pull/9301)）。
+- 添加 `StreamingJsonParser`，一个对分片到达的 JSON 文本做增量、宽容解析的解析器（每片只读一次；部分值的快照一旦返回就不再改变），以及 `ToolCallArgumentsStream`。每个 Provider 现在都用它解析流式工具调用参数；它的 `append()` 也返回每片造成的变更（`JsonChange`：某路径上设置的值，或追加到字符串的文本），供自己保留副本的写入方使用（[#9265](https://github.com/earendil-works/pi/issues/9265)）。
+- 为 OpenAI、Azure OpenAI Responses 和 OpenAI Codex Provider 添加 GPT-6.1 Terra，官方价格为输入 $1、缓存输入 $0.05、缓存写入 $1.25、输出 $5，272k 以上为长上下文档位，支持工具搜索和会话中途切换 effort。与 GPT-6.1 Sol 不同，它支持 `off`（reasoning effort `none`）；Codex 以 500K 上下文窗口提供它。
+- 添加 `Usage.cost.totalFromProvider`，用来区分 Provider 上报的账单总额和目录估算。缺失或 `false` 表示估算；只有每一部分都是 Provider 上报时，合并用量才标为 Provider 上报（[#11178](https://github.com/earendil-works/pi/pull/11178)）。
+- 为 pi-messages 终端事件添加 `responseModel`，在请求虚拟模型时保留 Radius 等 Provider 上报的具体模型（[#11265](https://github.com/earendil-works/pi/pull/11265)）。
+
+变更
+
+- faux Provider 现在流式输出部分工具调用参数，因此 `toolcall_delta` 的部分值会像真实 Provider 一样显示增长中的参数（[#9265](https://github.com/earendil-works/pi/issues/9265)）。
+- 内置模型目录由 models.dev 的 v2 目录生成，每个 Provider 的规则从 `scripts/generate-models.ts` 移到 `catalog/` 下每个 Provider 一个 TypeScript 定义。models.dev 标为 realtime 或图片模型的模型（`gpt-realtime-2.1`、`gemini-3.1-flash-live-preview`、`gemini-3.1-flash-lite-image`）不再作为聊天模型提供，models.dev 较新的 OpenAI 和 Google 聊天模型（`chat-latest`、`gpt-5.6-cyber`、`gemini-robotics-er-2-preview`）现在包含在内。
+
+修复
+
+- 修复接受会话中途系统消息的 Claude 模型，在系统更新之后跟着一条没有内容可发给 Anthropic 的 assistant 回复（例如空回复或另一个模型的仅推理回复）时，以 400（`role 'system' must precede an 'assistant' message`）拒绝会话的问题（[#11091](https://github.com/earendil-works/pi/issues/11091)）。
+- 修复带会话中途 effort 的 Claude 模型，在组织把 effort 上限设在 `high` 以下的账号上以 `Invalid effort level` 失败的问题，即使 thinking 是 `low` 或 `medium`；现在发送固定的顶层 effort `low`（[#10063](https://github.com/earendil-works/pi/issues/10063)）。
+- 修复流式工具调用参数在每个 delta 上被完整重新解析，使 CPU 时间和内存随工具调用大小二次增长的问题（Anthropic 上 90 KB 的 `write` 堆峰值约 140 MB；500 KB 的要几分钟）。每个 Provider 和 pi-messages 客户端现在每个 delta 只读一次，并把原始参数文本和其他流状态（`partialJson`、`partialArgs`、`index`、`customInput`、`streamIndex`、Bedrock 的加密推理字节）留在内容块之外，因此它们不再进入部分消息或失败流的记录（[#9265](https://github.com/earendil-works/pi/issues/9265)）。
+- 修复 grammar（自定义）工具输入流在每个 delta 上复制到目前为止的全部输入的问题（[#9265](https://github.com/earendil-works/pi/issues/9265)）。
+- 修复有界错误文本（telemetry span 消息、截断的 Provider 错误体、pi-messages 诊断、Radius 网关错误）让被截断的整段文本一直存活的问题（[#9265](https://github.com/earendil-works/pi/issues/9265)）。
+- 修复 Kimi Coding、Moonshot 和 OpenCode Go 上的 Kimi K3.1 Pro 和 K3.1 Pro Highspeed 使用 Kimi K2 请求设置的问题。它们现在发送 `reasoning_effort`（low/high/max），返回更早的推理，接受会话中途添加的工具，并在 Kimi Coding 上报 Moonshot 费率。Kimi Coding 的 `k3-256k` 现在上报 Kimi K3 费率。
+- 修复 OAuth 登录打开不是 `http:` 或 `https:` 的服务器提供 URL 的问题。Radius 现在检查浏览器授权端点和设备验证 URI，GitHub Copilot、Kimi Coding 和 Meta 共用一次检查。
+- 修复 pi-messages 流接受不是下一个或已有内容块的 `contentIndex` 的问题，例如 `__proto__` 或巨大的索引。
+- 修复 `pi-ai` CLI 认证文件可被其他用户读取的问题。它现在以模式 `0600` 写入。
+- 修复 OpenCode DeepSeek V4.1 Flash 发送 `prompt_cache_retention`，被 OpenCode 网关拒绝，并带长缓存保留的问题。
+- 修复从调用过工具的另一个模型切换过来后，GPT-5.4 和 GPT-5.5 以 `Missing namespace for function_call` 失败的问题。在 OpenAI 和 OpenCode Provider 上，它们现在把工具声明在顶层工具列表中，而不是通过 `additional_tools` 或工具搜索加载（[#11415](https://github.com/earendil-works/pi/issues/11415)）。
+- 修复 `strict: "prefer"` 工具超过 Claude 严格工具限制时（例如所有严格工具合计超过 16 个可选参数），Bedrock 请求失败的问题；请求现在用非严格的首选工具重试一次，同时保持 `strict: "require"` 工具为严格，与 Anthropic Provider 已有的做法一样（[#11416](https://github.com/earendil-works/pi/issues/11416)）。
+- 修复 OpenRouter 的 `~anthropic/claude-*-latest` 别名在每次工具调用后丢失 Claude 更早 thinking 的问题。它们使用 Chat Completions API，pi 在那里丢掉了 thinking 签名，OpenRouter 随后忽略未签名的 thinking。它们现在使用带 adaptive thinking 的 Anthropic Messages API，与带版本号的 Claude 模型一样（[#9534](https://github.com/earendil-works/pi/issues/9534)）。
+- 修复 OpenRouter 费用总额对 Chat Completions 和 Anthropic Messages 使用目录估算而不是上报账单的问题。BYOK 总额同时包含 OpenRouter 收费和上报的上游成本；分项成本仍是目录估算（[#9980](https://github.com/earendil-works/pi/issues/9980)）。
+- 修复 OpenCode Zen 和 OpenCode Go 请求使用共享端点，而不是各自协议专用的 OpenAI、Anthropic、Google 和 System One 端点的问题（[#11434](https://github.com/earendil-works/pi/pull/11434) 由 [@vimtor](https://github.com/vimtor) 贡献）。
+- 修复 Zhipu/Z.ai 用量上限错误（代码 `1308`）被当成瞬时 HTTP 429，从而自动重试，但在用量上限重置前不可能成功的问题（[#11537](https://github.com/earendil-works/pi/issues/11537)）。
+- 修复 LiteLLM 的 `ContextWindowExceededError` 不被识别为上下文溢出的问题（[#11492](https://github.com/earendil-works/pi/issues/11492)）。
+- 修复 Gemini 工具 schema 发送不支持的 `const` 关键字的问题。它们现在转成单值 `enum` schema，不改写 default、example 或 enum 值里的字面数据，也不丢失名为 `__proto__` 的属性（[#11308](https://github.com/earendil-works/pi/issues/11308)）。
+- 修复 faux Provider 把模拟的 cache-write Token 同时计为输入和 cache write 的问题。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+不兼容变更
+
+- `AgentTool` 的 `parameters` 接受任意 JSON Schema 对象（`AgentTool<TParameters extends object>`），并通过 `@earendil-works/pi-schema` 给 `params` 和 `prepareArguments` 定类型（`AgentToolParams<TParameters>`）：pi-schema 的 builder 给出静态类型，TypeBox schema 对常见种类给出 TypeBox 静态类型（String、Number、Integer、Boolean、Null、Literal、Array、带可选和只读属性的 Object、Union、Record、Unsafe、Unknown、Any；Enum、Tuple、Intersect 等其他种类给出 `unknown`），其他 schema 给出 `unknown`，`AgentTool<any>` 仍是 `any`。`outputSchema` 是任意 JSON Schema 对象。`typebox` 不再是依赖。迁移：用 pi-schema 构建参数（`obj({ path: str() })` 代替 `Type.Object({ path: Type.String() })`），或继续使用 TypeBox schema（只有用到其他种类时才需要自己收窄 `params`）。
+
+修复
+
+- 修复 `streamProxy()` 在每个 delta 上重新解析累积的工具调用参数，并把原始文本留在部分内容块上的问题（[#9265](https://github.com/earendil-works/pi/issues/9265)）。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+新增
+
+- 添加 `replaceControlCharacters()`，把连续的 C0 和 C1 控制字符替换成空格。
+- 添加 `Component.capturesViewportInput`。设置了它的组件拥有焦点时，`TuiAltScreen` 把 PageUp/PageDown 等视口键发给它，而不是滚动记录，与已有焦点的 overlay 一样。`SelectList`、`SettingsList` 和打开了自动补全的 `Editor` 会设置它（[#7629](https://github.com/earendil-works/pi/issues/7629)，基于 [#7680](https://github.com/earendil-works/pi/pull/7680) 由 [@muyiyr](https://github.com/muyiyr) 贡献）。
+- 添加 `getSelectPageIndex()`，用于计算 `tui.select.pageUp` 或 `tui.select.pageDown` 按键之后的选中项（[#7629](https://github.com/earendil-works/pi/issues/7629)，基于 [#7680](https://github.com/earendil-works/pi/pull/7680) 由 [@muyiyr](https://github.com/muyiyr) 贡献）。
+
+修复
+
+- 修复 Apple Terminal 发送 `ESC` + Return 时，`Shift+Enter` 把 follow-up 排队的问题。本地原生 Shift 检测可用时（Apple Terminal、原生 Windows），`ProcessTerminal` 现在把按住 Shift 的 `ESC` + Return 当成 `Shift+Enter`；没有 Shift 时仍是 `Alt+Enter`（[#11559](https://github.com/earendil-works/pi/issues/11559)）。
+- 修复常规模式 `TUI` 把渲染行中的 OSC 133 Prompt 标记写到终端的问题。终端把 `133;A` 当成新的 shell Prompt，并丢掉 OSC 7501 程序状态，因此运行期间工作指示消失。全屏仍然用这些标记做 Prompt 导航，并且已经剥掉它们（[#11519](https://github.com/earendil-works/pi/issues/11519)）。
+- 修复全屏双击选择在 `~`、`.`、`\` 和 `+` 处拆开路径和 Token 的问题。单词字符现在与 iTerm2 的默认值一致（[#10980](https://github.com/earendil-works/pi/issues/10980)）。
+- 修复 `fuzzyMatch()` 把散落在文本前部的查询排在后面的连续匹配之上的问题。它现在也对查询的每次连续出现计分，并保留最佳对齐（[#11220](https://github.com/earendil-works/pi/issues/11220)、[#11296](https://github.com/earendil-works/pi/pull/11296)）。
+- 修复 `ProcessTerminal.setTitle()` 把标题中的控制字符写出去，从而可能结束标题序列并把其余部分作为转义序列发给终端的问题。
+- 修复宽于内容宽度的显示数学被逐行换行、把分式和求和拆开的问题。现在回退到原始 LaTeX 源（[#11483](https://github.com/earendil-works/pi/issues/11483)）。
+- 修复 `SelectList`、`SettingsList` 和编辑器自动补全忽略 `tui.select.pageUp` 和 `tui.select.pageDown` 的问题（[#7629](https://github.com/earendil-works/pi/issues/7629)，基于 [#7680](https://github.com/earendil-works/pi/pull/7680) 由 [@muyiyr](https://github.com/muyiyr) 贡献）。
+- 修复带样式的词正好在换行宽度结束时，`wrapTextWithAnsi()` 让下一行以空格开头，以及删除线延续进换行右侧内边距的问题（[#10925](https://github.com/earendil-works/pi/issues/10925)）。
+- 修复 `Markdown` 在每次渲染时都对每个块做样式、高亮和换行的问题。它现在复用上次渲染的顶层块，因此流式消息只渲染改变的最后一块，resize 复用已高亮的代码。复用的块被弱引用持有，并由 `invalidate()` 丢掉；主题变化必须调用它，因为在此之前会复用 `MarkdownTheme.highlightCode` 的结果（[#10971](https://github.com/earendil-works/pi/issues/10971)）。
+- 修复 `Text.setText()` 在文本未变时丢掉已换行的行，使每次更新都设置相同文本的渲染器再次换行的问题（[#10971](https://github.com/earendil-works/pi/issues/10971)）。
+- 修复 Orca 终端对内联图片回退到文本的问题。Orca 现在被识别为支持 true color 和超链接，并在公布 `ORCA_IMAGE_PROTOCOL=kitty` 时支持 Kitty 图片（[#9329](https://github.com/earendil-works/pi/pull/9329) 由 [@XRX193](https://github.com/XRX193) 贡献）。
+- 修复裸 Markdown URL 吞掉后面的 CJK 标点和文本的问题；显式 Markdown 链接和尖括号自动链接不变（[#10934](https://github.com/earendil-works/pi/pull/10934) 由 [@haoqixu](https://github.com/haoqixu) 贡献）。
+- 修复 Kitty 协议的 F1–F12 快捷键（包括带修饰键的功能键）不被识别，以及 F13+ 和其他功能键把不可见的私用区字符插入编辑器的问题（[#11419](https://github.com/earendil-works/pi/issues/11419)、[#11345](https://github.com/earendil-works/pi/issues/11345)）。
+- 修复带内边距或颜色的盒子里的 Kitty 图片在第一行滚出全屏视口后消失的问题。部分可见的图片现在会被正确裁剪，包括旁边有其他文本时。
+- 修复深层嵌套的 Markdown 引用产生指数级行数，边框耗尽可用宽度后挂起或让渲染崩溃的问题（[#11272](https://github.com/earendil-works/pi/issues/11272)）。
+
+</details>
+
 ## v1.4.0（2026-10-21）
 
 <details>

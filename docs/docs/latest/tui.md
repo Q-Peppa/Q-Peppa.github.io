@@ -63,6 +63,8 @@
 
 常规模式把鼠标输入留给终端，因为终端拥有回滚缓冲区。即使全屏鼠标输入可用，也要为每种交互设计键盘路径。
 
+<a id="use-custom-screens-and-overlays"></a>
+
 ## 使用自定义界面和 overlay
 
 `ctx.ui.custom()` 临时把交互区域的控制权交给一个组件，并在该组件调用提供的完成回调时兑现。
@@ -180,6 +182,8 @@ return new Text(
 渲染期间求值的主题回调不需要特殊重建。无状态组件也可以在每次渲染时计算带主题的输出。
 
 用[主题](themes.md)创建终端配色。渲染应当匹配当前应用主题的 Markdown 时，使用 Pi 的 `getMarkdownTheme()`。
+
+<a id="keep-rendering-responsive"></a>
 
 ## 保持渲染响应迅速
 
