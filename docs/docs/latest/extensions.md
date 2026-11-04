@@ -886,6 +886,7 @@ pi.on('before_provider_request', (event, ctx) => {
 ```
 
 这主要用于调试 Provider 序列化和缓存行为。
+负载是完整请求。从先前响应继续的 Provider（通过 WebSocket 的 OpenAI Codex、Anthropic message threads）可能只发送自上次请求以来新增的部分。
 
 #### after_provider_response
 
@@ -1276,7 +1277,7 @@ pi.on('tool_result', async (event, ctx) => {
 请求优雅关闭 Pi。
 
 - **交互模式：** 延迟到 Agent 变为空闲后（处理完所有排队的引导和后续消息后）。
-- **RPC 模式：** 延迟到下一个空闲状态（完成当前命令响应后，等待下一个命令时）。
+- **RPC 模式：** 会话空闲且没有正在处理的命令时立即执行。否则延迟到当前命令结束（包括其响应）或活动运行 settled。（在扩展启动的压缩正在运行时发出的请求，会等到下一个命令或运行结束。）
 - **打印模式：** 无操作。进程在处理完所有提示后自动退出。
 
 在退出前向所有扩展发出 `session_shutdown` 事件。在所有上下文中可用（事件处理程序、工具、命令、快捷键）。
@@ -1834,15 +1835,25 @@ const userScoped = commands.filter((command) => command.sourceInfo.scope === 'us
 
 为具有您的 `customType` 的自定义消息注册自定义 TUI 渲染器。自定义消息通过 `pi.sendMessage()` 创建并参与 LLM 上下文。参见 [自定义 UI](#自定义-ui)。
 
-### pi.registerMarkdownTransformer(transformer)
+### pi.registerMarkdownTransformer(transformer, options?)
 
-为普通用户文本、助手文本和 thinking 块中的 Markdown 注册转换器。转换器按扩展加载顺序执行，每个转换器接收上一个转换器返回的 Markdown。链执行完毕后，Pi 使用内置渲染器渲染转换后的内容。
+在交互模式下、Pi 渲染 Markdown 之前为其注册转换器。转换器按扩展加载顺序执行，每个转换器接收上一个转换器返回的 Markdown。链执行完毕后，Pi 使用内置渲染器渲染转换后的内容。
+
+默认情况下，转换器作用于普通用户文本、助手文本和 thinking 块。`options.messageTypes` 改为列出它要作用的界面：
+
+| `messageType`                                   | 界面                                                                                                                                |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `"user"`、`"assistant"`、`"assistant-thinking"` | 转录消息（默认）                                                                                                                    |
+| `"custom"`                                      | 没有注册消息渲染器的 `pi.sendMessage()` 自定义消息，以及展开的 Skill 块（其内容，不含 Pi 的标题）                                   |
+| `"summary"`                                     | 展开的分支摘要和压缩摘要（摘要本身，不含 Pi 的标题）                                                                                |
+| `"changelog"`                                   | Pi 的 changelog（启动时的 "What's New" 和 `/changelog`）、启动时的 "Extension Updates" 通知，以及 "Update Available" 通知的发布说明 |
 
 转换器接收 Markdown 字符串和一个上下文对象：
 
-- `messageType` — `"user"`、`"assistant"` 或 `"assistant-thinking"`
-- `isStreaming` — 对部分助手更新为 `true`；对用户、已完成的助手和恢复的消息为 `false`
+- `messageType` — 上面列出的界面之一
+- `isStreaming` — 对部分助手更新为 `true`；其他情况为 `false`
 - `availableWidth` — 转换后 Markdown 内容可用的精确终端列数
+- `messageId`、`timestamp` — 从持久化会话条目渲染时的会话条目 ID 和 ISO 时间戳；实时消息和通知为 `undefined`
 
 返回转换后的 Markdown：
 
@@ -1851,9 +1862,14 @@ pi.registerMarkdownTransformer((markdown, { messageType, isStreaming }) => {
   if (isStreaming || messageType === 'assistant-thinking') return markdown;
   return markdown.replaceAll('-->', '→');
 });
+
+// Show :warning: shortcodes in changelogs as a symbol.
+pi.registerMarkdownTransformer((markdown) => markdown.replaceAll(':warning:', '⚠'), {
+  messageTypes: ['changelog'],
+});
 ```
 
-如果转换器抛出异常，Pi 保留目前生成的 Markdown 并继续执行下一个转换器。此 hook 仅用于显示：原始消息在会话和模型上下文中保持不变。它在新用户消息、助手流式更新、恢复的会话消息和终端宽度变化时运行，因此转换器应保持同步且开销低廉。
+如果转换器抛出异常，Pi 保留目前生成的 Markdown 并继续执行下一个转换器。此 hook 仅用于显示：原始消息在会话和模型上下文中保持不变。它在新消息、助手流式更新、恢复的会话消息和终端宽度变化时运行，因此转换器应保持同步且开销低廉。一个扩展只有一个转换器；再次注册会替换它。
 
 ### pi.registerEntryRenderer(customType, renderer)
 
@@ -2422,6 +2438,8 @@ pi.registerTool({
 ```
 
 **操作接口：** `ReadOperations`、`WriteOperations`、`EditOperations`、`BashOperations`、`PowerShellOperations`、`LsOperations`、`GrepOperations`、`FindOperations`
+
+`GrepOperations` 只覆盖目录检查：grep 始终运行本地的 `rg`。要搜索远程系统，改为覆盖 grep 的 `execute()`，如 [Gondolin 示例](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/extensions/gondolin/index.ts) 所示。
 
 对于 `user_bash`，扩展可以通过 `createLocalBashOperations()` 重用 pi 的本地 Shell 后端，而无需重新实现本地进程启动、Shell 解析和进程树终止。
 

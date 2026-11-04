@@ -149,7 +149,7 @@ Pi 先对不支持的 thinking level 做钳制，然后按此顺序合并模型 
 
 ## 使用分类器模型
 
-分类器模型不用于对话。它们回答关于 JSON 状态的带类型问题：从若干选项中选一个、回答是否，或给出分数，每项都带概率。Pi 通过这些 Provider 提供 TypeSafe 的 Jev 模型，通过 Workers AI 和 OpenRouter 提供 Cloudflare 的 Clef、Clef Flash 和 Clef Omni 模型，并通过 [Decisions API](https://developers.openai.com/api/docs/guides/decisions) 提供 OpenAI 的 GPT-6 Luna：
+分类器模型不用于对话。它们回答关于 JSON 状态的带类型问题：从若干选项中选一个、回答是否，或给出分数，每项都带概率。Pi 通过这些 Provider 提供 TypeSafe 的 Jev 模型，通过 Workers AI 和 OpenRouter 提供 Cloudflare 的 Clef、Clef Flash 和 Clef Omni 模型，通过 [Decisions API](https://developers.openai.com/api/docs/guides/decisions) 提供 OpenAI 的 GPT-6 Luna，并通过 GitHub Copilot 提供 Microsoft-Decision-1：
 
 | Provider                | 模型 ID                                                                                                                              | 认证                                            |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------- |
@@ -159,6 +159,7 @@ Pi 先对不支持的 thinking level 做钳制，然后按此顺序合并模型 
 | `vercel-ai-gateway`     | `typesafe-ai/jev`                                                                                                                    | `AI_GATEWAY_API_KEY`                            |
 | `opencode`              | `jev-1.13`、`jev-1.13-free`                                                                                                          | `OPENCODE_API_KEY`                              |
 | `openai`                | `gpt-6-luna`                                                                                                                         | `OPENAI_API_KEY`                                |
+| `github-copilot`        | `microsoft-decision-1`                                                                                                               | `COPILOT_GITHUB_TOKEN` 或 `/login`              |
 
 [llama.cpp router](llama-cpp.md#classification) 上的 chat 模型也会列为分类器模型。
 

@@ -27,8 +27,6 @@ llama cli --version
 ```bash
 llama serve \
   --no-models-autoload \
-  --host 127.0.0.1 \
-  --port 8080 \
   -ngl all \
   -c 32768
 ```
@@ -36,7 +34,6 @@ llama serve \
 重要选项：
 
 - `--no-models-autoload` 让加载只通过 `/llama` 显式进行。
-- `--jinja` 启用兼容的聊天模板和 tool calling。
 - `-ngl all` 把所有层卸载到 GPU。省略它则使用自动 GPU 卸载。
 - `-c 32768` 以 Token 为单位设置上下文大小。用 `-c 0` 表示模型的完整上下文窗口，这可能显著增加内存需求。上下文在并行的 server slot 之间共享。
 
@@ -66,14 +63,14 @@ llama serve \
 /login llama.cpp
 ```
 
-输入 router URL 和可选的 API Key。默认 URL 是 `http://127.0.0.1:8080`。
+输入 router URL 和可选的 API Key。默认 URL 是 `http://127.0.0.1:9931`。
 
 如果你用 `--no-models-autoload` 启动 router，`/login llama.cpp` 只保存连接。运行 `/llama` 加载模型，然后用 `/model` 为当前会话选择已加载的模型。
 
 不用 `/login` 也可以用环境变量配置相同的值：
 
 ```bash
-export LLAMA_BASE_URL=http://127.0.0.1:8080
+export LLAMA_BASE_URL=http://127.0.0.1:9931
 export LLAMA_API_KEY=optional-secret
 pi
 ```
@@ -128,8 +125,8 @@ llama.cpp 0.6.0 及之后版本会在 router 的模型列表中报告决策模�
 检查 router 是否可达：
 
 ```bash
-curl http://127.0.0.1:8080/health
-curl http://127.0.0.1:8080/models
+curl http://127.0.0.1:9931/health
+curl http://127.0.0.1:9931/models
 ```
 
 - **`/llama` 中没有模型：** 检查 `--models-dir`、目录布局，并重启 router。

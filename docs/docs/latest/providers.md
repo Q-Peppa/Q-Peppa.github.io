@@ -62,7 +62,7 @@ pi
 | MiniMax（中国）                                           | `MINIMAX_CN_API_KEY`            |
 | Moonshot AI（全球和中国）                                 | `MOONSHOT_API_KEY`              |
 | Qwen Token Plan and Individual                            | `QWEN_TOKEN_PLAN_API_KEY`       |
-| Qwen Token Plan（中国）                                   | `QWEN_TOKEN_PLAN_CN_API_KEY`    |
+| Qwen Token Plan（中国）和 Individual（中国）              | `QWEN_TOKEN_PLAN_CN_API_KEY`    |
 | Xiaomi MiMo                                               | `XIAOMI_API_KEY`                |
 | Xiaomi MiMo Token Plan（中国）                            | `XIAOMI_TOKEN_PLAN_CN_API_KEY`  |
 | Xiaomi MiMo Token Plan（阿姆斯特丹）                      | `XIAOMI_TOKEN_PLAN_AMS_API_KEY` |
