@@ -6,21 +6,23 @@
 
 在 `settings.json` 中添加 `"$schema": "https://pi.dev/schemas/settings.schema.json"`，即可获得编辑器校验和补全。
 
+<a id="model-and-thinking"></a>
+
 ## 模型与 thinking
 
 <a id="model-cycling"></a>
 
-| 设置                   | 类型                                                                    | 默认值        | 说明                                                                                                  |
-| ---------------------- | ----------------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------------------------------- |
-| `defaultProvider`      | string                                                                  | 自动          | 启动时的 AI Provider。                                                                                |
-| `defaultModel`         | string                                                                  | 自动          | 启动时的模型 ID。                                                                                     |
-| `defaultThinkingLevel` | `"off" \| "minimal" \| "low" \| "medium" \| "high" \| "xhigh" \| "max"` | `"medium"`    | 启动时的 thinking level。                                                                             |
-| `modelThinkingLevels`  | object                                                                  | 无            | 按模型设置启动 thinking level，键为精确的 `provider/modelId`。                                        |
-| `thinkingBudgets`      | object                                                                  | 内置预算      | `minimal`、`low`、`medium` 和 `high` thinking level 的 Token 预算。                                   |
-| `enabledModels`        | `string[]`                                                              | 所有可用模型  | 用于启动选择和模型循环的模型匹配模式。格式与 `--models` 相同。                                        |
-| `hideThinkingBlock`    | boolean                                                                 | `false`       | 在转录中隐藏 thinking 块。                                                                            |
-| `showCacheMissNotices` | boolean                                                                 | `false`       | 显示明显缓存未命中、缓存预热成功、压缩用量和 Provider 恢复的通知。                                    |
-| `cacheWarming`         | `"off" \| "streaming" \| "idle"`                                        | `"streaming"` | 在活动运行期间保持符合条件的 Provider Prompt 缓存温暖；设为 `"idle"` 时在运行之间保持。仅限全局设置。 |
+| 设置                   | 类型                                                                    | 默认值       | 说明                                                                                                                                                  |
+| ---------------------- | ----------------------------------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `defaultProvider`      | string                                                                  | 自动         | 启动时的 AI Provider。                                                                                                                                |
+| `defaultModel`         | string                                                                  | 自动         | 启动时的模型 ID。                                                                                                                                     |
+| `defaultThinkingLevel` | `"off" \| "minimal" \| "low" \| "medium" \| "high" \| "xhigh" \| "max"` | `"medium"`   | 启动时的 thinking level。                                                                                                                             |
+| `modelThinkingLevels`  | object                                                                  | 无           | 按模型设置启动 thinking level，键为精确的 `provider/modelId`。                                                                                        |
+| `thinkingBudgets`      | object                                                                  | 内置预算     | `minimal`、`low`、`medium` 和 `high` thinking level 的 Token 预算。                                                                                   |
+| `enabledModels`        | `string[]`                                                              | 所有可用模型 | 用于启动选择和模型循环的模型匹配模式。格式与 `--models` 相同。                                                                                        |
+| `hideThinkingBlock`    | boolean                                                                 | `false`      | 在转录中隐藏 thinking 块。                                                                                                                            |
+| `showCacheMissNotices` | boolean                                                                 | `false`      | 显示明显缓存未命中、缓存预热成功、压缩用量和 Provider 恢复的通知。                                                                                    |
+| `cacheWarming`         | `"off" \| "streaming" \| "idle"`                                        | `"idle"`     | 在活动运行期间保持符合条件的 Provider Prompt 缓存温暖；设为 `"idle"` 时，运行之间最多保持 30 分钟。`"streaming"` 只在活动运行期间预热。仅限全局设置。 |
 
 缓存预热只在模型声明了缓存时长，且 Pi 估计可避免至少 $0.05 缓存未命中成本时运行。刷新用量计入会话总量，但不进入模型上下文。`/session` 显示下一次决策；扩展可以用 `cache_warming_decision` 覆盖它。见 [Prompt 缓存时长](models.md#prompt-cache-lifetimes)。
 
@@ -93,6 +95,8 @@ CLI 工具选项会为单次调用覆盖该设置。只含 `+name` 和 `-name` �
 | ----------------------------- | ------- | ------- | ------------------------------------- |
 | `branchSummary.reserveTokens` | number  | `16384` | 摘要分支历史时保留的 Token。          |
 | `branchSummary.skipPrompt`    | boolean | `false` | 跳过分支摘要 Prompt，默认不生成摘要。 |
+
+<a id="terminal-and-display"></a>
 
 ## 终端与显示
 

@@ -141,7 +141,7 @@ export default function (pi: ExtensionAPI) {
 
 这个组件不显示文本光标，因此不需要 `Focusable`。包含 `Input` 或 `Editor` 的组件必须实现 `Focusable`，并把 `focused` 值传给该子组件。
 
-自定义组件不会把 pi 报告为正在等待用户，因为 `ctx.ui.custom()` 也会承载加载指示和其他非阻塞 UI。内联组件在等待回答时，传入 `blocked: { kind: "question", message: "Pick a color" }`，这样支持[程序状态](terminal-setup.md#program-status)的终端会在组件可见期间把 pi 显示为阻塞。`kind` 为 `"question"`、`"permission"` 或 `"auth"`。Overlay 忽略该选项。
+自定义组件不会把 pi 报告为正在等待用户，因为 `ctx.ui.custom()` 也会承载加载指示和其他非阻塞 UI。组件在等待回答时，传入 `blocked: { kind: "question", message: "Pick a color" }`，这样支持[程序状态](terminal-setup.md#program-status)的终端会把 pi 显示为阻塞。`kind` 为 `"question"`、`"permission"` 或 `"auth"`。内联组件在可见期间报告阻塞：后来显示在它位置上的对话框或组件改为报告自己的状态。Overlay 从显示到调用 `done()` 期间报告阻塞，用 `setHidden()` 隐藏或被另一个 overlay 盖住时也一样。多个阻塞提示同时打开时，最近显示的那个提供 `kind` 和 `message`。
 
 传入 `overlay: true` 会在已有内容之上绘制。Overlay 选项控制尺寸、锚点、偏移、边距和响应式可见性。交互仍在进行时，overlay 句柄可以通过 `setHidden()` 改变焦点，或临时隐藏和显示 overlay。
 

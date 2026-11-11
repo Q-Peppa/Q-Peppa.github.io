@@ -14,6 +14,8 @@ pi uninstall <source> [options]
 pi update [target] [options]
 pi list
 pi config [options]
+pi auth login <provider> [--api-key] [--no-browser]
+pi auth logout <provider>
 pi auth <check|print-api-key|print-bearer-token> [options]
 pi mcp <add|remove|list|login|logout> [options]
 ```
@@ -275,6 +277,8 @@ pi install npm:@scope/package
 
 给 `install`、`remove`、`uninstall` 或 `config` 加上 `--local` 或 `-l`，可以使用项目设置而不是全局设置。
 
+<a id="update-pi-or-packages"></a>
+
 ### 更新 Pi 或包
 
 不带目标运行 `pi update` 会更新 Pi 自身。
@@ -311,13 +315,26 @@ export PI_SELF_UPDATE_COMMAND="mise use -g npm:{packageName}@{version}"
 - `-a`、`--approve` 为一个命令信任项目本地文件。`-na`、`--no-approve` 忽略受信任门控的项目本地文件。
 - 给命令追加 `-h` 或 `--help` 可以查看它的确切用法和选项约束。
 
+<a id="credential-commands"></a>
+
 ## 凭证命令
 
+`pi auth login <provider>` 在终端登录某个 Provider 后退出，不启动会话。它用账号登录并打开浏览器，和 `/login <provider>` 一样。没有账号登录的 Provider 会要求 API Key。登录 Radius 时，如果还没有全局服务器使用该登录，还会把 Radius MCP 服务器加到 `~/.pi/agent/mcp.json`。它需要交互式终端。
+
+| 选项           | 说明                                                                                                            |
+| -------------- | --------------------------------------------------------------------------------------------------------------- |
+| `--api-key`    | 保存 API Key，而不是用账号登录；读取 Key 时不回显                                                               |
+| `--no-browser` | 不打开浏览器；使用 Provider 的其他登录方式，例如设备码，适合 SSH。有多种方式时会询问。不能与 `--api-key` 一起用 |
+
+`pi auth logout <provider>` 移除 `pi auth login` 或 `/login` 保存的凭证，和 `/logout` 一样。环境变量和 `models.json` 配置不变。没有已保存凭证时以状态 `0` 退出，所以可以重复执行。
+
 ```sh
+pi auth login radius
+pi auth logout radius
 pi auth check --provider openai --json
 ```
 
-认证命令需要 `--provider <provider>` 或 `--model <model>`。受支持的方式见 [Providers](providers.md)。
+其他认证命令需要 `--provider <provider>` 或 `--model <model>`。受支持的方式见 [Providers](providers.md)。
 
 | 命令                         | 说明                                                                    |
 | ---------------------------- | ----------------------------------------------------------------------- |

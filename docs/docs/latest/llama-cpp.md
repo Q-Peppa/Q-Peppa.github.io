@@ -15,7 +15,7 @@ curl -LsSf https://llama.app/install.sh | sh
 验证安装：
 
 ```bash
-llama cli --version
+llama --version
 ```
 
 其他安装方式（包括包管理器和从源码构建）见 [llama.app](https://llama.app)。

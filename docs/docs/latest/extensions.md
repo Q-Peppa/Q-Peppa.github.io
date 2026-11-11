@@ -1835,6 +1835,8 @@ const userScoped = commands.filter((command) => command.sourceInfo.scope === 'us
 
 为具有您的 `customType` 的自定义消息注册自定义 TUI 渲染器。自定义消息通过 `pi.sendMessage()` 创建并参与 LLM 上下文。参见 [自定义 UI](#自定义-ui)。
 
+<a id="piregistermarkdowntransformertransformer-options"></a>
+
 ### pi.registerMarkdownTransformer(transformer, options?)
 
 在交互模式下、Pi 渲染 Markdown 之前为其注册转换器。转换器按扩展加载顺序执行，每个转换器接收上一个转换器返回的 Markdown。链执行完毕后，Pi 使用内置渲染器渲染转换后的内容。
@@ -2017,7 +2019,7 @@ import { createProvider, openAICompletionsApi } from "@earendil-works/pi-ai/comp
 const provider = createProvider({
   id: "local-server",
   name: "Local Server",
-  baseUrl: "http://localhost:8080/v1",
+  baseUrl: "http://localhost:9931/v1",
   auth: {
     apiKey: {
       name: "Local server setup",
@@ -2066,11 +2068,11 @@ pi.registerProvider("anthropic", {
 
 // 注册不持久化已发现模型的实时 llama.cpp 目录
 pi.registerProvider("llama.cpp", {
-  baseUrl: "http://localhost:8080/v1",
+  baseUrl: "http://localhost:9931/v1",
   apiKey: "local",
   api: "openai-completions",
   async refreshModels({ signal }) {
-    const response = await fetch("http://localhost:8080/v1/models", { signal });
+    const response = await fetch("http://localhost:9931/v1/models", { signal });
     const { data } = (await response.json()) as { data: Array<{ id: string }> };
     return data.map(({ id }) => ({
       id,
@@ -2408,6 +2410,8 @@ pi --no-builtin-tools -e ./my-extension.ts
 - [find.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/tools/find.ts) - `FindToolDetails`
 - [ls.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/tools/ls.ts) - `LsToolDetails`
 
+<a id="remote-execution"></a>
+
 ### 远程执行
 
 内置工具支持可插拔的操作，用于委派到远程系统（SSH、容器等）：
@@ -2436,6 +2440,8 @@ pi.registerTool({
   },
 });
 ```
+
+`ReadOperations.createReadStream` 是可选的。当它把文件作为 chunk 的异步可迭代对象返回时（Node 的 `Readable` 可以），`read` 只在内存中保留要显示的行，因此大文件可以用 `offset`/`limit` 读取；没有它时，`read` 会通过 `readFile` 加载整个文件。
 
 **操作接口：** `ReadOperations`、`WriteOperations`、`EditOperations`、`BashOperations`、`PowerShellOperations`、`LsOperations`、`GrepOperations`、`FindOperations`
 

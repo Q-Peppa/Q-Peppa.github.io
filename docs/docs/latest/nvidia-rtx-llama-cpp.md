@@ -2,7 +2,7 @@
 
 > 本页面是 [Pi 官方文档](https://pi.dev/docs/latest/nvidia-rtx-llama-cpp) 的中文翻译。仅供学习参考。
 
-[NVIDIA Local AI Inference Recipes](https://nvidia.github.io/local-ai-inference-recipes/index.html) 提供针对特定 NVIDIA 硬件和模型调优的 llama.cpp 设置。每个 recipe 给出单模型的 `llama-server` 命令。Pi 使用 llama.cpp router，它可以提供并管理多个模型，所以本指南把 recipe 命令转换成 router 预设。
+[NVIDIA Local AI Inference Recipes](https://nvidia.github.io/local-ai-inference-recipes/index.html) 提供针对特定 NVIDIA 硬件和模型调优的 llama.cpp 设置。每个 recipe 给出单模型的 `llama-server` 命令。Pi 使用 llama.cpp router，它可以提供并管理多个模型，所以本指南把 recipe 命令转换成 router 预设，并用 `llama serve` 启动。`llama serve` 接受与 `llama-server` 相同的选项。
 
 下面的示例使用 Windows PowerShell。Pi 完整的 router 和模型管理参考见[用 llama.cpp 运行本地模型](llama-cpp.md)。
 
@@ -10,12 +10,12 @@
 
 1. 打开 [recipe 目录](https://nvidia.github.io/local-ai-inference-recipes/index.html)，选择你的硬件、操作系统和模型，然后选 **llama.cpp**。检查前置条件和内存要求。保留下 recipe 的启动命令，供下面的转换使用。
 2. 按 recipe 的安装说明安装 llama.cpp。recipe 的设置依赖它的构建，例如 CUDA 支持或投机解码选项。
-3. 运行 `llama-server --help`，确认它列出了 `--models-preset`。如果没有，该构建无法把 recipe 作为 router 预设加载。使用仍满足 recipe 要求的更新的构建。
+3. 运行 `llama serve --help`，确认它列出了 `--models-preset`。如果该构建没有 `llama` 程序，或缺少该选项，就无法把 recipe 作为 router 预设加载。使用仍满足 recipe 要求的更新的构建。
 4. 按[快速开始](quickstart.md)安装 Pi。在原生 Windows 上，另见[在 Windows 上运行 Pi](windows.md)。
 
 ## 把 recipe 转换成预设
 
-一个预设列出一个或多个模型的设置。每个小节名会成为 Pi 中显示的模型 ID。把预设保存在 `llama-server` 旁边，或者在启动 router 时传入它的完整路径。
+一个预设列出一个或多个模型的设置。每个小节名会成为 Pi 中显示的模型 ID。把预设保存在 llama.cpp 文件夹中，或者在启动 router 时传入它的完整路径。
 
 把 recipe 命令中的每个选项转换成一行预设：
 
@@ -84,7 +84,7 @@ spec-draft-backend-sampling = true
 在 llama.cpp 文件夹中打开 PowerShell 并运行：
 
 ```powershell
-.\llama-server.exe --models-preset qwen3.8-27b.ini --host 127.0.0.1 --port 8080
+.\llama.exe serve --models-preset qwen3.8-27b.ini --host 127.0.0.1
 ```
 
 如果 recipe 需要 Hugging Face Token，在启动 router 前在同一个 PowerShell 窗口中设置 `$env:HF_TOKEN`。首次启动时，router 会下载模型文件。
@@ -93,6 +93,6 @@ spec-draft-backend-sampling = true
 
 ## 在 Pi 中使用模型
 
-遵循[配置 Pi](llama-cpp.md#configure-pi)，连接到 `http://127.0.0.1:8080`。预设小节名就是模型 ID，所以本示例在 `/model` 中选择 `qwen3.8-27b`。
+遵循[配置 Pi](llama-cpp.md#configure-pi)，连接到 `http://127.0.0.1:9931`。预设小节名就是模型 ID，所以本示例在 `/model` 中选择 `qwen3.8-27b`。
 
 NVIDIA recipe 的内存设置假定只有选中的模型使用 GPU。如果 `/llama` 显示其他已加载的模型，在使用 recipe 模型前卸载它们。

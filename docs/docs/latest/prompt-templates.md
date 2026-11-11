@@ -49,7 +49,7 @@ Pi 在生成的文本进入 Agent 之前展开模板。除非同名的扩展命�
 | `${@:N}`             | 从位置 `N` 开始的参数        |
 | `${@:N:L}`           | 从位置 `N` 开始的 `L` 个参数 |
 
-参数遵循类似 Shell 的引号规则，所以 `/review "API compatibility"` 提供一个包含空格的参数。
+参数遵循类似 Shell 的引号规则，所以 `/review "API compatibility"` 提供一个包含空格的参数。引号只在参数开头才开始引用，所以单词内部的撇号（如 `doesn't`）仍是文本，没有闭合匹配的引号也按文本保留。在带引号的参数内部，同一引号字符前的反斜杠会把它保留为文本，所以 `/review "the \"fast\" path"` 提供 `the "fast" path`；其他反斜杠按输入保留。
 
 <a id="choose-where-it-loads"></a>
 
