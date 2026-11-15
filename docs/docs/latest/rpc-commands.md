@@ -811,7 +811,7 @@ drwxr-xr-x ...
 
 ### get_last_assistant_text
 
-获取最后一条 assistant 消息的文本内容。
+获取最后一条 assistant 消息的文本内容。中止或失败回合中没有文本的消息，以及只调用工具的消息，会被跳过。
 
 ```json
 { "type": "get_last_assistant_text" }

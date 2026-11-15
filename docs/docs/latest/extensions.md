@@ -1932,7 +1932,7 @@ const result = await pi.exec('git', ['status'], { signal, timeout: 5000 });
 // result.stdout, result.stderr, result.code, result.killed, result.truncated
 ```
 
-选项：`signal` 和 `timeout` 会终止命令，`cwd` 设置工作目录，`maxBuffer` 限制 stdout 与 stderr 的合计大小（默认 256 MiB）。输出超过 `maxBuffer` 时，Pi 会终止命令，并返回上限以内的输出，同时带上 `truncated: true`、`killed: true` 和非零 `code`。只要是 Pi 终止了命令，`killed` 就为 true：超时、中止，或触及 `maxBuffer`。忽略 SIGTERM 的命令会在 5 秒后收到 SIGKILL。
+选项：`signal` 和 `timeout` 会终止命令，`cwd` 设置工作目录，`maxBuffer` 限制 stdout 与 stderr 的合计大小（默认 256 MiB）。输出超过 `maxBuffer` 时，Pi 会终止命令，并返回上限以内的输出，同时带上 `truncated: true`、`killed: true` 和非零 `code`。只要是 Pi 终止了命令，`killed` 就为 true：超时、中止，或触及 `maxBuffer`。忽略 SIGTERM 的命令会在 5 秒后收到 SIGKILL。被信号终止的命令（无论是 Pi 还是其他原因）会把 `code` 报成 128 加信号编号，和 shell 一样：SIGTERM 为 143，SIGKILL 为 137。
 
 ### pi.getActiveTools() / pi.getAllTools() / pi.setActiveTools(names)
 
