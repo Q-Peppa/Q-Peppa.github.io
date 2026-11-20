@@ -2,6 +2,167 @@
 
 > Pi Coding Agent 及其子包的版本发布记录。
 
+## v1.6.0（2026-11-20）
+
+<details>
+<summary><strong>Pi Coding Agent</strong></summary>
+
+新功能
+
+- **GPT-6.2 Astra 和 GPT-6.2 Sol** – 两个模型都可在 `openai`、`azure` 和 `openai-codex` Provider 上使用，GPT-6.2 Sol 现在是这三个 Provider 的默认模型。详见 [Providers](/docs/latest/providers)。
+
+不兼容变更
+
+- 扩展组件：`render()` 现在返回 `readonly string[]`，子组件未变化时 `Container` 返回同一份缓存数组。就地修改渲染输出的扩展，包括 `Container` 子类里的 `super.render()` 或嵌入组件的输出，必须先复制（[#9549](https://github.com/earendil-works/pi/issues/9549)）。
+
+新增
+
+- 为 `openai`、`azure` 和 `openai-codex` Provider 添加了 GPT-6.2 Astra 和 GPT-6.2 Sol。两者都拒绝 reasoning effort `none` 和 `minimal`，因此 thinking 级别 `off` 不可用。Azure 以 1.05M 上下文窗口提供它们；Codex 为 GPT-6.2 Sol 提供 500K，为 GPT-6.2 Astra 提供 272K。
+- 为 Qwen Token Plan Individual Provider 添加了 `qwen4-max-preview`（[#12259](https://github.com/earendil-works/pi/issues/12259)）。
+- 为 Qwen Token Plan Individual Provider 添加了 `deepseek-v4.1-flash` 和 `deepseek-v4.1-flash-1017`，以及各套餐的 key 变量 `QWEN_TOKEN_PLAN_TEAM_API_KEY`、`QWEN_TOKEN_PLAN_TEAM_CN_API_KEY`、`QWEN_TOKEN_PLAN_INDIVIDUAL_API_KEY` 和 `QWEN_TOKEN_PLAN_INDIVIDUAL_CN_API_KEY`；共享的 `QWEN_TOKEN_PLAN_API_KEY` 和 `QWEN_TOKEN_PLAN_CN_API_KEY` 仍然可用（[#11773](https://github.com/earendil-works/pi/issues/11773)）。
+- OpenAI 从请求中丢弃 reasoning 项时，转录里会显示通知，例如 GPT-6.2 在压缩后出现 `OpenAI dropped 2 reasoning items: prefix_mismatch (details in session)`。和 Anthropic thinking 通知一样，只在 `showCacheMissNotices` 开启、且丢弃项比上一次响应更多时显示。两种通知现在都会写出原因。
+
+变更
+
+- Qwen Token Plan Provider 现在使用当前网关（国际 `token-plan.maas.qwencloudapi.com`，中国 `token-plan.maas.qianwenaiapi.com`），`qwen-token-plan` 和 `qwen-token-plan-cn` 的显示名改为 "Qwen Token Plan Team" 和 "Qwen Token Plan Team CN"。Provider ID 不变，旧的 `aliyuncs.com` 主机仍然可用（[#11773](https://github.com/earendil-works/pi/issues/11773)）。
+- 将 `undici` 升级到 8.12.4，以修复安全公告 GHSA-mqg3-3v4r-cm32、GHSA-7xg3-fphp-28hg、GHSA-5rm8-gv32-r954、GHSA-9v6h-8rgp-m69f、GHSA-3g9m-rv3r-w5w2 和 GHSA-r4pc-4jcp-7pqc（[#12200](https://github.com/earendil-works/pi/issues/12200)）。
+- `openai`、`azure` 和 `openai-codex` Provider 的默认模型现在是 GPT-6.2 Sol（`gpt-6.2-sol`），不再是 GPT-6.1 Sol，价格相同。
+- find 工具的路径模式现在相对于搜索目录，和 grep 的 `glob` 一样：`src/*.ts` 能找到 `src/a.ts`，但不再匹配 `pkg/src/a.ts`；要用 `**/src/*.ts` 匹配任意深度。不含 `/` 的模式仍然匹配任意深度的文件名（[#12066](https://github.com/earendil-works/pi/issues/12066)）。
+- llama.cpp 扩展现在默认连接 `http://127.0.0.1:9931`，即当前 llama-server 的默认端口，不再是 8080（[#12001](https://github.com/earendil-works/pi/pull/12001) 由 [@julien-c](https://github.com/julien-c) 贡献）。
+- 只要 Provider 的 baseUrl 在 api.anthropic.com 上，Anthropic message threads 现在默认开启，不再只限于 `anthropic` Provider（[#11987](https://github.com/earendil-works/pi/issues/11987)）。
+- 退出时打印的恢复命令现在单独占一行，跟在 `To resume this session:` 之后，因此可以用三击选中（[#12237](https://github.com/earendil-works/pi/issues/12237)）。
+
+修复
+
+- 修复了 `read` 把「当前模型不支持图片」记进结果、切换到视觉模型后又以过时文本回放给模型的问题。没有图片输入的模型仍会在每次请求里把图片换成占位符，read 结果的警告现在只在 TUI 中显示，折叠时也显示（[#12131](https://github.com/earendil-works/pi/issues/12131)）。
+- 修复了扩展在 `session_start` 只停用自己的工具时（例如 pi-web-access 和 pi-subagents 的 `toolActivation: "auto"` 模式），`tool_search` 加载的 MCP 工具在恢复和 `/reload` 时被丢弃的问题（[#11996](https://github.com/earendil-works/pi/issues/11996)）。
+- 修复了独立二进制无法解析入口点声明在 `package.json` 的 `main` 或 `exports` 中的扩展 npm 依赖（例如 `shiki`、`yaml`、`graceful-fs`），包括从其他依赖内部发起的导入（[#12012](https://github.com/earendil-works/pi/issues/12012)）。
+- 修复了 find 工具对以 `./` 开头的模式（例如 `./src/*.ts`）不返回结果的问题（[#12020](https://github.com/earendil-works/pi/issues/12020)）。
+- 修复了取消正在打开文件的 `read` 工具调用时，pi 以未捕获的 `AbortError` 退出的问题（[#11956](https://github.com/earendil-works/pi/issues/11956)）。
+- 修复了会话选择器在跳过不是会话的 `.jsonl` 文件后取消加载时，pi 以未捕获的 `AbortError` 退出，以及这些文件一直不关闭的问题（[#11956](https://github.com/earendil-works/pi/issues/11956)）。
+- 修复了 GitHub CLI 启动失败时 `/share` 使 pi 崩溃的问题。
+- 修复了 Windows 托管安装上，较旧的系统 Node.js 在安装器自带的独立 Node.js 之前出现在 PATH 时，`pi update` 报 "Could not verify managed Pi" 的问题（[#12048](https://github.com/earendil-works/pi/issues/12048)）。
+- 修复了 `/export` HTML 在自定义工具输出的链接周围显示原始终端超链接转义码的问题；链接现在可点击（[#12003](https://github.com/earendil-works/pi/issues/12003)）。
+- 修复了输出以一行超过约 100KB 的内容结尾时（例如在压缩文件里 `grep` 到的匹配），bash 工具不返回输出、页脚类似 `[Showing lines 3-2 of 2]` 的问题；现在会显示该行的末尾（[#12062](https://github.com/earendil-works/pi/issues/12062)）。
+- 修复了内容为 "Connection closed." 的 Provider 错误不触发自动重试的问题（[#12064](https://github.com/earendil-works/pi/issues/12064)）。
+- 修复了删除或重命名会话后列表重新加载时，`/resume` 有时选中无关会话的问题（[#12106](https://github.com/earendil-works/pi/issues/12106)）。
+- 修复了 Groq Qwen 模型报 `400 Unexpected message role` 的问题；除 OpenAI 以外的 OpenAI 兼容 Provider 现在以 `system` 角色接收系统消息（系统 Prompt 和对话中途的系统消息）（[#10741](https://github.com/earendil-works/pi/issues/10741)）。
+- 修复了 `enabledModels`/`--models` 警告（例如 `No models match pattern "github-copilot/nope"`）在每次 `/new`、`/resume` 和 `/fork` 时写到交互式 TUI 上、在全屏模式留下过时行的问题。警告现在只在启动时显示一次：交互模式在聊天里，其他模式在 stderr；RPC 模式不再为每次 `new_session`、`switch_session` 或 `fork` 在 stderr 上重复它们（[#11264](https://github.com/earendil-works/pi/issues/11264)）。
+- 修复了 find 工具把搜索路径之上的文件夹也拿来匹配路径模式的问题：项目在 `~/src/app` 时，`src/**/*.ts` 会返回项目里的每个 `.ts` 文件（[#12066](https://github.com/earendil-works/pi/issues/12066)）。
+- 修复了渲染非常大的 edit diff 时（例如编辑了含长达数 MB 一行的文件）pi 以 `RangeError: Maximum call stack size exceeded` 崩溃，并且每次恢复该会话都会再次崩溃的问题（[#8036](https://github.com/earendil-works/pi/issues/8036)）。
+- 修复了一批工具调用期间按 Esc，尚未开始的调用在会话里没有结果的问题；它们现在会得到 "Operation aborted" 结果（[#9986](https://github.com/earendil-works/pi/issues/9986)）。
+- 修复了无法解析的 `CHANGELOG.md`（pi 自己的或扩展包的）在交互式 TUI 上打印 `Warning: Could not parse changelog` 的问题；现在不显示 changelog 说明（[#11264](https://github.com/earendil-works/pi/issues/11264)）。
+- 修复了用 `/new`、`/resume`、`/fork` 或 RPC 的 `new_session`、`switch_session` 和 `fork` 替换会话时发现的问题从不显示的情况，例如 `/resume` 进入另一个项目后项目扩展加载失败，或设置变更后 `enabledModels` 模式什么都不匹配。交互模式现在在聊天里显示它们，print、JSON 和 RPC 模式写到 stderr；已经报告过的问题不会重复。SDK 宿主可以在启动时和每次替换后调用新的 `AgentSessionRuntime.takeUnreportedDiagnostics()`，每个诊断只取一次。
+- 修复了 RPC 的 `new_session`、`switch_session`、`fork` 和 `clone` 对新会话把扩展的 `session_start` 和 `resources_discover` 处理函数运行两次的问题。RPC 客户端现在也会收到 `session_start` 处理函数发出的事件，例如它们追加条目时的 `entry_appended`（[#10470](https://github.com/earendil-works/pi/issues/10470)）。
+- 修复了扩展的 `pi.events` 处理函数抛出的异常用 `console.error` 打印到交互式 TUI 上的问题。现在和其他扩展错误一样报告：交互模式在聊天里，RPC 模式为 `extension_error`，print 模式为 `Extension error (...)`。会话已被替换后才失败的处理函数，其错误会被丢弃（[#11264](https://github.com/earendil-works/pi/issues/11264)）。
+- 修复了 SDK 宿主用 `bindExtensions({})` 绑定扩展后，`AgentSession.reload()` 在已经发出 `session_shutdown` 之后不向扩展发出 `session_start` 的问题。在 `session_start` 里开始工作的扩展（例如 MCP 扩展连接其服务器）在 reload 之后会保持停止。
+- 修复了 `--mode json` 在启动时以及扩展替换会话之后，丢弃扩展 `session_start` 处理函数发出的事件（例如它们追加条目时的 `entry_appended`）的问题。
+- 修复了 `Could not restore model <provider>/<model>. Using <fallback>` 只在交互式启动时显示的问题。恢复或 fork 到模型已不存在或未登录的会话时会静默切换到另一个模型，print、JSON 和 RPC 模式也从不显示。现在每种模式都会报告，包括启动时以及 `/resume`、`/fork` 和 RPC 的 `switch_session` 或 `fork` 之后。
+- 修复了 pi 在 `/reload`、`/new`、`/resume` 和 `/fork` 期间安装或刷新包时（包括临时的 `-e git:` 和 `-e npm:` 包），git 和 npm 输出（例如 `Cloning into ...` 或 `added 12 packages`）画到交互式 TUI 上的问题。交互模式现在会捕获这些输出，安装失败时报告其末尾。TUI 启动之前，每次安装在 stderr 上宣布为 `Installing <source>...`，而不显示 git 和 npm 输出。git 和 ssh 在交互模式不能再提示输入：需要键入密码或口令的包会失败，并提示设置 credential helper 或 ssh agent，或从 shell 运行一次 `pi install <source>`。`pi install` 和 `pi update` 仍保留实时输出（[#11264](https://github.com/earendil-works/pi/issues/11264)）。
+- 修复了长会话中全屏滚动在每次滚轮事件都重新渲染整个转录、占满一个 CPU 核的问题（[#9549](https://github.com/earendil-works/pi/issues/9549)）。
+- 修复了 `/login`、`/logout`、`/scoped-models` 和 `/resume` 的搜索把高亮留在输入前滚到的那一行，导致 Enter 选中落到那里的条目而不是最佳匹配的问题；查询现在会高亮最上方的匹配，和 `/model` 一样（[#12245](https://github.com/earendil-works/pi/issues/12245)、[#12246](https://github.com/earendil-works/pi/pull/12246) 由 [@acmerfight](https://github.com/acmerfight) 贡献）。
+- 修复了退出 pi、`pi config` 以及 `--resume` 和其他启动选择器时，丢弃仍排在 stdout 里的终端输出（例如关掉鼠标跟踪和 Kitty 键盘报告的复位序列），导致 shell 把鼠标和按键报告当成文本打印的问题。pi 现在在退出或继续之前最多等待一秒，让已排队的输出写完（[#12133](https://github.com/earendil-works/pi/issues/12133)）。
+- 修复了在搜索框里用 Left、Right、Home 或 End 移动光标时，`/login`、`/logout`、`/model`、`/scoped-models`、`/resume`、`/settings`、按模型设置的模型选择器和 `pi config` 把高亮移回第一项的问题（[#12245](https://github.com/earendil-works/pi/issues/12245)）。
+- 修复了 llama.cpp 决策分类器忽略 llama.cpp 报告的图片输入（例如带 `mmproj` 的 Clef）的问题；`models.classify()` 现在把它们的图片发到 `/v1/systemone`（[#12282](https://github.com/earendil-works/pi/issues/12282)）。
+- 修复了从 pi 外部 `kill -TSTP` 时，pi 停止但不恢复终端，导致 shell 提示符下鼠标跟踪和 Kitty 键盘协议仍然开启、鼠标移动变成乱码输入的问题。pi 现在像 Ctrl+Z 一样挂起，并在 `fg` 时重绘（[#12283](https://github.com/earendil-works/pi/pull/12283) 由 [@haoqixu](https://github.com/haoqixu) 贡献）。
+- 修复了在 `openai-codex` Provider 上改变 thinking 级别会使 GPT-6 模型的 Prompt 缓存失效的问题（[#12269](https://github.com/earendil-works/pi/issues/12269)）。
+- 修复了没有 scope 的语法高亮文本继承终端前景色、在对比色的工具卡片上无法阅读的问题（[#11092](https://github.com/earendil-works/pi/issues/11092)）。
+- 修复了工具调用期间按 Esc 或 Provider 出错后，`/copy` 说 "No agent messages to copy yet." 的问题；现在会复制上一条回答。RPC 的 `get_last_assistant_text` 也会跳过同样的消息（[#12119](https://github.com/earendil-works/pi/issues/12119)、[#12121](https://github.com/earendil-works/pi/pull/12121) 由 [@acmerfight](https://github.com/acmerfight) 贡献）。
+- 修复了 `pi.exec` 对因信号结束的命令（例如超时、中止或崩溃）报告退出码 0 的问题；现在报告 128 加信号编号，和 shell 一样（SIGTERM 为 143，SIGKILL 为 137）（[#12088](https://github.com/earendil-works/pi/issues/12088)、[#12089](https://github.com/earendil-works/pi/pull/12089) 由 [@acmerfight](https://github.com/acmerfight) 贡献）。
+- 修复了 GitHub Copilot 的 Gemini 和 Kimi 模型（`gemini-4-argon`、`gemini-4-carbon`、`gemini-3.8-flash`、`kimi-k3`）忽略 thinking 级别，以及 Copilot 用量始终报告 0 个 reasoning Token 的问题（[#12110](https://github.com/earendil-works/pi/pull/12110) 由 [@DenielC1](https://github.com/DenielC1) 贡献）。
+- 修复了只报告 Node socket 错误码的 Provider 错误（例如 `read ECONNRESET`、`write EPIPE` 或 `connect ETIMEDOUT`）不触发自动重试的问题（[#12128](https://github.com/earendil-works/pi/issues/12128)）。
+- 修复了工具 schema 含没有 `type` 的节点（例如 `items: {}` 或 `Type.Unknown()`）时 OpenAI 以 400 拒绝请求的问题；这类工具现在以非严格模式发送（[#12049](https://github.com/earendil-works/pi/issues/12049)）。
+- 修复了 Mistral Large 4 的工具调用停滞数分钟的问题；除非设置了 `compat.supportsStrictMode`，Mistral 模型不再接收严格工具（[#12148](https://github.com/earendil-works/pi/issues/12148)）。
+- 修复了非严格的 Anthropic 工具 schema 不告诉模型禁止额外参数的问题（[#12067](https://github.com/earendil-works/pi/issues/12067)）。
+- 修复了 GitHub Copilot 上走 Responses API 的模型（GPT、Grok、MAI-Code）用空字符串或编造的值填充被省略的可选工具参数的问题（[#12286](https://github.com/earendil-works/pi/issues/12286)）。
+- 修复了 OpenAI Codex WebSocket 的 60 分钟连接限制在流中途命中时（例如长时间 thinking）使这一轮失败的问题；请求现在会在新连接上重试（[#12124](https://github.com/earendil-works/pi/issues/12124)）。
+- 修复了 `openai-codex` Provider 在 GPT-6.2 模型上几乎得不到系统 Prompt 的 Prompt 缓存命中的问题（[#12273](https://github.com/earendil-works/pi/issues/12273)）。
+- 修复了 `openai-codex` Provider 忽略模型 `maxTokens` 的问题。
+- 修复了全屏重绘（例如调整窗口大小）后全屏 Kitty 图片消失的问题（[#12010](https://github.com/earendil-works/pi/issues/12010)）。
+- 修复了 Markdown 里多行内联图片之后的文字画到图片上的问题（[#12017](https://github.com/earendil-works/pi/issues/12017)）。
+- 修复了 Kitty 和 iTerm2 图片盖住画在它们上面的 overlay 的问题（[#11584](https://github.com/earendil-works/pi/issues/11584)）。
+- 修复了在绝对路径的 Tab 路径菜单（`look at /tmp/fi`）或斜杠命令参数菜单（`/open /tm`）上按 Enter 会提交 Prompt 而不是接受补全的问题（[#12309](https://github.com/earendil-works/pi/issues/12309)、[#12312](https://github.com/earendil-works/pi/pull/12312) 由 [@acmerfight](https://github.com/acmerfight) 贡献）。
+
+移除
+
+- 从 Qwen Token Plan Team Provider 移除了已退役的 `deepseek-v3.2` 和 `deepseek-v4-flash`；请改用 `deepseek-v4-flash-0731` 或 `deepseek-v4.1-flash`（[#11773](https://github.com/earendil-works/pi/issues/11773)）。
+
+</details>
+
+<details>
+<summary><strong>Pi AI</strong></summary>
+
+新增
+
+- 为 `google-generative-ai` 和 `google-vertex` 适配器添加了自定义 `fetch` 支持；Vertex ADC Token 请求仍使用 `google-auth-library` 自己的 HTTP 客户端（[#12103](https://github.com/earendil-works/pi/pull/12103) 由 [@rometi](https://github.com/rometi) 贡献）。
+- 为 Qwen Token Plan Individual Provider 添加了 `qwen4-max-preview`（[#12259](https://github.com/earendil-works/pi/issues/12259)）。
+- 为 Qwen Token Plan Individual Provider 添加了 `deepseek-v4.1-flash` 和 `deepseek-v4.1-flash-1017`，以及各套餐的 key 变量 `QWEN_TOKEN_PLAN_TEAM_API_KEY`、`QWEN_TOKEN_PLAN_TEAM_CN_API_KEY`、`QWEN_TOKEN_PLAN_INDIVIDUAL_API_KEY` 和 `QWEN_TOKEN_PLAN_INDIVIDUAL_CN_API_KEY`；共享的 `QWEN_TOKEN_PLAN_API_KEY` 和 `QWEN_TOKEN_PLAN_CN_API_KEY` 仍然可用（[#11773](https://github.com/earendil-works/pi/issues/11773)）。
+- 为 OpenAI、Azure OpenAI Responses 和 OpenAI Codex Provider 添加了 GPT-6.2 Astra 和 GPT-6.2 Sol，附官方价格（Astra：输入 $8、缓存输入 $0.40、缓存写入 $10、输出 $40；Sol：$2、$0.10、$2.50、$10；272k 以上为长上下文档），以及工具搜索、额外工具和对话中途的 effort 变更。两者都拒绝 reasoning effort `none` 和 `minimal`，因此 `off` 不可用。Azure 以 1.05M 上下文窗口提供它们；Codex 为 GPT-6.2 Sol 提供 500K，为 GPT-6.2 Astra 提供 272K。
+- 为 OpenAI Responses、Azure OpenAI Responses 和 OpenAI Codex Provider 添加了 `openai_input_transformations` assistant 消息诊断。它们列出 API 未回放给模型的 reasoning 项及原因，例如 `prefix_mismatch`（从 GPT-6.2 起，OpenAI 会丢弃紧跟在更早输入被编辑之后的 reasoning，例如压缩之后）或 `organization_mismatch`。不记录 `turn_boundary` 移除：GPT-5.6 之前的模型在每次请求上都会这样报告更早每一轮的 reasoning。
+- 添加了 `@earendil-works/pi-ai/session-resources` 导出，含 `registerSessionResourceCleanup()` 和 `cleanupSessionResources()`，用于释放某个 Provider 会话的进程内 Provider 资源，例如一条 OpenAI Codex WebSocket（[#11676](https://github.com/earendil-works/pi/issues/11676)）。
+
+变更
+
+- 将 `openai` 升级到 7.59.0。
+- 将 `@google/genai` 升级到 2.32.0。Google 适配器关掉了它的自动续写，因此 `CONTINUATION` 结束会使这一轮以 stop reason `length` 结束（[#12103](https://github.com/earendil-works/pi/pull/12103) 由 [@rometi](https://github.com/rometi) 贡献）。
+- 只要 Provider 的 baseUrl 在 api.anthropic.com 上，Anthropic message threads 现在默认开启，不再只限于 `anthropic` Provider（[#11987](https://github.com/earendil-works/pi/issues/11987)）。
+- `openai-completions` 现在只向 `api.openai.com` 以 `developer` 角色发送 reasoning 模型的系统消息（系统 Prompt 和对话中途的系统消息）；所有其他主机，包括 Azure 和 OpenRouter，收到的是 `system`。设置 `compat.supportsDeveloperRole` 可覆盖（[#10741](https://github.com/earendil-works/pi/issues/10741)）。
+- Qwen Token Plan Provider 现在使用当前网关（国际 `token-plan.maas.qwencloudapi.com`，中国 `token-plan.maas.qianwenaiapi.com`），`qwen-token-plan` 和 `qwen-token-plan-cn` 的显示名改为 "Qwen Token Plan Team" 和 "Qwen Token Plan Team CN"。Provider ID 不变，旧的 `aliyuncs.com` 主机仍然可用（[#11773](https://github.com/earendil-works/pi/issues/11773)）。
+
+修复
+
+- 修复了 `strict: "prefer"` 约束采样的工具在 schema 含没有 `type` 的节点（例如 `items: {}`、`Type.Unknown()` 或裸 `const`）时仍以严格模式发送、被 OpenAI 以 400 拒绝的问题；这些工具现在回退到非严格模式，`strict: "require"` 会在本地失败。只有 `enum` 的节点保持严格（[#12049](https://github.com/earendil-works/pi/issues/12049)）。
+- 修复了只报告 Node socket 错误码的 Provider 错误（例如 `read ECONNRESET`、`write EPIPE` 或 `connect ETIMEDOUT`）不被重试的问题（[#12128](https://github.com/earendil-works/pi/issues/12128)）。
+- 修复了内容为 "Connection closed." 的 Provider 错误不被重试的问题（[#12064](https://github.com/earendil-works/pi/issues/12064)）。
+- 修复了 Groq Qwen 模型因系统 Prompt 以 `developer` 角色发送而报 `400 Unexpected message role` 的问题（[#10741](https://github.com/earendil-works/pi/issues/10741)）。
+- 修复了 Mistral Large 4 的工具调用停滞数分钟的问题：除非设置了 `compat.supportsStrictMode`，Mistral 模型不再接收严格（受 schema 约束的）工具（[#12148](https://github.com/earendil-works/pi/issues/12148)）。
+- 修复了非严格的 Anthropic 工具 schema 丢掉根上的 `additionalProperties`，因而没有告诉模型禁止额外参数的问题（[#12067](https://github.com/earendil-works/pi/issues/12067)）。
+- 修复了 GitHub Copilot 上走 Responses API 的模型（GPT、Grok、MAI-Code）用空字符串或编造的值填充被省略的可选工具参数的问题。它们的工具在不带 `strict` 的情况下发送，而 Copilot 把这当作严格模式；现在发送 `strict: false`，对有 JSON schema 约束采样的工具发送 `strict: true`。Copilot 的 Claude 模型现在也对那些工具发送 `strict: true`，和直接的 Anthropic 一样（[#12286](https://github.com/earendil-works/pi/issues/12286)）。
+- 修复了 OpenAI Codex WebSocket 的 60 分钟连接限制在流中途命中时（例如长时间 thinking）使这一轮失败的问题。该错误现在会在新连接上重试，新请求在 45 分钟后就不再复用缓存的连接，而不是 55 分钟，因此长响应更不容易碰到这个限制（[#12124](https://github.com/earendil-works/pi/issues/12124)）。
+- 修复了 OpenAI Codex Provider 在 GPT-6.2 模型上几乎得不到系统 Prompt 的 Prompt 缓存命中的问题。GPT-6.2 把顶层 `instructions` 放在对话之后，因此每一轮新对话都会使它的缓存失效。系统 Prompt 现在作为第一条 `developer` 输入项发送，和 Codex 一样，并且不再发送 `instructions` 字段（[#12273](https://github.com/earendil-works/pi/issues/12273)）。
+- 修复了在 OpenAI Codex Provider 上改变 thinking 级别会使 GPT-6 模型的 Prompt 缓存失效的问题。thinking 级别变化（包括切换到 off）现在作为带固定 `reasoning.effort` 的 `configuration_update` 输入项发送，和 `openai` Provider 以及 Codex 一样（[#12269](https://github.com/earendil-works/pi/issues/12269)）。
+- 修复了 GitHub Copilot 的 Gemini 和 Kimi 模型（`gemini-4-argon`、`gemini-4-carbon`、`gemini-3.8-flash`、`kimi-k3`）从未收到 thinking 级别，以及 Copilot 用量始终报告 0 个 reasoning Token 的问题（[#12110](https://github.com/earendil-works/pi/pull/12110) 由 [@DenielC1](https://github.com/DenielC1) 贡献）。
+- 修复了 OpenAI Codex Provider 忽略 `maxTokens` 的问题；现在会作为 `max_output_tokens` 发送（至少 16），除非模型设置了 `compat.supportsMaxOutputTokens: false`。
+
+移除
+
+- 从 `@earendil-works/pi-ai/api/google-shared` 移除了未使用的 `mapStopReasonString` 导出。
+- 从 Qwen Token Plan Team Provider 移除了已退役的 `deepseek-v3.2` 和 `deepseek-v4-flash`；请改用 `deepseek-v4-flash-0731` 或 `deepseek-v4.1-flash`（[#11773](https://github.com/earendil-works/pi/issues/11773)）。
+
+</details>
+
+<details>
+<summary><strong>Pi Agent</strong></summary>
+
+修复
+
+- 修复了一批调用中途被中止而跳过的工具调用在转录里没有工具结果的问题；每个现在都会得到 "Operation aborted" 错误结果。信号已中止时，`runToolCall` 和循环现在会在查找工具或调用 `beforeToolCall` 之前返回该结果（[#9986](https://github.com/earendil-works/pi/issues/9986)）。
+
+</details>
+
+<details>
+<summary><strong>Pi TUI</strong></summary>
+
+不兼容变更
+
+- `Component.render()` 现在返回 `readonly string[]`，子组件未变化时 `Container.render()` 返回同一份缓存数组，和 `Text`、`Markdown`、`Box` 已经做的一样。就地修改渲染输出的代码，包括 `Container` 子类里的 `super.render()`，必须先复制（[#9549](https://github.com/earendil-works/pi/issues/9549)）。
+
+新增
+
+- 添加了 `TUI.setSuspendSignalHandler()`，用于设置进程在 TUI 拥有终端期间（从 `start()` 到 `stop()`）收到 `SIGTSTP` 时调用的处理函数。`SIGTSTP` 监听器在 `stop()` 时移除，因此之后拥有终端的子进程会正常挂起（[#12283](https://github.com/earendil-works/pi/pull/12283) 由 [@haoqixu](https://github.com/haoqixu) 贡献）。
+
+修复
+
+- 修复了全屏重绘（例如调整窗口大小）后全屏 Kitty 图片消失的问题。清屏会使 Kitty 释放重绘随后要复用的缓存图片数据（[#12010](https://github.com/earendil-works/pi/issues/12010)）。
+- 修复了 Markdown 里多行内联图片的各行用硬换行拼接时，图片之后的文字画到图片上的问题（[#12017](https://github.com/earendil-works/pi/issues/12017)）。
+- 修复了 Kitty 和 iTerm2 图片盖住画在它们上面的 overlay 的问题。按行和列与 overlay 重叠的图片会在 overlay 打开时移除，关闭时再画出来。overlay 旁边的图片（例如侧边栏）保持可见（[#11584](https://github.com/earendil-works/pi/issues/11584)）。
+- 修复了全屏滚动在每次滚轮事件和按键时都重新渲染整个转录、在长会话里占满一个 CPU 核的问题；滚动帧现在复用上一帧输出（[#9549](https://github.com/earendil-works/pi/issues/9549)）。
+- 修复了容器在每一帧复制每一行已渲染文本的问题，并加快了不含组合字符的 ASCII 和其他文本的列切片（[#9549](https://github.com/earendil-works/pi/issues/9549)）。
+- 修复了补全文本以 `/` 开头时，在自动补全菜单上按 Enter 会提交 Prompt 的问题，例如绝对路径的 Tab 路径菜单（`look at /tmp/fi`）或斜杠命令参数（`/open /tm`）。Enter 现在只从斜杠命令名菜单提交（[#12309](https://github.com/earendil-works/pi/issues/12309)、[#12312](https://github.com/earendil-works/pi/pull/12312) 由 [@acmerfight](https://github.com/acmerfight) 贡献）。
+- 修复了开启 `enableSearch` 的 `SettingsList` 在 Left、Right、Home 或 End 移动搜索框光标但查询未变时，把选中项移回第一项的问题（[#12245](https://github.com/earendil-works/pi/issues/12245)）。
+
+</details>
+
 ## v1.5.2（2026-11-10）
 
 <details>
